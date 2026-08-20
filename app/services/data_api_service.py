@@ -42,6 +42,52 @@ def _display_source_path(source_path: str | None) -> str | None:
     return " | ".join(display_names)
 
 
+def _public_import_error(error_message: str | None) -> str | None:
+    """Map detailed internal import failures to a stable display-safe message."""
+    if not error_message:
+        return None
+
+    normalized = error_message.lower()
+    if "schema mismatch" in normalized:
+        return "Source schema is invalid."
+    if "already contains" in normalized:
+        return "Target already contains data."
+    if any(
+        marker in normalized
+        for marker in (
+            "unique constraint",
+            "foreign key constraint",
+            "database rejected",
+            "sqlite database",
+            "database is locked",
+        )
+    ):
+        return "Database operation failed."
+    if any(
+        marker in normalized
+        for marker in (
+            "source file does not exist",
+            "source file is empty",
+            "unsupported source format",
+            "unable to read",
+            "input directory does not exist",
+        )
+    ):
+        return "Source file is unavailable."
+    if any(
+        marker in normalized
+        for marker in (
+            "csv line",
+            "date_of_birth",
+            "must equal family_member_count",
+            "invalid date",
+            "required value",
+        )
+    ):
+        return "Source data validation failed."
+    return "Import failed."
+
+
 def get_data_status(database_path: str | Path) -> list[dict[str, Any]]:
     repository = DataRepository(database_path)
     reconciliation = run_reconciliation(database_path)
@@ -58,6 +104,10 @@ def get_data_status(database_path: str | Path) -> list[dict[str, Any]]:
                 "actual_rows": dataset["actual_count"],
                 "expected_rows": dataset["expected_count"],
                 "exact_match_required": dataset["exact_match_required"],
+                "count_tolerance_percent": dataset["count_tolerance_percent"],
+                "acceptable_min_rows": dataset["acceptable_min_rows"],
+                "acceptable_max_rows": dataset["acceptable_max_rows"],
+                "acceptable_count": dataset["acceptable_count"],
                 "reconciliation_status": dataset["status"],
                 "last_import_status": latest["status"] if latest else None,
                 "last_import_started_at": latest["started_at"] if latest else None,
@@ -85,6 +135,7 @@ def get_recent_imports(
     rows = DataRepository(database_path).fetch_import_runs(limit=limit, offset=offset)
     for row in rows:
         row["source_path"] = _display_source_path(row["source_path"])
+        row["error_message"] = _public_import_error(row["error_message"])
     return rows
 
 

@@ -11,6 +11,7 @@ documentation.
 
 ## Prerequisites
 
+- Git and [Git LFS](https://git-lfs.com/)
 - Python 3.11 or newer
 - PowerShell commands below assume Windows
 
@@ -30,7 +31,7 @@ customers. There is no `person_id` to `customer_id` mapping.
 
 ```text
 app/                     FastAPI routers, schemas, services, repositories, DB code
-data/                    Generated source files and local SQLite DB (Git-ignored)
+data/                    Tracked source datasets/samples; ignored local SQLite files
 data_generation_scripts/ Explicitly run synthetic-data generators
 docs/                    Implementation and handoff documentation
 frontend/                Static HTML, CSS, and Vanilla JavaScript UI
@@ -41,6 +42,20 @@ tests/                   Unit, integration, API, and frontend contract tests
 ```
 
 ## One-time setup
+
+For a fresh clone, install Git LFS support and materialize the tracked Phase 1
+GZIP objects before importing data:
+
+```powershell
+git clone https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git
+Set-Location .\Campaign-Implementation-Tool
+git lfs install
+git lfs pull
+git lfs ls-files
+```
+
+On macOS or Linux, use `cd Campaign-Implementation-Tool`; the three `git lfs`
+commands are otherwise the same.
 
 Create one environment for the application, tests, importers, and data generators:
 
@@ -78,7 +93,25 @@ names, columns, indexes, and current row counts:
 The default database path is `data/campaign_poc.db`. This step creates the schema
 only; generated CSV/GZIP files are not imported yet.
 
-## Import generated data
+## Import Phase 1 data
+
+The exact customer, campaign-sales, and demographic GZIP inputs are tracked with
+Git LFS and can be imported directly after `git lfs pull`; generator execution is
+not required for the normal setup flow.
+
+### LFS data manifest
+
+| File | Expected bytes | SHA-256 |
+|---|---:|---|
+| `customer_master_125000.csv.gz` | `6145052` | `5e80e1f25e433373f5f4b066e4d8d3a723cb4ae8d5af028895ea469d3c533a2e` |
+| `campaign_sales_570000.csv.gz` | `6465596` | `16aace571676765f358ecb3e981ec273ae08653fc9397229856cc4e27dfd500c` |
+| `usa_demographic_synthetic_5000000_rows.csv.gz` | `331342839` | `b5ff7051dda391f60188838ff91cb13e75c1cd855ef57461b2b0ad0a0786cd1d` |
+
+Allow disk space for approximately 344 MB of compressed LFS inputs, about 2.9 GB
+for the populated SQLite database, and additional working headroom for imports,
+indexes, WAL files, tests, and temporary validation databases. Generated source
+datasets, samples, masters, and summaries under `data/` are tracked; local
+SQLite `.db`, `.db-wal`, and `.db-shm` files remain ignored.
 
 Import in the enforced order: customers, campaign sales, then demographics.
 
@@ -107,6 +140,13 @@ instead of duplicating data. Customer replacement is refused after campaign rows
 exist; for a complete clean reload, initialize a new database path and import all
 three datasets in order. Campaign replacement clears only campaign rows, and
 demographic replacement clears only the independent demographic table.
+
+Before any explicit replacement clears existing rows, every source is opened and
+its header is checked. Replacement sources also receive a complete streaming
+structural/readability pass, including all multipart files, so wrong headers,
+malformed CSV structure, and truncated/corrupt GZIP streams preserve the existing
+target data. This preflight remains memory-bounded and does not increment import
+counters. Business-rule validation still occurs during the actual import pass.
 
 Imports commit in bounded batches. If validation fails after earlier batches were
 committed, the run is marked `FAILED` with its read/inserted/rejected counts. Fix
@@ -174,9 +214,13 @@ structural error is found. For machine-readable output:
 ```
 
 Statuses are `NOT_LOADED`, `OK`, `WARNING`, and `ERROR`. Customer count is an
-approximate target by default, while campaign-sales and demographics counts
-require exact matches. These policies can be changed through environment
-configuration without changing SQL.
+approximate target with a configurable ±5% tolerance by default, while
+campaign-sales and demographics counts require exact matches. Approximate bounds
+are inclusive and deterministic: the minimum is rounded up with
+`ceil(expected × (1 - tolerance/100))`, and the maximum is rounded down with
+`floor(expected × (1 + tolerance/100))`. Counts outside that range are
+`WARNING`. These policies can be changed through environment configuration
+without changing SQL.
 
 ## Start the application
 
@@ -237,6 +281,7 @@ Configuration is read from environment variables with safe local defaults. See
 - `EXPECTED_CAMPAIGN_SALES_ROWS`
 - `EXPECTED_DEMOGRAPHIC_ROWS`
 - `CUSTOMER_COUNT_EXACT_REQUIRED`
+- `CUSTOMER_COUNT_TOLERANCE_PERCENT`
 - `CAMPAIGN_SALES_COUNT_EXACT_REQUIRED`
 - `DEMOGRAPHIC_COUNT_EXACT_REQUIRED`
 - `LOG_LEVEL`
@@ -252,6 +297,11 @@ The example file is documentation only; no secrets are required for this POC.
   filename under `data/`, decompress or regenerate if necessary, and compare its
   header to the frozen schemas above. Failed attempts are recorded in
   `data_import_runs` when the database is writable.
+- **A GZIP file is about 130 bytes or starts with
+  `version https://git-lfs.github.com/spec/v1`:** it is an unresolved Git LFS
+  pointer, not compressed CSV data, and imports may report `Not a gzipped file`
+  or a similar read error. Run `git lfs install`, then `git lfs pull`, and verify
+  the materialized objects with `git lfs ls-files` and the manifest above.
 - **Target already contains rows:** this is intentional duplicate protection.
   Use a new database for a clean load, or use `--replace` only after reviewing
   the documented dataset-specific behavior.
@@ -282,8 +332,10 @@ The example file is documentation only; no secrets are required for this POC.
 ## Data generators
 
 The shared environment contains the Python packages required by all three scripts
-under `data_generation_scripts/`. Generators are not run automatically during
-application setup. Generate source data explicitly before the real import flow.
+under `data_generation_scripts/`. The generators are optional reproducibility and
+regeneration tools; they are not run automatically and are not required when the
+committed Git LFS objects are present. If regeneration is explicitly needed, run
+the scripts separately and validate the resulting files before replacement.
 
 ## Phase 1 scope boundary
 

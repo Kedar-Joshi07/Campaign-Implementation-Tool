@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from app import config
 from app.database.connection import get_connection
 from app.database.schema import (
     REQUIRED_INDEX_STATEMENTS,
@@ -16,6 +17,7 @@ from app.services.data_reconciliation_service import (
     STATUS_NOT_LOADED,
     STATUS_OK,
     STATUS_WARNING,
+    _dataset_result,
     run_reconciliation,
 )
 
@@ -30,6 +32,23 @@ def _expected_counts(count: int = 1) -> dict[str, dict[str, int | bool]]:
         dataset: {"expected_count": count, "exact_match_required": True}
         for dataset in ("customers", "campaign_sales", "demographics")
     }
+
+
+def _approximate_customer_result(
+    actual_count: int,
+    *,
+    structural_errors: int = 0,
+):
+    return _dataset_result(
+        metrics={"total_rows": actual_count},
+        policy={
+            "expected_count": 125_000,
+            "exact_match_required": False,
+            "count_tolerance_percent": 5.0,
+        },
+        structural_issues={"test_violation_count": structural_errors},
+        query_seconds=0.0,
+    )
 
 
 def _seed_fixture(database_path: Path, *, broken: bool = False) -> None:
@@ -170,14 +189,76 @@ def test_exact_expected_count_mismatch_is_warning(database_path: Path) -> None:
     )
 
 
-def test_non_exact_customer_target_does_not_warn(database_path: Path) -> None:
+def test_severe_non_exact_customer_shortfall_warns(database_path: Path) -> None:
     _seed_fixture(database_path)
     policies = _expected_counts()
-    policies["customers"] = {"expected_count": 125_000, "exact_match_required": False}
+    policies["customers"] = {
+        "expected_count": 125_000,
+        "exact_match_required": False,
+        "count_tolerance_percent": 5.0,
+    }
 
     result = run_reconciliation(database_path, policies)
 
     customer_result = result["datasets"]["customers"]
-    assert customer_result["status"] == STATUS_OK
+    assert customer_result["status"] == STATUS_WARNING
     assert customer_result["expected_count_match"] is False
     assert customer_result["exact_match_required"] is False
+    assert customer_result["acceptable_count"] is False
+    assert customer_result["acceptable_min_rows"] == 118_750
+    assert customer_result["acceptable_max_rows"] == 131_250
+
+
+@pytest.mark.parametrize(
+    ("actual_count", "expected_status"),
+    (
+        (1_000, STATUS_WARNING),
+        (118_750, STATUS_OK),
+        (131_250, STATUS_OK),
+        (118_749, STATUS_WARNING),
+        (131_251, STATUS_WARNING),
+    ),
+)
+def test_approximate_customer_tolerance_boundaries(
+    actual_count: int,
+    expected_status: str,
+) -> None:
+    result = _approximate_customer_result(actual_count)
+
+    assert result["status"] == expected_status
+    assert result["acceptable_count"] is (expected_status == STATUS_OK)
+    assert result["acceptable_min_rows"] == 118_750
+    assert result["acceptable_max_rows"] == 131_250
+    assert result["count_tolerance_percent"] == 5.0
+    assert result["expected_count_match"] is (actual_count == 125_000)
+
+
+def test_structural_error_overrides_acceptable_approximate_count() -> None:
+    result = _approximate_customer_result(125_000, structural_errors=1)
+
+    assert result["acceptable_count"] is True
+    assert result["status"] == STATUS_ERROR
+
+
+@pytest.mark.parametrize("raw_value", ("nan", "inf", "-0.1", "100.1", "invalid"))
+def test_customer_tolerance_configuration_rejects_invalid_values(
+    monkeypatch: pytest.MonkeyPatch,
+    raw_value: str,
+) -> None:
+    monkeypatch.setenv("CUSTOMER_COUNT_TOLERANCE_PERCENT", raw_value)
+
+    with pytest.raises(ValueError, match="0 through 100"):
+        config._percentage_from_env("CUSTOMER_COUNT_TOLERANCE_PERCENT", "5.0")
+
+
+@pytest.mark.parametrize(("raw_value", "expected"), (("0", 0.0), ("100", 100.0)))
+def test_customer_tolerance_configuration_accepts_inclusive_boundaries(
+    monkeypatch: pytest.MonkeyPatch,
+    raw_value: str,
+    expected: float,
+) -> None:
+    monkeypatch.setenv("CUSTOMER_COUNT_TOLERANCE_PERCENT", raw_value)
+
+    assert config._percentage_from_env(
+        "CUSTOMER_COUNT_TOLERANCE_PERCENT", "5.0"
+    ) == expected

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,20 +22,27 @@ STATUS_WARNING = "WARNING"
 STATUS_ERROR = "ERROR"
 
 
-def default_expected_counts() -> dict[str, dict[str, int | bool]]:
+def default_expected_counts() -> dict[str, dict[str, int | bool | float | None]]:
     """Return expected row-count policy using the current environment configuration."""
     return {
         "customers": {
             "expected_count": config.EXPECTED_CUSTOMER_ROWS,
             "exact_match_required": config.CUSTOMER_COUNT_EXACT_REQUIRED,
+            "count_tolerance_percent": (
+                None
+                if config.CUSTOMER_COUNT_EXACT_REQUIRED
+                else config.CUSTOMER_COUNT_TOLERANCE_PERCENT
+            ),
         },
         "campaign_sales": {
             "expected_count": config.EXPECTED_CAMPAIGN_SALES_ROWS,
             "exact_match_required": config.CAMPAIGN_SALES_COUNT_EXACT_REQUIRED,
+            "count_tolerance_percent": None,
         },
         "demographics": {
             "expected_count": config.EXPECTED_DEMOGRAPHIC_ROWS,
             "exact_match_required": config.DEMOGRAPHIC_COUNT_EXACT_REQUIRED,
+            "count_tolerance_percent": None,
         },
     }
 
@@ -54,41 +62,74 @@ def _timed_query(connection: Any, dataset: str, sql: str) -> tuple[dict[str, Any
 def _count_status(
     *,
     actual_count: int,
-    expected_count: int,
-    exact_match_required: bool,
+    acceptable_count: bool,
     structural_error_count: int,
 ) -> str:
     if actual_count == 0:
         return STATUS_NOT_LOADED
     if structural_error_count:
         return STATUS_ERROR
-    if exact_match_required and actual_count != expected_count:
+    if not acceptable_count:
         return STATUS_WARNING
     return STATUS_OK
+
+
+def _count_policy_result(
+    *,
+    actual_count: int,
+    expected_count: int,
+    exact_match_required: bool,
+    count_tolerance_percent: float | None,
+) -> dict[str, int | float | bool | None]:
+    if exact_match_required:
+        tolerance = None
+        acceptable_min_rows = expected_count
+        acceptable_max_rows = expected_count
+    else:
+        tolerance = 0.0 if count_tolerance_percent is None else float(
+            count_tolerance_percent
+        )
+        if not math.isfinite(tolerance) or not 0 <= tolerance <= 100:
+            raise ValueError("count_tolerance_percent must be from 0 through 100")
+        acceptable_min_rows = math.ceil(expected_count * (1 - tolerance / 100))
+        acceptable_max_rows = math.floor(expected_count * (1 + tolerance / 100))
+
+    return {
+        "count_tolerance_percent": tolerance,
+        "acceptable_min_rows": acceptable_min_rows,
+        "acceptable_max_rows": acceptable_max_rows,
+        "acceptable_count": acceptable_min_rows <= actual_count <= acceptable_max_rows,
+    }
 
 
 def _dataset_result(
     *,
     metrics: dict[str, Any],
-    policy: Mapping[str, int | bool],
+    policy: Mapping[str, int | bool | float | None],
     structural_issues: Mapping[str, int],
     query_seconds: float,
 ) -> dict[str, Any]:
     actual_count = int(metrics["total_rows"])
     expected_count = int(policy["expected_count"])
     exact_match_required = bool(policy["exact_match_required"])
+    count_policy = _count_policy_result(
+        actual_count=actual_count,
+        expected_count=expected_count,
+        exact_match_required=exact_match_required,
+        count_tolerance_percent=policy.get("count_tolerance_percent"),
+    )
     structural_error_count = sum(int(value) for value in structural_issues.values())
     return {
         "status": _count_status(
             actual_count=actual_count,
-            expected_count=expected_count,
-            exact_match_required=exact_match_required,
+            acceptable_count=bool(count_policy["acceptable_count"]),
             structural_error_count=structural_error_count,
         ),
         "expected_count": expected_count,
         "actual_count": actual_count,
         "exact_match_required": exact_match_required,
         "expected_count_match": actual_count == expected_count,
+        **count_policy,
         "structural_error_count": structural_error_count,
         "structural_issues": dict(structural_issues),
         "metrics": metrics,
@@ -108,7 +149,7 @@ def _overall_status(dataset_statuses: list[str]) -> str:
 
 def run_reconciliation(
     database_path: str | Path | None = None,
-    expected_counts: Mapping[str, Mapping[str, int | bool]] | None = None,
+    expected_counts: Mapping[str, Mapping[str, int | bool | float | None]] | None = None,
 ) -> dict[str, Any]:
     """Run machine-readable count, relationship, and consistency checks."""
     path = initialize_database(database_path)

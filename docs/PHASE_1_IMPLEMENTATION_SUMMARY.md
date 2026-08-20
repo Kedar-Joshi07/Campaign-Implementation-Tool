@@ -23,6 +23,8 @@ is included.
 
 - One project virtual environment installs the root `requirements.txt`, which
   also includes all generator dependencies.
+- The three canonical GZIP datasets are delivered through Git LFS; local SQLite
+  database, WAL, and SHM files remain ignored.
 - FastAPI serves both the API and static frontend; there is no frontend build
   toolchain.
 - Routers own HTTP behavior, services own orchestration/business validation,
@@ -81,6 +83,10 @@ its source and counters when the database is writable. A malformed row fails the
 run instead of being skipped silently. Because batches commit incrementally, a
 late failure can leave an auditable partial load that must be deliberately
 replaced or loaded into a fresh database.
+
+Replacement sources are preflighted before target deletion. Every part receives
+a complete memory-bounded CSV/GZIP structural pass, so unreadable input, wrong
+headers, malformed field counts, and truncated streams preserve existing rows.
 
 ## Test and validation coverage
 

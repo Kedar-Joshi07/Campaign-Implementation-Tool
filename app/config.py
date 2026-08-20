@@ -2,8 +2,21 @@
 
 from __future__ import annotations
 
+import math
 import os
 from pathlib import Path
+
+
+def _percentage_from_env(name: str, default: str) -> float:
+    """Read a finite percentage constrained to the inclusive 0–100 range."""
+    raw_value = os.getenv(name, default)
+    try:
+        value = float(raw_value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a number from 0 through 100") from exc
+    if not math.isfinite(value) or not 0 <= value <= 100:
+        raise ValueError(f"{name} must be a finite number from 0 through 100")
+    return value
 
 
 APP_NAME = os.getenv("APP_NAME", "Campaign Implementation Intelligence")
@@ -19,6 +32,9 @@ EXPECTED_DEMOGRAPHIC_ROWS = int(os.getenv("EXPECTED_DEMOGRAPHIC_ROWS", "5000000"
 CUSTOMER_COUNT_EXACT_REQUIRED = os.getenv(
     "CUSTOMER_COUNT_EXACT_REQUIRED", "false"
 ).lower() in {"1", "true", "yes", "on"}
+CUSTOMER_COUNT_TOLERANCE_PERCENT = _percentage_from_env(
+    "CUSTOMER_COUNT_TOLERANCE_PERCENT", "5.0"
+)
 CAMPAIGN_SALES_COUNT_EXACT_REQUIRED = os.getenv(
     "CAMPAIGN_SALES_COUNT_EXACT_REQUIRED", "true"
 ).lower() in {"1", "true", "yes", "on"}

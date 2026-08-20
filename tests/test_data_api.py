@@ -25,6 +25,7 @@ def client(database_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(config, "EXPECTED_CAMPAIGN_SALES_ROWS", 3)
     monkeypatch.setattr(config, "EXPECTED_DEMOGRAPHIC_ROWS", 3)
     monkeypatch.setattr(config, "CUSTOMER_COUNT_EXACT_REQUIRED", True)
+    monkeypatch.setattr(config, "CUSTOMER_COUNT_TOLERANCE_PERCENT", 5.0)
     monkeypatch.setattr(config, "CAMPAIGN_SALES_COUNT_EXACT_REQUIRED", True)
     monkeypatch.setattr(config, "DEMOGRAPHIC_COUNT_EXACT_REQUIRED", True)
     app.dependency_overrides[get_database_path] = lambda: database_path
@@ -110,6 +111,25 @@ def _seed_populated_fixture(database_path: Path) -> None:
         )
 
 
+def _record_failed_import(
+    database_path: Path,
+    *,
+    source_path: str,
+    error_message: str,
+) -> None:
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name, source_path, started_at, completed_at, status,
+                rows_read, rows_inserted, rows_rejected, error_message
+            ) VALUES ('customers', ?, '2026-08-20T11:00:00Z',
+                      '2026-08-20T11:00:01Z', 'FAILED', 0, 0, 0, ?)
+            """,
+            (source_path, error_message),
+        )
+
+
 def test_data_summary_empty_database(client: TestClient) -> None:
     response = client.get("/api/data/summary")
 
@@ -166,6 +186,32 @@ def test_data_status_reports_reconciliation_and_latest_import(
     assert payload[0]["last_import_status"] == "COMPLETED"
     assert payload[0]["rows_inserted"] == 1
     assert payload[0]["rows_rejected"] == 0
+    assert payload[0]["exact_match_required"] is True
+    assert payload[0]["count_tolerance_percent"] is None
+    assert payload[0]["acceptable_min_rows"] == 1
+    assert payload[0]["acceptable_max_rows"] == 1
+    assert payload[0]["acceptable_count"] is True
+
+
+def test_data_status_reports_approximate_customer_policy(
+    client: TestClient,
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _seed_populated_fixture(database_path)
+    monkeypatch.setattr(config, "EXPECTED_CUSTOMER_ROWS", 100)
+    monkeypatch.setattr(config, "CUSTOMER_COUNT_EXACT_REQUIRED", False)
+    monkeypatch.setattr(config, "CUSTOMER_COUNT_TOLERANCE_PERCENT", 5.0)
+
+    customer = client.get("/api/data/status").json()[0]
+
+    assert customer["reconciliation_status"] == "WARNING"
+    assert customer["expected_rows"] == 100
+    assert customer["exact_match_required"] is False
+    assert customer["count_tolerance_percent"] == 5.0
+    assert customer["acceptable_min_rows"] == 95
+    assert customer["acceptable_max_rows"] == 105
+    assert customer["acceptable_count"] is False
 
 
 def test_reference_campaigns_are_aggregated_and_searchable(
@@ -240,7 +286,75 @@ def test_imports_are_newest_first_sanitized_and_limit_is_validated(
     payload = response.json()
     assert [item["dataset_name"] for item in payload] == ["demographics", "campaign_sales"]
     assert payload[0]["source_path"] == "demographics.csv.gz"
+    assert payload[0]["error_message"] is None
+    assert payload[1]["error_message"] is None
     assert client.get("/api/data/imports", params={"limit": 0}).status_code == 422
     assert client.get("/api/data/imports", params={"limit": 101}).status_code == 422
     assert client.get("/api/data/imports", params={"offset": -1}).status_code == 422
     assert client.get("/api/reference/campaigns", params={"limit": 101}).status_code == 422
+
+
+def test_import_api_sanitizes_missing_source_path(
+    client: TestClient,
+    database_path: Path,
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "private" / "missing_customers.csv.gz"
+    _record_failed_import(
+        database_path,
+        source_path=str(source_path),
+        error_message=f"Source file does not exist: {source_path}",
+    )
+
+    item = client.get("/api/data/imports").json()[0]
+
+    assert item["error_message"] == "Source file is unavailable."
+    assert item["source_path"] == "missing_customers.csv.gz"
+    assert str(tmp_path) not in str(item)
+    assert "private" not in str(item)
+
+
+def test_import_api_sanitizes_sqlite_integrity_detail(
+    client: TestClient,
+    database_path: Path,
+) -> None:
+    _record_failed_import(
+        database_path,
+        source_path=r"C:\private\duplicates.csv",
+        error_message=(
+            "C:\\private\\duplicates.csv: database rejected batch: "
+            "UNIQUE constraint failed: customers.customer_id; SELECT * FROM customers"
+        ),
+    )
+
+    item = client.get("/api/data/imports").json()[0]
+
+    assert item["error_message"] == "Database operation failed."
+    public_payload = str(item).lower()
+    assert "unique constraint failed" not in public_payload
+    assert "customers.customer_id" not in public_payload
+    assert "select *" not in public_payload
+    assert "c:\\private" not in public_payload
+
+
+def test_import_api_sanitizes_schema_mismatch_detail(
+    client: TestClient,
+    database_path: Path,
+    tmp_path: Path,
+) -> None:
+    source_path = tmp_path / "received_secret_header.csv"
+    _record_failed_import(
+        database_path,
+        source_path=str(source_path),
+        error_message=(
+            f"Schema mismatch in {source_path}; expected ['customer_id']; "
+            "received ['secret_row_value', 'unexpected_column']"
+        ),
+    )
+
+    item = client.get("/api/data/imports").json()[0]
+
+    assert item["error_message"] == "Source schema is invalid."
+    assert str(tmp_path) not in str(item)
+    assert "secret_row_value" not in str(item)
+    assert "unexpected_column" not in str(item)

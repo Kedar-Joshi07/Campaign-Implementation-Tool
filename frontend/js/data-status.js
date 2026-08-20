@@ -11,6 +11,17 @@ function setCardsLoading() {
   }
 }
 
+function targetPolicyLabel(dataset) {
+  if (dataset.exact_match_required) {
+    return "Exact target";
+  }
+  const tolerance = Number(dataset.count_tolerance_percent);
+  const displayTolerance = Number.isInteger(tolerance)
+    ? tolerance.toFixed(0)
+    : tolerance.toString();
+  return `Approximate target (±${displayTolerance}%)`;
+}
+
 function renderDatasetStatus(datasets) {
   for (const dataset of datasets) {
     const card = document.querySelector(`[data-dataset-card="${dataset.dataset_name}"]`);
@@ -19,6 +30,7 @@ function renderDatasetStatus(datasets) {
     setStatusBadge(card.querySelector('[data-field="status"]'), dataset.reconciliation_status);
     card.querySelector('[data-field="actual"]').textContent = dataset.actual_rows > 0 ? formatNumber(dataset.actual_rows) : "Not loaded";
     card.querySelector('[data-field="expected"]').textContent = dataset.expected_rows === null ? "Not configured" : formatNumber(dataset.expected_rows);
+    card.querySelector('[data-field="policy"]').textContent = targetPolicyLabel(dataset);
     const importStatus = dataset.last_import_status
       ? `${dataset.last_import_status.toLowerCase()} · ${formatDate(dataset.last_import_completed_at || dataset.last_import_started_at, true)}`
       : "No import recorded";
@@ -35,6 +47,7 @@ function renderDatasetError() {
     setStatusBadge(card.querySelector('[data-field="status"]'), "ERROR");
     card.querySelector('[data-field="actual"]').textContent = "Unavailable";
     card.querySelector('[data-field="expected"]').textContent = "—";
+    card.querySelector('[data-field="policy"]').textContent = "Target policy";
   }
 }
 

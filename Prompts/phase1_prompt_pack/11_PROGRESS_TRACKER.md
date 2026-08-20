@@ -5,7 +5,7 @@ Do not delete previous entries. Append new entries chronologically.
 
 ## Project status
 - Current phase: Phase 1 — Foundation, SQLite, Data Ingestion, Base UI
-- Current step: Step 7 completed — Phase 1 integration, hardening, and documentation
+- Current step: Bounded Phase 1 hardening validated — commit-ready diff
 - Overall Phase 1 status: COMPLETED
 
 ---
@@ -522,3 +522,106 @@ Allowed statuses:
 **Next step:**
 - Phase 1 is accepted and closed. Begin Phase 2 only under a separate approved
   scope; no Phase 2 work was started.
+
+---
+
+### 2026-08-20 — Bounded Phase 1 hardening — Import safety, readiness, and LFS setup
+
+**Status:**
+- COMPLETED — validated commit-ready diff; not committed or pushed.
+
+**Implemented:**
+- Sanitized public `/api/data/imports` error messages at the API-service boundary
+  while preserving full internal details in logs and `data_import_runs`.
+- Added configurable `CUSTOMER_COUNT_TOLERANCE_PERCENT=5.0`, finite inclusive
+  0–100 validation, deterministic inclusive bounds, and a distinct
+  `acceptable_count` result without changing literal `expected_count_match`.
+- Added the tolerance, acceptable bounds, and acceptability fields to
+  `/api/data/status` and visible dynamic `Exact target` / `Approximate target
+  (±5%)` labels to Data Status cards.
+- Added memory-bounded source preflight before target preparation. All imports
+  validate readability/header; replacements stream every part completely before
+  deletion to detect malformed CSV and truncated/corrupt GZIP input.
+- Corrected README setup and data-delivery guidance for Git LFS, including fresh
+  clone commands, exact byte/hash manifest, pointer troubleshooting, disk-space
+  guidance, optional generator use, tolerance rounding, and replacement safety.
+- Added a small Git LFS/replacement consistency note to the Phase 1 summary.
+
+**Files created:**
+- None.
+
+**Files modified:**
+- `.env.example`
+- `README.md`
+- `app/config.py`
+- `app/schemas/data.py`
+- `app/services/data_api_service.py`
+- `app/services/data_import_service.py`
+- `app/services/data_reconciliation_service.py`
+- `docs/PHASE_1_IMPLEMENTATION_SUMMARY.md`
+- `frontend/index.html`
+- `frontend/js/data-status.js`
+- `tests/test_data_api.py`
+- `tests/test_data_import.py`
+- `tests/test_data_reconciliation.py`
+- `tests/test_frontend.py`
+- `Prompts/phase1_prompt_pack/11_PROGRESS_TRACKER.md`
+
+**Tests/checks run:**
+- Command: `.\.venv\Scripts\python.exe -m pip check`.
+- Result: no broken requirements.
+- Command: focused API/import/reconciliation/frontend tests.
+- Result: 60 passed; one external Starlette test-client deprecation warning.
+- Command: `.\.venv\Scripts\python.exe -m pytest -q`.
+- Result: 77 passed; one external Starlette test-client deprecation warning.
+- Replacement-preflight tests: wrong customer header, truncated campaign GZIP,
+  and invalid later demographic part all produced `FAILED` audit rows with zero
+  read/inserted/rejected counters and preserved original target rows.
+- Count-policy tests: 1,000 versus 125,000 ±5% warned; inclusive 118,750 and
+  131,250 boundaries passed; one row outside either boundary warned; structural
+  errors overrode acceptable counts; exact mismatch and empty behavior remained.
+- API tests: missing source, SQLite uniqueness detail, and schema mismatch mapped
+  to stable public messages without paths, SQL/table detail, headers, or row data;
+  successful imports retained `error_message: null`.
+- Full temporary real-data import outside the repository: customers 125,000 in
+  2.65s, campaign sales 570,000 in 37.26s, demographics 5,000,000 in 189.08s;
+  zero rejected rows.
+- Full reconciliation: overall `OK` in 10.20s, 17/17 indexes, exact required
+  counts, customer acceptable range 118,750–131,250, and zero structural
+  violations.
+- Runtime checks: health, version, status, summary, imports, states, campaigns,
+  products, and API docs all returned HTTP 200 against the temporary real DB.
+- Browser check: Data Status visibly rendered `Approximate target (±5%)` for
+  customers and `Exact target` for campaign sales/demographics, with textual
+  `Ready` badges and real counts.
+- Git LFS SHA-256 verification: all three canonical GZIP files matched the
+  audited manifest; no tracked data, LFS configuration, or object hashes changed.
+- Command: `git diff --check`.
+- Result: passed; the validation DB was safely removed from the OS temp directory.
+
+**Design decisions:**
+- Raw audit detail remains internal; one small API-service helper owns all public
+  error categorization and exposes no second/raw field.
+- Approximate bounds use `ceil` for the lower bound and `floor` for the upper
+  bound. Exact policies expose expected count as both bounds and no tolerance.
+- Replacement preflight deliberately validates structure/readability rather than
+  duplicating every business rule or introducing staging tables/large atomic
+  transactions.
+
+**Known issues:**
+- The unchanged external Starlette HTTPX compatibility deprecation warning is
+  emitted by the test environment; all 77 tests pass.
+- Late business-rule failures during the actual incremental replacement pass can
+  still leave an auditable partial replacement, as documented by the existing
+  bounded-batch design.
+
+**Deferred intentionally:**
+- The three separately identified low-severity findings remain out of scope:
+  global backend badge retry state, product catalogue-versus-observed naming,
+  and the machine-specific path in the demographic summary.
+- No Phase 2 features, dependency changes, schema migrations, data regeneration,
+  or UI redesign were introduced.
+
+**Next step:**
+- Human review of the commit-ready diff. If approved, commit once with:
+  `Harden Phase 1 import safety, readiness policy, and LFS setup`.

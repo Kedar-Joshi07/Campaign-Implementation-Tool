@@ -313,6 +313,37 @@ def test_customer_replace_is_explicit_and_replaces_rows(
     assert customer_ids == ["CUS_NEW"]
 
 
+def test_customer_replace_wrong_header_preserves_existing_rows(
+    tmp_path: Path,
+    database_path: Path,
+) -> None:
+    original = _write_source(
+        tmp_path / "original_customers.csv",
+        CUSTOMER_COLUMNS,
+        [_customer_row("CUS_OLD")],
+    )
+    wrong_header = _write_source(
+        tmp_path / "wrong_customers.csv",
+        ("wrong_column",),
+        [{"wrong_column": "not-a-customer"}],
+    )
+    import_customers(original, database_path=database_path)
+
+    with pytest.raises(DataImportError, match="Schema mismatch"):
+        import_customers(wrong_header, database_path=database_path, replace=True)
+
+    latest = _latest_import(database_path, "customers")
+    assert latest["status"] == "FAILED"
+    assert latest["rows_read"] == 0
+    assert latest["rows_inserted"] == 0
+    assert latest["rows_rejected"] == 0
+    with get_connection(database_path) as connection:
+        customer_ids = [
+            row[0] for row in connection.execute("SELECT customer_id FROM customers")
+        ]
+    assert customer_ids == ["CUS_OLD"]
+
+
 def test_default_import_refuses_nonempty_target(
     tmp_path: Path, database_path: Path
 ) -> None:
@@ -468,3 +499,74 @@ def test_campaign_and_demographic_replace_modes_are_explicit(
         ]
     assert campaign_ids == ["CS_NEW"]
     assert person_ids == ["US_NEW"]
+
+
+def test_campaign_replace_corrupt_gzip_preserves_existing_rows(
+    tmp_path: Path,
+    database_path: Path,
+) -> None:
+    _seed_history(tmp_path, database_path)
+    replacement = _write_source(
+        tmp_path / "replacement_campaign.csv.gz",
+        CAMPAIGN_SALES_COLUMNS,
+        [_campaign_row("CS_NEW")],
+    )
+    replacement.write_bytes(replacement.read_bytes()[:-8])
+
+    with pytest.raises(DataImportError, match="Unable to read"):
+        import_campaign_sales(replacement, database_path=database_path, replace=True)
+
+    latest = _latest_import(database_path, "campaign_sales")
+    assert latest["status"] == "FAILED"
+    assert latest["rows_read"] == 0
+    assert latest["rows_inserted"] == 0
+    assert latest["rows_rejected"] == 0
+    with get_connection(database_path) as connection:
+        campaign_ids = [
+            row[0]
+            for row in connection.execute(
+                "SELECT campaign_sales_id FROM campaign_sales"
+            )
+        ]
+    assert campaign_ids == ["CS_TEST_001"]
+
+
+def test_demographic_replace_preflights_every_part_before_deletion(
+    tmp_path: Path,
+    database_path: Path,
+) -> None:
+    _seed_history(tmp_path, database_path)
+    original = _write_source(
+        tmp_path / "original_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [_demographic_row("US_OLD")],
+    )
+    import_demographics((original,), database_path=database_path)
+    valid_part = _write_source(
+        tmp_path / "replacement_demo_01.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [_demographic_row("US_NEW_01")],
+    )
+    invalid_part = _write_source(
+        tmp_path / "replacement_demo_02.csv",
+        ("wrong_column",),
+        [{"wrong_column": "not-a-person"}],
+    )
+
+    with pytest.raises(DataImportError, match="Schema mismatch"):
+        import_demographics(
+            (valid_part, invalid_part),
+            database_path=database_path,
+            replace=True,
+        )
+
+    latest = _latest_import(database_path, "demographics")
+    assert latest["status"] == "FAILED"
+    assert latest["rows_read"] == 0
+    assert latest["rows_inserted"] == 0
+    assert latest["rows_rejected"] == 0
+    with get_connection(database_path) as connection:
+        person_ids = [
+            row[0] for row in connection.execute("SELECT person_id FROM demographics")
+        ]
+    assert person_ids == ["US_OLD"]

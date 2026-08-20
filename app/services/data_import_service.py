@@ -7,7 +7,7 @@ import gzip
 import logging
 import sqlite3
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -135,6 +135,69 @@ def _open_source(path: Path) -> TextIO:
     return path.open(mode="r", encoding="utf-8-sig", newline="")
 
 
+def _validate_source_header(
+    reader: Iterator[list[str]],
+    source_path: Path,
+    spec: DatasetSpec,
+) -> None:
+    try:
+        header = next(reader)
+    except StopIteration as exc:
+        raise DataImportError(f"Source file is empty: {source_path}") from exc
+    if tuple(header) != spec.columns:
+        raise DataImportError(
+            f"Schema mismatch in {source_path}; expected {list(spec.columns)!r}, "
+            f"received {header!r}"
+        )
+
+
+def _preflight_sources(
+    spec: DatasetSpec,
+    source_paths: tuple[Path, ...],
+    *,
+    full_read: bool,
+) -> None:
+    """Prove source structure/readability before a replacement can clear data."""
+    for source_path in source_paths:
+        logger.info(
+            "Source preflight started | dataset=%s path=%s full_read=%s",
+            spec.dataset_name,
+            source_path,
+            full_read,
+        )
+        try:
+            with _open_source(source_path) as source:
+                reader = csv.reader(source, strict=True)
+                _validate_source_header(reader, source_path, spec)
+                if full_read:
+                    for raw_row in reader:
+                        if len(raw_row) != len(spec.columns):
+                            raise DataImportError(
+                                f"{source_path}: CSV line {reader.line_num} has "
+                                f"{len(raw_row)} fields; expected {len(spec.columns)}"
+                            )
+        except DataImportError:
+            logger.error(
+                "Source preflight failed | dataset=%s path=%s",
+                spec.dataset_name,
+                source_path,
+            )
+            raise
+        except (OSError, EOFError, UnicodeError, csv.Error) as exc:
+            logger.error(
+                "Source preflight failed | dataset=%s path=%s error=%s",
+                spec.dataset_name,
+                source_path,
+                exc,
+            )
+            raise DataImportError(f"Unable to read {source_path}: {exc}") from exc
+        logger.info(
+            "Source preflight completed | dataset=%s path=%s",
+            spec.dataset_name,
+            source_path,
+        )
+
+
 def _start_import_run(
     database_path: Path,
     dataset_name: str,
@@ -258,16 +321,7 @@ def _stream_sources(
             try:
                 with _open_source(source_path) as source:
                     reader = csv.reader(source, strict=True)
-                    try:
-                        header = next(reader)
-                    except StopIteration as exc:
-                        raise DataImportError(f"Source file is empty: {source_path}") from exc
-
-                    if tuple(header) != spec.columns:
-                        raise DataImportError(
-                            f"Schema mismatch in {source_path}; expected {list(spec.columns)!r}, "
-                            f"received {header!r}"
-                        )
+                    _validate_source_header(reader, source_path, spec)
 
                     for raw_row in reader:
                         progress.rows_read += 1
@@ -306,7 +360,7 @@ def _stream_sources(
                                 f"{progress.rows_read:,}",
                                 f"{progress.rows_inserted:,}",
                             )
-            except (OSError, UnicodeError, csv.Error) as exc:
+            except (OSError, EOFError, UnicodeError, csv.Error) as exc:
                 progress.rows_rejected += 1
                 raise DataImportError(f"Unable to read {source_path}: {exc}") from exc
 
@@ -373,6 +427,7 @@ def _import_dataset(
     )
     try:
         validated_sources = _validate_source_paths(raw_sources)
+        _preflight_sources(spec, validated_sources, full_read=replace)
         _prepare_target(path, spec, replace=replace)
         _stream_sources(
             path,

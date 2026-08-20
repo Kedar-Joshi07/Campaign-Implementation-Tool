@@ -29,6 +29,7 @@ def test_frontend_contains_functional_phase_one_views(client: TestClient) -> Non
     assert "Historical customers" in response.text
     assert "Recent runs" in response.text
     assert "Campaign readiness, grounded in real data." in response.text
+    assert response.text.count('data-field="policy"') == 3
     assert "125,000" not in response.text
     assert "5,000,000" not in response.text
 
@@ -57,3 +58,15 @@ def test_later_phase_navigation_is_visibly_disabled(client: TestClient) -> None:
 
     assert html.count('class="navigation-item is-disabled"') == 4
     assert html.count("Later phase</small>") == 4
+
+
+def test_data_status_script_renders_exact_and_approximate_policy_labels(
+    client: TestClient,
+) -> None:
+    script = client.get("/static/js/data-status.js").text
+
+    assert 'return "Exact target"' in script
+    assert "Approximate target (±${displayTolerance}%)" in script
+    assert "dataset.count_tolerance_percent" in script
+    assert "125,000" not in script
+    assert "5,000,000" not in script

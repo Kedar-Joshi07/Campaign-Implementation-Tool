@@ -16,6 +16,10 @@ class DatasetStatusResponse(BaseModel):
     actual_rows: int
     expected_rows: int | None
     exact_match_required: bool
+    count_tolerance_percent: float | None
+    acceptable_min_rows: int
+    acceptable_max_rows: int
+    acceptable_count: bool
     reconciliation_status: ReconciliationStatus
     last_import_status: str | None
     last_import_started_at: str | None
