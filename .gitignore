@@ -10,8 +10,9 @@ htmlcov/
 .env
 
 # Runtime files and generated data
-data/*
-!data/.gitkeep
+data/*.db
+data/*.db-wal
+data/*.db-shm
 logs/*
 !logs/.gitkeep
 output/
@@ -22,4 +23,3 @@ source/
 .idea/
 .DS_Store
 Thumbs.db
-

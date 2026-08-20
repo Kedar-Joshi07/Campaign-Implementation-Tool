@@ -1,0 +1,173 @@
+{
+  "rows": 5000000,
+  "columns": 28,
+  "seed": 20260818,
+  "id_offset": 0,
+  "id_start": 1,
+  "id_end": 5000000,
+  "file": "C:\\POCs\\Campaign Implementation Tool\\data\\usa_demographic_synthetic_5000000_rows.csv.gz",
+  "file_size_bytes": 331342839,
+  "mean_age": 39.6091192,
+  "mean_individual_yearly_income": 33746.74914,
+  "mean_family_yearly_income": 114633.9162,
+  "employed_share": 0.5065006,
+  "gender_distribution": {
+    "Male": 0.4880006,
+    "Female": 0.5021792,
+    "Non-binary/Other": 0.0098202
+  },
+  "ethnicity_distribution": {
+    "White (Non-Hispanic)": 0.5445,
+    "Hispanic/Latino": 0.2150918,
+    "Black/African American (Non-Hispanic)": 0.1280774,
+    "Asian (Non-Hispanic)": 0.0689192,
+    "American Indian/Alaska Native (Non-Hispanic)": 0.0054574,
+    "Native Hawaiian/Pacific Islander (Non-Hispanic)": 0.0017894,
+    "Multiracial/Other (Non-Hispanic)": 0.0361648
+  },
+  "state_distribution": {
+    "CA": {
+      "state": "California",
+      "rows": 794309,
+      "share": 0.1588618
+    },
+    "TX": {
+      "state": "Texas",
+      "rows": 520651,
+      "share": 0.1041302
+    },
+    "FL": {
+      "state": "Florida",
+      "rows": 420762,
+      "share": 0.0841524
+    },
+    "NY": {
+      "state": "New York",
+      "rows": 377705,
+      "share": 0.075541
+    },
+    "IL": {
+      "state": "Illinois",
+      "rows": 236920,
+      "share": 0.047384
+    },
+    "PA": {
+      "state": "Pennsylvania",
+      "rows": 212503,
+      "share": 0.0425006
+    },
+    "OH": {
+      "state": "Ohio",
+      "rows": 192405,
+      "share": 0.038481
+    },
+    "NJ": {
+      "state": "New Jersey",
+      "rows": 186249,
+      "share": 0.0372498
+    },
+    "GA": {
+      "state": "Georgia",
+      "rows": 169937,
+      "share": 0.0339874
+    },
+    "MI": {
+      "state": "Michigan",
+      "rows": 158211,
+      "share": 0.0316422
+    },
+    "NC": {
+      "state": "North Carolina",
+      "rows": 148426,
+      "share": 0.0296852
+    },
+    "VA": {
+      "state": "Virginia",
+      "rows": 139412,
+      "share": 0.0278824
+    },
+    "WA": {
+      "state": "Washington",
+      "rows": 137049,
+      "share": 0.0274098
+    },
+    "MA": {
+      "state": "Massachusetts",
+      "rows": 136753,
+      "share": 0.0273506
+    },
+    "AZ": {
+      "state": "Arizona",
+      "rows": 136427,
+      "share": 0.0272854
+    },
+    "MD": {
+      "state": "Maryland",
+      "rows": 112821,
+      "share": 0.0225642
+    },
+    "CO": {
+      "state": "Colorado",
+      "rows": 105345,
+      "share": 0.021069
+    },
+    "IN": {
+      "state": "Indiana",
+      "rows": 103565,
+      "share": 0.020713
+    },
+    "TN": {
+      "state": "Tennessee",
+      "rows": 98280,
+      "share": 0.019656
+    },
+    "MO": {
+      "state": "Missouri",
+      "rows": 91895,
+      "share": 0.018379
+    },
+    "MN": {
+      "state": "Minnesota",
+      "rows": 87830,
+      "share": 0.017566
+    },
+    "WI": {
+      "state": "Wisconsin",
+      "rows": 84108,
+      "share": 0.0168216
+    },
+    "SC": {
+      "state": "South Carolina",
+      "rows": 74278,
+      "share": 0.0148556
+    },
+    "OR": {
+      "state": "Oregon",
+      "rows": 73112,
+      "share": 0.0146224
+    },
+    "LA": {
+      "state": "Louisiana",
+      "rows": 71436,
+      "share": 0.0142872
+    },
+    "CT": {
+      "state": "Connecticut",
+      "rows": 67099,
+      "share": 0.0134198
+    },
+    "UT": {
+      "state": "Utah",
+      "rows": 62512,
+      "share": 0.0125024
+    }
+  },
+  "contact_safety": "Emails use IANA-reserved example.com/example.net/example.org domains. Phones use the fictional 555-0100..0199 exchange range. Addresses are algorithmically synthesized, not copied from address records.",
+  "methodology": "State selection and row weights follow Census 2020 urban population counts for the top 27 states. Demographic/economic fields are correlated synthetic draws calibrated to broad recent ACS/QuickFacts-style state parameters. Religion is survey-calibrated synthetic data based on Pew 2023-24 national/regional patterns, because the Census does not collect religion.",
+  "source_urls": [
+    "https://www2.census.gov/geo/docs/reference/ua/State_Urban_Rural_Pop_2020_2010.xlsx",
+    "https://www.census.gov/programs-surveys/acs/data/data-via-api.html",
+    "https://www.census.gov/quickfacts/",
+    "https://www.pewresearch.org/religious-landscape-study/"
+  ]
+}
