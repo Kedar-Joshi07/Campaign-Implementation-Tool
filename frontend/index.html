@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Campaign Implementation Intelligence Phase 1 application shell">
+    <title>Campaign Implementation Intelligence</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <a class="brand" href="/" aria-label="Campaign Implementation Intelligence home">
+          <span class="brand-mark" aria-hidden="true">CI</span>
+          <span>
+            <strong>Campaign</strong>
+            <small>Implementation Intelligence</small>
+          </span>
+        </a>
+
+        <nav class="navigation">
+          <p class="navigation-label">Workspace</p>
+          <a class="navigation-item is-active" href="#overview" aria-current="page">Overview</a>
+          <a class="navigation-item" href="#data-status">Data Status</a>
+
+          <p class="navigation-label">Later phases</p>
+          <span class="navigation-item is-disabled">Historical Analysis <small>Coming later</small></span>
+          <span class="navigation-item is-disabled">Model Training <small>Coming later</small></span>
+          <span class="navigation-item is-disabled">Audience Explorer <small>Coming later</small></span>
+          <span class="navigation-item is-disabled">Campaigns <small>Coming later</small></span>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="eyebrow">Phase 1</span>
+          <p>Application and data foundation</p>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Campaign Implementation Tool</p>
+            <h1>Overview</h1>
+          </div>
+          <div id="backend-status" class="connection-status is-checking" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="backend-status-text">Checking backend</span>
+          </div>
+        </header>
+
+        <section id="overview" class="hero" aria-labelledby="overview-title">
+          <div>
+            <p class="eyebrow">Foundation status</p>
+            <h2 id="overview-title">A clear starting point for campaign intelligence.</h2>
+            <p class="hero-copy">
+              The application shell is ready. Database-backed summaries will appear after the
+              remaining Phase 1 setup and data-import steps are complete.
+            </p>
+          </div>
+          <span class="phase-badge">Step 1</span>
+        </section>
+
+        <section class="metric-grid" aria-label="Phase 1 dataset placeholders">
+          <article class="metric-card">
+            <p>Historical customers</p>
+            <strong>Not configured</strong>
+            <span>Available after database setup</span>
+          </article>
+          <article class="metric-card">
+            <p>Campaign sales</p>
+            <strong>Not configured</strong>
+            <span>Available after database setup</span>
+          </article>
+          <article class="metric-card">
+            <p>Prospect universe</p>
+            <strong>Not configured</strong>
+            <span>Available after database setup</span>
+          </article>
+        </section>
+
+        <section id="data-status" class="panel" aria-labelledby="data-status-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Data readiness</p>
+              <h2 id="data-status-title">Waiting for the Phase 1 database</h2>
+            </div>
+            <span class="status-badge is-pending">Not loaded</span>
+          </div>
+          <p>
+            Dataset counts and validation results will be fetched from SQLite after the schema,
+            import pipeline, and status APIs are implemented. No demonstration values are invented here.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/static/js/app.js"></script>
+  </body>
+</html>
+

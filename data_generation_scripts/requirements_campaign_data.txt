@@ -1,0 +1,5 @@
+# Python 3.11+
+# Third-party Python dependencies used by the three data generators.
+numpy>=1.26
+pandas>=2.1
+Faker>=24.0

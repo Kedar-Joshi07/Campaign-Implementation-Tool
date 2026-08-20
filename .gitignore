@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local environment and configuration
+.venv/
+.env
+
+# Runtime files and generated data
+data/*
+!data/.gitkeep
+logs/*
+!logs/.gitkeep
+output/
+source/
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+

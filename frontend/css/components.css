@@ -1,0 +1,93 @@
+.connection-status,
+.status-badge,
+.phase-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.connection-status {
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #98a2b3;
+}
+
+.connection-status.is-online {
+  border-color: #a6e7c3;
+  color: #087443;
+  background: #edfff5;
+}
+
+.connection-status.is-online .status-dot {
+  background: #12a762;
+}
+
+.connection-status.is-offline {
+  border-color: #f4b9b5;
+  color: #a52a24;
+  background: #fff1f0;
+}
+
+.connection-status.is-offline .status-dot {
+  background: #d0443e;
+}
+
+.phase-badge {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  color: #3852c9;
+  background: #e7ebff;
+}
+
+.metric-card {
+  min-height: 150px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.metric-card p {
+  margin-bottom: 24px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.metric-card strong,
+.metric-card span {
+  display: block;
+}
+
+.metric-card strong {
+  font-size: 1.2rem;
+}
+
+.metric-card span {
+  margin-top: 6px;
+  color: #8a94a5;
+  font-size: 0.78rem;
+}
+
+.status-badge {
+  padding: 7px 11px;
+}
+
+.status-badge.is-pending {
+  color: #82520a;
+  background: #fff4d6;
+}
+

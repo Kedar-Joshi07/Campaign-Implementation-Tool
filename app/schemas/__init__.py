@@ -1,0 +1,2 @@
+"""Application response-schema package."""
+
