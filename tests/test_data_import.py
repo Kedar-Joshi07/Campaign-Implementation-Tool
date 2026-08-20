@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import csv
 import gzip
+import sqlite3
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 
 import pytest
 
 from app.database.connection import get_connection
+from app.database import connection as connection_module
 from app.database.schema import (
     CAMPAIGN_SALES_COLUMNS,
     CUSTOMER_COLUMNS,
     DEMOGRAPHIC_COLUMNS,
+    initialize_database,
 )
 from app.services.data_import_service import (
     DataImportError,
@@ -355,3 +358,113 @@ def test_import_order_is_enforced(tmp_path: Path, database_path: Path) -> None:
     with pytest.raises(DataImportError, match="Import customers before campaign_sales"):
         import_campaign_sales(campaign_file, database_path=database_path)
 
+
+def test_missing_source_is_recorded_as_failed(tmp_path: Path, database_path: Path) -> None:
+    missing_source = tmp_path / "missing_customers.csv.gz"
+
+    with pytest.raises(DataImportError, match="does not exist"):
+        import_customers(missing_source, database_path=database_path)
+
+    latest = _latest_import(database_path, "customers")
+    assert latest["status"] == "FAILED"
+    assert str(missing_source) in latest["error_message"]
+
+
+def test_malformed_date_is_recorded_as_failed(tmp_path: Path, database_path: Path) -> None:
+    malformed = _customer_row()
+    malformed["date_of_birth"] = "not-a-date"
+    source = _write_source(
+        tmp_path / "malformed_date.csv",
+        CUSTOMER_COLUMNS,
+        [malformed],
+    )
+
+    with pytest.raises(DataImportError, match="date_of_birth"):
+        import_customers(source, database_path=database_path)
+
+    latest = _latest_import(database_path, "customers")
+    assert latest["status"] == "FAILED"
+    assert latest["rows_read"] == 1
+    assert latest["rows_rejected"] == 1
+
+
+def test_corrupted_gzip_is_recorded_as_failed(tmp_path: Path, database_path: Path) -> None:
+    source = tmp_path / "corrupted.csv.gz"
+    source.write_bytes(b"this is not a gzip stream")
+
+    with pytest.raises(DataImportError, match="Unable to read"):
+        import_customers(source, database_path=database_path)
+
+    latest = _latest_import(database_path, "customers")
+    assert latest["status"] == "FAILED"
+    assert "Not a gzipped file" in latest["error_message"]
+
+
+def test_locked_database_returns_useful_import_error(
+    tmp_path: Path,
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source = _write_source(
+        tmp_path / "customers.csv",
+        CUSTOMER_COLUMNS,
+        [_customer_row()],
+    )
+    initialize_database(database_path)
+    monkeypatch.setattr(connection_module, "DATABASE_BUSY_TIMEOUT_MS", 25)
+    locker = sqlite3.connect(database_path, timeout=0.025)
+    try:
+        locker.execute("BEGIN IMMEDIATE")
+
+        with pytest.raises(DataImportError, match="SQLite database.*database is locked"):
+            import_customers(source, database_path=database_path)
+    finally:
+        locker.rollback()
+        locker.close()
+
+
+def test_campaign_and_demographic_replace_modes_are_explicit(
+    tmp_path: Path,
+    database_path: Path,
+) -> None:
+    _seed_history(tmp_path, database_path)
+    first_demographic = _write_source(
+        tmp_path / "first_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [_demographic_row("US_OLD")],
+    )
+    import_demographics((first_demographic,), database_path=database_path)
+
+    replacement_campaign = _write_source(
+        tmp_path / "replacement_campaign.csv",
+        CAMPAIGN_SALES_COLUMNS,
+        [_campaign_row("CS_NEW")],
+    )
+    replacement_demographic = _write_source(
+        tmp_path / "replacement_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [_demographic_row("US_NEW")],
+    )
+    import_campaign_sales(
+        replacement_campaign,
+        database_path=database_path,
+        replace=True,
+    )
+    import_demographics(
+        (replacement_demographic,),
+        database_path=database_path,
+        replace=True,
+    )
+
+    with get_connection(database_path) as connection:
+        campaign_ids = [
+            row[0]
+            for row in connection.execute(
+                "SELECT campaign_sales_id FROM campaign_sales"
+            )
+        ]
+        person_ids = [
+            row[0] for row in connection.execute("SELECT person_id FROM demographics")
+        ]
+    assert campaign_ids == ["CS_NEW"]
+    assert person_ids == ["US_NEW"]

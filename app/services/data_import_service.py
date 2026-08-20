@@ -337,10 +337,31 @@ def _import_dataset(
         raise DataImportError("progress_every must be zero or positive")
 
     path = Path(database_path) if database_path is not None else DATABASE_PATH
-    initialize_database(path)
+    try:
+        initialize_database(path)
+    except (OSError, sqlite3.Error) as exc:
+        message = f"Unable to prepare SQLite database {path}: {exc}"
+        logger.error(
+            "Import database preparation failed | dataset=%s database=%s error=%s",
+            spec.dataset_name,
+            path,
+            exc,
+        )
+        raise DataImportError(message) from exc
+
     raw_sources = tuple(Path(source_path) for source_path in source_paths)
     source_description = " | ".join(str(source_path) for source_path in raw_sources)
-    import_id = _start_import_run(path, spec.dataset_name, source_description)
+    try:
+        import_id = _start_import_run(path, spec.dataset_name, source_description)
+    except sqlite3.Error as exc:
+        message = f"Unable to start import metadata for SQLite database {path}: {exc}"
+        logger.error(
+            "Import metadata start failed | dataset=%s database=%s error=%s",
+            spec.dataset_name,
+            path,
+            exc,
+        )
+        raise DataImportError(message) from exc
     progress = ImportProgress()
     started = time.perf_counter()
 

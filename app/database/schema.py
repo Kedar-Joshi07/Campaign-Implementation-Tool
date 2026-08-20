@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -249,6 +250,62 @@ CREATE_TABLE_STATEMENTS = (
     """,
 )
 
+REQUIRED_INDEX_STATEMENTS = {
+    "idx_customers_state": "CREATE INDEX IF NOT EXISTS idx_customers_state ON customers (state)",
+    "idx_customers_date_of_birth": (
+        "CREATE INDEX IF NOT EXISTS idx_customers_date_of_birth ON customers (date_of_birth)"
+    ),
+    "idx_customers_individual_yearly_income": (
+        "CREATE INDEX IF NOT EXISTS idx_customers_individual_yearly_income "
+        "ON customers (individual_yearly_income)"
+    ),
+    "idx_campaign_sales_customer_id": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_sales_customer_id ON campaign_sales (customer_id)"
+    ),
+    "idx_campaign_sales_campaign_id": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_sales_campaign_id ON campaign_sales (campaign_id)"
+    ),
+    "idx_campaign_sales_product_id": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_sales_product_id ON campaign_sales (product_id)"
+    ),
+    "idx_campaign_sales_contact_date": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_sales_contact_date ON campaign_sales (contact_date)"
+    ),
+    "idx_campaign_sales_purchase_flag": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_sales_purchase_flag ON campaign_sales (purchase_flag)"
+    ),
+    "idx_campaign_sales_pu_label": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_sales_pu_label ON campaign_sales (pu_label)"
+    ),
+    "idx_campaign_sales_campaign_product_pu": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_sales_campaign_product_pu "
+        "ON campaign_sales (campaign_id, product_id, pu_label)"
+    ),
+    "idx_demographics_state": (
+        "CREATE INDEX IF NOT EXISTS idx_demographics_state ON demographics (state)"
+    ),
+    "idx_demographics_age": "CREATE INDEX IF NOT EXISTS idx_demographics_age ON demographics (age)",
+    "idx_demographics_individual_yearly_income": (
+        "CREATE INDEX IF NOT EXISTS idx_demographics_individual_yearly_income "
+        "ON demographics (individual_yearly_income)"
+    ),
+    "idx_demographics_education": (
+        "CREATE INDEX IF NOT EXISTS idx_demographics_education ON demographics (education)"
+    ),
+    "idx_demographics_employment_status": (
+        "CREATE INDEX IF NOT EXISTS idx_demographics_employment_status "
+        "ON demographics (employment_status)"
+    ),
+    "idx_demographics_resident_status": (
+        "CREATE INDEX IF NOT EXISTS idx_demographics_resident_status "
+        "ON demographics (resident_status)"
+    ),
+    "idx_demographics_type_of_employment": (
+        "CREATE INDEX IF NOT EXISTS idx_demographics_type_of_employment "
+        "ON demographics (type_of_employment)"
+    ),
+}
+
 
 def _utc_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
@@ -288,6 +345,36 @@ def initialize_database(database_path: str | Path | None = None) -> Path:
 
     logger.info("SQLite schema initialized or verified | path=%s version=%s", path, SCHEMA_VERSION)
     return path
+
+
+def initialize_required_indexes(database_path: str | Path | None = None) -> dict[str, float]:
+    """Create the Phase 1 query indexes idempotently and return per-index timings."""
+    path = initialize_database(database_path)
+    timings: dict[str, float] = {}
+
+    with get_connection(path, write=True) as connection:
+        for index_name, statement in REQUIRED_INDEX_STATEMENTS.items():
+            started = time.perf_counter()
+            connection.execute(statement)
+            connection.commit()
+            elapsed = time.perf_counter() - started
+            timings[index_name] = elapsed
+            logger.info("SQLite index verified | index=%s seconds=%.3f", index_name, elapsed)
+
+    return timings
+
+
+def verify_required_indexes(database_path: str | Path | None = None) -> dict[str, bool]:
+    """Report whether each required index exists in the SQLite catalog."""
+    path = Path(database_path) if database_path is not None else DATABASE_PATH
+    with get_connection(path) as connection:
+        existing = {
+            row["name"]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'index'"
+            ).fetchall()
+        }
+    return {name: name in existing for name in REQUIRED_INDEX_STATEMENTS}
 
 
 def _quote_identifier(identifier: str) -> str:

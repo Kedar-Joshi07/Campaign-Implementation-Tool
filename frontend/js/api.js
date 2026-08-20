@@ -28,3 +28,35 @@ export async function getJSON(url, options = {}) {
   return payload;
 }
 
+const responseCache = new Map();
+
+export function clearCachedJSON(url) {
+  responseCache.delete(url);
+}
+
+export async function getCachedJSON(url, { maxAgeMs = 60_000, force = false } = {}) {
+  if (force) {
+    responseCache.delete(url);
+  }
+
+  const now = Date.now();
+  const cached = responseCache.get(url);
+  if (cached?.value !== undefined && cached.expiresAt > now) {
+    return cached.value;
+  }
+  if (cached?.promise) {
+    return cached.promise;
+  }
+
+  const promise = getJSON(url)
+    .then((value) => {
+      responseCache.set(url, { value, expiresAt: Date.now() + maxAgeMs });
+      return value;
+    })
+    .catch((error) => {
+      responseCache.delete(url);
+      throw error;
+    });
+  responseCache.set(url, { promise, expiresAt: 0 });
+  return promise;
+}

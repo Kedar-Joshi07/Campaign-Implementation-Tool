@@ -3,94 +3,219 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Campaign Implementation Intelligence Phase 1 application shell">
-    <title>Campaign Implementation Intelligence</title>
+    <meta name="description" content="Campaign Implementation Intelligence data foundation dashboard">
+    <title>Overview | Campaign Implementation Intelligence</title>
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/components.css">
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Primary navigation">
-        <a class="brand" href="/" aria-label="Campaign Implementation Intelligence home">
+        <a class="brand" href="#overview" aria-label="Campaign Implementation Intelligence overview">
           <span class="brand-mark" aria-hidden="true">CI</span>
-          <span>
+          <span class="brand-copy">
             <strong>Campaign</strong>
             <small>Implementation Intelligence</small>
           </span>
         </a>
 
-        <nav class="navigation">
+        <nav class="navigation" aria-label="Application sections">
           <p class="navigation-label">Workspace</p>
-          <a class="navigation-item is-active" href="#overview" aria-current="page">Overview</a>
-          <a class="navigation-item" href="#data-status">Data Status</a>
+          <button class="navigation-item is-active" type="button" data-view-target="overview" aria-current="page">
+            <span class="nav-icon" aria-hidden="true">01</span><span>Overview</span>
+          </button>
+          <button class="navigation-item" type="button" data-view-target="data-status">
+            <span class="nav-icon" aria-hidden="true">02</span><span>Data Status</span>
+          </button>
 
           <p class="navigation-label">Later phases</p>
-          <span class="navigation-item is-disabled">Historical Analysis <small>Coming later</small></span>
-          <span class="navigation-item is-disabled">Model Training <small>Coming later</small></span>
-          <span class="navigation-item is-disabled">Audience Explorer <small>Coming later</small></span>
-          <span class="navigation-item is-disabled">Campaigns <small>Coming later</small></span>
+          <button class="navigation-item is-disabled" type="button" disabled>
+            <span>Historical Analysis</span><small>Later phase</small>
+          </button>
+          <button class="navigation-item is-disabled" type="button" disabled>
+            <span>Model Training</span><small>Later phase</small>
+          </button>
+          <button class="navigation-item is-disabled" type="button" disabled>
+            <span>Audience Explorer</span><small>Later phase</small>
+          </button>
+          <button class="navigation-item is-disabled" type="button" disabled>
+            <span>Campaigns</span><small>Later phase</small>
+          </button>
         </nav>
 
         <div class="sidebar-footer">
-          <span class="eyebrow">Phase 1</span>
-          <p>Application and data foundation</p>
+          <div class="sidebar-footer-row">
+            <span class="eyebrow eyebrow-on-dark">Foundation</span>
+            <span class="phase-chip">Phase 1</span>
+          </div>
+          <p>Trusted local data, ready for campaign intelligence.</p>
         </div>
       </aside>
 
-      <main class="main-content">
+      <main class="main-content" id="main-content">
         <header class="topbar">
           <div>
             <p class="eyebrow">Campaign Implementation Tool</p>
-            <h1>Overview</h1>
+            <h1 id="page-title">Overview</h1>
           </div>
-          <div id="backend-status" class="connection-status is-checking" role="status" aria-live="polite">
+          <button id="backend-status" class="connection-status is-checking" type="button" aria-live="polite" title="Check backend connection">
             <span class="status-dot" aria-hidden="true"></span>
-            <span id="backend-status-text">Checking backend</span>
-          </div>
+            <span id="backend-status-text">Checking system</span>
+          </button>
         </header>
 
-        <section id="overview" class="hero" aria-labelledby="overview-title">
-          <div>
-            <p class="eyebrow">Foundation status</p>
-            <h2 id="overview-title">A clear starting point for campaign intelligence.</h2>
-            <p class="hero-copy">
-              The application shell is ready. Database-backed summaries will appear after the
-              remaining Phase 1 setup and data-import steps are complete.
-            </p>
-          </div>
-          <span class="phase-badge">Step 1</span>
-        </section>
-
-        <section class="metric-grid" aria-label="Phase 1 dataset placeholders">
-          <article class="metric-card">
-            <p>Historical customers</p>
-            <strong>Not configured</strong>
-            <span>Available after database setup</span>
-          </article>
-          <article class="metric-card">
-            <p>Campaign sales</p>
-            <strong>Not configured</strong>
-            <span>Available after database setup</span>
-          </article>
-          <article class="metric-card">
-            <p>Prospect universe</p>
-            <strong>Not configured</strong>
-            <span>Available after database setup</span>
-          </article>
-        </section>
-
-        <section id="data-status" class="panel" aria-labelledby="data-status-title">
-          <div class="panel-heading">
+        <section id="overview-view" class="view" data-view="overview" aria-labelledby="overview-title">
+          <div id="overview-error" class="error-banner" role="alert" hidden>
             <div>
-              <p class="eyebrow">Data readiness</p>
-              <h2 id="data-status-title">Waiting for the Phase 1 database</h2>
+              <strong>Overview data is unavailable</strong>
+              <p id="overview-error-message">The backend request could not be completed.</p>
             </div>
-            <span class="status-badge is-pending">Not loaded</span>
+            <button id="overview-retry" class="button button-danger" type="button">Try again</button>
           </div>
-          <p>
-            Dataset counts and validation results will be fetched from SQLite after the schema,
-            import pipeline, and status APIs are implemented. No demonstration values are invented here.
-          </p>
+
+          <section class="hero">
+            <div>
+              <p class="eyebrow">Foundation snapshot</p>
+              <h2 id="overview-title">Campaign readiness, grounded in real data.</h2>
+              <p class="hero-copy">
+                A concise view of the historical campaign foundation and the independent
+                prospect universe prepared for later-phase intelligence.
+              </p>
+            </div>
+            <button id="overview-refresh" class="button button-secondary" type="button">Refresh data</button>
+          </section>
+
+          <section class="metric-grid" aria-label="Dataset and campaign summary">
+            <article class="metric-card metric-card-primary">
+              <div class="metric-label-row"><p>Historical customers</p><span class="metric-index" aria-hidden="true">01</span></div>
+              <strong id="customer-count" class="metric-value is-loading">—</strong>
+              <span>Customer master records</span>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label-row"><p>Campaign records</p><span class="metric-index" aria-hidden="true">02</span></div>
+              <strong id="campaign-sales-count" class="metric-value is-loading">—</strong>
+              <span>Historical observations</span>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label-row"><p>Prospect universe</p><span class="metric-index" aria-hidden="true">03</span></div>
+              <strong id="demographic-count" class="metric-value is-loading">—</strong>
+              <span>Independent demographic records</span>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label-row"><p>Distinct campaigns</p><span class="metric-index" aria-hidden="true">04</span></div>
+              <strong id="distinct-campaigns" class="metric-value is-loading">—</strong>
+              <span>Observed campaign definitions</span>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label-row"><p>Distinct products</p><span class="metric-index" aria-hidden="true">05</span></div>
+              <strong id="distinct-products" class="metric-value is-loading">—</strong>
+              <span>Products present in history</span>
+            </article>
+            <article class="metric-card metric-card-positive">
+              <div class="metric-label-row"><p>Known positives</p><span class="metric-index" aria-hidden="true">PU</span></div>
+              <strong id="known-positive-count" class="metric-value is-loading">—</strong>
+              <span>Confirmed attributed purchases</span>
+            </article>
+          </section>
+
+          <section class="overview-detail-grid">
+            <article class="panel coverage-panel">
+              <div class="panel-heading">
+                <div><p class="eyebrow">Historical coverage</p><h2>Observation window</h2></div>
+                <span class="panel-icon" aria-hidden="true">↗</span>
+              </div>
+              <strong id="campaign-date-range" class="date-range is-loading">—</strong>
+              <dl class="compact-facts">
+                <div><dt>Attributed purchases</dt><dd id="attributed-purchase-count">—</dd></div>
+                <div><dt>Database</dt><dd id="database-name">—</dd></div>
+                <div><dt>Schema</dt><dd id="schema-version">—</dd></div>
+              </dl>
+            </article>
+
+            <article class="panel health-panel">
+              <div class="panel-heading">
+                <div><p class="eyebrow">System health</p><h2>Local foundation</h2></div>
+                <span id="overview-health-badge" class="status-badge is-checking">Checking</span>
+              </div>
+              <div class="health-facts">
+                <div><span>Application</span><strong id="application-health">Checking</strong></div>
+                <div><span>Database</span><strong id="database-health">Checking</strong></div>
+                <div><span>Schema</span><strong id="schema-health">Checking</strong></div>
+              </div>
+            </article>
+
+            <article class="panel readiness-panel">
+              <div class="panel-heading">
+                <div><p class="eyebrow">Data readiness</p><h2>Reconciliation status</h2></div>
+                <span id="readiness-spinner" class="spinner" aria-hidden="true"></span>
+              </div>
+              <p id="readiness-note" class="panel-note">Running complete integrity checks. Large datasets may take a moment.</p>
+              <div class="readiness-list">
+                <div><span>Customer data</span><span id="customers-readiness" class="status-badge is-checking">Checking</span></div>
+                <div><span>Campaign sales</span><span id="campaign-sales-readiness" class="status-badge is-checking">Checking</span></div>
+                <div><span>Demographics</span><span id="demographics-readiness" class="status-badge is-checking">Checking</span></div>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <section id="data-status-view" class="view" data-view="data-status" aria-labelledby="data-status-title" hidden>
+          <div id="data-status-error" class="error-banner" role="alert" hidden>
+            <div>
+              <strong>Data status is unavailable</strong>
+              <p id="data-status-error-message">The backend request could not be completed.</p>
+            </div>
+            <button id="data-status-retry" class="button button-danger" type="button">Try again</button>
+          </div>
+
+          <section class="page-intro">
+            <div>
+              <p class="eyebrow">Operational confidence</p>
+              <h2 id="data-status-title">Know exactly what is loaded.</h2>
+              <p>Actual counts, expected targets, import history, and structural reconciliation are reported directly from the local SQLite foundation.</p>
+            </div>
+            <button id="data-status-refresh" class="button button-primary" type="button">Run checks again</button>
+          </section>
+
+          <div class="notice" role="note">
+            <span class="notice-icon" aria-hidden="true">i</span>
+            <p>Complete integrity checks scan the prospect universe and can take about 30 seconds.</p>
+          </div>
+
+          <section class="status-card-grid" aria-label="Dataset status">
+            <article class="dataset-card is-loading" data-dataset-card="customers">
+              <div class="dataset-card-header"><div><span class="dataset-code">CUS</span><h3>Customers</h3></div><span data-field="status" class="status-badge is-checking">Checking</span></div>
+              <div class="count-comparison"><div><span>Actual rows</span><strong data-field="actual">—</strong></div><div><span>Expected target</span><strong data-field="expected">—</strong></div></div>
+              <dl class="dataset-facts"><div><dt>Last import</dt><dd data-field="last-import">—</dd></div><div><dt>Source</dt><dd data-field="source">—</dd></div><div><dt>Rejected rows</dt><dd data-field="rejected">—</dd></div></dl>
+            </article>
+
+            <article class="dataset-card is-loading" data-dataset-card="campaign_sales">
+              <div class="dataset-card-header"><div><span class="dataset-code">CAM</span><h3>Campaign sales</h3></div><span data-field="status" class="status-badge is-checking">Checking</span></div>
+              <div class="count-comparison"><div><span>Actual rows</span><strong data-field="actual">—</strong></div><div><span>Expected target</span><strong data-field="expected">—</strong></div></div>
+              <dl class="dataset-facts"><div><dt>Last import</dt><dd data-field="last-import">—</dd></div><div><dt>Source</dt><dd data-field="source">—</dd></div><div><dt>Rejected rows</dt><dd data-field="rejected">—</dd></div></dl>
+            </article>
+
+            <article class="dataset-card is-loading" data-dataset-card="demographics">
+              <div class="dataset-card-header"><div><span class="dataset-code">DEM</span><h3>Demographics</h3></div><span data-field="status" class="status-badge is-checking">Checking</span></div>
+              <div class="count-comparison"><div><span>Actual rows</span><strong data-field="actual">—</strong></div><div><span>Expected target</span><strong data-field="expected">—</strong></div></div>
+              <dl class="dataset-facts"><div><dt>Last import</dt><dd data-field="last-import">—</dd></div><div><dt>Source</dt><dd data-field="source">—</dd></div><div><dt>Rejected rows</dt><dd data-field="rejected">—</dd></div></dl>
+            </article>
+          </section>
+
+          <section class="panel import-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">Import activity</p><h2>Recent runs</h2></div>
+              <span class="table-caption">Newest first</span>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th scope="col">Dataset</th><th scope="col">Status</th><th scope="col">Completed</th><th scope="col">Source</th><th scope="col" class="numeric">Inserted</th><th scope="col" class="numeric">Rejected</th></tr></thead>
+                <tbody id="import-history-body">
+                  <tr class="loading-row"><td colspan="6"><span class="spinner" aria-hidden="true"></span> Loading import history</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         </section>
       </main>
     </div>
@@ -98,4 +223,3 @@
     <script type="module" src="/static/js/app.js"></script>
   </body>
 </html>
-
