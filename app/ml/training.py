@@ -1,4 +1,4 @@
-"""Genuine PU candidates and a diagnostic-only supervised baseline."""
+"""Governed PU candidates with mandatory Bagging PU as the primary model."""
 
 from __future__ import annotations
 
@@ -12,6 +12,12 @@ import numpy as np
 from scipy import sparse
 
 from app.ml.feature_contract import FEATURE_CONTRACT_SHA256, ORDERED_FEATURES
+from app.ml.model_roles import (
+    CHALLENGER_1_ROLE,
+    DIAGNOSTIC_CONTROL_ROLE,
+    PRIMARY_ROLE,
+    CandidateRole,
+)
 from app.ml.preprocessing import CustomerCohortSplit, PreparedFeatureMatrices
 from app.ml.pu_estimators import (
     BAGGING_PU_NAME,
@@ -29,23 +35,18 @@ from app.ml.pu_estimators import (
 MINIMUM_POSITIVE_COUNT = 5
 MINIMUM_UNLABELED_COUNT = 5
 MAXIMUM_ELKAN_DENSE_BYTES = 512 * 1024 * 1024
-DEFAULT_CHALLENGER_RUNTIME_LIMIT_SECONDS = 30.0
 
-CandidateStatus = Literal[
-    "FITTED",
-    "SKIPPED_DISABLED",
-    "SKIPPED_RUNTIME",
-    "SKIPPED_INCOMPATIBLE",
-]
+CandidateStatus = Literal["FITTED", "SKIPPED_DISABLED", "SKIPPED_INCOMPATIBLE"]
 
 
 class TrainingAlgorithmError(RuntimeError):
-    """Raised when the required Phase 3 training contract cannot be satisfied."""
+    """Raised when the required governed training contract cannot be satisfied."""
 
 
 @dataclass(frozen=True)
 class CandidateTrainingResult:
     name: str
+    candidate_role: CandidateRole
     status: CandidateStatus
     is_genuine_pu: bool
     estimator: Any | None
@@ -59,9 +60,24 @@ class CandidateTrainingResult:
 
 @dataclass(frozen=True)
 class TrainingCandidateSet:
-    elkan_noto: CandidateTrainingResult
-    naive_diagnostic: CandidateTrainingResult
-    bagging_pu: CandidateTrainingResult
+    primary: CandidateTrainingResult
+    challenger_1: CandidateTrainingResult
+    diagnostic_control: CandidateTrainingResult
+
+    @property
+    def bagging_pu(self) -> CandidateTrainingResult:
+        """Compatibility alias for callers written under role-policy v1."""
+        return self.primary
+
+    @property
+    def elkan_noto(self) -> CandidateTrainingResult:
+        """Compatibility alias for callers written under role-policy v1."""
+        return self.challenger_1
+
+    @property
+    def naive_diagnostic(self) -> CandidateTrainingResult:
+        """Compatibility alias for callers written under role-policy v1."""
+        return self.diagnostic_control
 
 
 def _validate_training_inputs(
@@ -113,15 +129,14 @@ def _validate_training_inputs(
 
 def _warning_messages(captured: list[warnings.WarningMessage]) -> tuple[str, ...]:
     return tuple(
-        dict.fromkeys(
-            f"{item.category.__name__}: {item.message}" for item in captured
-        )
+        dict.fromkeys(f"{item.category.__name__}: {item.message}" for item in captured)
     )
 
 
 def _bounded_dense_training_matrix(matrix: Any) -> tuple[np.ndarray, int]:
-    shape = matrix.shape
-    dense_bytes = int(shape[0] * shape[1] * np.dtype(np.float64).itemsize)
+    dense_bytes = int(
+        matrix.shape[0] * matrix.shape[1] * np.dtype(np.float64).itemsize
+    )
     if dense_bytes > MAXIMUM_ELKAN_DENSE_BYTES:
         raise TrainingAlgorithmError(
             "Elkan-Noto dense compatibility conversion exceeds the bounded memory limit."
@@ -140,7 +155,57 @@ def _elkan_holdout_has_positive(labels: np.ndarray, *, random_seed: int) -> bool
     return bool(np.any(labels[indices[:holdout_size]] == 1))
 
 
-def _train_elkan_noto(
+def _train_bagging_primary(
+    prepared: PreparedFeatureMatrices,
+    labels: np.ndarray,
+    *,
+    random_seed: int,
+) -> CandidateTrainingResult:
+    estimator = build_bagging_pu_estimator(random_seed=random_seed)
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always")
+        fit_started = time.perf_counter()
+        try:
+            estimator.fit(prepared.train_matrix, labels)
+        except Exception as exc:
+            raise TrainingAlgorithmError(
+                "Mandatory Bagging PU primary training failed."
+            ) from exc
+        fit_seconds = time.perf_counter() - fit_started
+        score_started = time.perf_counter()
+        try:
+            scores = positive_class_scores(
+                estimator, prepared.validation_matrix, require_unit_interval=True
+            )
+        except Exception as exc:
+            raise TrainingAlgorithmError(
+                "Mandatory Bagging PU primary validation scoring failed."
+            ) from exc
+        score_seconds = time.perf_counter() - score_started
+
+    return CandidateTrainingResult(
+        name=BAGGING_PU_NAME,
+        candidate_role=PRIMARY_ROLE,
+        status="FITTED",
+        is_genuine_pu=True,
+        estimator=estimator,
+        fit_seconds=fit_seconds,
+        score_seconds=score_seconds,
+        validation_scores=scores,
+        warnings=_warning_messages(captured),
+        algorithm_metadata={
+            "algorithm": "pulearn.BaggingPuClassifier",
+            "base_estimator": "sklearn.linear_model.LogisticRegression",
+            "candidate_role": PRIMARY_ROLE,
+            "eligible_for_official_selection": True,
+            "label_input_contract": {"known_positive": 1, "unlabeled": 0},
+            "bounded_cpu_jobs": 1,
+            "hyperparameters": estimator_hyperparameters(estimator),
+        },
+    )
+
+
+def _train_elkan_challenger(
     prepared: PreparedFeatureMatrices,
     labels: np.ndarray,
     *,
@@ -148,13 +213,11 @@ def _train_elkan_noto(
 ) -> CandidateTrainingResult:
     if not _elkan_holdout_has_positive(labels, random_seed=random_seed):
         raise TrainingAlgorithmError(
-            "The deterministic Elkan-Noto holdout contains no known-positive customer; "
-            "use a larger cohort or an approved seed."
+            "The deterministic Elkan-Noto holdout contains no known-positive customer."
         )
     dense_train, dense_bytes = _bounded_dense_training_matrix(prepared.train_matrix)
     pulearn_labels = np.where(labels == 1, 1, -1).astype(np.int8)
     estimator = build_elkan_noto_estimator(random_seed=random_seed)
-
     with warnings.catch_warnings(record=True) as captured:
         warnings.simplefilter("always")
         fit_started = time.perf_counter()
@@ -162,7 +225,7 @@ def _train_elkan_noto(
             estimator.fit(dense_train, pulearn_labels)
         except Exception as exc:
             raise TrainingAlgorithmError(
-                "Elkan-Noto PU training failed with the tested dependency configuration."
+                "Elkan-Noto challenger training failed with the tested dependencies."
             ) from exc
         fit_seconds = time.perf_counter() - fit_started
         c_value = float(estimator.c)
@@ -173,16 +236,17 @@ def _train_elkan_noto(
         score_started = time.perf_counter()
         try:
             scores = positive_class_scores(
-                estimator,
-                prepared.validation_matrix,
-                require_unit_interval=False,
+                estimator, prepared.validation_matrix, require_unit_interval=False
             )
         except Exception as exc:
-            raise TrainingAlgorithmError("Elkan-Noto validation scoring failed.") from exc
+            raise TrainingAlgorithmError(
+                "Elkan-Noto challenger validation scoring failed."
+            ) from exc
         score_seconds = time.perf_counter() - score_started
 
     return CandidateTrainingResult(
         name=ELKAN_NOTO_NAME,
+        candidate_role=CHALLENGER_1_ROLE,
         status="FITTED",
         is_genuine_pu=True,
         estimator=estimator,
@@ -193,6 +257,8 @@ def _train_elkan_noto(
         algorithm_metadata={
             "algorithm": "pulearn.ElkanotoPuClassifier",
             "base_estimator": "sklearn.linear_model.LogisticRegression",
+            "candidate_role": CHALLENGER_1_ROLE,
+            "eligible_for_official_selection": False,
             "label_input_contract": {"known_positive": 1, "unlabeled": 0},
             "pulearn_label_adapter": {"known_positive": 1, "unlabeled": -1},
             "hold_out_ratio": ELKAN_HOLD_OUT_RATIO,
@@ -204,6 +270,29 @@ def _train_elkan_noto(
             "dense_compatibility_bytes": dense_bytes,
             "hyperparameters": estimator_hyperparameters(estimator),
         },
+    )
+
+
+def _skipped_elkan_challenger(
+    *, status: CandidateStatus, reason: str
+) -> CandidateTrainingResult:
+    return CandidateTrainingResult(
+        name=ELKAN_NOTO_NAME,
+        candidate_role=CHALLENGER_1_ROLE,
+        status=status,
+        is_genuine_pu=True,
+        estimator=None,
+        fit_seconds=0.0,
+        score_seconds=0.0,
+        validation_scores=None,
+        warnings=(),
+        algorithm_metadata={
+            "algorithm": "pulearn.ElkanotoPuClassifier",
+            "candidate_role": CHALLENGER_1_ROLE,
+            "eligible_for_official_selection": False,
+            "label_input_contract": {"known_positive": 1, "unlabeled": 0},
+        },
+        skip_reason=reason,
     )
 
 
@@ -225,9 +314,7 @@ def _train_naive_diagnostic(
         score_started = time.perf_counter()
         try:
             scores = positive_class_scores(
-                estimator,
-                prepared.validation_matrix,
-                require_unit_interval=True,
+                estimator, prepared.validation_matrix, require_unit_interval=True
             )
         except Exception as exc:
             raise TrainingAlgorithmError("Naive diagnostic scoring failed.") from exc
@@ -235,6 +322,7 @@ def _train_naive_diagnostic(
 
     return CandidateTrainingResult(
         name=NAIVE_BASELINE_NAME,
+        candidate_role=DIAGNOSTIC_CONTROL_ROLE,
         status="FITTED",
         is_genuine_pu=False,
         estimator=estimator,
@@ -244,102 +332,15 @@ def _train_naive_diagnostic(
         warnings=_warning_messages(captured),
         algorithm_metadata={
             "algorithm": "sklearn.linear_model.LogisticRegression",
-            "role": "diagnostic_only_not_pu_learning",
-            "known_limitation": "unlabeled_treated_as_negative_for_diagnostic_only",
+            "candidate_role": DIAGNOSTIC_CONTROL_ROLE,
+            "role": DIAGNOSTIC_CONTROL_ROLE,
+            "is_genuine_pu": False,
+            "unlabeled_treatment": (
+                "temporarily_treated_as_negative_for_diagnostic_only"
+            ),
+            "eligible_for_selection": False,
+            "eligible_for_official_selection": False,
             "label_input_contract": {"known_positive": 1, "unlabeled": 0},
-            "hyperparameters": estimator_hyperparameters(estimator),
-        },
-    )
-
-
-def _skipped_challenger(
-    *,
-    status: CandidateStatus,
-    reason: str,
-    fit_seconds: float = 0.0,
-    warning_messages: tuple[str, ...] = (),
-) -> CandidateTrainingResult:
-    return CandidateTrainingResult(
-        name=BAGGING_PU_NAME,
-        status=status,
-        is_genuine_pu=True,
-        estimator=None,
-        fit_seconds=fit_seconds,
-        score_seconds=0.0,
-        validation_scores=None,
-        warnings=warning_messages,
-        algorithm_metadata={
-            "algorithm": "pulearn.BaggingPuClassifier",
-            "label_input_contract": {"known_positive": 1, "unlabeled": 0},
-        },
-        skip_reason=reason,
-    )
-
-
-def _train_bagging_pu(
-    prepared: PreparedFeatureMatrices,
-    labels: np.ndarray,
-    *,
-    random_seed: int,
-    runtime_limit_seconds: float,
-) -> CandidateTrainingResult:
-    estimator = build_bagging_pu_estimator(random_seed=random_seed)
-    with warnings.catch_warnings(record=True) as captured:
-        warnings.simplefilter("always")
-        fit_started = time.perf_counter()
-        try:
-            estimator.fit(prepared.train_matrix, labels)
-        except Exception as exc:
-            return _skipped_challenger(
-                status="SKIPPED_INCOMPATIBLE",
-                reason=(
-                    "Bagging PU was incompatible with the bounded configuration: "
-                    f"{type(exc).__name__}."
-                ),
-                fit_seconds=time.perf_counter() - fit_started,
-                warning_messages=_warning_messages(captured),
-            )
-        fit_seconds = time.perf_counter() - fit_started
-        if fit_seconds > runtime_limit_seconds:
-            return _skipped_challenger(
-                status="SKIPPED_RUNTIME",
-                reason=(
-                    "Bagging PU exceeded the configured runtime limit of "
-                    f"{runtime_limit_seconds:.3f}s."
-                ),
-                fit_seconds=fit_seconds,
-                warning_messages=_warning_messages(captured),
-            )
-        score_started = time.perf_counter()
-        try:
-            scores = positive_class_scores(
-                estimator,
-                prepared.validation_matrix,
-                require_unit_interval=True,
-            )
-        except Exception as exc:
-            return _skipped_challenger(
-                status="SKIPPED_INCOMPATIBLE",
-                reason=f"Bagging PU validation scoring failed: {type(exc).__name__}.",
-                fit_seconds=fit_seconds,
-                warning_messages=_warning_messages(captured),
-            )
-        score_seconds = time.perf_counter() - score_started
-
-    return CandidateTrainingResult(
-        name=BAGGING_PU_NAME,
-        status="FITTED",
-        is_genuine_pu=True,
-        estimator=estimator,
-        fit_seconds=fit_seconds,
-        score_seconds=score_seconds,
-        validation_scores=scores,
-        warnings=_warning_messages(captured),
-        algorithm_metadata={
-            "algorithm": "pulearn.BaggingPuClassifier",
-            "base_estimator": "sklearn.linear_model.LogisticRegression",
-            "label_input_contract": {"known_positive": 1, "unlabeled": 0},
-            "bounded_cpu_jobs": 1,
             "hyperparameters": estimator_hyperparameters(estimator),
         },
     )
@@ -350,40 +351,38 @@ def train_pu_candidates(
     split: CustomerCohortSplit,
     *,
     random_seed: int | None = None,
-    run_challenger: bool = True,
-    challenger_runtime_limit_seconds: float = DEFAULT_CHALLENGER_RUNTIME_LIMIT_SECONDS,
+    run_elkan_challenger: bool = True,
 ) -> TrainingCandidateSet:
-    """Fit required candidates without evaluating or selecting a model."""
+    """Fit the mandatory primary, optional challenger, and diagnostic control."""
     seed = split.random_seed if random_seed is None else random_seed
     if isinstance(seed, bool) or not isinstance(seed, int):
         raise TrainingAlgorithmError("random_seed must be an integer.")
-    if (
-        not isinstance(challenger_runtime_limit_seconds, (int, float))
-        or not math.isfinite(challenger_runtime_limit_seconds)
-        or challenger_runtime_limit_seconds <= 0
-    ):
-        raise TrainingAlgorithmError(
-            "challenger_runtime_limit_seconds must be finite and positive."
-        )
+    if not isinstance(run_elkan_challenger, bool):
+        raise TrainingAlgorithmError("run_elkan_challenger must be a boolean.")
     labels = _validate_training_inputs(prepared, split)
-    elkan_noto = _train_elkan_noto(prepared, labels, random_seed=seed)
-    naive = _train_naive_diagnostic(prepared, labels, random_seed=seed)
-    if run_challenger:
-        bagging = _train_bagging_pu(
-            prepared,
-            labels,
-            random_seed=seed,
-            runtime_limit_seconds=float(challenger_runtime_limit_seconds),
-        )
+
+    primary = _train_bagging_primary(prepared, labels, random_seed=seed)
+    if run_elkan_challenger:
+        try:
+            challenger = _train_elkan_challenger(prepared, labels, random_seed=seed)
+        except TrainingAlgorithmError as exc:
+            challenger = _skipped_elkan_challenger(
+                status="SKIPPED_INCOMPATIBLE",
+                reason=(
+                    "Elkan-Noto challenger was incompatible with the bounded "
+                    f"configuration: {exc}"
+                ),
+            )
     else:
-        bagging = _skipped_challenger(
+        challenger = _skipped_elkan_challenger(
             status="SKIPPED_DISABLED",
-            reason="Bagging PU challenger was disabled by the caller.",
+            reason="Elkan-Noto challenger was disabled by the caller.",
         )
+    diagnostic = _train_naive_diagnostic(prepared, labels, random_seed=seed)
     return TrainingCandidateSet(
-        elkan_noto=elkan_noto,
-        naive_diagnostic=naive,
-        bagging_pu=bagging,
+        primary=primary,
+        challenger_1=challenger,
+        diagnostic_control=diagnostic,
     )
 
 

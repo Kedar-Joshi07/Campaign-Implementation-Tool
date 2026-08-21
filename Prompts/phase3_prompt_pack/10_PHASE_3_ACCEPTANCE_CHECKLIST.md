@@ -221,3 +221,44 @@ Record:
   metadata, artifact checksum/reload, and same-seed reproducibility. Phase 4 can
   safely consume a verified `COMPLETED model_run_id` without adding scoring or
   later audience/campaign scope.
+
+## Post-Phase-3 algorithm-role update acceptance — 2026-08-21
+
+- [x] PASS — baseline SHA `d2d46bdc08a02a27e4c6a7069857354a2e32a1d6`
+  was reviewed before editing.
+- [x] PASS — role policy v2 explicitly maps Bagging/Elkan/Naive to
+  PRIMARY/CHALLENGER_1/DIAGNOSTIC_CONTROL.
+- [x] PASS — Bagging + Logistic is mandatory, deterministic, bounded to one CPU,
+  cannot be disabled by challenger controls, and has no runtime-skip path.
+- [x] PASS — Bagging fit/scoring/nonfinite/constant failure cannot fall back to
+  Elkan or Naive.
+- [x] PASS — Elkan + Logistic runs by default, can be explicitly disabled, and a
+  bounded incompatibility does not invalidate a valid Bagging primary.
+- [x] PASS — Naive metadata says U is temporarily treated as N for diagnostic
+  use only; it is non-PU and permanently ineligible.
+- [x] PASS — evaluation contract v2 records candidate roles, eligibility, role
+  policy, comparison deltas, and `PRIMARY_ROLE_GOVERNED` selection.
+- [x] PASS — ties and challenger improvements retain Bagging; improvements raise
+  `CHALLENGER_OUTPERFORMED_PRIMARY`.
+- [x] PASS — CLI uses `--[no-]run-elkan-challenger`; there is no Bagging-disable
+  option; JSON and human summaries identify all roles.
+- [x] PASS — new artifacts retain payload version 1 and contain the fitted
+  Bagging estimator; supported historical artifacts still load.
+- [x] PASS — final full-data runs 5/6 completed from analysis 10 and selected
+  Bagging with identical counts, split fingerprint, non-runtime metrics,
+  validation scores, artifact bytes, and checksum.
+- [x] PASS — historical rows/artifacts 1/2 were not rewritten.
+- [x] PASS — feature contract hash remains
+  `a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`;
+  schema remains v3 and Phase 2 P/U semantics are unchanged.
+- [x] PASS — focused role-update suites: 31 passed in 54.41s; full regression
+  suite: 221 passed in 144.14s with one external deprecation warning.
+- [x] PASS — pip check, compileall, diff check, and populated data validation all
+  passed; reconciliation is `OK` for all three datasets and all 23 indexes.
+- [x] PASS — no prospect scoring, demographic linkage, propensity table,
+  behavioral/PII leakage, active training UI/API, audience, campaign, or export
+  functionality was introduced.
+
+Final regression command results are recorded in the progress tracker. The
+recommendation remains **Go for Phase 4** with a
+verified role-policy-v2 Bagging artifact.

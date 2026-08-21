@@ -1,4 +1,4 @@
-"""PU-aware validation metrics and genuine-PU model selection."""
+"""PU-aware validation metrics under the governed algorithm-role policy."""
 
 from __future__ import annotations
 
@@ -11,16 +11,21 @@ from typing import Any
 import numpy as np
 from sklearn.metrics import average_precision_score, roc_auc_score
 
-from app.ml.preprocessing import CustomerCohortSplit
-from app.ml.pu_estimators import (
-    BAGGING_PU_NAME,
-    ELKAN_NOTO_NAME,
-    NAIVE_BASELINE_NAME,
+from app.ml.model_roles import (
+    CHALLENGER_1_MODEL_NAME,
+    DIAGNOSTIC_CONTROL_NAME,
+    MODEL_ROLE_POLICY_VERSION,
+    PRIMARY_MODEL_NAME,
+    PRIMARY_ROLE,
+    PRIMARY_ROLE_GOVERNED_SELECTION,
+    expected_candidate_role,
 )
+from app.ml.preprocessing import CustomerCohortSplit
+from app.ml.pu_estimators import ELKAN_NOTO_NAME
 from app.ml.training import CandidateTrainingResult, TrainingCandidateSet
 
 
-EVALUATION_CONTRACT_VERSION = "1"
+EVALUATION_CONTRACT_VERSION = "2"
 TOP_SLICE_FRACTIONS = (0.05, 0.10, 0.20)
 LOW_POSITIVE_COUNT_THRESHOLD = 30
 LOW_SCORE_STANDARD_DEVIATION_THRESHOLD = 1e-12
@@ -34,7 +39,7 @@ OBSERVED_LABEL_DISCLAIMER = (
 
 
 class ModelEvaluationError(RuntimeError):
-    """Raised when validation or genuine-PU selection cannot be completed safely."""
+    """Raised when validation or governed primary selection cannot complete safely."""
 
 
 @dataclass(frozen=True)
@@ -43,9 +48,11 @@ class ModelEvaluationResult:
 
     selected_candidate: str
     selected_candidate_result: CandidateTrainingResult
+    selection_policy: str
     selection_reason: str
     quality_flags: tuple[str, ...]
     candidate_results: dict[str, dict[str, Any]]
+    challenger_comparison: dict[str, Any]
     snapshot: dict[str, Any]
     canonical_json: str
 
@@ -74,7 +81,6 @@ def _score_summary(scores: np.ndarray) -> dict[str, int | float]:
 
 
 def _ks_statistic(left: np.ndarray, right: np.ndarray) -> float:
-    """Return the two-sample empirical KS statistic without another dependency."""
     combined = np.sort(np.concatenate((left, right)))
     left_cdf = np.searchsorted(np.sort(left), combined, side="right") / left.size
     right_cdf = np.searchsorted(np.sort(right), combined, side="right") / right.size
@@ -88,8 +94,6 @@ def _top_slice_metrics(
     positive_count: int,
     prevalence: float,
 ) -> dict[str, dict[str, int | float]]:
-    # Split order is deterministic. Positional order is therefore a stable,
-    # non-PII secondary key for exact score ties.
     positions = np.arange(labels.size, dtype=np.int64)
     ranking = np.lexsort((positions, -scores))
     results: dict[str, dict[str, int | float]] = {}
@@ -102,13 +106,9 @@ def _top_slice_metrics(
             "fraction": fraction,
             "top_n": top_n,
             "known_positives_captured": captured,
-            "known_positive_recall_at_k": _finite_number(
-                captured / positive_count
-            ),
+            "known_positive_recall_at_k": _finite_number(captured / positive_count),
             "known_positive_concentration_at_k": _finite_number(concentration),
-            "known_positive_lift_at_k": _finite_number(
-                concentration / prevalence
-            ),
+            "known_positive_lift_at_k": _finite_number(concentration / prevalence),
         }
     return results
 
@@ -175,10 +175,7 @@ def _evaluate_fitted_candidate(
     positive_summary = _score_summary(positive_scores)
     unlabeled_summary = _score_summary(unlabeled_scores)
     top_slices = _top_slice_metrics(
-        labels,
-        score_array,
-        positive_count=positive_count,
-        prevalence=prevalence,
+        labels, score_array, positive_count=positive_count, prevalence=prevalence
     )
     mean_difference = _finite_number(
         positive_summary["mean"] - unlabeled_summary["mean"]
@@ -197,9 +194,10 @@ def _evaluate_fitted_candidate(
 
     return {
         "name": candidate.name,
+        "candidate_role": candidate.candidate_role,
+        "eligible_for_official_selection": candidate.candidate_role == PRIMARY_ROLE,
         "status": candidate.status,
         "is_genuine_pu": candidate.is_genuine_pu,
-        "role": "official_candidate" if candidate.is_genuine_pu else "diagnostic_only",
         "validation_context": {
             "validation_customer_count": int(labels.size),
             "validation_positive_count": positive_count,
@@ -244,9 +242,10 @@ def _evaluate_fitted_candidate(
 def _skipped_candidate_snapshot(candidate: CandidateTrainingResult) -> dict[str, Any]:
     return {
         "name": candidate.name,
+        "candidate_role": candidate.candidate_role,
+        "eligible_for_official_selection": False,
         "status": candidate.status,
         "is_genuine_pu": candidate.is_genuine_pu,
-        "role": "official_candidate" if candidate.is_genuine_pu else "diagnostic_only",
         "skip_reason": candidate.skip_reason,
         "runtime": {
             "fit_seconds": _finite_number(candidate.fit_seconds),
@@ -254,79 +253,153 @@ def _skipped_candidate_snapshot(candidate: CandidateTrainingResult) -> dict[str,
         },
         "algorithm_metadata": candidate.algorithm_metadata,
         "warnings": list(candidate.warnings),
-        "quality_flags": (
-            ["CHALLENGER_SKIPPED_RUNTIME"]
-            if candidate.status == "SKIPPED_RUNTIME"
-            else []
-        ),
+        "quality_flags": ["CHALLENGER_1_SKIPPED"],
     }
 
 
-def _selection_key(result: dict[str, Any]) -> tuple[float, ...]:
-    slices = result["top_slice_metrics"]
-    separation = result["separation_diagnostics"]
-    observed = result["observed_label_diagnostics"]
-    runtime = result["runtime"]
-    return (
-        float(slices["top_10_percent"]["known_positive_lift_at_k"]),
-        float(slices["top_10_percent"]["known_positive_recall_at_k"]),
-        float(slices["top_05_percent"]["known_positive_lift_at_k"]),
-        float(slices["top_20_percent"]["known_positive_lift_at_k"]),
-        float(separation["observed_label_ks_statistic"]),
-        float(observed["observed_label_average_precision"]),
-        -(float(runtime["fit_seconds"]) + float(runtime["scoring_seconds"])),
-        1.0 if result["name"] == ELKAN_NOTO_NAME else 0.0,
-    )
-
-
-def _select_genuine_pu(
-    candidates: tuple[CandidateTrainingResult, ...],
-    results: dict[str, dict[str, Any]],
-) -> tuple[CandidateTrainingResult, str]:
-    eligible = [
-        candidate
-        for candidate in candidates
-        if candidate.status == "FITTED"
-        and candidate.is_genuine_pu
-        and candidate.name != NAIVE_BASELINE_NAME
-        and "LOW_SCORE_VARIANCE" not in results[candidate.name]["quality_flags"]
-    ]
-    if not eligible:
+def _validate_role_contract(candidate: CandidateTrainingResult) -> None:
+    try:
+        expected_role = expected_candidate_role(candidate.name)
+    except ValueError as exc:
+        raise ModelEvaluationError(str(exc)) from exc
+    if candidate.candidate_role != expected_role:
         raise ModelEvaluationError(
-            "No fitted, finite, nonconstant genuine PU candidate is eligible for selection."
+            f"Candidate {candidate.name} does not match its governed role."
         )
 
-    selected = max(eligible, key=lambda item: _selection_key(results[item.name]))
-    selected_metrics = results[selected.name]
-    top10 = selected_metrics["top_slice_metrics"]["top_10_percent"]
-    separation = selected_metrics["separation_diagnostics"]
-    comparison = ", ".join(
-        (
-            f"{candidate.name} top-10 lift="
-            f"{results[candidate.name]['top_slice_metrics']['top_10_percent']['known_positive_lift_at_k']:.6f}"
-            "/recall="
-            f"{results[candidate.name]['top_slice_metrics']['top_10_percent']['known_positive_recall_at_k']:.6f}"
+
+def _select_primary(
+    primary: CandidateTrainingResult,
+    primary_result: dict[str, Any],
+) -> tuple[CandidateTrainingResult, str]:
+    if (
+        primary.name != PRIMARY_MODEL_NAME
+        or primary.candidate_role != PRIMARY_ROLE
+        or primary.status != "FITTED"
+        or not primary.is_genuine_pu
+        or primary.estimator is None
+    ):
+        raise ModelEvaluationError(
+            "The mandatory Bagging PU primary is not a valid fitted candidate."
         )
-        for candidate in eligible
-    )
+    if "LOW_SCORE_VARIANCE" in primary_result["quality_flags"]:
+        raise ModelEvaluationError(
+            "The mandatory Bagging PU primary returned constant validation scores."
+        )
+    top10 = primary_result["top_slice_metrics"]["top_10_percent"]
     reason = (
-        f"Selected {selected.name}, a genuine PU candidate, using deterministic "
-        "top-slice ranking, separation, runtime, and simplicity priorities: "
-        f"top-10 lift={top10['known_positive_lift_at_k']:.6f}, "
-        f"top-10 recall={top10['known_positive_recall_at_k']:.6f}, "
-        "observed-label KS="
-        f"{separation['observed_label_ks_statistic']:.6f}. Genuine-PU comparison: "
-        f"{comparison}. "
-        f"{NAIVE_BASELINE_NAME} was diagnostic-only and ineligible."
+        f"Selected {PRIMARY_MODEL_NAME} because role-policy v"
+        f"{MODEL_ROLE_POLICY_VERSION} governs the valid nonconstant PRIMARY as the "
+        "official model; challengers and diagnostic controls cannot be promoted. "
+        f"Primary top-10 lift={top10['known_positive_lift_at_k']:.6f} and "
+        f"recall={top10['known_positive_recall_at_k']:.6f}."
     )
-    return selected, reason
+    return primary, reason
+
+
+def _comparison_values(result: dict[str, Any]) -> dict[str, float]:
+    slices = result["top_slice_metrics"]
+    return {
+        "top_05_lift": float(
+            slices["top_05_percent"]["known_positive_lift_at_k"]
+        ),
+        "top_10_lift": float(
+            slices["top_10_percent"]["known_positive_lift_at_k"]
+        ),
+        "top_10_recall": float(
+            slices["top_10_percent"]["known_positive_recall_at_k"]
+        ),
+        "top_05_recall": float(
+            slices["top_05_percent"]["known_positive_recall_at_k"]
+        ),
+        "top_20_lift": float(
+            slices["top_20_percent"]["known_positive_lift_at_k"]
+        ),
+        "top_20_recall": float(
+            slices["top_20_percent"]["known_positive_recall_at_k"]
+        ),
+        "observed_label_roc_auc": float(
+            result["observed_label_diagnostics"]["observed_label_roc_auc"]
+        ),
+        "observed_label_ks": float(
+            result["separation_diagnostics"]["observed_label_ks_statistic"]
+        ),
+        "observed_label_average_precision": float(
+            result["observed_label_diagnostics"][
+                "observed_label_average_precision"
+            ]
+        ),
+        "known_positive_score_mean": float(
+            result["score_distributions"]["known_positive"]["mean"]
+        ),
+        "known_positive_score_median": float(
+            result["score_distributions"]["known_positive"]["median"]
+        ),
+        "unlabeled_score_mean": float(
+            result["score_distributions"]["unlabeled"]["mean"]
+        ),
+        "unlabeled_score_median": float(
+            result["score_distributions"]["unlabeled"]["median"]
+        ),
+        "fit_seconds": float(result["runtime"]["fit_seconds"]),
+        "scoring_seconds": float(result["runtime"]["scoring_seconds"]),
+    }
+
+
+def _challenger_comparison(
+    challenger: CandidateTrainingResult,
+    candidate_results: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    if challenger.status != "FITTED":
+        return {
+            "challenger": CHALLENGER_1_MODEL_NAME,
+            "primary": PRIMARY_MODEL_NAME,
+            "status": challenger.status,
+            "challenger_outperformed_primary": False,
+            "outperformed_metrics": [],
+            "challenger_minus_primary_deltas": {},
+        }
+    primary_values = _comparison_values(candidate_results[PRIMARY_MODEL_NAME])
+    challenger_values = _comparison_values(
+        candidate_results[CHALLENGER_1_MODEL_NAME]
+    )
+    deltas = {
+        key: _finite_number(challenger_values[key] - primary_values[key])
+        for key in primary_values
+    }
+    higher_is_better = (
+        "top_05_lift",
+        "top_05_recall",
+        "top_10_lift",
+        "top_10_recall",
+        "top_20_lift",
+        "top_20_recall",
+        "observed_label_roc_auc",
+        "observed_label_average_precision",
+        "observed_label_ks",
+    )
+    outperformed = [key for key in higher_is_better if deltas[key] > 1e-12]
+    return {
+        "challenger": CHALLENGER_1_MODEL_NAME,
+        "primary": PRIMARY_MODEL_NAME,
+        "status": "EVALUATED",
+        "challenger_outperformed_primary": bool(outperformed),
+        "outperformed_metrics": outperformed,
+        "challenger_minus_primary_deltas": deltas,
+        "top10_lift_delta": deltas["top_10_lift"],
+        "top10_recall_delta": deltas["top_10_recall"],
+        "observed_label_ap_delta": deltas[
+            "observed_label_average_precision"
+        ],
+        "fit_seconds_delta": deltas["fit_seconds"],
+    }
 
 
 def evaluate_and_select_model(
     candidates: TrainingCandidateSet,
     split: CustomerCohortSplit,
 ) -> ModelEvaluationResult:
-    """Evaluate every fitted candidate and select only a genuine PU candidate."""
+    """Evaluate all roles and select the valid mandatory Bagging PU primary."""
     if not isinstance(candidates, TrainingCandidateSet) or not isinstance(
         split, CustomerCohortSplit
     ):
@@ -344,17 +417,25 @@ def evaluate_and_select_model(
         )
     if len(split.validation_customer_ids) != labels.size:
         raise ModelEvaluationError("Validation customer and label counts do not match.")
-    if split.validation_customer_ids.isna().any() or not split.validation_customer_ids.is_unique:
-        raise ModelEvaluationError("Validation customer keys must be present and unique.")
+    if (
+        split.validation_customer_ids.isna().any()
+        or not split.validation_customer_ids.is_unique
+    ):
+        raise ModelEvaluationError(
+            "Validation customer keys must be present and unique."
+        )
 
-    prevalence = _finite_number(positive_count / labels.size)
     ordered_candidates = (
-        candidates.elkan_noto,
-        candidates.bagging_pu,
-        candidates.naive_diagnostic,
+        candidates.primary,
+        candidates.challenger_1,
+        candidates.diagnostic_control,
     )
     if len({candidate.name for candidate in ordered_candidates}) != 3:
         raise ModelEvaluationError("Candidate names must be unique.")
+    for candidate in ordered_candidates:
+        _validate_role_contract(candidate)
+
+    prevalence = _finite_number(positive_count / labels.size)
     candidate_results: dict[str, dict[str, Any]] = {}
     for candidate in ordered_candidates:
         if candidate.status == "FITTED":
@@ -368,17 +449,29 @@ def evaluate_and_select_model(
         else:
             candidate_results[candidate.name] = _skipped_candidate_snapshot(candidate)
 
-    selected, selection_reason = _select_genuine_pu(
-        ordered_candidates, candidate_results
+    selected, selection_reason = _select_primary(
+        candidates.primary, candidate_results[PRIMARY_MODEL_NAME]
+    )
+    comparison = _challenger_comparison(
+        candidates.challenger_1, candidate_results
     )
     overall_flags = {"OBSERVED_LABEL_METRICS_ONLY"}
-    overall_flags.update(candidate_results[selected.name]["quality_flags"])
-    if any(candidate.status == "SKIPPED_RUNTIME" for candidate in ordered_candidates):
-        overall_flags.add("CHALLENGER_SKIPPED_RUNTIME")
+    overall_flags.update(candidate_results[PRIMARY_MODEL_NAME]["quality_flags"])
+    if candidates.challenger_1.status != "FITTED":
+        overall_flags.add("CHALLENGER_1_SKIPPED")
+    if comparison["challenger_outperformed_primary"]:
+        overall_flags.add("CHALLENGER_OUTPERFORMED_PRIMARY")
     quality_flags = tuple(sorted(overall_flags))
+
     snapshot = {
         "evaluation_contract_version": EVALUATION_CONTRACT_VERSION,
+        "model_role_policy_version": MODEL_ROLE_POLICY_VERSION,
+        "primary_candidate": PRIMARY_MODEL_NAME,
+        "challenger_candidates": [CHALLENGER_1_MODEL_NAME],
+        "diagnostic_controls": [DIAGNOSTIC_CONTROL_NAME],
+        "selection_policy": PRIMARY_ROLE_GOVERNED_SELECTION,
         "candidate_results": candidate_results,
+        "challenger_comparison": comparison,
         "selected_candidate": selected.name,
         "selection_reason": selection_reason,
         "quality_flags": list(quality_flags),
@@ -399,9 +492,11 @@ def evaluate_and_select_model(
     return ModelEvaluationResult(
         selected_candidate=selected.name,
         selected_candidate_result=selected,
+        selection_policy=PRIMARY_ROLE_GOVERNED_SELECTION,
         selection_reason=selection_reason,
         quality_flags=quality_flags,
         candidate_results=candidate_results,
+        challenger_comparison=comparison,
         snapshot=snapshot,
         canonical_json=canonical_json,
     )

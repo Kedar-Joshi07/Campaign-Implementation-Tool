@@ -98,3 +98,30 @@ Before training or loading:
 Phase 4 receives no persisted training-customer list and no PII artifact.
 
 The model-run ID plus governed metadata/artifact is the handoff.
+
+## Post-Phase-3 role-policy-v2 handoff — 2026-08-21
+
+For model runs created after the algorithm-role update, Phase 4 must interpret:
+
+- PRIMARY and selected artifact estimator: `BAGGING_PU` + Logistic Regression;
+- CHALLENGER_1: `ELKAN_NOTO_LOGISTIC` + Logistic Regression;
+- DIAGNOSTIC_CONTROL: `NAIVE_PU_LABEL_BASELINE`, never selection-eligible;
+- `model_role_policy_version`: `2`;
+- `evaluation_contract_version`: `2`;
+- `selection_policy`: `PRIMARY_ROLE_GOVERNED`.
+
+Elkan challenger metrics and challenger-minus-primary deltas are advisory. A
+`CHALLENGER_OUTPERFORMED_PRIMARY` flag must not be interpreted as an automatic
+promotion. Any promotion requires a separately approved governance policy.
+Unlabeled observations remain unlabeled; Naive temporarily treats them as
+negative only for diagnostic comparison. Observed-label metrics are not
+true-negative performance, and scores are look-alike/PU rankings rather than
+guaranteed calibrated purchase probabilities.
+
+Final reference validation model runs 5 and 6 both selected Bagging and have identical
+10,107-byte artifacts with SHA-256
+`a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210`.
+Historical role-policy-v1 rows/artifacts remain immutable and supported; missing
+role-policy metadata must be treated as legacy v1 only when inspection requires
+that distinction. Phase 4 must continue checksum verification and must not
+rewrite old rows/artifacts.

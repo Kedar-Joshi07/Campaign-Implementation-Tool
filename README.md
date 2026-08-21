@@ -521,6 +521,26 @@ the scripts separately and validate the resulting files before replacement.
 
 ## Known limitations and Phase 4 boundary
 
+### Post-Phase-3 algorithm-role policy update (2026-08-21)
+
+New model runs use model-role policy version 2 and evaluation contract version 2:
+
+- **PRIMARY:** `BAGGING_PU` with a Logistic Regression base estimator. It is
+  mandatory, cannot be disabled by challenger controls, and is the selected
+  artifact whenever it satisfies the finite, nonconstant primary contract.
+- **CHALLENGER_1:** `ELKAN_NOTO_LOGISTIC` with Logistic Regression. It runs by
+  default and can be disabled with `--no-run-elkan-challenger`. Its metrics and
+  deltas are recorded, but it cannot silently replace the governed primary.
+- **DIAGNOSTIC_CONTROL:** `NAIVE_PU_LABEL_BASELINE`. It temporarily treats
+  unlabeled observations as negative for diagnostic comparison only and is
+  permanently ineligible for official selection.
+
+Unlabeled still means unlabeled, not a confirmed negative. All observed-label
+diagnostics measure separation from unlabeled observations, not true-negative
+performance. The output is a look-alike/PU ranking score, not a guaranteed
+calibrated purchase probability. Historical role-policy-v1 rows and artifacts
+remain unchanged and loadable.
+
 - Historical analytics run synchronously in this local POC; broad full-history
   work can take about a minute on the reference machine.
 - Saved results are aggregate snapshots and do not auto-refresh if source data

@@ -26,6 +26,12 @@ from app.ml.feature_contract import (
     FEATURE_CONTRACT_VERSION,
     ORDERED_FEATURES,
 )
+from app.ml.model_roles import (
+    CHALLENGER_1_MODEL_NAME,
+    DIAGNOSTIC_CONTROL_NAME,
+    MODEL_ROLE_POLICY_VERSION,
+    PRIMARY_MODEL_NAME,
+)
 from app.ml.preprocessing import prepare_feature_matrices, split_customer_cohort
 from app.ml.pu_estimators import positive_class_scores
 from app.ml.training import train_pu_candidates
@@ -312,7 +318,7 @@ def train_and_persist_model(
     model_name: str | None = None,
     random_seed: int = 42,
     validation_fraction: float = 0.20,
-    run_challenger: bool = True,
+    run_elkan_challenger: bool = True,
     project_root: str | Path | None = None,
     artifact_root: str | Path = DEFAULT_ARTIFACT_ROOT,
 ) -> dict[str, Any]:
@@ -327,6 +333,10 @@ def train_and_persist_model(
         )
     if isinstance(random_seed, bool) or not isinstance(random_seed, int):
         raise ModelTrainingValidationError("random_seed must be an integer.")
+    if not isinstance(run_elkan_challenger, bool):
+        raise ModelTrainingValidationError(
+            "run_elkan_challenger must be a boolean."
+        )
     if (
         isinstance(validation_fraction, bool)
         or not isinstance(validation_fraction, (int, float))
@@ -381,7 +391,7 @@ def train_and_persist_model(
             prepared,
             split,
             random_seed=random_seed,
-            run_challenger=run_challenger,
+            run_elkan_challenger=run_elkan_challenger,
         )
         stage_seconds["candidate_training"] = time.perf_counter() - stage_started
         stage_started = time.perf_counter()
@@ -432,7 +442,13 @@ def train_and_persist_model(
             "analysis_run_id": analysis_run_id,
             "model_name": normalized_name,
             "status": "COMPLETED",
+            "model_role_policy_version": MODEL_ROLE_POLICY_VERSION,
+            "primary_candidate": PRIMARY_MODEL_NAME,
+            "challenger_1": CHALLENGER_1_MODEL_NAME,
+            "challenger_1_status": candidates.challenger_1.status,
+            "diagnostic_control": DIAGNOSTIC_CONTROL_NAME,
             "selected_candidate": evaluation.selected_candidate,
+            "selection_policy": evaluation.selection_policy,
             "selected_customer_count": cohort.selected_customer_count,
             "positive_customer_count": cohort.positive_customer_count,
             "unlabeled_customer_count": cohort.unlabeled_customer_count,
@@ -465,7 +481,12 @@ def train_and_persist_model(
             preprocessing_json=_canonical_json(_preprocessing_metadata(prepared)),
             hyperparameters_json=_canonical_json(
                 {
+                    "model_role_policy_version": MODEL_ROLE_POLICY_VERSION,
+                    "primary_candidate": PRIMARY_MODEL_NAME,
+                    "challenger_1": CHALLENGER_1_MODEL_NAME,
+                    "diagnostic_control": DIAGNOSTIC_CONTROL_NAME,
                     "selected_candidate": evaluation.selected_candidate,
+                    "selection_policy": evaluation.selection_policy,
                     "algorithm_metadata": selected_result.algorithm_metadata,
                 }
             ),

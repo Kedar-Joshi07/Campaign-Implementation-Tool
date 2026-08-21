@@ -55,10 +55,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Validation fraction strictly between 0 and 1 (default: 0.20).",
     )
     parser.add_argument(
-        "--run-challenger",
+        "--run-elkan-challenger",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Run the bounded Bagging PU challenger (default: enabled).",
+        help="Run the bounded Elkan-Noto challenger (default: enabled).",
     )
     parser.add_argument(
         "--database-path",
@@ -80,7 +80,15 @@ def _format_summary(summary: dict[str, object]) -> str:
             f"Model run: {summary['model_run_id']}",
             f"Analysis run: {summary['analysis_run_id']}",
             f"Status: {summary['status']}",
+            f"Role policy: v{summary['model_role_policy_version']}",
+            f"Primary: {summary['primary_candidate']}",
+            (
+                f"Challenger 1: {summary['challenger_1']} "
+                f"({summary['challenger_1_status']})"
+            ),
+            f"Diagnostic control: {summary['diagnostic_control']}",
             f"Selected candidate: {summary['selected_candidate']}",
+            f"Selection policy: {summary['selection_policy']}",
             f"Customers: {summary['selected_customer_count']}",
             f"Known positives: {summary['positive_customer_count']}",
             f"Unlabeled: {summary['unlabeled_customer_count']}",
@@ -104,7 +112,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             model_name=args.model_name,
             random_seed=args.random_seed,
             validation_fraction=args.validation_fraction,
-            run_challenger=args.run_challenger,
+            run_elkan_challenger=args.run_elkan_challenger,
         )
     except ModelTrainingServiceError as exc:
         failure: dict[str, object] = {

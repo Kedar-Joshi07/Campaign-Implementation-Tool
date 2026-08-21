@@ -64,6 +64,31 @@ def test_phase3_documentation_records_contract_cli_caveat_and_phase4_boundary() 
     assert "Go for Phase 4" in summary
 
 
+def test_phase3_algorithm_role_policy_v2_is_explicit_and_scope_stays_bounded() -> None:
+    roles = (REPOSITORY_ROOT / "app" / "ml" / "model_roles.py").read_text(
+        encoding="utf-8"
+    )
+    training = (REPOSITORY_ROOT / "app" / "ml" / "training.py").read_text(
+        encoding="utf-8"
+    )
+    evaluation = (REPOSITORY_ROOT / "app" / "ml" / "evaluation.py").read_text(
+        encoding="utf-8"
+    )
+    cli = (REPOSITORY_ROOT / "scripts" / "train_pu_model.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'MODEL_ROLE_POLICY_VERSION = "2"' in roles
+    assert "PRIMARY_MODEL_NAME = BAGGING_PU_NAME" in roles
+    assert "CHALLENGER_1_MODEL_NAME = ELKAN_NOTO_NAME" in roles
+    assert "DIAGNOSTIC_CONTROL_NAME = NAIVE_BASELINE_NAME" in roles
+    assert 'EVALUATION_CONTRACT_VERSION = "2"' in evaluation
+    assert "SKIPPED_RUNTIME" not in training
+    assert "run_elkan_challenger" in training
+    assert "--run-elkan-challenger" in cli
+    assert "--run-challenger" not in cli
+
+
 def test_prohibited_ml_infrastructure_dependencies_are_absent() -> None:
     requirements = (REPOSITORY_ROOT / "requirements.txt").read_text(
         encoding="utf-8"

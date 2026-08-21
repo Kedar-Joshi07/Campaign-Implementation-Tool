@@ -661,3 +661,93 @@ Status: COMPLETE — 2026-08-21T13:48:06+05:30
   `COMPLETED model_run_id` and reuse the training service for orchestration/UI.
   It must retain the frozen no-scoring/no-audience/no-campaign/no-linkage boundary
   unless separately approved.
+
+## Post-Phase-3 algorithm-role update — 2026-08-21
+
+### Baseline and scope
+- reviewed starting SHA:
+  `d2d46bdc08a02a27e4c6a7069857354a2e32a1d6`
+- historical model rows/artifacts 1 and 2 were not rewritten; their SHA-256
+  remains `04913a2eb766d116b2e73ea9842ecf25914b3360f35e1fee65860351841bf1de`
+- schema remains version 3; artifact payload remains version 1; the exact
+  11-feature contract/hash and Phase 2 P/U semantics are unchanged
+
+### Implemented governance
+- model-role policy: `2`
+- evaluation contract: `2`
+- PRIMARY: `BAGGING_PU`; mandatory, bounded to 10 estimators/one CPU, no old
+  challenger runtime skip, and primary failure fails the run
+- CHALLENGER_1: `ELKAN_NOTO_LOGISTIC`; enabled by default and controlled only by
+  `run_elkan_challenger` / `--[no-]run-elkan-challenger`
+- DIAGNOSTIC_CONTROL: `NAIVE_PU_LABEL_BASELINE`; unlabeled temporarily treated
+  as 0 for diagnostics only and permanently ineligible
+- selection policy: `PRIMARY_ROLE_GOVERNED`; challenger improvements are
+  persisted and flagged rather than silently promoted
+
+### Full-data evidence
+- source: completed `analysis_run_id=10`, `ATTRIBUTED_PURCHASE`
+- initial v2 evidence runs 3/4 and final expanded-comparison runs 5/6 all
+  `COMPLETED`; evidence below uses final run 5 and reproducibility run 6
+- counts in both: 14,037 selected = 626 positive + 13,411 unlabeled;
+  train/validation 11,229/2,808; train/validation positives 501/125;
+  transformed features 64
+- run 5 PRIMARY Bagging: ROC-AUC 0.5349444652; AP 0.0555523059;
+  KS 0.0860648528; recall 5/10/20% 0.096/0.160/0.232; lift
+  1.9118297872/1.5988612100/1.1591743772; fit/score
+  0.3425503s/0.0060387s; flags none
+  - positive/unlabeled score mean: 0.0470888966/0.0446795140
+  - positive/unlabeled score median: 0.0452684907/0.0431420384
+- run 5 CHALLENGER_1 Elkan: ROC-AUC 0.5268729035; AP 0.0531762167;
+  KS 0.0690838613; recall 0.064/0.152/0.240; lift
+  1.2745531915/1.5189181495/1.1991459075; `c=0.04746373084461211`;
+  fit/score 0.0493589s/0.0004439s; flags none
+  - positive/unlabeled score mean: 0.9684602551/0.9279677513
+  - positive/unlabeled score median: 0.9263650547/0.8865900453
+- run 5 DIAGNOSTIC_CONTROL Naive: ROC-AUC 0.5350667164;
+  AP 0.0551666204; KS 0.0735296310; recall 0.104/0.160/0.232; lift
+  2.0711489362/1.5988612100/1.1591743772; fit/score
+  0.0370573s/0.0005422s; flags none; ineligible for selection
+  - positive/unlabeled score mean: 0.0468833534/0.0445153107
+  - positive/unlabeled score median: 0.0450220123/0.0428702735
+- challenger-minus-primary deltas: ROC-AUC -0.0080715617; AP -0.0023760892;
+  KS -0.0169809914; lift/recall 5% -0.6372765957/-0.032; lift/recall 10%
+  -0.0799430605/-0.008; lift/recall 20% +0.0399715302/+0.008;
+  fit/scoring -0.2931914s/-0.0055948s. Score mean/median deltas are also
+  persisted. `CHALLENGER_OUTPERFORMED_PRIMARY` records the 20% lift/recall
+  improvements; selected candidate remains `BAGGING_PU`.
+- run 5 artifact: `artifacts/models/model_run_000005/pu_model.joblib`, 10,107
+  bytes, SHA-256
+  `a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210`;
+  reload/rescore verification PASS
+
+### Reproducibility
+- run 6 used the same analysis, seed 42, validation fraction 0.20, and enabled
+  Elkan challenger
+- split fingerprints equal:
+  `5cc80dbb44e7c9b8b850e1e7a58942df30c8cfd4ef47d11fa59d4cb174d8f645`
+- role metadata, counts, contract, selected Bagging candidate, and all
+  non-runtime metrics equal; non-runtime SHA-256:
+  `86f5450cca05b11c7656083992a01a7193f266329deb674578880da56deb32f2`
+- all 2,808 reloaded validation scores equal within absolute tolerance 1e-12;
+  maximum absolute delta 0.0
+- run 6 artifact bytes/checksum equal to run 5; historical artifacts 1/2 also
+  remain loadable (with the expected scikit-learn 1.7.1-to-1.7.2 warning)
+
+### Verification and recommendation
+- focused role-update suites: 31 passed in 54.41s
+- full regression: 221 passed in 144.14s; one external Starlette/httpx
+  deprecation warning, no application failure
+- `python -m pip check`: PASS — no broken requirements
+- `python -m compileall -q app scripts tests`: PASS — no output
+- `git diff --check`: PASS — only expected Git LF-to-CRLF working-copy warnings
+- `python scripts/validate_data.py --json`: PASS — `overall_status=OK`;
+  customers 125,000, campaign sales 570,000, demographics 5,000,000; zero
+  invalid customer FKs, zero PU consistency violations, all 23 indexes present
+- verified update environment: Python 3.12.0; NumPy 2.4.6; pandas 3.0.5;
+  SciPy 1.18.0; scikit-learn 1.7.2; pulearn 0.0.12; joblib 1.5.3
+- scope scan remains clean: no prospect/demographic scoring, propensity table,
+  customer/person linkage, behavioral/PII feature, training API/UI activation,
+  Audience Explorer, campaign builder, or export
+- **GO for continuing to Phase 4.** Phase 4
+  must consume a verified completed role-policy-v2 Bagging artifact and retain
+  the frozen later-phase boundaries.

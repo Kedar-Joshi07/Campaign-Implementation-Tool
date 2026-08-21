@@ -194,13 +194,13 @@ def normalize_categorical_features(frame: pd.DataFrame) -> pd.DataFrame:
 
 def validate_and_normalize_feature_frame(frame: pd.DataFrame) -> pd.DataFrame:
     validate_feature_columns(frame)
-    normalized = frame.copy()
-    normalized.loc[:, NUMERIC_FEATURES] = normalize_numeric_features(
+    numeric = normalize_numeric_features(
         frame.loc[:, NUMERIC_FEATURES]
     )
-    normalized.loc[:, CATEGORICAL_FEATURES] = normalize_categorical_features(
+    categorical = normalize_categorical_features(
         frame.loc[:, CATEGORICAL_FEATURES]
     )
+    normalized = pd.concat((numeric, categorical), axis="columns")
     return normalized.loc[:, ORDERED_FEATURES]
 
 

@@ -235,3 +235,76 @@ checksum-verified artifact. Phase 4 may add orchestration, background job/API
 lifecycle, run listing/detail, and the disabled Model Training UI by reusing the
 Phase 3 service. It must not silently add prospect scoring or later audience and
 campaign features.
+
+## Post-Phase-3 algorithm-role update (2026-08-21)
+
+The original evidence above is retained as historical role-policy-v1 evidence.
+New runs use model-role policy `2` and evaluation contract `2`:
+
+- PRIMARY: `BAGGING_PU` + Logistic Regression.
+- CHALLENGER_1: `ELKAN_NOTO_LOGISTIC` + Logistic Regression.
+- DIAGNOSTIC_CONTROL: `NAIVE_PU_LABEL_BASELINE`, with unlabeled temporarily
+  treated as negative only for diagnostic comparison and never eligible for
+  official selection.
+
+The primary is mandatory and is selected by `PRIMARY_ROLE_GOVERNED` when finite
+and nonconstant. Elkan runs by default, can be explicitly disabled, and may be
+recorded as bounded-incompatible without invalidating a valid primary. Better
+challenger diagnostics produce `CHALLENGER_OUTPERFORMED_PRIMARY`; they do not
+silently promote the challenger. Primary fit/scoring/finite/constant failures
+fail the governed run. Artifact payload version remains `1` because its keys did
+not change; new payloads contain the Bagging preprocessor/estimator, while the
+loader still accepts supported historical payloads.
+
+Full-data validation used completed `analysis_run_id=10`. Runs 3 and 4 captured
+the initial v2 evidence; final contract runs 5 and 6 include the expanded delta
+metadata. Historical runs 1 and 2 were not changed. Each new run reconstructed 14,037
+customers (626 positive, 13,411 unlabeled), split 11,229/2,808 with 501/125
+positives, and produced 64 transformed features.
+
+Final role-policy-v2 run 5 evidence:
+
+- PRIMARY Bagging: fitted; 0.342550s fit, 0.006039s score; observed-label
+  ROC-AUC 0.534944, AP 0.055552, KS 0.086065; recall at 5/10/20% =
+  0.096/0.160/0.232; lift = 1.911830/1.598861/1.159174; positive/unlabeled
+  score mean 0.047089/0.044680 and median 0.045268/0.043142; no candidate flags.
+- CHALLENGER_1 Elkan: fitted; 0.049359s fit, 0.000444s score; propensity
+  `c=0.04746373084461211`; observed-label ROC-AUC 0.526873, AP 0.053176,
+  KS 0.069084; recall = 0.064/0.152/0.240; lift =
+  1.274553/1.518918/1.199146; positive/unlabeled score mean
+  0.968460/0.927968 and median 0.926365/0.886590; no candidate flags.
+- DIAGNOSTIC_CONTROL Naive: fitted; 0.037057s fit, 0.000542s score;
+  observed-label ROC-AUC 0.535067, AP 0.055167, KS 0.073530; recall =
+  0.104/0.160/0.232; lift = 2.071149/1.598861/1.159174;
+  positive/unlabeled score mean 0.046883/0.044515 and median
+  0.045022/0.042870; no candidate flags.
+- Challenger-minus-primary deltas: 5% lift/recall -0.637277/-0.032000,
+  10% lift/recall -0.079943/-0.008000, 20% lift/recall
+  +0.039972/+0.008000, ROC-AUC -0.008072, observed AP -0.002376, KS
+  -0.016981, fit -0.293191s, and scoring -0.005595s. The 20% lift/recall
+  improvements correctly raised the advisory
+  flag while `BAGGING_PU` remained selected.
+- Artifact: `artifacts/models/model_run_000005/pu_model.joblib`, 10,107 bytes,
+  SHA-256 `a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210`.
+
+Same-seed run 6 produced the identical split fingerprint
+`5cc80dbb44e7c9b8b850e1e7a58942df30c8cfd4ef47d11fa59d4cb174d8f645`,
+identical non-runtime metrics SHA-256
+`86f5450cca05b11c7656083992a01a7193f266329deb674578880da56deb32f2`,
+identical 2,808 validation scores (maximum absolute difference 0.0), and an
+identical artifact checksum. Final artifacts and both historical artifacts passed the
+verified loader. The frozen feature-contract SHA-256 remains
+`a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`.
+
+These synthetic observed-label results do not prove real-world superiority,
+calibration, causality, or fairness. No prospect scoring, propensity table,
+customer/person linkage, API/UI activation, audience workflow, or campaign
+export was introduced.
+
+The role update was verified with Python 3.12.0, NumPy 2.4.6, pandas 3.0.5,
+SciPy 1.18.0, scikit-learn 1.7.2, pulearn 0.0.12, and joblib 1.5.3.
+Final verification: focused suites 31 passed in 54.41s; full suite 221 passed in
+144.14s with one third-party Starlette/httpx deprecation warning; pip check,
+compileall, and `git diff --check` passed; populated reconciliation returned
+`overall_status=OK` for 125,000 customers, 570,000 campaign-sales rows,
+5,000,000 demographics, and all 23 indexes.

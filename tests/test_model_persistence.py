@@ -9,10 +9,18 @@ from typing import Any
 
 import joblib
 import pytest
+from pulearn import BaggingPuClassifier
 
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.ml.feature_contract import FEATURE_CONTRACT_SHA256, ORDERED_FEATURES
+from app.ml.model_roles import (
+    CHALLENGER_1_MODEL_NAME,
+    DIAGNOSTIC_CONTROL_NAME,
+    MODEL_ROLE_POLICY_VERSION,
+    PRIMARY_MODEL_NAME,
+    PRIMARY_ROLE_GOVERNED_SELECTION,
+)
 from app.repositories.model_run_repository import ModelRunRepository
 from app.services.historical_analysis_service import create_historical_analysis
 from app.services.model_training_service import (
@@ -105,7 +113,7 @@ def _train(
         database_path,
         analysis_run_id,
         model_name="Persistence fixture",
-        run_challenger=False,
+        run_elkan_challenger=False,
         project_root=tmp_path,
     )
 
@@ -140,6 +148,13 @@ def test_successful_lifecycle_persists_reloadable_checksummed_artifact(
 
     assert row is not None
     assert row["status"] == "COMPLETED"
+    assert row["selected_candidate"] == PRIMARY_MODEL_NAME
+    assert summary["model_role_policy_version"] == MODEL_ROLE_POLICY_VERSION
+    assert summary["primary_candidate"] == PRIMARY_MODEL_NAME
+    assert summary["challenger_1"] == CHALLENGER_1_MODEL_NAME
+    assert summary["challenger_1_status"] == "SKIPPED_DISABLED"
+    assert summary["diagnostic_control"] == DIAGNOSTIC_CONTROL_NAME
+    assert summary["selection_policy"] == PRIMARY_ROLE_GOVERNED_SELECTION
     assert row["analysis_run_id"] == analysis_run_id
     assert row["selected_candidate"] == summary["selected_candidate"]
     assert row["completed_at"] is not None
@@ -179,6 +194,7 @@ def test_successful_lifecycle_persists_reloadable_checksummed_artifact(
     assert payload["selected_candidate"] == row["selected_candidate"]
     assert payload["feature_contract_sha256"] == FEATURE_CONTRACT_SHA256
     assert tuple(payload["raw_feature_order"]) == ORDERED_FEATURES
+    assert isinstance(payload["estimator"], BaggingPuClassifier)
     assert set(payload) == {
         "artifact_version",
         "feature_contract_version",
@@ -206,6 +222,10 @@ def test_successful_lifecycle_persists_reloadable_checksummed_artifact(
     assert json.loads(row["metrics_json"])["selected_candidate"] == row[
         "selected_candidate"
     ]
+    assert json.loads(row["metrics_json"])["model_role_policy_version"] == "2"
+    assert json.loads(row["hyperparameters_json"])[
+        "model_role_policy_version"
+    ] == "2"
     assert json.loads(row["library_versions_json"])["joblib"] == joblib.__version__
 
 
@@ -286,7 +306,7 @@ def test_completion_failure_removes_artifact_and_persists_failed_status(
         train_and_persist_model(
             database_path,
             analysis_run_id,
-            run_challenger=False,
+            run_elkan_challenger=False,
             project_root=tmp_path,
         )
 
@@ -317,7 +337,7 @@ def test_cli_json_success_and_failure_exit_codes(
             str(analysis_run_id),
             "--model-name",
             "CLI fixture",
-            "--no-run-challenger",
+            "--no-run-elkan-challenger",
             "--database-path",
             str(database_path),
             "--json",
