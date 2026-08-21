@@ -16,7 +16,7 @@ from app.database.connection import get_connection
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 3
+CURRENT_SCHEMA_VERSION = 4
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -27,6 +27,7 @@ EXPECTED_TABLES = (
     "demographics",
     "historical_analysis_runs",
     "model_runs",
+    "jobs",
 )
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
@@ -72,6 +73,23 @@ MODEL_RUN_COLUMNS = (
     "library_versions_json",
     "artifact_path",
     "artifact_sha256",
+    "error_message",
+)
+
+JOB_COLUMNS = (
+    "job_id",
+    "job_type",
+    "status",
+    "progress_percent",
+    "stage",
+    "message",
+    "analysis_run_id",
+    "model_run_id",
+    "created_at",
+    "started_at",
+    "finished_at",
+    "request_json",
+    "result_json",
     "error_message",
 )
 
@@ -388,10 +406,27 @@ PHASE_THREE_REQUIRED_INDEX_STATEMENTS = {
     ),
 }
 
+PHASE_FOUR_REQUIRED_INDEX_STATEMENTS = {
+    "idx_jobs_newest": (
+        "CREATE INDEX IF NOT EXISTS idx_jobs_newest "
+        "ON jobs (created_at DESC, job_id DESC)"
+    ),
+    "idx_jobs_status": (
+        "CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs (status)"
+    ),
+    "idx_jobs_analysis_run_id": (
+        "CREATE INDEX IF NOT EXISTS idx_jobs_analysis_run_id ON jobs (analysis_run_id)"
+    ),
+    "idx_jobs_model_run_id": (
+        "CREATE INDEX IF NOT EXISTS idx_jobs_model_run_id ON jobs (model_run_id)"
+    ),
+}
+
 REQUIRED_INDEX_STATEMENTS = {
     **PHASE_ONE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_TWO_REQUIRED_INDEX_STATEMENTS,
     **PHASE_THREE_REQUIRED_INDEX_STATEMENTS,
+    **PHASE_FOUR_REQUIRED_INDEX_STATEMENTS,
 }
 
 
@@ -600,9 +635,89 @@ def _migrate_to_version_3(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_4(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE jobs (
+            job_id INTEGER PRIMARY KEY,
+            job_type TEXT NOT NULL
+                CHECK (job_type IN ('MODEL_TRAINING')),
+            status TEXT NOT NULL
+                CHECK (status IN ('QUEUED', 'RUNNING', 'COMPLETED', 'FAILED')),
+            progress_percent INTEGER NOT NULL DEFAULT 0
+                CHECK (progress_percent BETWEEN 0 AND 100),
+            stage TEXT NOT NULL
+                CHECK (stage IN (
+                    'QUEUED',
+                    'STARTING',
+                    'RECONSTRUCTING_COHORT',
+                    'SPLITTING_DATA',
+                    'PREPROCESSING',
+                    'TRAINING_PRIMARY',
+                    'TRAINING_CHALLENGER',
+                    'TRAINING_DIAGNOSTIC',
+                    'EVALUATING',
+                    'PERSISTING_ARTIFACT',
+                    'VERIFYING_ARTIFACT',
+                    'COMPLETED',
+                    'FAILED'
+                )),
+            message TEXT,
+            analysis_run_id INTEGER,
+            model_run_id INTEGER,
+            created_at TEXT NOT NULL,
+            started_at TEXT,
+            finished_at TEXT,
+            request_json TEXT NOT NULL,
+            result_json TEXT,
+            error_message TEXT,
+            FOREIGN KEY (analysis_run_id)
+                REFERENCES historical_analysis_runs (analysis_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (model_run_id)
+                REFERENCES model_runs (model_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            CHECK (analysis_run_id IS NULL OR analysis_run_id > 0),
+            CHECK (model_run_id IS NULL OR model_run_id > 0),
+            CHECK (
+                status != 'QUEUED'
+                OR (
+                    progress_percent = 0
+                    AND started_at IS NULL
+                    AND finished_at IS NULL
+                )
+            ),
+            CHECK (
+                status != 'RUNNING'
+                OR progress_percent BETWEEN 1 AND 99
+            ),
+            CHECK (
+                status != 'COMPLETED'
+                OR (
+                    progress_percent = 100
+                    AND finished_at IS NOT NULL
+                    AND result_json IS NOT NULL
+                )
+            ),
+            CHECK (
+                status != 'FAILED'
+                OR (
+                    progress_percent <= 99
+                    AND finished_at IS NOT NULL
+                    AND error_message IS NOT NULL
+                )
+            )
+        )
+        """
+    )
+    for statement in PHASE_FOUR_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
+    4: _migrate_to_version_4,
 }
 
 

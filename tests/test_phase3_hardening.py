@@ -25,7 +25,7 @@ def test_phase3_training_boundary_contains_no_later_phase_scoring_or_prospect_qu
     assert "campaign export" not in lowered
 
 
-def test_no_model_training_http_surface_and_later_navigation_remains_disabled() -> None:
+def test_phase4_api_surface_excludes_scoring_and_later_navigation_remains_disabled() -> None:
     router_source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in (REPOSITORY_ROOT / "app" / "routers").glob("*.py")
@@ -34,10 +34,14 @@ def test_no_model_training_http_surface_and_later_navigation_remains_disabled() 
         encoding="utf-8"
     )
 
-    assert "train_pu_model" not in router_source
-    assert "/api/models" not in router_source
-    assert html.count('class="navigation-item is-disabled"') == 3
-    assert '<span>Model Training</span><small>Later phase</small>' in html
+    assert "prefix=\"/api\"" in router_source
+    assert "\"/models/train\"" in router_source
+    assert "\"/models\"" in router_source
+    assert "/api/models/{model_run_id}/score" not in router_source
+    assert "/api/models/{id}/score" not in router_source
+    assert html.count('class="navigation-item is-disabled"') == 2
+    assert 'data-view-target="model-training"' in html
+    assert '<span class="nav-icon" aria-hidden="true">04</span><span>Model Training</span><small>Phase 4</small>' in html
     assert '<span>Audience Explorer</span><small>Later phase</small>' in html
     assert '<span>Campaigns</span><small>Later phase</small>' in html
 
@@ -106,3 +110,38 @@ def test_prohibited_ml_infrastructure_dependencies_are_absent() -> None:
         "spark",
     ):
         assert prohibited not in requirements
+
+
+def test_phase5_scope_scan_confirms_later_phase_scoring_and_activation_absent() -> None:
+    app_source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in REPOSITORY_ROOT.joinpath("app").rglob("*.py")
+    ).casefold()
+    frontend_source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in REPOSITORY_ROOT.joinpath("frontend", "js").glob("*.js")
+    ).casefold()
+    html = (REPOSITORY_ROOT / "frontend" / "index.html").read_text(
+        encoding="utf-8"
+    ).casefold()
+
+    for forbidden in (
+        "propensity_scores",
+        "/api/audience",
+        "/api/campaigns/export",
+        "audience persistence",
+        "activation adapter",
+        "score band",
+        "percentile band",
+        "csv export",
+        "demographic scoring",
+        "/api/models/{model_run_id}/score",
+        "/api/models/{id}/score",
+    ):
+        assert forbidden not in app_source
+        assert forbidden not in frontend_source
+
+    assert 'data-view="audience-explorer"' not in html
+    assert 'data-view-target="audience-explorer"' not in html
+    assert 'data-view="campaigns"' not in html
+    assert 'data-view-target="campaigns"' not in html

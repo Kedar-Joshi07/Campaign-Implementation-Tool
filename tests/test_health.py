@@ -8,7 +8,6 @@ from fastapi.testclient import TestClient
 
 from app import config
 from app.config import APP_NAME, APP_VERSION
-from app.database import connection as connection_module
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.dependencies import get_database_path
@@ -75,13 +74,38 @@ def test_health_reports_unavailable_database(tmp_path: Path) -> None:
     assert response.json()["schema_status"] == "unknown"
 
 
-def test_application_startup_does_not_open_database(
+def test_application_startup_runs_stale_job_reconciliation_and_shutdown(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def fail_if_called(*_args, **_kwargs):
-        raise AssertionError("startup must not open or scan the database")
+    observed: dict[str, object] = {}
 
-    monkeypatch.setattr(connection_module.sqlite3, "connect", fail_if_called)
+    def fake_reconcile(database_path: Path) -> int:
+        observed["database_path"] = database_path
+        return 0
+
+    def fake_shutdown(*, wait: bool) -> None:
+        observed["wait"] = wait
+
+    monkeypatch.setattr("app.main.reconcile_stale_model_training_jobs", fake_reconcile)
+    monkeypatch.setattr("app.main.shutdown_model_training_executor", fake_shutdown)
+
+    with TestClient(app):
+        pass
+
+    assert "database_path" in observed
+    assert observed["wait"] is False
+
+
+def test_application_startup_tolerates_reconciliation_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def failing_reconcile(_database_path: Path) -> int:
+        raise RuntimeError("forced startup reconciliation failure")
+
+    monkeypatch.setattr(
+        "app.main.reconcile_stale_model_training_jobs",
+        failing_reconcile,
+    )
 
     with TestClient(app):
         pass
@@ -101,7 +125,7 @@ def test_first_normal_database_access_initializes_current_schema(
             "SELECT value FROM app_metadata WHERE key = 'schema_version'"
         ).fetchone()[0]
 
-    assert schema_version == "3"
+    assert schema_version == "4"
 
 
 def test_unexpected_api_exception_is_logged_and_sanitized(

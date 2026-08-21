@@ -80,7 +80,7 @@ python3 -m venv .venv
 
 ## Initialize SQLite
 
-Create or verify the current schema (version 3):
+Create or verify the current schema (version 4):
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\init_db.py
@@ -241,7 +241,8 @@ The frontend is served by FastAPI; no frontend build command is required.
 
 The Overview, Data Status, and Historical Analysis views display only API-backed
 aggregate values. Empty datasets are labeled clearly, and backend failures show a
-recoverable error with retry. Model Training, Audience Explorer, and Campaigns
+recoverable error with retry. Model Training is enabled in Phase 4 for
+asynchronous governed training orchestration; Audience Explorer and Campaigns
 remain disabled as later-phase work. A complete Data Status reconciliation scans
 the 5-million-row prospect universe and may take about 30 seconds; the browser
 reuses the completed result for five minutes unless the user explicitly reruns it.
@@ -434,6 +435,36 @@ feature-contract hash, selected `BAGGING_PU` candidate, non-runtime metrics,
 bounded-sample scores, and artifact SHA-256. Exact timings vary with machine load
 and are recorded as evidence rather than an SLA.
 
+## Phase 4 asynchronous model training
+
+Schema version 4 additively extends version 3 with a durable `jobs` lifecycle
+table and indexes for bounded asynchronous execution. The application uses a lazy
+`ProcessPoolExecutor(max_workers=1)` and enforces one active model-training job
+at a time. Job lifecycle state is durable (`QUEUED`, `RUNNING`, `COMPLETED`,
+`FAILED`) with monotonic progress and safe public messages.
+
+On startup, stale active jobs left in `QUEUED` or `RUNNING` are reconciled to
+`FAILED` with a bounded restart message; terminal rows remain unchanged.
+Failures in executor submission, worker execution, delegated Phase 3 training,
+or post-training artifact completion all transition cleanly to `FAILED` without
+fake-success states.
+
+Phase 4 API endpoints:
+
+- `POST /api/models/train`
+- `GET /api/jobs/{job_id}`
+- `GET /api/models`
+- `GET /api/models/{model_run_id}`
+- `GET /api/models/training-options`
+
+Contract highlights:
+
+- Submit returns `202 Accepted` with persisted queued snapshot details.
+- When a training job is already active, submit returns `409 Conflict`.
+- Model detail verifies persisted artifact existence and SHA-256 safely.
+- Artifact drift is surfaced as verification failure in detail payloads.
+- No customer- or person-level raw rows are returned by training/job/model APIs.
+
 ## Run tests
 
 ```powershell
@@ -509,6 +540,11 @@ The example file is documentation only; no secrets are required for this POC.
 - `POST /api/historical/analyses`
 - `GET /api/historical/analyses`
 - `GET /api/historical/analyses/{analysis_run_id}`
+- `POST /api/models/train`
+- `GET /api/jobs/{job_id}`
+- `GET /api/models`
+- `GET /api/models/{model_run_id}`
+- `GET /api/models/training-options`
 - `GET /`
 
 ## Data generators
@@ -519,7 +555,7 @@ regeneration tools; they are not run automatically and are not required when the
 committed Git LFS objects are present. If regeneration is explicitly needed, run
 the scripts separately and validate the resulting files before replacement.
 
-## Known limitations and Phase 4 boundary
+## Known limitations and Phase 5 boundary
 
 ### Post-Phase-3 algorithm-role policy update (2026-08-21)
 
@@ -554,20 +590,25 @@ remain unchanged and loadable.
   demographic `person_id`.
 - SQLite and the local single-process/single-user design are not production
   multi-user infrastructure.
+- Asynchronous training is intentionally bounded to one worker process and one
+  active training job at a time; this is a correctness/safety profile, not a
+  high-throughput scheduler.
 - Model artifacts use local joblib serialization and must be treated as trusted
   local files; the verified loader rejects missing, corrupt, or incompatible
   artifacts but is not a remote model registry.
 
-## Phase 4 handoff
+## Phase 5 handoff
 
-The authoritative Phase 4 handoff is a `model_run_id` whose row is `COMPLETED`,
+The authoritative Phase 5 input is a `model_run_id` whose row is `COMPLETED`,
 references a valid completed `analysis_run_id`, matches the frozen feature
-contract, and has an existing checksum-verified artifact. Phase 4 may reuse the
-Phase 3 service for training orchestration, job/API lifecycle, run listing/detail,
-and the currently disabled Model Training UI.
+contract, and has an existing checksum-verified artifact. For role-policy-v2
+runs, `BAGGING_PU` remains PRIMARY and selected, while challenger/diagnostic
+metrics are retained for governance review.
 
-Phase 4 must not silently add 5-million-row prospect scoring, a
-`propensity_scores` table, Audience Explorer, campaign construction/export, or
-customer/person linkage. Those remain later separately approved phases. See
-`Prompts/phase3_prompt_pack/12_PHASE_4_HANDOFF_CONTRACT.md` and
-`docs/PHASE_3_IMPLEMENTATION_SUMMARY.md`.
+Before any prospect scoring phase, consumers must verify artifact path, SHA-256,
+payload compatibility, feature-contract version/hash, and selected estimator.
+Phase 5 boundary constraints remain in force: no customer/person linkage and no
+automatic addition of Audience Explorer, campaign construction/persistence,
+export, or activation adapters unless separately approved. See
+`Prompts/phase4_prompt_pack/13_PHASE_5_HANDOFF_CONTRACT.md` and
+`docs/PHASE_4_IMPLEMENTATION_SUMMARY.md`.

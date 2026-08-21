@@ -31,10 +31,11 @@
             <span class="nav-icon" aria-hidden="true">03</span><span>Historical Analysis</span><small>Phase 2</small>
           </button>
 
-          <p class="navigation-label">Later phases</p>
-          <button class="navigation-item is-disabled" type="button" disabled>
-            <span>Model Training</span><small>Later phase</small>
+          <button class="navigation-item" type="button" data-view-target="model-training">
+            <span class="nav-icon" aria-hidden="true">04</span><span>Model Training</span><small>Phase 4</small>
           </button>
+
+          <p class="navigation-label">Later phases</p>
           <button class="navigation-item is-disabled" type="button" disabled>
             <span>Audience Explorer</span><small>Later phase</small>
           </button>
@@ -428,6 +429,213 @@
                   <div id="profile-chart" class="profile-chart" role="tabpanel" tabindex="0"></div>
                 </section>
               </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="model-training-view" class="view" data-view="model-training" aria-labelledby="model-training-title" hidden>
+          <div id="model-training-error" class="error-banner" role="alert" hidden>
+            <div>
+              <strong>Model Training is unavailable</strong>
+              <p id="model-training-error-message">The backend request could not be completed.</p>
+            </div>
+            <button id="model-training-retry" class="button button-danger" type="button">Try again</button>
+          </div>
+
+          <section class="page-intro model-training-shell">
+            <div>
+              <p class="eyebrow">Phase 4 · Governed model training</p>
+              <h2 id="model-training-title">Model Training</h2>
+              <p>Train a governed look-alike model from a completed historical analysis with progress tracking, candidate comparison, and safe diagnostics.</p>
+            </div>
+            <button id="model-training-refresh" class="button button-secondary" type="button">Refresh training workspace</button>
+          </section>
+
+          <div id="model-training-loading" class="analysis-page-loading" role="status" aria-live="polite">
+            <span class="spinner" aria-hidden="true"></span>
+            <div><strong>Loading model training options</strong><p>Preparing completed analyses, active jobs, and recent model runs.</p></div>
+          </div>
+
+          <div id="model-training-empty" class="historical-empty" role="status" hidden>
+            <span class="historical-empty-mark" aria-hidden="true">M</span>
+            <div><h3>No completed analyses are available</h3><p>Complete a Historical Analysis run before training a model.</p></div>
+          </div>
+
+          <div id="model-training-workspace" hidden>
+            <div class="model-training-grid">
+              <form id="model-training-form" class="panel model-training-form" novalidate aria-labelledby="model-training-form-title">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Training setup</p><h3 id="model-training-form-title">Source Analysis and Configuration</h3></div>
+                </div>
+
+                <div id="model-training-form-error" class="inline-form-error" role="alert" tabindex="-1" hidden></div>
+
+                <section class="model-training-section" aria-labelledby="source-analysis-title">
+                  <h4 id="source-analysis-title">1. Source Analysis</h4>
+                  <div class="form-field">
+                    <label for="source-analysis-select">Completed analysis</label>
+                    <select id="source-analysis-select" name="analysis_run_id"></select>
+                  </div>
+                  <div id="source-analysis-summary" class="model-source-summary">
+                    <article><span>Analysis</span><strong id="source-analysis-name">—</strong></article>
+                    <article><span>Run ID</span><strong id="source-analysis-id">—</strong></article>
+                    <article><span>Conversion definition</span><strong id="source-conversion-definition">—</strong></article>
+                    <article><span>Date range</span><strong id="source-date-range">—</strong></article>
+                    <article><span>Selected customers</span><strong id="source-selected-count">—</strong></article>
+                    <article><span>Known positives</span><strong id="source-positive-count">—</strong></article>
+                    <article><span>Unlabeled</span><strong id="source-unlabeled-count">—</strong></article>
+                  </div>
+                </section>
+
+                <section class="model-training-section" aria-labelledby="training-config-title">
+                  <h4 id="training-config-title">2. Training Configuration</h4>
+                  <div class="model-config-grid">
+                    <div class="form-field form-field-wide">
+                      <label for="model-name-input">Model Name <span>Optional</span></label>
+                      <input id="model-name-input" name="model_name" type="text" maxlength="160" autocomplete="off" placeholder="e.g. Holiday high-intent look-alike">
+                    </div>
+                    <div class="form-field">
+                      <label for="random-seed-input">Random Seed</label>
+                      <input id="random-seed-input" name="random_seed" type="number" step="1" value="42" required>
+                    </div>
+                    <div class="form-field">
+                      <label for="validation-fraction-input">Validation Fraction</label>
+                      <input id="validation-fraction-input" name="validation_fraction" type="number" min="0.01" max="0.99" step="0.01" value="0.2" required>
+                    </div>
+                  </div>
+                  <label class="checkbox-control" for="run-elkan-challenger-input">
+                    <input id="run-elkan-challenger-input" name="run_elkan_challenger" type="checkbox" checked>
+                    <span><strong>Run Elkan-Noto Challenger</strong><small>Primary Bagging always runs under policy v2 and cannot be disabled.</small></span>
+                  </label>
+                </section>
+
+                <section class="model-training-section" aria-labelledby="governance-cards-title">
+                  <h4 id="governance-cards-title">Governance Roles</h4>
+                  <div class="model-governance-grid">
+                    <article class="model-governance-card is-primary">
+                      <span>PRIMARY</span>
+                      <strong>PU Bagging + Logistic Regression</strong>
+                    </article>
+                    <article class="model-governance-card is-challenger">
+                      <span>CHALLENGER 1</span>
+                      <strong>Elkan-Noto + Logistic Regression</strong>
+                    </article>
+                    <article class="model-governance-card is-diagnostic">
+                      <span>DIAGNOSTIC CONTROL</span>
+                      <strong>Naive Logistic Regression</strong>
+                    </article>
+                  </div>
+                </section>
+
+                <div class="notice model-metric-help" role="note">
+                  <span class="notice-icon" aria-hidden="true">i</span>
+                  <div>
+                    <p>Unlabeled customers are not confirmed negatives. Observed-label ROC-AUC and AP are diagnostics. Lift shows enrichment in the highest-ranked slice. Model scores are not guaranteed calibrated purchase probabilities.</p>
+                  </div>
+                </div>
+
+                <div class="analysis-form-actions">
+                  <button id="train-model-submit" class="button button-primary" type="submit">Train Look-alike Model</button>
+                  <span id="model-training-announcement" role="status" aria-live="polite">Ready to train.</span>
+                </div>
+              </form>
+
+              <aside class="panel model-runs-panel" aria-labelledby="recent-model-runs-title">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Saved models</p><h3 id="recent-model-runs-title">7. Recent Model Runs</h3></div>
+                  <button id="recent-model-runs-refresh" class="button button-secondary" type="button">Refresh</button>
+                </div>
+                <div id="recent-model-runs-loading" class="recent-loading" role="status" aria-live="polite">
+                  <span class="spinner" aria-hidden="true"></span> Loading recent model runs
+                </div>
+                <div id="recent-model-runs-empty" class="compact-empty" hidden>No model runs yet. Your completed training run will appear here.</div>
+                <div id="recent-model-runs-table" class="recent-analysis-list" hidden>
+                  <table>
+                    <thead><tr><th scope="col">Run</th><th scope="col">Status</th><th scope="col">Selected</th><th scope="col">Top-10 lift</th><th scope="col">Quality</th><th scope="col" aria-label="Action"></th></tr></thead>
+                    <tbody id="recent-model-runs-body"></tbody>
+                  </table>
+                </div>
+              </aside>
+            </div>
+
+            <section id="model-job-panel" class="panel model-job-panel" aria-labelledby="model-job-title">
+              <div class="panel-heading">
+                <div><p class="eyebrow">Execution</p><h3 id="model-job-title">3. Active Job / Progress</h3></div>
+              </div>
+              <div id="model-job-empty" class="compact-empty">No active model-training job.</div>
+              <div id="model-job-content" hidden>
+                <div class="analysis-run-identity">
+                  <span id="model-job-status" class="status-badge is-neutral">—</span>
+                  <span>Job <strong id="model-job-id">—</strong></span>
+                </div>
+                <div class="model-job-progress">
+                  <div class="model-job-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <span id="model-job-progress-fill"></span>
+                  </div>
+                  <div class="model-job-progress-copy">
+                    <strong id="model-job-progress-percent">0%</strong>
+                    <span id="model-job-stage">QUEUED</span>
+                  </div>
+                </div>
+                <p id="model-job-message" class="panel-note">Waiting for a training submission.</p>
+                <dl class="model-job-facts">
+                  <div><dt>Source analysis</dt><dd id="model-job-analysis">—</dd></div>
+                  <div><dt>Created</dt><dd id="model-job-created">—</dd></div>
+                  <div><dt>Started</dt><dd id="model-job-started">—</dd></div>
+                  <div><dt>Finished</dt><dd id="model-job-finished">—</dd></div>
+                  <div><dt>Elapsed</dt><dd id="model-job-elapsed">—</dd></div>
+                  <div><dt>Model run ID</dt><dd id="model-job-model-run">—</dd></div>
+                </dl>
+                <p id="model-job-failure" class="inline-form-error" hidden></p>
+              </div>
+            </section>
+
+            <section id="model-summary-panel" class="analysis-results" hidden aria-labelledby="model-summary-title">
+              <div class="analysis-results-heading">
+                <div>
+                  <p class="eyebrow">Model output</p>
+                  <h3 id="model-summary-title">4. Completed Model Summary</h3>
+                  <p id="model-summary-caption">Governed selection and bounded diagnostics.</p>
+                </div>
+              </div>
+              <div class="analysis-metric-grid model-summary-grid">
+                <article><span>Model run ID</span><strong id="summary-model-run-id">—</strong></article>
+                <article><span>Source analysis</span><strong id="summary-analysis-run-id">—</strong></article>
+                <article><span>Selected PRIMARY</span><strong id="summary-selected-primary">—</strong></article>
+                <article><span>Policy version</span><strong id="summary-policy-version">—</strong></article>
+                <article><span>Selected customers</span><strong id="summary-selected-count">—</strong></article>
+                <article><span>Known positives</span><strong id="summary-positive-count">—</strong></article>
+                <article><span>Unlabeled customers</span><strong id="summary-unlabeled-count">—</strong></article>
+                <article><span>Transformed feature count</span><strong id="summary-feature-count">—</strong></article>
+                <article><span>Top-10 lift</span><strong id="summary-top10-lift">—</strong></article>
+                <article><span>Top-10 recall</span><strong id="summary-top10-recall">—</strong></article>
+                <article><span>Quality flags</span><strong id="summary-quality-flags">—</strong></article>
+                <article><span>Artifact verification</span><strong id="summary-artifact-verification">—</strong></article>
+              </div>
+              <div id="challenger-advisory" class="notice model-advisory" role="status" hidden>
+                <span class="notice-icon" aria-hidden="true">!</span>
+                <p>Challenger exceeded the primary on one or more validation diagnostics. The governed primary remains selected under policy v2.</p>
+              </div>
+            </section>
+
+            <section id="candidate-comparison-panel" class="panel" hidden aria-labelledby="candidate-comparison-title">
+              <div class="panel-heading">
+                <div><p class="eyebrow">Validation metrics</p><h3 id="candidate-comparison-title">5. Candidate Comparison</h3></div>
+              </div>
+              <div class="table-scroll model-comparison-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th scope="col">Metric</th>
+                      <th scope="col">PRIMARY Bagging</th>
+                      <th scope="col">CHALLENGER Elkan</th>
+                      <th scope="col">DIAGNOSTIC Naive</th>
+                    </tr>
+                  </thead>
+                  <tbody id="candidate-comparison-body"></tbody>
+                </table>
+              </div>
+              <p id="diagnostic-candidate-note" class="panel-note">DIAGNOSTIC Naive is diagnostic-only and non-selection-eligible.</p>
             </section>
           </div>
         </section>

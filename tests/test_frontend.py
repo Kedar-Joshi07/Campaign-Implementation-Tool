@@ -44,6 +44,7 @@ def test_frontend_contains_functional_phase_one_views(client: TestClient) -> Non
         "/static/js/overview.js",
         "/static/js/historical-overview.js",
         "/static/js/historical-analysis.js",
+        "/static/js/model-training.js",
         "/static/js/data-status.js",
         "/static/js/app.js",
     ),
@@ -58,8 +59,10 @@ def test_frontend_assets_are_served(client: TestClient, asset_path: str) -> None
 def test_later_phase_navigation_is_visibly_disabled(client: TestClient) -> None:
     html = client.get("/").text
 
-    assert html.count('class="navigation-item is-disabled"') == 3
-    assert html.count("Later phase</small>") == 3
+    assert html.count('class="navigation-item is-disabled"') == 2
+    assert html.count("Later phase</small>") == 2
+    assert 'data-view-target="model-training"' in html
+    assert "Phase 4</small>" in html
     assert "Model Training" in html
     assert "Audience Explorer" in html
     assert "Campaigns" in html
@@ -139,3 +142,68 @@ def test_data_status_script_renders_exact_and_approximate_policy_labels(
     assert "dataset.count_tolerance_percent" in script
     assert "125,000" not in script
     assert "5,000,000" not in script
+
+
+def test_model_training_workspace_contains_required_sections_and_controls(
+    client: TestClient,
+) -> None:
+    html = client.get("/").text
+
+    assert 'data-view="model-training"' in html
+    for control_id in (
+        "source-analysis-select",
+        "model-name-input",
+        "random-seed-input",
+        "validation-fraction-input",
+        "run-elkan-challenger-input",
+        "train-model-submit",
+        "model-training-refresh",
+        "model-training-retry",
+        "recent-model-runs-refresh",
+        "candidate-comparison-body",
+    ):
+        assert f'id="{control_id}"' in html
+    assert "Train Look-alike Model" in html
+    assert "PU Bagging + Logistic Regression" in html
+    assert "Elkan-Noto + Logistic Regression" in html
+    assert "Naive Logistic Regression" in html
+    assert "DIAGNOSTIC Naive is diagnostic-only and non-selection-eligible." in html
+    assert "Challenger exceeded the primary on one or more validation diagnostics." in html
+
+
+def test_model_training_script_uses_expected_endpoints_and_polling_contract(
+    client: TestClient,
+) -> None:
+    script = client.get("/static/js/model-training.js").text
+
+    assert 'getCachedJSON(API_PATHS.options' in script
+    assert 'API_PATHS.options = "/api/models/training-options"' not in script
+    assert 'options: "/api/models/training-options"' in script
+    assert 'submit: "/api/models/train"' in script
+    assert 'models: "/api/models?limit=20&offset=0"' in script
+    assert 'jobDetail: (jobId) => `/api/jobs/${jobId}`' in script
+    assert 'analysisDetail: (analysisRunId) => `/api/historical/analyses/${analysisRunId}`' in script
+    assert "window.setTimeout" in script
+    assert "POLL_INTERVAL_MS = 1500" in script
+    assert 'TERMINAL_JOB_STATUSES = new Set(["COMPLETED", "FAILED"])' in script
+    assert "if (TERMINAL_JOB_STATUSES.has(job.status))" in script
+    assert "clearPolling();" in script
+
+
+def test_model_training_script_handles_active_job_failure_advisory_and_safety(
+    client: TestClient,
+) -> None:
+    script = client.get("/static/js/model-training.js").text
+
+    assert "submit.disabled = disabled" in script
+    assert "Training is unavailable while job #" in script
+    assert "Model training failed safely." in script
+    assert "CHALLENGER_OUTPERFORMED_PRIMARY" in script
+    assert "diagnostic-only and non-selection-eligible" in client.get("/").text
+    assert "textContent" in script
+    assert "document.createElement" in script
+    assert "replaceChildren" in script
+    assert "innerHTML" not in script
+    assert "person_id" not in script
+    assert "propensity_scores" not in script
+    assert "/api/models/{model_run_id}/score" not in script

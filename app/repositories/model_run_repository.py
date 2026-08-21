@@ -149,5 +149,36 @@ class ModelRunRepository:
             ).fetchone()
         return dict(row) if row is not None else None
 
+    def list_runs(
+        self,
+        *,
+        limit: int,
+        offset: int,
+        status: str | None = None,
+    ) -> list[dict[str, Any]]:
+        with get_connection(self.database_path) as connection:
+            if status is None:
+                rows = connection.execute(
+                    """
+                    SELECT *
+                    FROM model_runs
+                    ORDER BY created_at DESC, model_run_id DESC
+                    LIMIT ? OFFSET ?
+                    """,
+                    (limit, offset),
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    """
+                    SELECT *
+                    FROM model_runs
+                    WHERE status = ?
+                    ORDER BY created_at DESC, model_run_id DESC
+                    LIMIT ? OFFSET ?
+                    """,
+                    (status, limit, offset),
+                ).fetchall()
+        return [dict(row) for row in rows]
+
 
 __all__ = ("ModelRunRepository",)

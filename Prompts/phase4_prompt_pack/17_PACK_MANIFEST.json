@@ -1,0 +1,91 @@
+{
+  "repository": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git",
+  "phase3_baseline": "04e61caddedcf7963e824e2ccc425ac241d03842",
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 1518,
+      "sha256": "6efbfd9439a62245947cf1570a516cd039864e1e4528959d6c5be8d115b24a63"
+    },
+    {
+      "file": "01_PHASE_4_FREEZE_AND_BOUNDARIES.md",
+      "bytes": 4947,
+      "sha256": "4cbe51e53b3c9306c00d28903df02a032da4f81d506c18d547f3a095f9b6045e"
+    },
+    {
+      "file": "02_AGENT_OPERATING_INSTRUCTIONS.md",
+      "bytes": 1633,
+      "sha256": "688b1369ae7de9865beba9dc0001e1e990ec52f9f13a5b2334109b499d167189"
+    },
+    {
+      "file": "03_STEP_01_SCHEMA_JOB_FOUNDATION.md",
+      "bytes": 1868,
+      "sha256": "7ea9d2c31a4d7ca20bf07a9e532feee676b257aaf5025362d36721dec7fb8e61"
+    },
+    {
+      "file": "04_STEP_02_BACKGROUND_ORCHESTRATION.md",
+      "bytes": 2268,
+      "sha256": "f5d43f672a4ab36de547a6f37a7130ecdfe409d72c1296c1094f6d37b09603ed"
+    },
+    {
+      "file": "05_STEP_03_MODEL_AND_JOB_APIS.md",
+      "bytes": 2165,
+      "sha256": "6ef13b1cfb0ef53045426f72fa57b17e4ad8a7028a923122275d96bebcb7d57a"
+    },
+    {
+      "file": "06_STEP_04_MODEL_TRAINING_UI.md",
+      "bytes": 2667,
+      "sha256": "ed02369322826e58dee089aed720b9bdc19d651118269a6e9b08639dc3f0904d"
+    },
+    {
+      "file": "07_STEP_05_HARDENING_AND_FINAL_VALIDATION.md",
+      "bytes": 2620,
+      "sha256": "ab59061766ad926714f2f1823c186841929d82c8fd74c692681c850653511c0b"
+    },
+    {
+      "file": "08_PROGRESS_TRACKER.md",
+      "bytes": 1394,
+      "sha256": "4de3208e73ebe0984b54006873b92a06255355671b5ae4dd0f4c6a185d10b130"
+    },
+    {
+      "file": "09_JOB_LIFECYCLE_CONTRACT.md",
+      "bytes": 1428,
+      "sha256": "58239120daa8f41d25aab2e44729ec7064f2d5863f99972ede0f82a4fd0070e1"
+    },
+    {
+      "file": "10_MODEL_API_CONTRACT.md",
+      "bytes": 1200,
+      "sha256": "3c63b4c41ae82bf12cfc1eba362dbb3736ec5816e72bcfa496b0e2bfb282f111"
+    },
+    {
+      "file": "11_MODEL_TRAINING_UI_CONTRACT.md",
+      "bytes": 1206,
+      "sha256": "ae2c0a80cc50b0c8fa44bce64d9ee7af667bf5e2807771975acdeb29dbfdaf3f"
+    },
+    {
+      "file": "12_PHASE_4_ACCEPTANCE_CHECKLIST.md",
+      "bytes": 3552,
+      "sha256": "62bafb2eaef0399962defcc54d65adc95faec12f5451664d6d8408de639fa140"
+    },
+    {
+      "file": "13_PHASE_5_HANDOFF_CONTRACT.md",
+      "bytes": 1019,
+      "sha256": "390281908bb5bbf992016b2e74d09311ce3b885f59790aa2c14418d51fe912bd"
+    },
+    {
+      "file": "14_SECURITY_AND_TEST_MATRIX.md",
+      "bytes": 1402,
+      "sha256": "a57c9c2afe0ec565e1bcd5543f511d113bb121a3b10e49ef9c1fe729884aa9d9"
+    },
+    {
+      "file": "15_SINGLE_MASTER_PHASE4_PROMPT.md",
+      "bytes": 1808,
+      "sha256": "dd404687bde6e9787c919213166b0a7b3defd205a897722a3451d92dca2315e7"
+    },
+    {
+      "file": "16_EXPECTED_PHASE4_FILE_STRUCTURE.md",
+      "bytes": 760,
+      "sha256": "b8f3edb061a4865b8ef243ff47ed9a15a9300bfba78a381c869aa06866bcf007"
+    }
+  ]
+}

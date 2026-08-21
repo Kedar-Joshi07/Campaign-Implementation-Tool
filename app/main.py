@@ -11,12 +11,15 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.config import APP_ENV, APP_NAME, APP_VERSION
+from app.config import APP_ENV, APP_NAME, APP_VERSION, DATABASE_PATH
+from app.jobs.executor import shutdown_model_training_executor
 from app.logging_config import configure_logging
 from app.routers.data import router as data_router
 from app.routers.health import router as health_router
 from app.routers.historical import router as historical_router
+from app.routers.models import router as model_router
 from app.routers.reference import router as reference_router
+from app.services.model_job_service import reconcile_stale_model_training_jobs
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -34,8 +37,19 @@ async def lifespan(_: FastAPI):
         APP_VERSION,
         APP_ENV,
     )
-    yield
-    logger.info("Application stopping | name=%s", APP_NAME)
+    try:
+        stale_failed = reconcile_stale_model_training_jobs(DATABASE_PATH)
+        logger.info(
+            "Model-training startup reconciliation completed | failed_stale_jobs=%s",
+            stale_failed,
+        )
+    except Exception:
+        logger.exception("Model-training startup reconciliation failed")
+    try:
+        yield
+    finally:
+        shutdown_model_training_executor(wait=False)
+        logger.info("Application stopping | name=%s", APP_NAME)
 
 
 app = FastAPI(
@@ -51,6 +65,7 @@ app.include_router(health_router)
 app.include_router(data_router)
 app.include_router(reference_router)
 app.include_router(historical_router)
+app.include_router(model_router)
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 

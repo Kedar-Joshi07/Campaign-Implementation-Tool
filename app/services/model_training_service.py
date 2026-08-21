@@ -14,13 +14,13 @@ import traceback
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import joblib
 import numpy as np
 
 from app.database.schema import initialize_database
-from app.ml.evaluation import evaluate_and_select_model
+from app.ml.evaluation import EVALUATION_CONTRACT_VERSION, evaluate_and_select_model
 from app.ml.feature_contract import (
     FEATURE_CONTRACT_SHA256,
     FEATURE_CONTRACT_VERSION,
@@ -48,6 +48,23 @@ RELOAD_RELATIVE_TOLERANCE = 1e-12
 RELOAD_ABSOLUTE_TOLERANCE = 1e-12
 MAXIMUM_MODEL_NAME_LENGTH = 160
 MAXIMUM_INTERNAL_ERROR_LENGTH = 65_536
+
+TRAINING_PROGRESS_STAGES: dict[str, int] = {
+    "QUEUED": 0,
+    "STARTING": 5,
+    "RECONSTRUCTING_COHORT": 15,
+    "SPLITTING_DATA": 25,
+    "PREPROCESSING": 35,
+    "TRAINING_PRIMARY": 50,
+    "TRAINING_CHALLENGER": 62,
+    "TRAINING_DIAGNOSTIC": 70,
+    "EVALUATING": 80,
+    "PERSISTING_ARTIFACT": 90,
+    "VERIFYING_ARTIFACT": 95,
+    "COMPLETED": 100,
+}
+
+ProgressCallback = Callable[[str, int, str | None, int | None], None]
 
 
 class ModelTrainingServiceError(RuntimeError):
@@ -279,6 +296,19 @@ def _stored_artifact_path(project_root: Path, raw_path: Any) -> Path:
     return resolved
 
 
+def _emit_progress(
+    progress_callback: ProgressCallback | None,
+    *,
+    stage: str,
+    progress_percent: int,
+    message: str | None,
+    model_run_id: int | None,
+) -> None:
+    if progress_callback is None:
+        return
+    progress_callback(stage, progress_percent, message, model_run_id)
+
+
 def load_verified_model_artifact(
     database_path: str | Path,
     model_run_id: int,
@@ -321,6 +351,7 @@ def train_and_persist_model(
     run_elkan_challenger: bool = True,
     project_root: str | Path | None = None,
     artifact_root: str | Path = DEFAULT_ARTIFACT_ROOT,
+    progress_callback: ProgressCallback | None = None,
 ) -> dict[str, Any]:
     """Execute the governed RUNNING-to-COMPLETED/FAILED model lifecycle."""
     if (
@@ -365,6 +396,13 @@ def train_and_persist_model(
         raise ModelTrainingValidationError(
             "The source historical analysis run does not exist."
         ) from exc
+    _emit_progress(
+        progress_callback,
+        stage="STARTING",
+        progress_percent=TRAINING_PROGRESS_STAGES["STARTING"],
+        message="Model run row created.",
+        model_run_id=model_run_id,
+    )
 
     run_directory: Path | None = None
     temporary_path: Path | None = None
@@ -374,9 +412,23 @@ def train_and_persist_model(
     stage_seconds: dict[str, float] = {}
     try:
         stage_started = time.perf_counter()
+        _emit_progress(
+            progress_callback,
+            stage="RECONSTRUCTING_COHORT",
+            progress_percent=TRAINING_PROGRESS_STAGES["RECONSTRUCTING_COHORT"],
+            message="Reconstructing customer-grain training cohort.",
+            model_run_id=model_run_id,
+        )
         cohort = reconstruct_training_cohort(initialized_path, analysis_run_id)
         stage_seconds["reconstruction"] = time.perf_counter() - stage_started
         stage_started = time.perf_counter()
+        _emit_progress(
+            progress_callback,
+            stage="SPLITTING_DATA",
+            progress_percent=TRAINING_PROGRESS_STAGES["SPLITTING_DATA"],
+            message="Splitting deterministic train/validation cohort.",
+            model_run_id=model_run_id,
+        )
         split = split_customer_cohort(
             cohort.frame,
             validation_fraction=float(validation_fraction),
@@ -384,17 +436,55 @@ def train_and_persist_model(
         )
         stage_seconds["split"] = time.perf_counter() - stage_started
         stage_started = time.perf_counter()
+        _emit_progress(
+            progress_callback,
+            stage="PREPROCESSING",
+            progress_percent=TRAINING_PROGRESS_STAGES["PREPROCESSING"],
+            message="Fitting training-only preprocessing pipeline.",
+            model_run_id=model_run_id,
+        )
         prepared = prepare_feature_matrices(split)
         stage_seconds["preprocessing"] = time.perf_counter() - stage_started
         stage_started = time.perf_counter()
+        _emit_progress(
+            progress_callback,
+            stage="TRAINING_PRIMARY",
+            progress_percent=TRAINING_PROGRESS_STAGES["TRAINING_PRIMARY"],
+            message="Training PRIMARY candidate.",
+            model_run_id=model_run_id,
+        )
         candidates = train_pu_candidates(
             prepared,
             split,
             random_seed=random_seed,
             run_elkan_challenger=run_elkan_challenger,
         )
+        _emit_progress(
+            progress_callback,
+            stage="TRAINING_CHALLENGER",
+            progress_percent=TRAINING_PROGRESS_STAGES["TRAINING_CHALLENGER"],
+            message=(
+                "Training CHALLENGER_1 candidate "
+                f"({candidates.challenger_1.status})."
+            ),
+            model_run_id=model_run_id,
+        )
+        _emit_progress(
+            progress_callback,
+            stage="TRAINING_DIAGNOSTIC",
+            progress_percent=TRAINING_PROGRESS_STAGES["TRAINING_DIAGNOSTIC"],
+            message="Training DIAGNOSTIC_CONTROL candidate.",
+            model_run_id=model_run_id,
+        )
         stage_seconds["candidate_training"] = time.perf_counter() - stage_started
         stage_started = time.perf_counter()
+        _emit_progress(
+            progress_callback,
+            stage="EVALUATING",
+            progress_percent=TRAINING_PROGRESS_STAGES["EVALUATING"],
+            message="Evaluating governed candidates and selecting primary.",
+            model_run_id=model_run_id,
+        )
         evaluation = evaluate_and_select_model(candidates, split)
         stage_seconds["evaluation_selection"] = time.perf_counter() - stage_started
         selected_result = evaluation.selected_candidate_result
@@ -403,6 +493,13 @@ def train_and_persist_model(
             raise ModelArtifactError("The selected candidate has no validation scores.")
 
         stage_started = time.perf_counter()
+        _emit_progress(
+            progress_callback,
+            stage="PERSISTING_ARTIFACT",
+            progress_percent=TRAINING_PROGRESS_STAGES["PERSISTING_ARTIFACT"],
+            message="Persisting selected model artifact.",
+            model_run_id=model_run_id,
+        )
         artifact_storage_root.mkdir(parents=True, exist_ok=True)
         run_directory = artifact_storage_root / f"model_run_{model_run_id:06d}"
         run_directory.mkdir(exist_ok=False)
@@ -412,6 +509,13 @@ def train_and_persist_model(
         joblib.dump(_artifact_payload(prepared, evaluation), temporary_path, compress=3)
         os.replace(temporary_path, final_path)
         temporary_path = None
+        _emit_progress(
+            progress_callback,
+            stage="VERIFYING_ARTIFACT",
+            progress_percent=TRAINING_PROGRESS_STAGES["VERIFYING_ARTIFACT"],
+            message="Reloading and verifying persisted artifact.",
+            model_run_id=model_run_id,
+        )
         _verify_reloaded_scores(
             final_path,
             validation_features=split.validation_features,
@@ -437,11 +541,15 @@ def train_and_persist_model(
         top10_lift = selected_metrics["top_slice_metrics"]["top_10_percent"][
             "known_positive_lift_at_k"
         ]
+        challenger_advisory_flags: list[str] = []
+        if evaluation.challenger_comparison.get("challenger_outperformed_primary"):
+            challenger_advisory_flags.append("CHALLENGER_OUTPERFORMED_PRIMARY")
         summary = {
             "model_run_id": model_run_id,
             "analysis_run_id": analysis_run_id,
             "model_name": normalized_name,
             "status": "COMPLETED",
+            "evaluation_contract_version": EVALUATION_CONTRACT_VERSION,
             "model_role_policy_version": MODEL_ROLE_POLICY_VERSION,
             "primary_candidate": PRIMARY_MODEL_NAME,
             "challenger_1": CHALLENGER_1_MODEL_NAME,
@@ -468,6 +576,7 @@ def train_and_persist_model(
             },
             "stage_seconds": stage_seconds,
             "quality_flags": list(evaluation.quality_flags),
+            "challenger_advisory_flags": challenger_advisory_flags,
             "artifact_path": artifact_relative_path,
             "artifact_sha256": artifact_sha256,
         }
@@ -534,6 +643,7 @@ __all__ = (
     "ModelTrainingExecutionError",
     "ModelTrainingServiceError",
     "ModelTrainingValidationError",
+    "TRAINING_PROGRESS_STAGES",
     "load_verified_model_artifact",
     "train_and_persist_model",
 )

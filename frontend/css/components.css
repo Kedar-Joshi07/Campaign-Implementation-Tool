@@ -1162,6 +1162,234 @@ tbody tr:hover td {
   box-shadow: var(--shadow-sm);
 }
 
+.model-training-shell {
+  border-color: #dce4f6;
+  background: linear-gradient(120deg, #ffffff, #f0f7ff);
+}
+
+.model-training-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+  gap: 17px;
+  align-items: start;
+  margin-top: 17px;
+}
+
+.model-training-form {
+  min-width: 0;
+}
+
+.model-training-section {
+  margin-top: 15px;
+}
+
+.model-training-section h4 {
+  margin-bottom: 10px;
+  color: var(--ink-soft);
+  font-size: 0.83rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.model-source-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.model-source-summary article {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+
+.model-source-summary span,
+.model-source-summary strong {
+  display: block;
+}
+
+.model-source-summary span {
+  color: var(--muted);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+}
+
+.model-source-summary strong {
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  font-size: 0.73rem;
+}
+
+.model-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.model-governance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.model-governance-card {
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-soft);
+}
+
+.model-governance-card span,
+.model-governance-card strong {
+  display: block;
+}
+
+.model-governance-card span {
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 780;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.model-governance-card strong {
+  margin-top: 6px;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.model-governance-card.is-primary {
+  border-color: #b8caf7;
+  background: #edf3ff;
+}
+
+.model-governance-card.is-challenger {
+  border-color: #cfd8f4;
+  background: #f4f7ff;
+}
+
+.model-governance-card.is-diagnostic {
+  border-color: #d5dee8;
+  background: #f6f8fb;
+}
+
+.model-metric-help {
+  margin-top: 14px;
+}
+
+.model-metric-help p {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.model-runs-panel {
+  min-width: 0;
+}
+
+.model-job-panel {
+  margin-top: 17px;
+}
+
+.model-job-progress {
+  margin-top: 12px;
+}
+
+.model-job-progress-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8edf8;
+}
+
+.model-job-progress-track > span {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2c7be5, #16a085);
+  transition: width 220ms ease;
+}
+
+.model-job-progress-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 0.73rem;
+}
+
+.model-job-progress-copy strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.model-job-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.model-job-facts > div {
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-soft);
+}
+
+.model-job-facts dt {
+  color: var(--muted);
+  font-size: 0.61rem;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.model-job-facts dd {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.7rem;
+  font-weight: 680;
+}
+
+.model-summary-grid {
+  margin-top: 14px;
+}
+
+.model-advisory {
+  margin-top: 14px;
+  border-color: #f3d6b2;
+  background: #fff8ef;
+}
+
+.model-advisory .notice-icon {
+  background: #c46a07;
+}
+
+.model-comparison-scroll {
+  margin-top: 14px;
+}
+
+.model-comparison-scroll table {
+  min-width: 720px;
+}
+
+@media (max-width: 1100px) {
+  .model-training-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .model-source-summary,
+  .model-job-facts,
+  .model-governance-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .analysis-results-heading,
 .analysis-profile-heading {
   display: flex;
@@ -1472,6 +1700,13 @@ tbody tr:hover td {
   .historical-chart-card:first-child,
   .historical-chart-skeletons > div:first-child {
     grid-column: auto;
+  }
+
+  .model-source-summary,
+  .model-governance-grid,
+  .model-config-grid,
+  .model-job-facts {
+    grid-template-columns: 1fr;
   }
 
   .analysis-form-grid,
