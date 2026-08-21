@@ -373,10 +373,10 @@ encoding are fitted on the training partition only; unknown future categories
 are ignored safely.
 
 The default deterministic split uses seed `42`, a 20% validation partition, and
-stratification on the PU label. Phase 3 fits:
+stratification on the PU label. Under model-role policy version 2, Phase 3 fits:
 
-- Elkan–Noto logistic regression as the required genuine-PU candidate;
-- bounded Bagging PU as the genuine-PU challenger;
+- bounded Bagging PU as the mandatory PRIMARY genuine-PU candidate;
+- Elkan–Noto logistic regression as CHALLENGER_1;
 - a naive logistic baseline that treats unlabeled as negative for diagnostic
   comparison only and is never eligible for official selection.
 
@@ -398,7 +398,7 @@ First create or reuse a completed Phase 2 analysis, then run:
 ```
 
 Useful options are `--random-seed`, `--validation-fraction`,
-`--run-challenger`/`--no-run-challenger`, and `--database-path`. The CLI
+`--run-elkan-challenger`/`--no-run-elkan-challenger`, and `--database-path`. The CLI
 initializes schema v3, creates a `RUNNING` row, reconstructs and reconciles the
 cohort, trains/evaluates candidates, atomically writes and reload-verifies the
 artifact, persists SHA-256 plus a relative path, and marks the row `COMPLETED`.
@@ -423,9 +423,9 @@ SHA-256, payload contract, and selected candidate before returning the model.
 
 Unlabeled rows may contain unknown positives, so ordinary accuracy, specificity,
 or “true precision” would be misleading. Evaluation explicitly labels ROC-AUC
-and average precision as observed-label diagnostics and selects among genuine-PU
-candidates using held-out known-positive recall/lift at the top 5%, 10%, and 20%,
-score separation/stability, reproducibility, runtime, and simplicity. These are
+and average precision as observed-label diagnostics. Under role-governed policy
+version 2, the valid nonconstant PRIMARY Bagging candidate is selected while
+challenger and diagnostic metrics/deltas are persisted for comparison. These are
 synthetic-POC ranking diagnostics, not real-world population-performance or
 calibrated-probability claims.
 
