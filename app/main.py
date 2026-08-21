@@ -15,6 +15,7 @@ from app.config import APP_ENV, APP_NAME, APP_VERSION
 from app.logging_config import configure_logging
 from app.routers.data import router as data_router
 from app.routers.health import router as health_router
+from app.routers.historical import router as historical_router
 from app.routers.reference import router as reference_router
 
 
@@ -40,12 +41,16 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
-    description="Phase 1 foundation for the Campaign Implementation Tool POC.",
+    description=(
+        "Campaign Implementation Tool POC with Phase 1 data foundations and "
+        "Phase 2 aggregate historical campaign analysis."
+    ),
     lifespan=lifespan,
 )
 app.include_router(health_router)
 app.include_router(data_router)
 app.include_router(reference_router)
+app.include_router(historical_router)
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 

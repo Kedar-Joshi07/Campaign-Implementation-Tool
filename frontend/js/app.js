@@ -1,10 +1,12 @@
 import { getCachedJSON } from "./api.js";
 import { initializeDataStatus, loadDataStatus } from "./data-status.js";
+import { initializeHistoricalAnalysis, loadHistoricalAnalysis } from "./historical-analysis.js";
 import { initializeOverview, loadOverview } from "./overview.js";
 
 const viewTitles = {
   overview: "Overview",
   "data-status": "Data Status",
+  "historical-analysis": "Historical Analysis",
 };
 
 function setBackendStatus(state, text) {
@@ -48,7 +50,8 @@ function showView(viewName) {
   document.querySelector("#page-title").textContent = title;
   document.title = `${title} | Campaign Implementation Intelligence`;
   if (safeView === "overview") loadOverview();
-  else loadDataStatus();
+  else if (safeView === "data-status") loadDataStatus();
+  else if (safeView === "historical-analysis") loadHistoricalAnalysis();
 }
 
 function requestedView() {
@@ -69,6 +72,7 @@ function initializeNavigation() {
 document.addEventListener("DOMContentLoaded", () => {
   initializeOverview();
   initializeDataStatus();
+  initializeHistoricalAnalysis();
   initializeNavigation();
   document.querySelector("#backend-status").addEventListener("click", () => checkBackendHealth(true));
   window.addEventListener("backend-status", (event) => {

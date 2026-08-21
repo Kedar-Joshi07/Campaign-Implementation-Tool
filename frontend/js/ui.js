@@ -1,4 +1,13 @@
 const numberFormatter = new Intl.NumberFormat("en-US");
+const percentFormatter = new Intl.NumberFormat("en-US", {
+  style: "percent",
+  maximumFractionDigits: 1,
+});
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
   month: "short",
@@ -30,6 +39,14 @@ const statusPresentation = {
 
 export function formatNumber(value) {
   return value === null || value === undefined ? "—" : numberFormatter.format(value);
+}
+
+export function formatPercent(value) {
+  return Number.isFinite(Number(value)) ? percentFormatter.format(Number(value)) : "—";
+}
+
+export function formatCurrency(value) {
+  return Number.isFinite(Number(value)) ? currencyFormatter.format(Number(value)) : "—";
 }
 
 export function formatDate(value, includeTime = false) {

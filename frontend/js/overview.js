@@ -1,4 +1,5 @@
 import { getCachedJSON } from "./api.js";
+import { loadHistoricalOverview } from "./historical-overview.js";
 import { formatDate, formatNumber, hideError, setButtonLoading, setStatusBadge, showError } from "./ui.js";
 
 const metricIds = [
@@ -121,12 +122,16 @@ export async function loadOverview(force = false) {
   setReadinessLoading();
 
   const errors = [];
+  let healthResult = null;
   await Promise.all([
     getCachedJSON("/api/data/summary", { maxAgeMs: 300_000, force }).then(renderSummary).catch((error) => {
       setSummaryError();
       errors.push(error);
     }),
-    getCachedJSON("/api/health", { maxAgeMs: 30_000, force }).then(renderHealth).catch((error) => {
+    getCachedJSON("/api/health", { maxAgeMs: 30_000, force }).then((health) => {
+      healthResult = health;
+      renderHealth(health);
+    }).catch((error) => {
       renderHealthError();
       errors.push(error);
     }),
@@ -138,7 +143,22 @@ export async function loadOverview(force = false) {
       }
       errors.push(error);
     }),
+    loadHistoricalOverview(force).catch((error) => {
+      errors.push(error);
+    }),
   ]);
   setButtonLoading(refreshButton, false, "Refreshing…");
-  if (errors.length) showError(errorBanner, errorMessage, errors[0]);
+  if (errors.length) {
+    showError(errorBanner, errorMessage, errors[0]);
+    window.dispatchEvent(new CustomEvent("backend-status", {
+      detail: { state: "is-offline", text: "Backend unavailable" },
+    }));
+  } else if (healthResult) {
+    window.dispatchEvent(new CustomEvent("backend-status", {
+      detail: {
+        state: "is-online",
+        text: `Database online · v${healthResult.version}`,
+      },
+    }));
+  }
 }

@@ -21,8 +21,13 @@ export async function getJSON(url, options = {}) {
   }
 
   if (!response.ok) {
-    const message = payload.detail || payload.message || response.statusText;
-    throw new Error(`Request failed (${response.status}): ${message}`);
+    const detail = payload.detail || payload.message;
+    const message = Array.isArray(detail)
+      ? detail.map((item) => item.msg || "Invalid request value").join("; ")
+      : (detail || response.statusText);
+    const error = new Error(`Request failed (${response.status}): ${message}`);
+    error.status = response.status;
+    throw error;
   }
 
   return payload;

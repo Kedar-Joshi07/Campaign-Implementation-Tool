@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 import time
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -13,7 +15,9 @@ from app.database.connection import get_connection
 
 
 logger = logging.getLogger(__name__)
-SCHEMA_VERSION = "1"
+PHASE_ONE_SCHEMA_VERSION = 1
+CURRENT_SCHEMA_VERSION = 2
+SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
     "app_metadata",
@@ -21,6 +25,24 @@ EXPECTED_TABLES = (
     "customers",
     "campaign_sales",
     "demographics",
+    "historical_analysis_runs",
+)
+
+HISTORICAL_ANALYSIS_RUN_COLUMNS = (
+    "analysis_run_id",
+    "analysis_name",
+    "created_at",
+    "completed_at",
+    "status",
+    "conversion_definition",
+    "filters_json",
+    "results_json",
+    "observation_count",
+    "selected_customer_count",
+    "positive_customer_count",
+    "unlabeled_customer_count",
+    "positive_customer_rate",
+    "error_message",
 )
 
 CUSTOMER_COLUMNS = (
@@ -250,7 +272,7 @@ CREATE_TABLE_STATEMENTS = (
     """,
 )
 
-REQUIRED_INDEX_STATEMENTS = {
+PHASE_ONE_REQUIRED_INDEX_STATEMENTS = {
     "idx_customers_state": "CREATE INDEX IF NOT EXISTS idx_customers_state ON customers (state)",
     "idx_customers_date_of_birth": (
         "CREATE INDEX IF NOT EXISTS idx_customers_date_of_birth ON customers (date_of_birth)"
@@ -306,24 +328,212 @@ REQUIRED_INDEX_STATEMENTS = {
     ),
 }
 
+PHASE_TWO_REQUIRED_INDEX_STATEMENTS = {
+    "idx_historical_analysis_runs_newest": (
+        "CREATE INDEX IF NOT EXISTS idx_historical_analysis_runs_newest "
+        "ON historical_analysis_runs (created_at DESC, analysis_run_id DESC)"
+    ),
+    "idx_campaign_sales_campaign_channel": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_sales_campaign_channel "
+        "ON campaign_sales (campaign_channel)"
+    ),
+    "idx_campaign_sales_product_category": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_sales_product_category "
+        "ON campaign_sales (product_category)"
+    ),
+    "idx_campaign_sales_campaign_type": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_sales_campaign_type "
+        "ON campaign_sales (campaign_type)"
+    ),
+}
+
+REQUIRED_INDEX_STATEMENTS = {
+    **PHASE_ONE_REQUIRED_INDEX_STATEMENTS,
+    **PHASE_TWO_REQUIRED_INDEX_STATEMENTS,
+}
+
+
+class UnsupportedSchemaVersionError(RuntimeError):
+    """Raised when a database version cannot be safely handled by this application."""
+
 
 def _utc_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
-def initialize_database(database_path: str | Path | None = None) -> Path:
-    """Create or verify the complete Phase 1 schema without deleting data."""
-    path = Path(database_path) if database_path is not None else DATABASE_PATH
-    timestamp = _utc_timestamp()
+def _table_exists(connection: sqlite3.Connection, table_name: str) -> bool:
+    return (
+        connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            (table_name,),
+        ).fetchone()
+        is not None
+    )
+
+
+def _user_table_names(connection: sqlite3.Connection) -> tuple[str, ...]:
+    return tuple(
+        row["name"]
+        for row in connection.execute(
+            """
+            SELECT name
+            FROM sqlite_master
+            WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+            ORDER BY name
+            """
+        ).fetchall()
+    )
+
+
+def _stored_schema_version(connection: sqlite3.Connection) -> int:
+    row = connection.execute(
+        "SELECT value FROM app_metadata WHERE key = ?",
+        ("schema_version",),
+    ).fetchone()
+    if row is None:
+        raise UnsupportedSchemaVersionError(
+            "Database metadata does not contain a schema_version value."
+        )
+    try:
+        return int(row["value"])
+    except (TypeError, ValueError) as exc:
+        raise UnsupportedSchemaVersionError(
+            f"Database schema_version is invalid: {row['value']!r}."
+        ) from exc
+
+
+def _initialize_phase_one_schema(path: Path, timestamp: str) -> None:
+    """Create the accepted Phase 1 base only when the database is empty."""
+    with get_connection(path) as connection:
+        if _table_exists(connection, "app_metadata"):
+            return
 
     with get_connection(path, write=True) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        if _table_exists(connection, "app_metadata"):
+            return
+
+        existing_tables = _user_table_names(connection)
+        if existing_tables:
+            raise UnsupportedSchemaVersionError(
+                "Database has tables but no app_metadata schema version; "
+                "automatic migration was not attempted."
+            )
+
         for statement in CREATE_TABLE_STATEMENTS:
             connection.execute(statement)
 
         for key, value in (
-            ("schema_version", SCHEMA_VERSION),
+            ("schema_version", str(PHASE_ONE_SCHEMA_VERSION)),
             ("application_version", APP_VERSION),
+            ("database_initialized_at", timestamp),
         ):
+            connection.execute(
+                """
+                INSERT INTO app_metadata (key, value, updated_at)
+                VALUES (?, ?, ?)
+                """,
+                (key, value, timestamp),
+            )
+
+
+def _migrate_to_version_2(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE historical_analysis_runs (
+            analysis_run_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            analysis_name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            completed_at TEXT,
+            status TEXT NOT NULL
+                CHECK (status IN ('RUNNING', 'COMPLETED', 'FAILED')),
+            conversion_definition TEXT NOT NULL
+                CHECK (conversion_definition IN (
+                    'ATTRIBUTED_PURCHASE', 'ANY_PURCHASE', 'RESPONSE'
+                )),
+            filters_json TEXT NOT NULL,
+            results_json TEXT,
+            observation_count INTEGER NOT NULL DEFAULT 0
+                CHECK (observation_count >= 0),
+            selected_customer_count INTEGER NOT NULL DEFAULT 0
+                CHECK (selected_customer_count >= 0),
+            positive_customer_count INTEGER NOT NULL DEFAULT 0
+                CHECK (positive_customer_count >= 0),
+            unlabeled_customer_count INTEGER NOT NULL DEFAULT 0
+                CHECK (unlabeled_customer_count >= 0),
+            positive_customer_rate REAL,
+            error_message TEXT,
+            CHECK (
+                positive_customer_rate IS NULL
+                OR positive_customer_rate BETWEEN 0 AND 1
+            )
+        )
+        """
+    )
+    for statement in PHASE_TWO_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+
+
+MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
+    2: _migrate_to_version_2,
+}
+
+
+def initialize_database(database_path: str | Path | None = None) -> Path:
+    """Create the Phase 1 base and apply each missing schema migration in order."""
+    path = Path(database_path) if database_path is not None else DATABASE_PATH
+    timestamp = _utc_timestamp()
+
+    _initialize_phase_one_schema(path, timestamp)
+
+    with get_connection(path) as connection:
+        stored_version = _stored_schema_version(connection)
+
+    if stored_version > CURRENT_SCHEMA_VERSION:
+        raise UnsupportedSchemaVersionError(
+            "Database schema version "
+            f"{stored_version} is newer than supported version {CURRENT_SCHEMA_VERSION}."
+        )
+    if stored_version < PHASE_ONE_SCHEMA_VERSION:
+        raise UnsupportedSchemaVersionError(
+            f"Database schema version {stored_version} is older than the supported base "
+            f"version {PHASE_ONE_SCHEMA_VERSION}."
+        )
+
+    for target_version in range(stored_version + 1, CURRENT_SCHEMA_VERSION + 1):
+        migration = MIGRATIONS.get(target_version)
+        if migration is None:
+            raise UnsupportedSchemaVersionError(
+                f"No migration is registered for schema version {target_version}."
+            )
+
+        with get_connection(path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            current_version = _stored_schema_version(connection)
+            if current_version >= target_version:
+                continue
+            if current_version != target_version - 1:
+                raise UnsupportedSchemaVersionError(
+                    "Database schema changed during migration; expected version "
+                    f"{target_version - 1}, found {current_version}."
+                )
+            migration(connection)
+            connection.execute(
+                """
+                UPDATE app_metadata
+                SET value = ?, updated_at = ?
+                WHERE key = 'schema_version'
+                """,
+                (str(target_version), timestamp),
+            )
+
+    with get_connection(path) as connection:
+        application_version_row = connection.execute(
+            "SELECT value FROM app_metadata WHERE key = 'application_version'"
+        ).fetchone()
+
+    if application_version_row is None or application_version_row["value"] != APP_VERSION:
+        with get_connection(path, write=True) as connection:
             connection.execute(
                 """
                 INSERT INTO app_metadata (key, value, updated_at)
@@ -332,23 +542,15 @@ def initialize_database(database_path: str | Path | None = None) -> Path:
                     value = excluded.value,
                     updated_at = excluded.updated_at
                 """,
-                (key, value, timestamp),
+                ("application_version", APP_VERSION, timestamp),
             )
-
-        connection.execute(
-            """
-            INSERT OR IGNORE INTO app_metadata (key, value, updated_at)
-            VALUES (?, ?, ?)
-            """,
-            ("database_initialized_at", timestamp, timestamp),
-        )
 
     logger.info("SQLite schema initialized or verified | path=%s version=%s", path, SCHEMA_VERSION)
     return path
 
 
 def initialize_required_indexes(database_path: str | Path | None = None) -> dict[str, float]:
-    """Create the Phase 1 query indexes idempotently and return per-index timings."""
+    """Create all required query indexes idempotently and return per-index timings."""
     path = initialize_database(database_path)
     timings: dict[str, float] = {}
 

@@ -27,11 +27,11 @@
           <button class="navigation-item" type="button" data-view-target="data-status">
             <span class="nav-icon" aria-hidden="true">02</span><span>Data Status</span>
           </button>
+          <button class="navigation-item" type="button" data-view-target="historical-analysis">
+            <span class="nav-icon" aria-hidden="true">03</span><span>Historical Analysis</span><small>Phase 2</small>
+          </button>
 
           <p class="navigation-label">Later phases</p>
-          <button class="navigation-item is-disabled" type="button" disabled>
-            <span>Historical Analysis</span><small>Later phase</small>
-          </button>
           <button class="navigation-item is-disabled" type="button" disabled>
             <span>Model Training</span><small>Later phase</small>
           </button>
@@ -157,6 +157,279 @@
               </div>
             </article>
           </section>
+
+          <section class="historical-overview-section" aria-labelledby="historical-overview-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Historical performance</p>
+                <h2 id="historical-overview-title">See what campaign history is telling you.</h2>
+                <p>Aggregate performance from the loaded campaign history, ready to shape a governed customer cohort.</p>
+              </div>
+              <button id="historical-analysis-cta" class="button button-primary" type="button" data-view-target="historical-analysis">
+                Analyze historical campaigns
+              </button>
+            </div>
+
+            <div id="historical-overview-loading" class="historical-loading" role="status" aria-live="polite">
+              <span class="visually-hidden">Loading historical campaign performance</span>
+              <div class="historical-summary-skeleton" aria-hidden="true"></div>
+              <div class="historical-chart-skeletons" aria-hidden="true">
+                <div></div><div></div><div></div>
+              </div>
+            </div>
+
+            <div id="historical-overview-empty" class="historical-empty" role="status" hidden>
+              <span class="historical-empty-mark" aria-hidden="true">H</span>
+              <div>
+                <h3>No campaign history is loaded yet</h3>
+                <p>Load campaign sales data to see monthly, channel, and product-category performance.</p>
+              </div>
+            </div>
+
+            <div id="historical-overview-unavailable" class="historical-empty" role="status" hidden>
+              <span class="historical-empty-mark is-error" aria-hidden="true">!</span>
+              <div>
+                <h3>Historical performance is unavailable</h3>
+                <p>Use Try again above to retry the aggregate request.</p>
+              </div>
+            </div>
+
+            <div id="historical-overview-content" hidden>
+              <dl class="historical-summary-strip" aria-label="Historical campaign performance summary">
+                <div><dt>Observations</dt><dd id="historical-observation-count">—</dd></div>
+                <div><dt>Attributed purchase rate</dt><dd id="historical-attributed-rate">—</dd></div>
+                <div><dt>Net sales</dt><dd id="historical-net-sales">—</dd></div>
+                <div><dt>Coverage</dt><dd id="historical-date-range">—</dd></div>
+              </dl>
+
+              <div class="historical-chart-grid">
+                <article class="historical-chart-card">
+                  <div class="historical-chart-heading">
+                    <div><span>Trend</span><h3>Monthly attributed purchases</h3></div>
+                    <small>Rate by contact month</small>
+                  </div>
+                  <div id="historical-monthly-chart" class="monthly-chart" aria-live="polite"></div>
+                  <ul id="historical-monthly-data" class="visually-hidden"></ul>
+                </article>
+
+                <article class="historical-chart-card">
+                  <div class="historical-chart-heading">
+                    <div><span>Channel</span><h3>Campaign channel performance</h3></div>
+                    <small>Attributed purchase rate</small>
+                  </div>
+                  <ol id="historical-channel-chart" class="performance-bars" aria-label="Attributed purchase performance by campaign channel"></ol>
+                </article>
+
+                <article class="historical-chart-card">
+                  <div class="historical-chart-heading">
+                    <div><span>Category</span><h3>Product-category performance</h3></div>
+                    <small>Attributed purchase rate</small>
+                  </div>
+                  <ol id="historical-category-chart" class="performance-bars" aria-label="Attributed purchase performance by product category"></ol>
+                </article>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section id="historical-analysis-view" class="view" data-view="historical-analysis" aria-labelledby="historical-analysis-title" hidden>
+          <div id="historical-analysis-error" class="error-banner" role="alert" hidden>
+            <div>
+              <strong>Historical Analysis is unavailable</strong>
+              <p id="historical-analysis-error-message">The backend request could not be completed.</p>
+            </div>
+            <button id="historical-analysis-retry" class="button button-danger" type="button">Try again</button>
+          </div>
+
+          <section class="page-intro historical-analysis-shell">
+            <div>
+              <p class="eyebrow">Phase 2 · Historical cohort definition</p>
+              <h2 id="historical-analysis-title">Historical Analysis</h2>
+              <p>Define a reproducible historical customer cohort, identify known positives, and inspect aggregate profiles that can govern a later modeling handoff.</p>
+            </div>
+            <button id="historical-analysis-refresh" class="button button-secondary" type="button">Refresh options and runs</button>
+          </section>
+
+          <div id="historical-options-loading" class="analysis-page-loading" role="status" aria-live="polite">
+            <span class="spinner" aria-hidden="true"></span>
+            <div><strong>Loading real campaign filters</strong><p>Preparing available dates, campaigns, products, channels, and saved analyses.</p></div>
+          </div>
+
+          <div id="historical-analysis-empty" class="historical-empty" role="status" hidden>
+            <span class="historical-empty-mark" aria-hidden="true">H</span>
+            <div><h3>No campaign history is loaded yet</h3><p>Load campaign sales data before defining a historical customer cohort.</p></div>
+          </div>
+
+          <div id="historical-analysis-workspace" hidden>
+            <div class="analysis-workspace-grid">
+              <form id="historical-analysis-form" class="panel analysis-form" novalidate aria-labelledby="analysis-form-title">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Cohort filters</p><h2 id="analysis-form-title">Define the population</h2></div>
+                  <button id="historical-analysis-reset" class="button button-secondary" type="button">Reset to defaults</button>
+                </div>
+                <p class="panel-note">Empty multi-selects include all available values. Use Ctrl or Command to select more than one value.</p>
+
+                <div id="historical-form-error" class="inline-form-error" role="alert" tabindex="-1" hidden></div>
+
+                <div class="analysis-form-grid">
+                  <div class="form-field form-field-wide">
+                    <label for="analysis-name">Analysis name <span>Optional</span></label>
+                    <input id="analysis-name" name="analysis_name" type="text" maxlength="120" autocomplete="off" placeholder="e.g. Holiday electronics purchasers">
+                    <small>Up to 120 characters. A date-based name is generated if omitted.</small>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="contact-date-from">Contact date from</label>
+                    <input id="contact-date-from" name="contact_date_from" type="date" required>
+                  </div>
+                  <div class="form-field">
+                    <label for="contact-date-to">Contact date to</label>
+                    <input id="contact-date-to" name="contact_date_to" type="date" required>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="campaign-filter">Campaigns <span>Maximum 25</span></label>
+                    <select id="campaign-filter" name="campaign_ids" multiple size="5" aria-describedby="campaign-filter-help"></select>
+                    <small id="campaign-filter-help">No selection means all campaigns.</small>
+                  </div>
+                  <div class="form-field">
+                    <label for="product-filter">Products <span>Maximum 50</span></label>
+                    <select id="product-filter" name="product_ids" multiple size="5" aria-describedby="product-filter-help"></select>
+                    <small id="product-filter-help">No selection means all products.</small>
+                  </div>
+                  <div class="form-field">
+                    <label for="product-category-filter">Product categories <span>Maximum 25</span></label>
+                    <select id="product-category-filter" name="product_categories" multiple size="5"></select>
+                  </div>
+                  <div class="form-field">
+                    <label for="channel-filter">Campaign channels <span>Maximum 20</span></label>
+                    <select id="channel-filter" name="campaign_channels" multiple size="5"></select>
+                  </div>
+                  <div class="form-field">
+                    <label for="campaign-type-filter">Campaign types <span>Maximum 20</span></label>
+                    <select id="campaign-type-filter" name="campaign_types" multiple size="5"></select>
+                  </div>
+
+                  <fieldset class="form-field conversion-field form-field-wide">
+                    <legend>Known-positive definition</legend>
+                    <div id="conversion-definition-options" class="conversion-options"></div>
+                  </fieldset>
+
+                  <label class="checkbox-control form-field-wide" for="contacted-only">
+                    <input id="contacted-only" name="contacted_only" type="checkbox" checked>
+                    <span><strong>Contacted observations only</strong><small>Recommended: analyze customers with recorded campaign exposure.</small></span>
+                  </label>
+                </div>
+
+                <div class="analysis-form-actions">
+                  <button id="analyze-population" class="button button-primary" type="submit">Analyze Population</button>
+                  <span id="analysis-run-announcement" role="status" aria-live="polite">Ready to analyze.</span>
+                </div>
+              </form>
+
+              <aside class="panel recent-analysis-panel" aria-labelledby="recent-analyses-title">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Saved history</p><h2 id="recent-analyses-title">Recent Analyses</h2></div>
+                  <button id="recent-analyses-refresh" class="button button-secondary" type="button">Refresh</button>
+                </div>
+                <div id="recent-analyses-loading" class="recent-loading" role="status" aria-live="polite">
+                  <span class="spinner" aria-hidden="true"></span> Loading recent analyses
+                </div>
+                <div id="recent-analyses-empty" class="compact-empty" hidden>No saved analyses yet. Your completed run will appear here.</div>
+                <div id="recent-analyses-table" class="recent-analysis-list" hidden>
+                  <table>
+                    <thead><tr><th scope="col">Analysis</th><th scope="col">Customers</th><th scope="col">Outcome</th><th scope="col" aria-label="Action"></th></tr></thead>
+                    <tbody id="recent-analyses-body"></tbody>
+                  </table>
+                </div>
+              </aside>
+            </div>
+
+            <section id="historical-analysis-results" class="analysis-results" aria-labelledby="analysis-results-title" hidden>
+              <div class="analysis-results-heading">
+                <div>
+                  <p class="eyebrow">Saved aggregate snapshot</p>
+                  <h2 id="analysis-results-title" tabindex="-1">Analysis results</h2>
+                  <p id="analysis-results-name"></p>
+                </div>
+                <div class="analysis-run-identity">
+                  <span id="analysis-results-status" class="status-badge is-neutral">—</span>
+                  <span>Run <strong id="analysis-run-id">—</strong></span>
+                </div>
+              </div>
+
+              <div id="analysis-running-state" class="analysis-running" role="status" aria-live="polite" hidden>
+                <span class="spinner" aria-hidden="true"></span>
+                <div><strong>Analyzing the selected population</strong><p>Classifying distinct historical customers and preparing bounded aggregate profiles.</p></div>
+              </div>
+
+              <div id="analysis-results-content">
+                <section class="analysis-metric-grid" aria-label="Historical cohort summary">
+                  <article><span>Matching observations</span><strong id="result-observations">—</strong></article>
+                  <article><span>Selected customers</span><strong id="result-selected">—</strong></article>
+                  <article class="is-positive"><span>Known-positive customers</span><strong id="result-positive">—</strong></article>
+                  <article><span>Unlabeled customers</span><strong id="result-unlabeled">—</strong></article>
+                  <article><span>Positive-customer rate</span><strong id="result-positive-rate">—</strong></article>
+                  <article><span>Net sales</span><strong id="result-net-sales">—</strong></article>
+                  <article><span>Gross margin</span><strong id="result-gross-margin">—</strong></article>
+                  <article><span>Saved run ID</span><strong id="result-run-id">—</strong></article>
+                </section>
+
+                <div class="unlabeled-explanation" role="note">
+                  <strong>Positive–unlabeled interpretation</strong>
+                  <p>Unlabeled customers are not confirmed negatives; no qualifying positive event was observed inside the selected filters.</p>
+                </div>
+
+                <section class="panel normalized-filter-panel" aria-labelledby="normalized-filter-title">
+                  <div class="panel-heading"><div><p class="eyebrow">Reproducibility</p><h3 id="normalized-filter-title">Server-normalized filters</h3></div></div>
+                  <dl id="normalized-filter-list" class="normalized-filter-list"></dl>
+                </section>
+
+                <div class="analysis-visual-grid">
+                  <section class="panel" aria-labelledby="analysis-monthly-title">
+                    <div class="panel-heading"><div><p class="eyebrow">Trend</p><h3 id="analysis-monthly-title">Monthly performance</h3></div><span class="table-caption">Matching observations</span></div>
+                    <div class="table-scroll analysis-table-scroll">
+                      <table>
+                        <thead><tr><th scope="col">Month</th><th scope="col" class="numeric">Observations</th><th scope="col" class="numeric">Responses</th><th scope="col" class="numeric">Purchases</th><th scope="col" class="numeric">Attributed</th></tr></thead>
+                        <tbody id="analysis-monthly-body"></tbody>
+                      </table>
+                    </div>
+                  </section>
+
+                  <section class="panel" aria-labelledby="analysis-breakdown-title">
+                    <div class="panel-heading"><div><p class="eyebrow">Performance</p><h3 id="analysis-breakdown-title">Breakdowns</h3></div></div>
+                    <div id="analysis-breakdown-tabs" class="compact-tabs" role="tablist" aria-label="Analysis performance breakdown">
+                      <button type="button" role="tab" aria-selected="true" data-breakdown="channel_performance">Channels</button>
+                      <button type="button" role="tab" aria-selected="false" data-breakdown="product_category_performance" tabindex="-1">Categories</button>
+                      <button type="button" role="tab" aria-selected="false" data-breakdown="top_campaigns" tabindex="-1">Campaigns</button>
+                      <button type="button" role="tab" aria-selected="false" data-breakdown="top_products" tabindex="-1">Products</button>
+                    </div>
+                    <div id="analysis-breakdown-panel" role="tabpanel" tabindex="0">
+                      <ol id="analysis-breakdown-bars" class="performance-bars"></ol>
+                    </div>
+                  </section>
+                </div>
+
+                <section class="panel analysis-profile-panel" aria-labelledby="analysis-profile-title">
+                  <div class="analysis-profile-heading">
+                    <div><p class="eyebrow">Aggregate customer attributes</p><h3 id="analysis-profile-title">Population profiles</h3></div>
+                    <div class="form-field compact-select-field">
+                      <label for="profile-dimension">Profile dimension</label>
+                      <select id="profile-dimension"></select>
+                    </div>
+                  </div>
+                  <div id="profile-group-tabs" class="compact-tabs" role="tablist" aria-label="Customer profile population">
+                    <button type="button" role="tab" aria-selected="true" data-profile-group="selected">Selected</button>
+                    <button type="button" role="tab" aria-selected="false" data-profile-group="positive" tabindex="-1">Known positive</button>
+                    <button type="button" role="tab" aria-selected="false" data-profile-group="unlabeled" tabindex="-1">Unlabeled</button>
+                    <button type="button" role="tab" aria-selected="false" data-profile-group="historical_baseline" tabindex="-1">Historical baseline</button>
+                  </div>
+                  <div id="profile-group-summary" class="profile-group-summary" role="status"></div>
+                  <div id="profile-chart" class="profile-chart" role="tabpanel" tabindex="0"></div>
+                </section>
+              </div>
+            </section>
+          </div>
         </section>
 
         <section id="data-status-view" class="view" data-view="data-status" aria-labelledby="data-status-title" hidden>

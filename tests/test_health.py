@@ -6,8 +6,10 @@ import pytest
 from fastapi import Request
 from fastapi.testclient import TestClient
 
+from app import config
 from app.config import APP_NAME, APP_VERSION
 from app.database import connection as connection_module
+from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.dependencies import get_database_path
 from app.main import app, unexpected_exception_handler
@@ -83,6 +85,23 @@ def test_application_startup_does_not_open_database(
 
     with TestClient(app):
         pass
+
+
+def test_first_normal_database_access_initializes_current_schema(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    database_path = tmp_path / "first-access.db"
+    monkeypatch.setattr(config, "DATABASE_PATH", database_path)
+
+    assert get_database_path() == database_path
+
+    with get_connection(database_path) as connection:
+        schema_version = connection.execute(
+            "SELECT value FROM app_metadata WHERE key = 'schema_version'"
+        ).fetchone()[0]
+
+    assert schema_version == "2"
 
 
 def test_unexpected_api_exception_is_logged_and_sanitized(

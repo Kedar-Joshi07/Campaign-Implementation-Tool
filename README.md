@@ -1,13 +1,13 @@
 # Campaign Implementation Intelligence
 
 Campaign Implementation Intelligence is a local proof of concept for building,
-validating, and later extending a campaign-analysis data foundation. Phase 1 uses
-FastAPI, SQLite, and a static HTML/CSS/Vanilla JavaScript frontend.
+validating, and extending a campaign-analysis data foundation. It uses FastAPI,
+SQLite, and a static HTML/CSS/Vanilla JavaScript frontend.
 
-This repository contains the completed Phase 1 foundation: a functional
-Overview/Data Status UI, summary and reference APIs, SQLite storage, a streaming
-import pipeline, required indexes, reconciliation, tests, and operational
-documentation.
+This repository contains the completed Phase 1 data foundation and Phase 2
+historical campaign analysis. Users can inspect aggregate historical performance,
+define a reproducible distinct-customer cohort, distinguish known-positive from
+unlabeled customers, review aggregate profiles, and reopen saved analysis runs.
 
 ## Prerequisites
 
@@ -77,7 +77,7 @@ python3 -m venv .venv
 
 ## Initialize SQLite
 
-Create or verify the empty Phase 1 database schema:
+Create or verify the current schema (version 2):
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\init_db.py
@@ -236,12 +236,12 @@ Open:
 
 The frontend is served by FastAPI; no frontend build command is required.
 
-The Overview and Data Status views display only API-backed values. Empty datasets
-are labeled `Not loaded`, and backend failures show an error banner with a retry
-action. Later-phase navigation remains visibly disabled. A complete Data Status
-reconciliation scans the 5-million-row prospect universe and may take about 30
-seconds; the browser reuses the completed result for five minutes unless the user
-explicitly runs the checks again.
+The Overview, Data Status, and Historical Analysis views display only API-backed
+aggregate values. Empty datasets are labeled clearly, and backend failures show a
+recoverable error with retry. Model Training, Audience Explorer, and Campaigns
+remain disabled as later-phase work. A complete Data Status reconciliation scans
+the 5-million-row prospect universe and may take about 30 seconds; the browser
+reuses the completed result for five minutes unless the user explicitly reruns it.
 
 ## Data and reference APIs
 
@@ -259,10 +259,92 @@ Database and import source locations in responses are display-safe filenames,
 not arbitrary filesystem paths. Interactive OpenAPI documentation remains
 available at <http://127.0.0.1:8000/docs>.
 
+## Phase 2 historical analysis
+
+Schema version 2 is an additive, idempotent migration. It preserves every Phase 1
+table and row, adds `historical_analysis_runs`, and adds a restrained set of
+filter/list indexes. Application database initialization migrates version 1 to
+version 2 transactionally; the metadata version advances only after migration
+success.
+
+Analysis is performed at distinct historical-customer grain. Matching
+`campaign_sales` rows are observations. A selected customer is positive when any
+matching observation satisfies the chosen definition; every other selected
+customer is unlabeled. Unlabeled does not mean confirmed negative, and activity
+outside the submitted filters cannot change the current label. Every completed
+run enforces:
+
+```text
+positive_customer_count + unlabeled_customer_count = selected_customer_count
+```
+
+The supported conversion definitions are:
+
+| Value | A matching observation is positive when |
+|---|---|
+| `ATTRIBUTED_PURCHASE` | `campaign_attributed_sale_flag = 1` and `purchase_flag = 1` |
+| `ANY_PURCHASE` | `purchase_flag = 1` |
+| `RESPONSE` | `response_flag = 1` |
+
+`ATTRIBUTED_PURCHASE` and `contacted_only=true` are the defaults. Dates are
+inclusive and must stay within the available history. An omitted date range is
+normalized to the available minimum/maximum and persisted; the normalized end
+date is also the deterministic age reference date.
+
+Phase 2 exposes five aggregate-only endpoints:
+
+- `GET /api/historical/options`
+- `GET /api/historical/overview`
+- `POST /api/historical/analyses`
+- `GET /api/historical/analyses?limit=20&offset=0`
+- `GET /api/historical/analyses/{analysis_run_id}`
+
+Example requests:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/api/historical/options
+Invoke-RestMethod http://127.0.0.1:8000/api/historical/overview
+
+$body = @{
+  analysis_name = "Email attributed purchasers"
+  campaign_ids = @()
+  product_ids = @()
+  product_categories = @()
+  campaign_channels = @("Email")
+  campaign_types = @()
+  contact_date_from = "2024-01-01"
+  contact_date_to = "2025-12-31"
+  contacted_only = $true
+  conversion_definition = "ATTRIBUTED_PURCHASE"
+} | ConvertTo-Json
+
+Invoke-RestMethod http://127.0.0.1:8000/api/historical/analyses `
+  -Method Post -ContentType "application/json" -Body $body
+```
+
+In the UI, open **Historical Analysis**, choose zero or more real filter values,
+select the conversion meaning, and choose **Analyze population**. The synchronous
+request saves a bounded aggregate snapshot and renders KPIs, trends, breakdowns,
+four aggregate profile groups, and a recent-run list. Completed runs can be
+reopened without recomputing them. No person-level rows or customer-ID list are
+returned or stored as the Phase 3 handoff.
+
+Local full-data Step 7 measurements on 570,000 observations were: options
+4.44s first/3.84s repeat, overview 12.28s first/9.50s repeat, broad default
+analysis 53.91s first/60.13s repeat, narrow campaign/product analysis 15.07s
+first/14.40s repeat, recent list about 0.05s, and saved-run reopen about 0.05s.
+Machine load and OS cache materially affect these synchronous POC timings. The
+overview and broad analysis exceed the approximate warm targets. Query plans
+show full scans and temporary aggregate B-trees for broad work; narrow filters
+use the existing `(campaign_id, product_id, pu_label)` index. No additional
+composite index was justified.
+
 ## Run tests
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest
+.\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m compileall -q app scripts tests
 ```
 
 ## Configuration
@@ -327,6 +409,11 @@ The example file is documentation only; no secrets are required for this POC.
 - `GET /api/reference/states`
 - `GET /api/reference/campaigns`
 - `GET /api/reference/products`
+- `GET /api/historical/options`
+- `GET /api/historical/overview`
+- `POST /api/historical/analyses`
+- `GET /api/historical/analyses`
+- `GET /api/historical/analyses/{analysis_run_id}`
 - `GET /`
 
 ## Data generators
@@ -337,15 +424,30 @@ regeneration tools; they are not run automatically and are not required when the
 committed Git LFS objects are present. If regeneration is explicitly needed, run
 the scripts separately and validate the resulting files before replacement.
 
-## Phase 1 scope boundary
+## Known limitations and Phase 3 boundary
 
-Phase 1 establishes the application, SQLite, data ingestion, reconciliation,
-summary APIs, and the Overview/Data Status UI. PU learning, propensity scoring,
-audience selection, campaign execution, authentication, and external activation
-integrations are not part of this phase.
+- Historical analytics run synchronously in this local POC; broad full-history
+  work can take about a minute on the reference machine.
+- Saved results are aggregate snapshots and do not auto-refresh if source data
+  changes.
+- Unlabeled customers are not confirmed negatives.
+- Analysis quality depends on synthetic historical data; no causal inference is
+  claimed, and displayed metrics are descriptive rather than model-performance
+  metrics.
+- No model is trained, no prospect is scored, and no historical `customer_id` is
+  linked or inferred to a demographic `person_id`.
+- SQLite and the local single-process/single-user design are not production
+  multi-user infrastructure.
+- One upstream Starlette/httpx deprecation warning may appear in the test suite.
 
-## Next phase
+## Phase 3 handoff
 
-Phase 2 may build governed analytical or modeling workflows on this verified
-foundation. Its design and implementation require a separate approved prompt;
-no Phase 2 code is included here.
+The only authoritative handoff is an `analysis_run_id` referencing a valid
+`COMPLETED` row. The saved filters define how a future approved Phase 3 may
+reconstruct the distinct-customer cohort, while `results_json` is an explanatory
+aggregate snapshot rather than a training matrix. Before any training, Phase 3
+must recompute and reconcile selected/positive/unlabeled counts. Model design,
+training, evaluation, artifact persistence, prospect scoring, audience selection,
+campaign creation, and export remain outside this repository's implemented scope.
+See `Prompts/phase2_prompt_pack/12_PHASE_3_HANDOFF_CONTRACT.md` for the frozen
+contract.

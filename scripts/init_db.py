@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Initialize or inspect the configured Phase 1 SQLite database."""
+"""Initialize, migrate, or inspect the configured SQLite database."""
 
 from __future__ import annotations
 
@@ -55,4 +55,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

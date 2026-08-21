@@ -142,7 +142,7 @@ def test_data_summary_empty_database(client: TestClient) -> None:
     assert payload["campaign_contact_date_max"] is None
     assert payload["database_path"] == "api_fixture.db"
     assert "private" not in payload["database_path"]
-    assert payload["schema_version"] == "1"
+    assert payload["schema_version"] == "2"
 
 
 def test_data_summary_populated_fixture(client: TestClient, database_path: Path) -> None:
@@ -162,7 +162,7 @@ def test_data_summary_populated_fixture(client: TestClient, database_path: Path)
         "known_positive_count": 1,
         "attributed_purchase_count": 1,
         "database_path": "api_fixture.db",
-        "schema_version": "1",
+        "schema_version": "2",
     }
 
 
