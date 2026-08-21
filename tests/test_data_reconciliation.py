@@ -113,7 +113,7 @@ def test_required_indexes_are_created_and_verified(database_path: Path) -> None:
     timings = initialize_required_indexes(database_path)
     status = verify_required_indexes(database_path)
 
-    assert len(REQUIRED_INDEX_STATEMENTS) == 21
+    assert len(REQUIRED_INDEX_STATEMENTS) == 23
     assert set(timings) == set(REQUIRED_INDEX_STATEMENTS)
     assert all(seconds >= 0 for seconds in timings.values())
     assert all(status.values())

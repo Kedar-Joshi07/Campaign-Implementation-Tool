@@ -14,6 +14,11 @@ The coding agent must update this file at the end of every step. Preserve prior 
 - Initial full test result: 77 passed, 1 upstream Starlette deprecation warning in 30.99s
 - Started at: 2026-08-20T21:12:00+05:30
 - Current status: PHASE 2 COMPLETE — ACCEPTANCE AND HANDOFF VALIDATED
+- Phase 2 was validated while the implementation was still in the working tree
+  on the accepted Phase 1 base; the accepted Phase 2 implementation was
+  subsequently committed as `52396010f945b0328b84453ce25c587b11ed7fd7`, and
+  this SHA is the authoritative Phase 3 baseline. Historical test counts,
+  timings, and worktree evidence below remain intentionally unchanged.
 
 ## Frozen decisions
 

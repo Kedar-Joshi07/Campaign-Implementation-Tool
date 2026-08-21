@@ -41,6 +41,51 @@ _FILTER_COLUMNS = {
     "campaign_types": "campaign_type",
 }
 
+
+def build_matching_observations_cte(
+    filters: dict[str, Any],
+) -> tuple[str, tuple[Any, ...]]:
+    """Build the authoritative parameterized Phase 2 cohort/label CTE."""
+    clauses: list[str] = []
+    parameters: list[Any] = []
+
+    for filter_name, column in _FILTER_COLUMNS.items():
+        values = filters[filter_name]
+        if not values:
+            continue
+        placeholders = ", ".join("?" for _ in values)
+        clauses.append(f"{column} IN ({placeholders})")
+        parameters.extend(values)
+
+    if filters["contact_date_from"] is not None:
+        clauses.append("contact_date >= ?")
+        parameters.append(filters["contact_date_from"])
+    if filters["contact_date_to"] is not None:
+        clauses.append("contact_date <= ?")
+        parameters.append(filters["contact_date_to"])
+    if filters["contacted_only"]:
+        clauses.append("contacted_flag = 1")
+
+    where_clause = " AND ".join(clauses) if clauses else "1 = 1"
+    positive_expression = _CONVERSION_EXPRESSIONS[filters["conversion_definition"]]
+    cte = f"""
+        WITH matching_observations AS (
+            SELECT *
+            FROM campaign_sales
+            WHERE {where_clause}
+        ),
+        customer_labels AS (
+            SELECT
+                customer_id,
+                MAX(CASE WHEN {positive_expression} THEN 1 ELSE 0 END)
+                    AS is_positive,
+                COUNT(*) AS matching_observation_count
+            FROM matching_observations
+            GROUP BY customer_id
+        )
+    """
+    return cte, tuple(parameters)
+
 _AGGREGATE_COLUMNS_SQL = """
     COUNT(*) AS observation_count,
     COALESCE(SUM(CASE WHEN contacted_flag = 1 THEN 1 ELSE 0 END), 0)
@@ -400,45 +445,7 @@ class HistoricalRepository:
 
     @staticmethod
     def _matching_cte(filters: dict[str, Any]) -> tuple[str, tuple[Any, ...]]:
-        clauses: list[str] = []
-        parameters: list[Any] = []
-
-        for filter_name, column in _FILTER_COLUMNS.items():
-            values = filters[filter_name]
-            if not values:
-                continue
-            placeholders = ", ".join("?" for _ in values)
-            clauses.append(f"{column} IN ({placeholders})")
-            parameters.extend(values)
-
-        if filters["contact_date_from"] is not None:
-            clauses.append("contact_date >= ?")
-            parameters.append(filters["contact_date_from"])
-        if filters["contact_date_to"] is not None:
-            clauses.append("contact_date <= ?")
-            parameters.append(filters["contact_date_to"])
-        if filters["contacted_only"]:
-            clauses.append("contacted_flag = 1")
-
-        where_clause = " AND ".join(clauses) if clauses else "1 = 1"
-        positive_expression = _CONVERSION_EXPRESSIONS[filters["conversion_definition"]]
-        cte = f"""
-            WITH matching_observations AS (
-                SELECT *
-                FROM campaign_sales
-                WHERE {where_clause}
-            ),
-            customer_labels AS (
-                SELECT
-                    customer_id,
-                    MAX(CASE WHEN {positive_expression} THEN 1 ELSE 0 END)
-                        AS is_positive,
-                    COUNT(*) AS matching_observation_count
-                FROM matching_observations
-                GROUP BY customer_id
-            )
-        """
-        return cte, tuple(parameters)
+        return build_matching_observations_cte(filters)
 
     def analyze_cohort(self, filters: dict[str, Any]) -> dict[str, Any]:
         """Return aggregate-only results for one normalized historical cohort."""

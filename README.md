@@ -4,10 +4,12 @@ Campaign Implementation Intelligence is a local proof of concept for building,
 validating, and extending a campaign-analysis data foundation. It uses FastAPI,
 SQLite, and a static HTML/CSS/Vanilla JavaScript frontend.
 
-This repository contains the completed Phase 1 data foundation and Phase 2
-historical campaign analysis. Users can inspect aggregate historical performance,
-define a reproducible distinct-customer cohort, distinguish known-positive from
-unlabeled customers, review aggregate profiles, and reopen saved analysis runs.
+This repository contains the completed Phase 1 data foundation, Phase 2
+historical campaign analysis, and Phase 3 positive-unlabeled (PU) modeling
+foundation. Users can inspect aggregate historical performance, define a
+reproducible distinct-customer cohort, distinguish known-positive from unlabeled
+customers, review aggregate profiles, reopen saved analyses, and train a governed
+local look-alike model from a completed analysis run.
 
 ## Prerequisites
 
@@ -31,6 +33,7 @@ customers. There is no `person_id` to `customer_id` mapping.
 
 ```text
 app/                     FastAPI routers, schemas, services, repositories, DB code
+artifacts/models/        Ignored local Phase 3 joblib model artifacts
 data/                    Tracked source datasets/samples; ignored local SQLite files
 data_generation_scripts/ Explicitly run synthetic-data generators
 docs/                    Implementation and handoff documentation
@@ -77,7 +80,7 @@ python3 -m venv .venv
 
 ## Initialize SQLite
 
-Create or verify the current schema (version 2):
+Create or verify the current schema (version 3):
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\init_db.py
@@ -339,6 +342,98 @@ show full scans and temporary aggregate B-trees for broad work; narrow filters
 use the existing `(campaign_id, product_id, pu_label)` index. No additional
 composite index was justified.
 
+## Phase 3 PU modeling
+
+Schema version 3 additively and transactionally migrates version 2 and adds the
+governed `model_runs` lifecycle. It does not add a model BLOB or propensity-score
+table. A model run references exactly one valid `COMPLETED` Phase 2
+`analysis_run_id`; current source rows are reconstructed with the saved Phase 2
+filters and counts must reconcile before training can continue.
+
+One training row represents one distinct historical customer. The PU label is:
+
+- `1`: known positive under the saved conversion definition;
+- `0`: unlabeled, not a confirmed negative.
+
+Campaign behavior determines cohort membership and the PU label only. It is not
+used as a predictive feature. The versioned feature contract contains exactly 11
+prospect-compatible attributes, in this order:
+
+```text
+age, gender, state, individual_yearly_income, marital_status, education,
+employment_status, resident_status, resident_type, family_member_count,
+type_of_employment
+```
+
+`age` uses the saved analysis end date, never the current date. Customer IDs,
+names, contact details, ZIP/address fields, campaign/product behavior, response,
+spend, margin, `pu_label`, and independent-prospect attributes are excluded from
+model inputs and artifacts. Numeric imputation/scaling and categorical one-hot
+encoding are fitted on the training partition only; unknown future categories
+are ignored safely.
+
+The default deterministic split uses seed `42`, a 20% validation partition, and
+stratification on the PU label. Phase 3 fits:
+
+- Elkan–Noto logistic regression as the required genuine-PU candidate;
+- bounded Bagging PU as the genuine-PU challenger;
+- a naive logistic baseline that treats unlabeled as negative for diagnostic
+  comparison only and is never eligible for official selection.
+
+The tested local environment uses Python 3.12.0, NumPy 2.3.3, pandas 2.3.3,
+scikit-learn 1.7.1, pulearn 0.0.12, and joblib 1.5.2. Exact runtime versions are
+persisted per model run. scikit-learn and pulearn use permissive BSD-style
+licenses, and joblib uses BSD 3-Clause; these libraries introduce no commercial
+runtime service requirement.
+
+### Train a model
+
+First create or reuse a completed Phase 2 analysis, then run:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\train_pu_model.py `
+  --analysis-run-id 10 `
+  --model-name "Holiday Electronics Lookalike" `
+  --json
+```
+
+Useful options are `--random-seed`, `--validation-fraction`,
+`--run-challenger`/`--no-run-challenger`, and `--database-path`. The CLI
+initializes schema v3, creates a `RUNNING` row, reconstructs and reconciles the
+cohort, trains/evaluates candidates, atomically writes and reload-verifies the
+artifact, persists SHA-256 plus a relative path, and marks the row `COMPLETED`.
+An unrecoverable post-insert error removes the incomplete artifact, records a
+bounded internal diagnostic locally, marks the run `FAILED`, and returns nonzero.
+JSON mode is bounded and does not expose the internal traceback or absolute
+filesystem paths.
+
+Artifacts have this ignored runtime layout:
+
+```text
+artifacts/models/model_run_000001/pu_model.joblib
+```
+
+The payload contains only the artifact/feature-contract versions and hash, raw
+feature order, fitted preprocessor, selected fitted genuine-PU estimator, and
+selected-candidate name. It contains no raw training rows, customer-ID list,
+PII, or validation score vector. Loading verifies the relative path, file
+SHA-256, payload contract, and selected candidate before returning the model.
+
+### Evaluation caveat and reproducibility
+
+Unlabeled rows may contain unknown positives, so ordinary accuracy, specificity,
+or “true precision” would be misleading. Evaluation explicitly labels ROC-AUC
+and average precision as observed-label diagnostics and selects among genuine-PU
+candidates using held-out known-positive recall/lift at the top 5%, 10%, and 20%,
+score separation/stability, reproducibility, runtime, and simplicity. These are
+synthetic-POC ranking diagnostics, not real-world population-performance or
+calibrated-probability claims.
+
+Full-data same-seed runs from analysis 10 produced identical split fingerprints,
+feature-contract hash, selected `BAGGING_PU` candidate, non-runtime metrics,
+bounded-sample scores, and artifact SHA-256. Exact timings vary with machine load
+and are recorded as evidence rather than an SLA.
+
 ## Run tests
 
 ```powershell
@@ -424,7 +519,7 @@ regeneration tools; they are not run automatically and are not required when the
 committed Git LFS objects are present. If regeneration is explicitly needed, run
 the scripts separately and validate the resulting files before replacement.
 
-## Known limitations and Phase 3 boundary
+## Known limitations and Phase 4 boundary
 
 - Historical analytics run synchronously in this local POC; broad full-history
   work can take about a minute on the reference machine.
@@ -432,22 +527,27 @@ the scripts separately and validate the resulting files before replacement.
   changes.
 - Unlabeled customers are not confirmed negatives.
 - Analysis quality depends on synthetic historical data; no causal inference is
-  claimed, and displayed metrics are descriptive rather than model-performance
-  metrics.
-- No model is trained, no prospect is scored, and no historical `customer_id` is
-  linked or inferred to a demographic `person_id`.
+  claimed. Phase 3 evaluation measures synthetic observed-label ranking, not
+  ground-truth population performance or calibrated conversion probability.
+- Phase 3 trains and persists a customer-history-derived PU model, but no
+  prospect is scored and no historical `customer_id` is linked or inferred to a
+  demographic `person_id`.
 - SQLite and the local single-process/single-user design are not production
   multi-user infrastructure.
-- One upstream Starlette/httpx deprecation warning may appear in the test suite.
+- Model artifacts use local joblib serialization and must be treated as trusted
+  local files; the verified loader rejects missing, corrupt, or incompatible
+  artifacts but is not a remote model registry.
 
-## Phase 3 handoff
+## Phase 4 handoff
 
-The only authoritative handoff is an `analysis_run_id` referencing a valid
-`COMPLETED` row. The saved filters define how a future approved Phase 3 may
-reconstruct the distinct-customer cohort, while `results_json` is an explanatory
-aggregate snapshot rather than a training matrix. Before any training, Phase 3
-must recompute and reconcile selected/positive/unlabeled counts. Model design,
-training, evaluation, artifact persistence, prospect scoring, audience selection,
-campaign creation, and export remain outside this repository's implemented scope.
-See `Prompts/phase2_prompt_pack/12_PHASE_3_HANDOFF_CONTRACT.md` for the frozen
-contract.
+The authoritative Phase 4 handoff is a `model_run_id` whose row is `COMPLETED`,
+references a valid completed `analysis_run_id`, matches the frozen feature
+contract, and has an existing checksum-verified artifact. Phase 4 may reuse the
+Phase 3 service for training orchestration, job/API lifecycle, run listing/detail,
+and the currently disabled Model Training UI.
+
+Phase 4 must not silently add 5-million-row prospect scoring, a
+`propensity_scores` table, Audience Explorer, campaign construction/export, or
+customer/person linkage. Those remain later separately approved phases. See
+`Prompts/phase3_prompt_pack/12_PHASE_4_HANDOFF_CONTRACT.md` and
+`docs/PHASE_3_IMPLEMENTATION_SUMMARY.md`.

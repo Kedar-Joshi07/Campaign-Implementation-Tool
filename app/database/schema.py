@@ -16,7 +16,7 @@ from app.database.connection import get_connection
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 2
+CURRENT_SCHEMA_VERSION = 3
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -26,6 +26,7 @@ EXPECTED_TABLES = (
     "campaign_sales",
     "demographics",
     "historical_analysis_runs",
+    "model_runs",
 )
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
@@ -42,6 +43,35 @@ HISTORICAL_ANALYSIS_RUN_COLUMNS = (
     "positive_customer_count",
     "unlabeled_customer_count",
     "positive_customer_rate",
+    "error_message",
+)
+
+MODEL_RUN_COLUMNS = (
+    "model_run_id",
+    "analysis_run_id",
+    "model_name",
+    "created_at",
+    "completed_at",
+    "status",
+    "algorithm",
+    "selected_candidate",
+    "random_seed",
+    "validation_fraction",
+    "reconstructed_observation_count",
+    "selected_customer_count",
+    "positive_customer_count",
+    "unlabeled_customer_count",
+    "train_customer_count",
+    "validation_customer_count",
+    "train_positive_count",
+    "validation_positive_count",
+    "feature_contract_json",
+    "preprocessing_json",
+    "hyperparameters_json",
+    "metrics_json",
+    "library_versions_json",
+    "artifact_path",
+    "artifact_sha256",
     "error_message",
 )
 
@@ -347,9 +377,21 @@ PHASE_TWO_REQUIRED_INDEX_STATEMENTS = {
     ),
 }
 
+PHASE_THREE_REQUIRED_INDEX_STATEMENTS = {
+    "idx_model_runs_newest": (
+        "CREATE INDEX IF NOT EXISTS idx_model_runs_newest "
+        "ON model_runs (created_at DESC, model_run_id DESC)"
+    ),
+    "idx_model_runs_analysis_run_id": (
+        "CREATE INDEX IF NOT EXISTS idx_model_runs_analysis_run_id "
+        "ON model_runs (analysis_run_id)"
+    ),
+}
+
 REQUIRED_INDEX_STATEMENTS = {
     **PHASE_ONE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_TWO_REQUIRED_INDEX_STATEMENTS,
+    **PHASE_THREE_REQUIRED_INDEX_STATEMENTS,
 }
 
 
@@ -474,8 +516,93 @@ def _migrate_to_version_2(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_3(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE model_runs (
+            model_run_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            analysis_run_id INTEGER NOT NULL,
+            model_name TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            completed_at TEXT,
+            status TEXT NOT NULL
+                CHECK (status IN ('RUNNING', 'COMPLETED', 'FAILED')),
+            algorithm TEXT,
+            selected_candidate TEXT,
+            random_seed INTEGER NOT NULL,
+            validation_fraction REAL NOT NULL
+                CHECK (validation_fraction > 0 AND validation_fraction < 1),
+            reconstructed_observation_count INTEGER NOT NULL DEFAULT 0
+                CHECK (reconstructed_observation_count >= 0),
+            selected_customer_count INTEGER NOT NULL DEFAULT 0
+                CHECK (selected_customer_count >= 0),
+            positive_customer_count INTEGER NOT NULL DEFAULT 0
+                CHECK (positive_customer_count >= 0),
+            unlabeled_customer_count INTEGER NOT NULL DEFAULT 0
+                CHECK (unlabeled_customer_count >= 0),
+            train_customer_count INTEGER NOT NULL DEFAULT 0
+                CHECK (train_customer_count >= 0),
+            validation_customer_count INTEGER NOT NULL DEFAULT 0
+                CHECK (validation_customer_count >= 0),
+            train_positive_count INTEGER NOT NULL DEFAULT 0
+                CHECK (train_positive_count >= 0),
+            validation_positive_count INTEGER NOT NULL DEFAULT 0
+                CHECK (validation_positive_count >= 0),
+            feature_contract_json TEXT,
+            preprocessing_json TEXT,
+            hyperparameters_json TEXT,
+            metrics_json TEXT,
+            library_versions_json TEXT,
+            artifact_path TEXT,
+            artifact_sha256 TEXT,
+            error_message TEXT,
+            FOREIGN KEY (analysis_run_id)
+                REFERENCES historical_analysis_runs (analysis_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            CHECK (positive_customer_count <= selected_customer_count),
+            CHECK (unlabeled_customer_count <= selected_customer_count),
+            CHECK (
+                positive_customer_count + unlabeled_customer_count
+                <= selected_customer_count
+            ),
+            CHECK (train_customer_count <= selected_customer_count),
+            CHECK (validation_customer_count <= selected_customer_count),
+            CHECK (
+                train_customer_count + validation_customer_count
+                <= selected_customer_count
+            ),
+            CHECK (train_positive_count <= train_customer_count),
+            CHECK (validation_positive_count <= validation_customer_count),
+            CHECK (
+                train_positive_count + validation_positive_count
+                <= positive_customer_count
+            ),
+            CHECK (
+                status != 'COMPLETED'
+                OR positive_customer_count + unlabeled_customer_count
+                    = selected_customer_count
+            ),
+            CHECK (
+                status != 'COMPLETED'
+                OR train_customer_count + validation_customer_count
+                    = selected_customer_count
+            ),
+            CHECK (
+                status != 'COMPLETED'
+                OR train_positive_count + validation_positive_count
+                    = positive_customer_count
+            ),
+            CHECK (artifact_sha256 IS NULL OR length(artifact_sha256) = 64)
+        )
+        """
+    )
+    for statement in PHASE_THREE_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
+    3: _migrate_to_version_3,
 }
 
 

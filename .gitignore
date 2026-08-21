@@ -17,6 +17,8 @@ logs/*
 !logs/.gitkeep
 output/
 source/
+artifacts/models/*
+!artifacts/models/.gitkeep
 
 # Editors and operating systems
 .vscode/
