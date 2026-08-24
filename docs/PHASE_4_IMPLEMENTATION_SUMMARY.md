@@ -3,7 +3,7 @@
 ## Scope and baseline
 
 - Repository: https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git
-- Authoritative baseline SHA: 04e61caddedcf7963e824e2ccc425ac241d03842
+- Authoritative Phase 3 baseline for Phase 4 implementation: 04e61caddedcf7963e824e2ccc425ac241d03842
 - Goal: Add bounded asynchronous model-training orchestration and a governed UI/API surface while preserving strict phase boundaries.
 
 ## Delivered capabilities
@@ -92,3 +92,38 @@ Phase 4 is ready for Phase 5 with a Go decision, conditioned on preserving:
 - artifact verification before inference,
 - strict independence of `customer_id` and `person_id`,
 - explicit approval for any audience/campaign/activation expansion.
+
+## Phase 4 Finalization / Pre-Phase-5 Corrections
+
+Corrective baseline gate:
+
+- Starting corrective SHA: `21bf610b2aabcf2faabee98a82fcb6e637893fb3`
+
+Corrective updates applied:
+
+1. Corrected Phase 5 handoff baseline reference so Phase 5 cannot be started from a Phase 3 SHA.
+2. Fixed model-detail feature-contract metadata extraction to validate real persisted Phase 3 contract shape (`version`, ordered/numeric/categorical structure) and return authoritative metadata.
+3. Updated model API tests to use real frozen feature-contract constants and added positive/negative regression coverage for contract validation.
+4. Corrected worker/executor submission-failure HTTP semantics from conflict (`409`) to sanitized server failure (`500`).
+5. Candidate-level progress-stage timing refinement was intentionally deferred to avoid invasive training-engine changes.
+
+Corrective validation evidence:
+
+- Focused suite (`tests/test_model_api.py tests/test_model_job_orchestration.py tests/test_phase3_hardening.py tests/test_frontend.py`): `53 passed, 1 warning`.
+- Full regression: `268 passed, 1 warning`.
+- `python -m pip check`: no broken requirements.
+- `python -m compileall -q app scripts tests`: passed.
+- `git diff --check`: no whitespace/conflict-marker failures (CRLF conversion warnings only).
+- `python scripts/validate_data.py --json`: `overall_status=OK` with customers=125000, campaign_sales=570000, demographics=5000000, invalid_customer_fk_count=0, pu_consistency_violation_count=0.
+
+Real model detail verification (`model_run_id=7`):
+
+- status=`COMPLETED`
+- selected_candidate=`BAGGING_PU`
+- model_role_policy_version=`2`
+- evaluation_contract_version=`2`
+- artifact.verified=`true`
+- feature_contract.feature_contract_version=`1`
+- feature_contract.feature_contract_sha256=`a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`
+- ordered_features returned all 11 frozen contract features in canonical order
+- no exposure of `customer_id`, `person_id`, `validation_scores`, raw SQL text, or absolute local path tokens in response payload

@@ -203,3 +203,36 @@ Status: COMPLETED
 	- Validated by `test_phase5_scope_scan_confirms_later_phase_scoring_and_activation_absent` in tests/test_phase3_hardening.py.
 - Final Phase 5 recommendation:
 	- GO. Phase 4 hardening is complete and boundaries are preserved for Phase 5 scoring-only expansion.
+
+## Phase 4 Finalization — Pre-Phase-5 corrective pass (2026-08-24)
+Status: COMPLETED
+- Corrective starting SHA:
+	- `21bf610b2aabcf2faabee98a82fcb6e637893fb3` (baseline gate matched expected corrective prompt SHA).
+- Corrective scope executed:
+	- FIX 1: corrected Phase 5 handoff baseline reference (removed stale Phase 3 SHA as handoff authority).
+	- FIX 2: corrected model-detail feature-contract metadata extraction/validation for real Phase 3 persisted contract shape.
+	- FIX 3: corrected model API fixtures/tests to use real frozen contract constants and added malformed-contract negative coverage.
+	- FIX 4: corrected worker/executor submission-failure HTTP semantics from 409 conflict to sanitized 500 server failure.
+	- Optional FIX 5: not implemented (kept as low-severity UI/progress sequencing limitation to avoid invasive training-engine modification).
+- Feature-contract correction evidence:
+	- Real constants: version=`1`; sha256=`a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`.
+	- Model detail now reports `feature_contract.feature_contract_version`, `feature_contract.feature_contract_sha256`, and all 11 ordered features for supported persisted rows.
+	- Malformed/incompatible persisted contract metadata now yields safe API validation failure (422) instead of null metadata or unsafe behavior.
+- HTTP semantics correction evidence:
+	- active job conflict -> 409 (unchanged).
+	- unusable analysis -> 409 (unchanged).
+	- request validation -> 422 (unchanged).
+	- worker/executor submission failure -> 500 (corrected).
+- Real model detail verification (`model_run_id=7`):
+	- status=COMPLETED; selected_candidate=BAGGING_PU; model_role_policy_version=2; evaluation_contract_version=2.
+	- artifact.verified=true.
+	- feature_contract.version=1; feature_contract.sha256 matches authoritative frozen hash.
+	- response contains no customer_id/person_id/validation_scores/raw SQL/absolute path leakage.
+- Focused tests:
+	- `53 passed, 1 warning` (`tests/test_model_api.py tests/test_model_job_orchestration.py tests/test_phase3_hardening.py tests/test_frontend.py`).
+- Full regression and gates:
+	- `python -m pytest -q` -> `268 passed, 1 warning`.
+	- `python -m pip check` -> no broken requirements.
+	- `python -m compileall -q app scripts tests` -> passed.
+	- `git diff --check` -> no whitespace/conflict-marker failures (CRLF warnings only).
+	- `python scripts/validate_data.py --json` -> overall_status=OK; customers=125000; campaign_sales=570000; demographics=5000000; invalid_customer_fk_count=0; pu_consistency_violation_count=0.

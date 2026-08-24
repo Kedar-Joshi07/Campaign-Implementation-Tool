@@ -7,6 +7,12 @@ from pathlib import Path
 from typing import Any
 
 from app.ml.evaluation import EVALUATION_CONTRACT_VERSION
+from app.ml.feature_contract import (
+    FEATURE_CONTRACT,
+    FEATURE_CONTRACT_SHA256,
+    FEATURE_CONTRACT_VERSION,
+    ORDERED_FEATURES,
+)
 from app.ml.model_roles import (
     CHALLENGER_1_MODEL_NAME,
     DIAGNOSTIC_CONTROL_NAME,
@@ -65,6 +71,22 @@ def _decode_json_object(raw: Any, *, field_name: str) -> dict[str, Any]:
     return decoded
 
 
+def _validated_feature_contract_section(feature_contract: dict[str, Any]) -> dict[str, Any]:
+    if feature_contract != FEATURE_CONTRACT:
+        raise ModelApiValidationError("feature_contract metadata is invalid.")
+
+    version = feature_contract.get("version")
+    ordered_features = feature_contract.get("ordered_features")
+    if version != FEATURE_CONTRACT_VERSION or ordered_features != list(ORDERED_FEATURES):
+        raise ModelApiValidationError("feature_contract metadata is invalid.")
+
+    return {
+        "feature_contract_version": version,
+        "feature_contract_sha256": FEATURE_CONTRACT_SHA256,
+        "ordered_features": list(ordered_features),
+    }
+
+
 def _public_job_failure_message(row: dict[str, Any]) -> str | None:
     if row["status"] != "FAILED":
         return None
@@ -106,7 +128,7 @@ def submit_training_request(
             raise ModelApiConflictError(message) from exc
         raise ModelApiValidationError(message) from exc
     except ModelJobSubmissionError as exc:
-        raise ModelApiConflictError(str(exc)) from exc
+        raise ModelApiError(MODEL_TRAINING_FAILED_MESSAGE) from exc
     return _public_job_summary(job)
 
 
@@ -240,11 +262,7 @@ def get_model_run_detail(database_path: str | Path, model_run_id: int) -> dict[s
         "challenger_comparison": metrics.get("challenger_comparison", {}),
         "quality_flags": list(metrics.get("quality_flags", [])),
         "artifact": _artifact_section(database_path, row),
-        "feature_contract": {
-            "feature_contract_version": feature_contract.get("feature_contract_version"),
-            "feature_contract_sha256": feature_contract.get("feature_contract_sha256"),
-            "ordered_features": feature_contract.get("ordered_features", []),
-        },
+        "feature_contract": _validated_feature_contract_section(feature_contract),
         "runtime": {
             "random_seed": row.get("random_seed"),
             "validation_fraction": row.get("validation_fraction"),

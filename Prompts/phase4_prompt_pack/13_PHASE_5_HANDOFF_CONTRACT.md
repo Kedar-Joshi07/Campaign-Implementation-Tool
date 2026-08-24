@@ -1,6 +1,7 @@
 # Phase 5 Handoff Contract — Prospect Scoring
 
-Authoritative baseline: `04e61caddedcf7963e824e2ccc425ac241d03842`
+Authoritative Phase 4 baseline for Phase 5:
+`21bf610b2aabcf2faabee98a82fcb6e637893fb3`
 
 Phase 5 input is a verified completed `model_run_id` produced by Phase 4 APIs/job lifecycle.
 

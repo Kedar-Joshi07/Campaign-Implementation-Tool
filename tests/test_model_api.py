@@ -11,16 +11,24 @@ from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.dependencies import get_database_path
 from app.main import app
+from app.ml.feature_contract import (
+    FEATURE_CONTRACT_JSON,
+    FEATURE_CONTRACT_SHA256,
+    FEATURE_CONTRACT_VERSION,
+    ORDERED_FEATURES,
+)
 from app.services import model_api_service as model_api_service_module
 from app.services import model_job_service as model_job_service_module
 from app.services.model_api_service import (
     JOB_NOT_FOUND_MESSAGE,
     MODEL_RUN_NOT_FOUND_MESSAGE,
+    MODEL_TRAINING_FAILED_MESSAGE,
 )
 from app.services.model_job_service import (
     ACTIVE_JOB_CONFLICT_MESSAGE,
     ANALYSIS_NOT_AVAILABLE_MESSAGE,
     ModelJobConflictError,
+    ModelJobSubmissionError,
     ModelJobValidationError,
 )
 
@@ -98,15 +106,7 @@ def _insert_model_run(
     created_at: str,
 ) -> int:
     completed_at = "2026-08-21T00:20:00Z" if status != "RUNNING" else None
-    feature_contract_json = json.dumps(
-        {
-            "feature_contract_version": "1",
-            "feature_contract_sha256": "contract-sha",
-            "ordered_features": ["age", "gender", "state"],
-        },
-        sort_keys=True,
-        separators=(",", ":"),
-    )
+    feature_contract_json = FEATURE_CONTRACT_JSON
     preprocessing_json = json.dumps({"transformed_feature_count": 3})
     hyperparameters_json = json.dumps({"model_role_policy_version": "2"})
     metrics_json = json.dumps(metrics, sort_keys=True, separators=(",", ":")) if metrics else None
@@ -351,6 +351,25 @@ def test_train_request_validation_is_422(client: TestClient) -> None:
     assert response.status_code == 422
 
 
+def test_train_worker_submission_failure_maps_to_500(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        model_api_service_module,
+        "submit_model_training_job_request",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            ModelJobSubmissionError("internal worker failure")
+        ),
+    )
+
+    response = client.post("/api/models/train", json={"analysis_run_id": 10})
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": MODEL_TRAINING_FAILED_MESSAGE}
+    assert "internal worker failure" not in response.text
+
+
 def test_get_job_returns_sanitized_failed_job_and_404_for_unknown(
     client: TestClient,
     database_path: Path,
@@ -445,11 +464,49 @@ def test_model_detail_supports_role_policy_v2_and_challenger_skipped(
     assert payload["governance"]["is_legacy"] is False
     assert payload["governance"]["model_role_policy_version"] == "2"
     assert payload["governance"]["selection_policy"] == "PRIMARY_ROLE_GOVERNED"
+    assert payload["feature_contract"]["feature_contract_version"] == FEATURE_CONTRACT_VERSION
+    assert payload["feature_contract"]["feature_contract_sha256"] == FEATURE_CONTRACT_SHA256
+    assert payload["feature_contract"]["ordered_features"] == list(ORDERED_FEATURES)
     assert payload["candidates"]["ELKAN_NOTO_LOGISTIC"]["status"] == "SKIPPED_DISABLED"
     assert payload["artifact"]["verified"] is False
     assert payload["artifact"]["verification_message"] == (
         "The model artifact could not be verified."
     )
+
+
+def test_model_detail_rejects_malformed_feature_contract_metadata(
+    client: TestClient,
+    database_path: Path,
+) -> None:
+    analysis_run_id = _insert_analysis_run(database_path, status="COMPLETED")
+    model_run_id = _insert_model_run(
+        database_path,
+        analysis_run_id=analysis_run_id,
+        status="COMPLETED",
+        model_name="Malformed feature contract",
+        selected_candidate="BAGGING_PU",
+        metrics=_v2_metrics("BAGGING_PU", challenger_status="FITTED"),
+        created_at="2026-08-21T02:05:00Z",
+    )
+
+    malformed_contract = json.dumps(
+        {
+            "version": "1",
+            "ordered_features": ["age", "gender"],
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            "UPDATE model_runs SET feature_contract_json = ? WHERE model_run_id = ?",
+            (malformed_contract, model_run_id),
+        )
+
+    detail = client.get(f"/api/models/{model_run_id}")
+
+    assert detail.status_code == 422
+    assert detail.json() == {"detail": "feature_contract metadata is invalid."}
 
 
 def test_model_detail_legacy_run_is_not_reinterpreted_as_v2(

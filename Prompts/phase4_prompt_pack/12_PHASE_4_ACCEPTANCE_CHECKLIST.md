@@ -124,3 +124,22 @@ concurrency test: near-simultaneous submit admits one active job, second returns
 residual risks: single-worker bounded throughput and local SQLite single-node constraints remain by design.
 - **Go / Conditional Go / No-Go for Phase 5:** Go.
 - Reasoning: all Critical items passed, boundary constraints are preserved, hardening scenarios were validated, and full-data asynchronous workflow completed with governed model/detail evidence.
+
+## Phase 4 Finalization / Pre-Phase-5 Corrections
+
+- Corrective baseline SHA verified at start: `21bf610b2aabcf2faabee98a82fcb6e637893fb3`.
+- Phase 5 handoff baseline reference corrected to prevent accidental Phase 3 checkout for Phase 5 kickoff.
+- Model detail API feature-contract metadata corrected to validate and report real persisted contract shape.
+- Model API tests now use authoritative frozen contract constants/shape (not synthetic contract fields).
+- Worker/executor submission failure HTTP status corrected from 409 to 500 with sanitized message.
+- Optional candidate-level progress timing refinement intentionally deferred to avoid invasive model-engine changes.
+
+Corrective verification:
+
+- Focused suite: `53 passed, 1 warning`.
+- Full suite: `268 passed, 1 warning`.
+- pip check: pass.
+- compileall: pass.
+- git diff --check: no whitespace/conflict markers (CRLF warnings only).
+- data validation: overall_status=OK; customers=125000; campaign_sales=570000; demographics=5000000.
+- model_run_id=7 verification: status COMPLETED, selected BAGGING_PU, policy/evaluation versions 2/2, artifact verified true, feature-contract version 1 + authoritative SHA + all 11 features, no customer/person/validation-score/raw-SQL/absolute-path leakage.

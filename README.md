@@ -599,6 +599,9 @@ remain unchanged and loadable.
 
 ## Phase 5 handoff
 
+This Phase 5 handoff supersedes the earlier Phase 4 handoff wording while
+preserving all Phase 4 safety and boundary constraints.
+
 The authoritative Phase 5 input is a `model_run_id` whose row is `COMPLETED`,
 references a valid completed `analysis_run_id`, matches the frozen feature
 contract, and has an existing checksum-verified artifact. For role-policy-v2
