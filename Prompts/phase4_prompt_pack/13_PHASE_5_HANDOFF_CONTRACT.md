@@ -3,6 +3,9 @@
 Authoritative Phase 4 baseline for Phase 5:
 `da487443dc61601b9d02fafa784b03bbae52257a`
 
+If a later commit only refreshes this baseline line/documentation, use repository
+HEAD at Phase 5 kickoff as the authoritative baseline.
+
 Phase 5 input is a verified completed `model_run_id` produced by Phase 4 APIs/job lifecycle.
 
 For new role-policy-v2 runs:
