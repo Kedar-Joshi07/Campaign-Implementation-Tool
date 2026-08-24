@@ -25,7 +25,7 @@ def test_phase3_training_boundary_contains_no_later_phase_scoring_or_prospect_qu
     assert "campaign export" not in lowered
 
 
-def test_phase4_api_surface_excludes_scoring_and_later_navigation_remains_disabled() -> None:
+def test_phase5_api_surface_includes_scoring_and_later_navigation_remains_disabled() -> None:
     router_source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in (REPOSITORY_ROOT / "app" / "routers").glob("*.py")
@@ -37,8 +37,9 @@ def test_phase4_api_surface_excludes_scoring_and_later_navigation_remains_disabl
     assert "prefix=\"/api\"" in router_source
     assert "\"/models/train\"" in router_source
     assert "\"/models\"" in router_source
-    assert "/api/models/{model_run_id}/score" not in router_source
-    assert "/api/models/{id}/score" not in router_source
+    assert "/models/{model_run_id}/score" in router_source
+    assert "/models/{model_run_id}/scoring-status" in router_source
+    assert "/scoring-runs" in router_source
     assert html.count('class="navigation-item is-disabled"') == 2
     assert 'data-view-target="model-training"' in html
     assert '<span class="nav-icon" aria-hidden="true">04</span><span>Model Training</span><small>Phase 4</small>' in html
@@ -112,7 +113,7 @@ def test_prohibited_ml_infrastructure_dependencies_are_absent() -> None:
         assert prohibited not in requirements
 
 
-def test_phase5_scope_scan_confirms_later_phase_scoring_and_activation_absent() -> None:
+def test_phase5_scope_scan_confirms_later_phase_activation_surfaces_absent() -> None:
     app_source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in REPOSITORY_ROOT.joinpath("app").rglob("*.py")
@@ -126,7 +127,6 @@ def test_phase5_scope_scan_confirms_later_phase_scoring_and_activation_absent() 
     ).casefold()
 
     for forbidden in (
-        "propensity_scores",
         "/api/audience",
         "/api/campaigns/export",
         "audience persistence",
@@ -135,8 +135,6 @@ def test_phase5_scope_scan_confirms_later_phase_scoring_and_activation_absent() 
         "percentile band",
         "csv export",
         "demographic scoring",
-        "/api/models/{model_run_id}/score",
-        "/api/models/{id}/score",
     ):
         assert forbidden not in app_source
         assert forbidden not in frontend_source

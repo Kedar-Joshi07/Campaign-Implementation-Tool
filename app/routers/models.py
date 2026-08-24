@@ -14,6 +14,10 @@ from app.schemas.models import (
     ModelRunDetailResponse,
     ModelRunStatus,
     ModelRunSummaryResponse,
+    ScoringRunDetailResponse,
+    ScoringRunStatus,
+    ScoringRunSummaryResponse,
+    ScoringStatusResponse,
     ModelTrainingOptionsResponse,
     ModelTrainingRequest,
 )
@@ -22,10 +26,14 @@ from app.services.model_api_service import (
     ModelApiError,
     ModelApiNotFoundError,
     ModelApiValidationError,
+    get_scoring_run_detail,
+    get_scoring_status,
     get_job_detail,
     get_model_run_detail,
     get_model_training_options,
+    list_scoring_run_summaries,
     list_model_summaries,
+    submit_scoring_request,
     submit_training_request,
 )
 
@@ -63,6 +71,23 @@ def submit_model_training(
         _raise_model_api_error(exc)
 
 
+@router.post(
+    "/models/{model_run_id}/score",
+    response_model=JobSummaryResponse,
+    response_model_exclude_none=True,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Submit asynchronous prospect scoring",
+)
+def submit_model_scoring(
+    model_run_id: Annotated[int, PathParameter(gt=0)],
+    database_path: DatabasePath,
+) -> dict:
+    try:
+        return submit_scoring_request(database_path, model_run_id)
+    except ModelApiError as exc:
+        _raise_model_api_error(exc)
+
+
 @router.get(
     "/jobs/{job_id}",
     response_model=JobDetailResponse,
@@ -75,6 +100,22 @@ def get_job(
 ) -> dict:
     try:
         return get_job_detail(database_path, job_id)
+    except ModelApiError as exc:
+        _raise_model_api_error(exc)
+
+
+@router.get(
+    "/models/{model_run_id}/scoring-status",
+    response_model=ScoringStatusResponse,
+    response_model_exclude_none=True,
+    summary="Get prospect scoring readiness and status",
+)
+def get_model_scoring_status(
+    model_run_id: Annotated[int, PathParameter(gt=0)],
+    database_path: DatabasePath,
+) -> dict:
+    try:
+        return get_scoring_status(database_path, model_run_id)
     except ModelApiError as exc:
         _raise_model_api_error(exc)
 
@@ -116,6 +157,31 @@ def list_models(
 
 
 @router.get(
+    "/scoring-runs",
+    response_model=list[ScoringRunSummaryResponse],
+    response_model_exclude_none=True,
+    summary="List scoring runs",
+)
+def list_scoring_runs(
+    database_path: DatabasePath,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    status_filter: Annotated[ScoringRunStatus | None, Query(alias="status")] = None,
+    model_run_id: Annotated[int | None, Query(gt=0)] = None,
+) -> list[dict]:
+    try:
+        return list_scoring_run_summaries(
+            database_path,
+            limit=limit,
+            offset=offset,
+            status=status_filter,
+            model_run_id=model_run_id,
+        )
+    except ModelApiError as exc:
+        _raise_model_api_error(exc)
+
+
+@router.get(
     "/models/{model_run_id}",
     response_model=ModelRunDetailResponse,
     response_model_exclude_none=True,
@@ -127,5 +193,21 @@ def get_model(
 ) -> dict:
     try:
         return get_model_run_detail(database_path, model_run_id)
+    except ModelApiError as exc:
+        _raise_model_api_error(exc)
+
+
+@router.get(
+    "/scoring-runs/{scoring_run_id}",
+    response_model=ScoringRunDetailResponse,
+    response_model_exclude_none=True,
+    summary="Get scoring run detail",
+)
+def get_scoring_run(
+    scoring_run_id: Annotated[int, PathParameter(gt=0)],
+    database_path: DatabasePath,
+) -> dict:
+    try:
+        return get_scoring_run_detail(database_path, scoring_run_id)
     except ModelApiError as exc:
         _raise_model_api_error(exc)

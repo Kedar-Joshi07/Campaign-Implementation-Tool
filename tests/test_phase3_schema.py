@@ -85,9 +85,10 @@ def test_fresh_initialization_creates_schema_version_three(database_path: Path) 
             ).fetchall()
         }
 
-    assert version == "4"
+    assert version == "5"
     assert "model_runs" in tables
-    assert "propensity_scores" not in tables
+    assert "scoring_runs" in tables
+    assert "propensity_scores" in tables
 
 
 def test_populated_version_two_migration_preserves_phase_one_and_two_rows(
@@ -189,7 +190,7 @@ def test_populated_version_two_migration_preserves_phase_one_and_two_rows(
             "SELECT value FROM app_metadata WHERE key = 'schema_version'"
         ).fetchone()[0]
 
-    assert version == "4"
+    assert version == "5"
     assert counts_after == counts_before
     assert snapshot_after == snapshot_before
 

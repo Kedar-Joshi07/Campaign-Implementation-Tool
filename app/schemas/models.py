@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 ModelRunStatus = Literal["RUNNING", "COMPLETED", "FAILED"]
 JobStatus = Literal["QUEUED", "RUNNING", "COMPLETED", "FAILED"]
+ScoringRunStatus = Literal["RUNNING", "COMPLETED", "FAILED"]
 
 
 class ModelApiResponseModel(BaseModel):
@@ -59,6 +60,85 @@ class JobSummaryResponse(ModelApiResponseModel):
 class JobDetailResponse(JobSummaryResponse):
     result: dict[str, Any] | None = None
     failure_message: str | None = None
+
+
+class CompletedScoringRunReferenceResponse(ModelApiResponseModel):
+    scoring_run_id: int = Field(gt=0)
+    status: ScoringRunStatus
+    completed_at: datetime
+    scored_person_count: int = Field(ge=0)
+    score_min: float = Field(ge=0, le=1)
+    score_max: float = Field(ge=0, le=1)
+    score_mean: float = Field(ge=0, le=1)
+
+
+class ScoringStatusResponse(ModelApiResponseModel):
+    model_run_id: int = Field(gt=0)
+    eligible: bool
+    reason: str | None = None
+    demographic_count: int = Field(ge=0)
+    selected_candidate: str | None = None
+    artifact_feature_compatible: bool
+    feature_contract_version: str | None = None
+    feature_contract_sha256: str | None = None
+    artifact_sha256: str | None = None
+    active_job: JobSummaryResponse | None = None
+    completed_scoring_run: CompletedScoringRunReferenceResponse | None = None
+
+
+class ScoringRunSummaryResponse(ModelApiResponseModel):
+    scoring_run_id: int = Field(gt=0)
+    job_id: int = Field(gt=0)
+    model_run_id: int = Field(gt=0)
+    status: ScoringRunStatus
+    created_at: datetime
+    completed_at: datetime | None = None
+    demographic_snapshot_count: int = Field(ge=0)
+    scored_person_count: int = Field(ge=0)
+    chunk_size: int = Field(ge=1000, le=100000)
+    selected_candidate: str
+    score_min: float | None = Field(default=None, ge=0, le=1)
+    score_max: float | None = Field(default=None, ge=0, le=1)
+    score_mean: float | None = Field(default=None, ge=0, le=1)
+
+
+class ScoringRunIdentityResponse(ModelApiResponseModel):
+    scoring_run_id: int = Field(gt=0)
+    job_id: int = Field(gt=0)
+    model_run_id: int = Field(gt=0)
+    status: ScoringRunStatus
+    created_at: datetime
+    completed_at: datetime | None = None
+    failure_message: str | None = None
+
+
+class ScoringRunPopulationResponse(ModelApiResponseModel):
+    demographic_snapshot_count: int = Field(ge=0)
+    scored_person_count: int = Field(ge=0)
+    chunk_size: int = Field(ge=1000, le=100000)
+
+
+class ScoringRunModelContractResponse(ModelApiResponseModel):
+    selected_candidate: str
+    model_role_policy_version: str
+    feature_contract_version: str
+    feature_contract_sha256: str
+    artifact_sha256: str
+
+
+class ScoringRunScoreSummaryResponse(ModelApiResponseModel):
+    score_min: float | None = Field(default=None, ge=0, le=1)
+    score_max: float | None = Field(default=None, ge=0, le=1)
+    score_mean: float | None = Field(default=None, ge=0, le=1)
+    summary_payload: dict[str, Any] | None = None
+
+
+class ScoringRunDetailResponse(ModelApiResponseModel):
+    identity: ScoringRunIdentityResponse
+    population: ScoringRunPopulationResponse
+    model_contract: ScoringRunModelContractResponse
+    score_summary: ScoringRunScoreSummaryResponse
+    job: JobSummaryResponse | None = None
 
 
 class ModelRunSummaryResponse(ModelApiResponseModel):

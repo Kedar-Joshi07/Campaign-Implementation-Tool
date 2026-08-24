@@ -161,12 +161,31 @@ def test_model_training_workspace_contains_required_sections_and_controls(
         "model-training-retry",
         "recent-model-runs-refresh",
         "candidate-comparison-body",
+        "prospect-scoring-panel",
+        "score-prospect-submit",
+        "scoring-model-run-id",
+        "scoring-selected-primary",
+        "scoring-artifact-compatibility",
+        "scoring-demographic-count",
+        "scoring-availability",
+        "scoring-completed-run",
+        "scoring-announcement",
+        "scoring-completed-summary",
+        "scoring-summary-scored-count",
+        "scoring-summary-runtime",
     ):
         assert f'id="{control_id}"' in html
     assert "Train Look-alike Model" in html
+    assert "Score Prospect Universe" in html
+    assert "Completion aggregate" in html
+    assert "Reconciliation" in html
+    assert "Rows per second" in html
     assert "PU Bagging + Logistic Regression" in html
     assert "Elkan-Noto + Logistic Regression" in html
     assert "Naive Logistic Regression" in html
+    assert "Active Compute Job / Progress" in html
+    assert "No active compute job." in html
+    assert "Propensity scores are relative look-alike affinity scores, not guaranteed purchase probabilities." in html
     assert "DIAGNOSTIC Naive is diagnostic-only and non-selection-eligible." in html
     assert "Challenger exceeded the primary on one or more validation diagnostics." in html
 
@@ -183,10 +202,16 @@ def test_model_training_script_uses_expected_endpoints_and_polling_contract(
     assert 'models: "/api/models?limit=20&offset=0"' in script
     assert 'jobDetail: (jobId) => `/api/jobs/${jobId}`' in script
     assert 'analysisDetail: (analysisRunId) => `/api/historical/analyses/${analysisRunId}`' in script
+    assert 'scoringStatus: (modelRunId) => `/api/models/${modelRunId}/scoring-status`' in script
+    assert 'scoringSubmit: (modelRunId) => `/api/models/${modelRunId}/score`' in script
+    assert 'scoringRunDetail: (scoringRunId) => `/api/scoring-runs/${scoringRunId}`' in script
     assert "window.setTimeout" in script
     assert "POLL_INTERVAL_MS = 1500" in script
     assert 'TERMINAL_JOB_STATUSES = new Set(["COMPLETED", "FAILED"])' in script
     assert "if (TERMINAL_JOB_STATUSES.has(job.status))" in script
+    assert "loadScoringStatus(modelRunId, { force: true })" in script
+    assert "loadScoringRunDetail" in script
+    assert 'querySelector("#score-prospect-submit").addEventListener("click", submitScoring)' in script
     assert "clearPolling();" in script
 
 
@@ -194,16 +219,35 @@ def test_model_training_script_handles_active_job_failure_advisory_and_safety(
     client: TestClient,
 ) -> None:
     script = client.get("/static/js/model-training.js").text
+    html = client.get("/").text
+    combined = f"{html}\n{script}".casefold()
 
-    assert "submit.disabled = disabled" in script
+    assert "trainSubmit.disabled = trainingDisabled" in script
+    assert "scoreSubmit.disabled = scoreDisabled" in script
+    assert "scoreSubmit.hidden = hasCompletedScoring && scoringPanelVisible" in script
     assert "Training is unavailable while job #" in script
+    assert "Scoring is unavailable while job #" in script
+    assert "A completed scoring run already exists for this model." in script
     assert "Model training failed safely." in script
+    assert "Prospect scoring failed safely." in script
     assert "CHALLENGER_OUTPERFORMED_PRIMARY" in script
-    assert "diagnostic-only and non-selection-eligible" in client.get("/").text
+    assert "diagnostic-only and non-selection-eligible" in html
     assert "textContent" in script
     assert "document.createElement" in script
     assert "replaceChildren" in script
     assert "innerHTML" not in script
+    assert "person_id" not in combined
+    assert "person_ids" not in combined
     assert "person_id" not in script
     assert "propensity_scores" not in script
-    assert "/api/models/{model_run_id}/score" not in script
+    for forbidden in (
+        "score band",
+        "percentile",
+        "top-percent",
+        "audience selection",
+        "audience export",
+        "csv export",
+    ):
+        assert forbidden not in combined
+    assert "5,000,000" not in combined
+    assert "5000000" not in combined

@@ -576,6 +576,8 @@ def test_phase4_worker_and_service_do_not_use_fastapi_backgroundtasks() -> None:
             root / "app" / "jobs" / "executor.py",
             root / "app" / "jobs" / "model_training_worker.py",
             root / "app" / "services" / "model_job_service.py",
+            root / "app" / "jobs" / "prospect_scoring_worker.py",
+            root / "app" / "services" / "scoring_job_service.py",
         )
     )
     assert "BackgroundTasks" not in sources

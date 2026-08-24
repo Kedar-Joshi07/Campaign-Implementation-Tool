@@ -1378,6 +1378,38 @@ tbody tr:hover td {
   min-width: 720px;
 }
 
+.prospect-scoring-panel {
+  margin-top: 14px;
+}
+
+.scoring-availability-grid {
+  margin-top: 16px;
+}
+
+.scoring-completed-summary {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 88%);
+}
+
+.scoring-completed-summary h4 {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.83rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.scoring-summary-grid {
+  margin-top: 12px;
+}
+
+.scoring-relative-note {
+  margin-top: 14px;
+}
+
 @media (max-width: 1100px) {
   .model-training-grid {
     grid-template-columns: 1fr;

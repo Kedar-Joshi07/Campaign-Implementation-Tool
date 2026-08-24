@@ -23,6 +23,9 @@ const API_PATHS = {
   models: "/api/models?limit=20&offset=0",
   analysisDetail: (analysisRunId) => `/api/historical/analyses/${analysisRunId}`,
   modelDetail: (modelRunId) => `/api/models/${modelRunId}`,
+  scoringStatus: (modelRunId) => `/api/models/${modelRunId}/scoring-status`,
+  scoringSubmit: (modelRunId) => `/api/models/${modelRunId}/score`,
+  scoringRunDetail: (scoringRunId) => `/api/scoring-runs/${scoringRunId}`,
   jobDetail: (jobId) => `/api/jobs/${jobId}`,
 };
 
@@ -30,9 +33,12 @@ let initialized = false;
 let loadedOnce = false;
 let optionsSnapshot = null;
 let selectedAnalysis = null;
+let selectedModelRunId = null;
 let activeJobId = null;
 let pollTimer = null;
 let loadingJob = false;
+let scoringStatusSnapshot = null;
+let scoringStatusRequestToken = 0;
 const analysisDateRangeCache = new Map();
 const modelQualityCache = new Map();
 
@@ -140,19 +146,117 @@ function applyDefaults() {
   ) === true;
 }
 
+function setModelAnnouncement(text) {
+  document.querySelector("#model-training-announcement").textContent = text;
+}
+
+function setScoringAnnouncement(text) {
+  document.querySelector("#scoring-announcement").textContent = text;
+}
+
+function activeComputeJob() {
+  const activeJob = optionsSnapshot?.active_job;
+  if (!activeJob) return null;
+  if (TERMINAL_JOB_STATUSES.has(activeJob.status)) return null;
+  return activeJob;
+}
+
+function shortHash(value) {
+  if (!value || typeof value !== "string") return "-";
+  return value.length > 12 ? `${value.slice(0, 12)}...` : value;
+}
+
+function formatScore(value) {
+  if (!Number.isFinite(Number(value))) return "-";
+  return Number(value).toFixed(6);
+}
+
+function formatRowsPerSecond(value) {
+  if (!Number.isFinite(Number(value))) return "-";
+  return `${formatNumber(Math.round(Number(value)))} rows/s`;
+}
+
+function formatSeconds(value) {
+  if (!Number.isFinite(Number(value))) return "-";
+  const totalSeconds = Math.max(0, Number(value));
+  if (totalSeconds < 60) {
+    return `${totalSeconds.toFixed(1)}s`;
+  }
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.round(totalSeconds % 60);
+  return `${minutes}m ${seconds}s`;
+}
+
+function setScoringText(id, value) {
+  document.querySelector(id).textContent = value;
+}
+
+function resetScoringSummary() {
+  for (const selector of [
+    "#scoring-summary-scored-count",
+    "#scoring-summary-reconciliation",
+    "#scoring-summary-min",
+    "#scoring-summary-mean",
+    "#scoring-summary-max",
+    "#scoring-summary-runtime",
+    "#scoring-summary-rows-per-second",
+    "#scoring-summary-feature-contract",
+    "#scoring-summary-artifact-sha",
+  ]) {
+    setScoringText(selector, "-");
+  }
+}
+
+function hideScoringPanel() {
+  document.querySelector("#prospect-scoring-panel").hidden = true;
+  document.querySelector("#scoring-status-reason").hidden = true;
+  document.querySelector("#scoring-completed-summary").hidden = true;
+  document.querySelector("#score-prospect-submit").hidden = false;
+  selectedModelRunId = null;
+  scoringStatusSnapshot = null;
+  resetScoringSummary();
+  setScoringAnnouncement("Load a completed model to evaluate scoring readiness.");
+}
+
 function applySubmitDisabledState() {
-  const hasActiveJob = optionsSnapshot?.active_job
-    && !TERMINAL_JOB_STATUSES.has(optionsSnapshot.active_job.status);
-  const disabled = Boolean(hasActiveJob || loadingJob);
-  const submit = document.querySelector("#train-model-submit");
-  submit.disabled = disabled;
+  const activeJob = activeComputeJob();
+  const hasActiveJob = Boolean(activeJob);
+  const trainingDisabled = Boolean(hasActiveJob || loadingJob);
+  const trainSubmit = document.querySelector("#train-model-submit");
+  trainSubmit.disabled = trainingDisabled;
+
+  const scoringPanelVisible = !document.querySelector("#prospect-scoring-panel").hidden;
+  const hasCompletedScoring = Boolean(scoringStatusSnapshot?.completed_scoring_run);
+  const scoreReady = Boolean(scoringPanelVisible && scoringStatusSnapshot?.eligible);
+  const scoreDisabled = Boolean(loadingJob || hasActiveJob || !scoreReady || hasCompletedScoring);
+  const scoreSubmit = document.querySelector("#score-prospect-submit");
+  scoreSubmit.disabled = scoreDisabled;
+  scoreSubmit.hidden = hasCompletedScoring && scoringPanelVisible;
 
   if (hasActiveJob) {
-    document.querySelector("#model-training-announcement").textContent = (
-      `Training is unavailable while job #${optionsSnapshot.active_job.job_id} is ${optionsSnapshot.active_job.status.toLowerCase()}.`
+    setModelAnnouncement(
+      `Training is unavailable while job #${activeJob.job_id} is ${activeJob.status.toLowerCase()}.`,
     );
+    if (scoringPanelVisible) {
+      setScoringAnnouncement(
+        `Scoring is unavailable while job #${activeJob.job_id} is ${activeJob.status.toLowerCase()}.`,
+      );
+    }
   } else if (!loadingJob) {
-    document.querySelector("#model-training-announcement").textContent = "Ready to train.";
+    setModelAnnouncement("Ready to train.");
+    if (scoringPanelVisible) {
+      if (!selectedModelRunId) {
+        setScoringAnnouncement("Load a completed model to evaluate scoring readiness.");
+      } else if (hasCompletedScoring) {
+        setScoringAnnouncement("A completed scoring run already exists for this model.");
+      } else if (scoreReady) {
+        setScoringAnnouncement("Ready to score prospect universe.");
+      } else if (scoringStatusSnapshot?.reason) {
+        setScoringAnnouncement(scoringStatusSnapshot.reason);
+      } else {
+        setScoringAnnouncement("Scoring is currently unavailable.");
+      }
+    }
   }
 }
 
@@ -177,11 +281,14 @@ function formatElapsed(createdAt, finishedAt) {
 }
 
 function showJobPanel(job) {
+  const isScoringJob = job.job_type === "PROSPECT_SCORING";
   document.querySelector("#model-job-empty").hidden = true;
   document.querySelector("#model-job-content").hidden = false;
   document.querySelector("#model-job-id").textContent = `#${job.job_id}`;
   document.querySelector("#model-job-stage").textContent = job.stage || "-";
-  document.querySelector("#model-job-message").textContent = job.message || "Model training in progress.";
+  document.querySelector("#model-job-message").textContent = job.message || (
+    isScoringJob ? "Prospect scoring in progress." : "Model training in progress."
+  );
   document.querySelector("#model-job-analysis").textContent = job.analysis_run_id ? `#${job.analysis_run_id}` : "-";
   document.querySelector("#model-job-created").textContent = formatDate(job.created_at, true);
   document.querySelector("#model-job-started").textContent = formatDate(job.started_at, true);
@@ -205,6 +312,178 @@ function showJobEmpty() {
   document.querySelector("#model-job-content").hidden = true;
   document.querySelector("#model-job-failure").hidden = true;
   setJobProgress(0);
+}
+
+function renderScoringSummaryFromDetail(detail) {
+  const population = detail?.population || {};
+  const contract = detail?.model_contract || {};
+  const scoreSummary = detail?.score_summary || {};
+  const summaryPayload = scoreSummary.summary_payload || {};
+
+  const scoredCount = Number(population.scored_person_count);
+  const snapshotCount = Number(population.demographic_snapshot_count);
+  const reconciliation = (
+    Number.isFinite(scoredCount)
+    && Number.isFinite(snapshotCount)
+    && scoredCount >= 0
+    && snapshotCount >= 0
+  )
+    ? `${formatNumber(scoredCount)} / ${formatNumber(snapshotCount)}`
+    : "-";
+
+  setScoringText("#scoring-summary-scored-count", formatNumber(population.scored_person_count));
+  setScoringText("#scoring-summary-reconciliation", reconciliation);
+  setScoringText("#scoring-summary-min", formatScore(scoreSummary.score_min));
+  setScoringText("#scoring-summary-mean", formatScore(scoreSummary.score_mean));
+  setScoringText("#scoring-summary-max", formatScore(scoreSummary.score_max));
+  setScoringText("#scoring-summary-runtime", formatSeconds(summaryPayload.total_seconds));
+  setScoringText("#scoring-summary-rows-per-second", formatRowsPerSecond(summaryPayload.rows_per_second));
+  setScoringText(
+    "#scoring-summary-feature-contract",
+    `${contract.feature_contract_version || "-"} · ${shortHash(contract.feature_contract_sha256)}`,
+  );
+  setScoringText("#scoring-summary-artifact-sha", shortHash(contract.artifact_sha256));
+  document.querySelector("#scoring-completed-summary").hidden = false;
+}
+
+function renderScoringSummaryFromJobResult(resultPayload) {
+  if (!resultPayload || typeof resultPayload !== "object") {
+    return;
+  }
+  const demographicCount = Number(scoringStatusSnapshot?.demographic_count);
+  const scoredCount = Number(resultPayload.scored_person_count);
+  const reconciliation = (
+    Number.isFinite(demographicCount)
+    && Number.isFinite(scoredCount)
+    && demographicCount >= 0
+    && scoredCount >= 0
+  )
+    ? `${formatNumber(scoredCount)} / ${formatNumber(demographicCount)}`
+    : "-";
+
+  setScoringText("#scoring-summary-scored-count", formatNumber(resultPayload.scored_person_count));
+  setScoringText("#scoring-summary-reconciliation", reconciliation);
+  setScoringText("#scoring-summary-min", formatScore(resultPayload.score_min));
+  setScoringText("#scoring-summary-mean", formatScore(resultPayload.score_mean));
+  setScoringText("#scoring-summary-max", formatScore(resultPayload.score_max));
+  setScoringText("#scoring-summary-runtime", formatSeconds(resultPayload.total_seconds));
+  setScoringText("#scoring-summary-rows-per-second", formatRowsPerSecond(resultPayload.rows_per_second));
+  setScoringText(
+    "#scoring-summary-feature-contract",
+    `${resultPayload.feature_contract_version || "-"} · ${shortHash(resultPayload.feature_contract_sha256)}`,
+  );
+  setScoringText("#scoring-summary-artifact-sha", shortHash(resultPayload.artifact_sha256));
+  document.querySelector("#scoring-completed-summary").hidden = false;
+}
+
+function renderScoringStatus(status) {
+  scoringStatusSnapshot = status;
+  document.querySelector("#prospect-scoring-panel").hidden = false;
+
+  setScoringText("#scoring-model-run-id", `#${status.model_run_id}`);
+  setScoringText("#scoring-selected-primary", status.selected_candidate || "-");
+  setScoringText("#scoring-demographic-count", formatNumber(status.demographic_count));
+  setScoringText("#scoring-availability", status.eligible ? "Eligible" : "Not eligible");
+
+  if (status.artifact_feature_compatible) {
+    const compatibility = `${status.feature_contract_version || "-"} · ${shortHash(status.artifact_sha256)}`;
+    setScoringText("#scoring-artifact-compatibility", `Compatible (${compatibility})`);
+  } else {
+    setScoringText("#scoring-artifact-compatibility", "Not compatible");
+  }
+
+  if (status.completed_scoring_run) {
+    const completed = status.completed_scoring_run;
+    setScoringText(
+      "#scoring-completed-run",
+      `#${completed.scoring_run_id} · ${formatDate(completed.completed_at, true)}`,
+    );
+  } else {
+    setScoringText("#scoring-completed-run", "-");
+  }
+
+  const reason = document.querySelector("#scoring-status-reason");
+  if (status.reason) {
+    reason.textContent = status.reason;
+    reason.hidden = false;
+  } else {
+    reason.hidden = true;
+  }
+
+  if (!status.completed_scoring_run) {
+    document.querySelector("#scoring-completed-summary").hidden = true;
+    resetScoringSummary();
+  }
+
+  const activeJob = status.active_job;
+  if (activeJob && !TERMINAL_JOB_STATUSES.has(activeJob.status)) {
+    showJobPanel(activeJob);
+    activeJobId = activeJob.job_id;
+    optionsSnapshot = {
+      ...(optionsSnapshot || {}),
+      active_job: activeJob,
+    };
+    schedulePoll();
+  }
+
+  applySubmitDisabledState();
+}
+
+async function loadScoringRunDetail(scoringRunId, { silent = false } = {}) {
+  try {
+    const detail = await getJSON(API_PATHS.scoringRunDetail(scoringRunId));
+    renderScoringSummaryFromDetail(detail);
+  } catch (error) {
+    document.querySelector("#scoring-completed-summary").hidden = true;
+    resetScoringSummary();
+    if (!silent) {
+      setScoringAnnouncement(error.message || "Scoring run detail could not be loaded.");
+    }
+  }
+}
+
+async function loadScoringStatus(modelRunId, { force = false } = {}) {
+  const token = scoringStatusRequestToken + 1;
+  scoringStatusRequestToken = token;
+  setScoringAnnouncement("Loading scoring readiness.");
+
+  try {
+    const status = await getCachedJSON(API_PATHS.scoringStatus(modelRunId), { maxAgeMs: 10_000, force });
+    if (token !== scoringStatusRequestToken) {
+      return;
+    }
+
+    selectedModelRunId = modelRunId;
+    renderScoringStatus(status);
+
+    if (status.completed_scoring_run?.scoring_run_id) {
+      await loadScoringRunDetail(status.completed_scoring_run.scoring_run_id, { silent: true });
+    }
+    dispatchBackendStatus("is-online", "Backend online");
+  } catch (error) {
+    if (token !== scoringStatusRequestToken) {
+      return;
+    }
+
+    document.querySelector("#prospect-scoring-panel").hidden = false;
+    setScoringText("#scoring-model-run-id", `#${modelRunId}`);
+    setScoringText("#scoring-selected-primary", "-");
+    setScoringText("#scoring-artifact-compatibility", "Unavailable");
+    setScoringText("#scoring-demographic-count", "-");
+    setScoringText("#scoring-availability", "Unavailable");
+    setScoringText("#scoring-completed-run", "-");
+    const reason = document.querySelector("#scoring-status-reason");
+    reason.textContent = "Scoring readiness could not be loaded.";
+    reason.hidden = false;
+    document.querySelector("#scoring-completed-summary").hidden = true;
+    resetScoringSummary();
+    scoringStatusSnapshot = null;
+    applySubmitDisabledState();
+    dispatchBackendStatus(
+      error.status && error.status < 500 ? "is-online" : "is-offline",
+      error.status && error.status < 500 ? "Backend online" : "Backend unavailable",
+    );
+  }
 }
 
 function metricFromCandidate(candidate, metric) {
@@ -392,6 +671,11 @@ async function loadRecentRuns(force = false) {
 async function loadModelDetail(modelRunId, { focusSummary = false } = {}) {
   const detail = await getJSON(API_PATHS.modelDetail(modelRunId));
   renderSummary(detail);
+  if (detail?.identity?.status === "COMPLETED") {
+    await loadScoringStatus(modelRunId, { force: true });
+  } else {
+    hideScoringPanel();
+  }
   if (focusSummary) {
     document.querySelector("#model-summary-title").focus();
   }
@@ -415,13 +699,32 @@ async function loadJobDetail(jobId, { silent = false } = {}) {
     if (TERMINAL_JOB_STATUSES.has(job.status)) {
       clearPolling();
       activeJobId = null;
-      if (job.status === "COMPLETED" && job.model_run_id) {
-        await Promise.all([loadModelDetail(job.model_run_id), loadRecentRuns(true)]);
-        document.querySelector("#model-training-announcement").textContent = (
-          `Model training completed as run #${job.model_run_id}.`
-        );
+      if (job.status === "COMPLETED") {
+        if (job.job_type === "MODEL_TRAINING" && job.model_run_id) {
+          await Promise.all([loadModelDetail(job.model_run_id), loadRecentRuns(true)]);
+          setModelAnnouncement(`Model training completed as run #${job.model_run_id}.`);
+        }
+        if (job.job_type === "PROSPECT_SCORING") {
+          if (job.model_run_id) {
+            await loadScoringStatus(job.model_run_id, { force: true });
+          } else if (selectedModelRunId) {
+            await loadScoringStatus(selectedModelRunId, { force: true });
+          }
+          renderScoringSummaryFromJobResult(job.result);
+          const scoringRunId = job.result?.scoring_run_id;
+          if (Number.isFinite(Number(scoringRunId))) {
+            await loadScoringRunDetail(Number(scoringRunId), { silent: true });
+            setScoringAnnouncement(`Prospect scoring completed as run #${scoringRunId}.`);
+          } else {
+            setScoringAnnouncement("Prospect scoring completed.");
+          }
+        }
       } else if (job.status === "FAILED") {
-        document.querySelector("#model-training-announcement").textContent = "Model training failed safely.";
+        if (job.job_type === "PROSPECT_SCORING") {
+          setScoringAnnouncement("Prospect scoring failed safely.");
+        } else {
+          setModelAnnouncement("Model training failed safely.");
+        }
       }
       optionsSnapshot = {
         ...(optionsSnapshot || {}),
@@ -432,9 +735,11 @@ async function loadJobDetail(jobId, { silent = false } = {}) {
     }
 
     if (!silent) {
-      document.querySelector("#model-training-announcement").textContent = (
-        `Job #${job.job_id} is ${job.status.toLowerCase()}.`
-      );
+      if (job.job_type === "PROSPECT_SCORING") {
+        setScoringAnnouncement(`Scoring job #${job.job_id} is ${job.status.toLowerCase()}.`);
+      } else {
+        setModelAnnouncement(`Job #${job.job_id} is ${job.status.toLowerCase()}.`);
+      }
     }
     schedulePoll();
   } catch (error) {
@@ -484,7 +789,7 @@ async function submitTraining(event) {
 
   const submitButton = document.querySelector("#train-model-submit");
   setButtonLoading(submitButton, true, "Submitting...");
-  document.querySelector("#model-training-announcement").textContent = "Submitting model training request.";
+  setModelAnnouncement("Submitting model training request.");
 
   try {
     const job = await getJSON(API_PATHS.submit, {
@@ -501,18 +806,67 @@ async function submitTraining(event) {
       active_job: job,
     };
     applySubmitDisabledState();
-    document.querySelector("#model-training-announcement").textContent = `Job #${job.job_id} accepted and queued.`;
+    setModelAnnouncement(`Job #${job.job_id} accepted and queued.`);
     schedulePoll();
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {
     setFormError(error.message);
-    document.querySelector("#model-training-announcement").textContent = "Model training submission failed.";
+    setModelAnnouncement("Model training submission failed.");
     dispatchBackendStatus(
       error.status && error.status < 500 ? "is-online" : "is-offline",
       error.status && error.status < 500 ? "Backend online" : "Backend unavailable",
     );
   } finally {
     setButtonLoading(submitButton, false, "Submitting...");
+    applySubmitDisabledState();
+  }
+}
+
+async function submitScoring() {
+  hideFormError();
+  if (!selectedModelRunId) {
+    setScoringAnnouncement("Load a completed model before scoring prospects.");
+    return;
+  }
+  if (!scoringStatusSnapshot) {
+    setScoringAnnouncement("Scoring readiness is still loading.");
+    return;
+  }
+  if (!scoringStatusSnapshot.eligible) {
+    setScoringAnnouncement(scoringStatusSnapshot.reason || "Scoring is not eligible for this model.");
+    applySubmitDisabledState();
+    return;
+  }
+
+  const scoreButton = document.querySelector("#score-prospect-submit");
+  setButtonLoading(scoreButton, true, "Submitting...");
+  setScoringAnnouncement("Submitting prospect scoring request.");
+
+  try {
+    const job = await getJSON(API_PATHS.scoringSubmit(selectedModelRunId), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    showJobPanel(job);
+    activeJobId = job.job_id;
+    optionsSnapshot = {
+      ...(optionsSnapshot || {}),
+      active_job: job,
+    };
+    document.querySelector("#scoring-completed-summary").hidden = true;
+    resetScoringSummary();
+    applySubmitDisabledState();
+    setScoringAnnouncement(`Scoring job #${job.job_id} accepted and queued.`);
+    schedulePoll();
+    dispatchBackendStatus("is-online", "Backend online");
+  } catch (error) {
+    setScoringAnnouncement(error.message || "Prospect scoring submission failed.");
+    dispatchBackendStatus(
+      error.status && error.status < 500 ? "is-online" : "is-offline",
+      error.status && error.status < 500 ? "Backend online" : "Backend unavailable",
+    );
+  } finally {
+    setButtonLoading(scoreButton, false, "Submitting...");
     applySubmitDisabledState();
   }
 }
@@ -530,6 +884,7 @@ function renderOptions(options) {
   const completed = options.completed_analyses || [];
   if (!completed.length) {
     setWorkspaceState({ loading: false, empty: true });
+    hideScoringPanel();
     showJobEmpty();
     return;
   }
@@ -596,6 +951,7 @@ export async function loadModelTraining(force = false) {
 function handleRefresh() {
   clearPolling();
   activeJobId = null;
+  scoringStatusRequestToken += 1;
   loadModelTraining(true);
 }
 
@@ -621,4 +977,5 @@ export function initializeModelTraining() {
     }
   });
   document.querySelector("#source-analysis-select").addEventListener("change", bindAnalysisSelection);
+  document.querySelector("#score-prospect-submit").addEventListener("click", submitScoring);
 }

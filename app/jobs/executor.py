@@ -1,4 +1,4 @@
-"""Bounded lazy executor for Phase 4 model-training background jobs."""
+"""Bounded lazy executor for training and prospect-scoring background jobs."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from pathlib import Path
 from threading import Lock
 
 from app.jobs.model_training_worker import run_model_training_job
+from app.jobs.prospect_scoring_worker import run_prospect_scoring_job
 
 
 EXECUTOR_MAX_WORKERS = 1
@@ -43,6 +44,18 @@ def submit_model_training_job(
     return executor.submit(run_model_training_job, path, job_id)
 
 
+def submit_prospect_scoring_job(
+    database_path: str | Path,
+    job_id: int,
+) -> Future[None]:
+    """Submit one prospect-scoring worker target to the shared process executor."""
+    if isinstance(job_id, bool) or not isinstance(job_id, int) or job_id <= 0:
+        raise ValueError("job_id must be a positive integer.")
+    path = str(Path(database_path))
+    executor = get_model_training_executor()
+    return executor.submit(run_prospect_scoring_job, path, job_id)
+
+
 def shutdown_model_training_executor(*, wait: bool = False) -> None:
     """Shut down the process executor if it was created."""
     global _MODEL_TRAINING_EXECUTOR
@@ -58,5 +71,6 @@ __all__ = (
     "get_model_training_executor",
     "is_model_training_executor_initialized",
     "shutdown_model_training_executor",
+    "submit_prospect_scoring_job",
     "submit_model_training_job",
 )

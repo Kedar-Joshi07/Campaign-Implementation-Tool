@@ -40,11 +40,11 @@ async def lifespan(_: FastAPI):
     try:
         stale_failed = reconcile_stale_model_training_jobs(DATABASE_PATH)
         logger.info(
-            "Model-training startup reconciliation completed | failed_stale_jobs=%s",
+            "Compute startup reconciliation completed | failed_stale_jobs=%s",
             stale_failed,
         )
     except Exception:
-        logger.exception("Model-training startup reconciliation failed")
+        logger.exception("Compute startup reconciliation failed")
     try:
         yield
     finally:

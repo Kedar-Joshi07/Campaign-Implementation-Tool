@@ -80,7 +80,7 @@ python3 -m venv .venv
 
 ## Initialize SQLite
 
-Create or verify the current schema (version 4):
+Create or verify the current schema (version 5):
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\init_db.py
@@ -435,35 +435,42 @@ feature-contract hash, selected `BAGGING_PU` candidate, non-runtime metrics,
 bounded-sample scores, and artifact SHA-256. Exact timings vary with machine load
 and are recorded as evidence rather than an SLA.
 
-## Phase 4 asynchronous model training
+## Phase 5 asynchronous model training and prospect scoring
 
-Schema version 4 additively extends version 3 with a durable `jobs` lifecycle
-table and indexes for bounded asynchronous execution. The application uses a lazy
-`ProcessPoolExecutor(max_workers=1)` and enforces one active model-training job
-at a time. Job lifecycle state is durable (`QUEUED`, `RUNNING`, `COMPLETED`,
-`FAILED`) with monotonic progress and safe public messages.
+Schema version 5 additively extends version 4 with prospect-scoring persistence
+(`scoring_runs`, `propensity_scores`) and scoring-specific job stages, while
+preserving all earlier tables and rows. The application uses a lazy
+`ProcessPoolExecutor(max_workers=1)` and enforces one active compute job at a
+time across training and scoring. Job lifecycle state is durable (`QUEUED`,
+`RUNNING`, `COMPLETED`, `FAILED`) with monotonic progress and safe public
+messages.
 
 On startup, stale active jobs left in `QUEUED` or `RUNNING` are reconciled to
-`FAILED` with a bounded restart message; terminal rows remain unchanged.
-Failures in executor submission, worker execution, delegated Phase 3 training,
-or post-training artifact completion all transition cleanly to `FAILED` without
-fake-success states.
+`FAILED` with bounded restart messages; stale `RUNNING` scoring runs are also
+failed defensively. Terminal rows remain unchanged. Failures in executor
+submission, worker execution, delegated training, scoring, or artifact
+verification all transition cleanly to `FAILED` without fake-success states.
 
-Phase 4 API endpoints:
+Phase 5 model/scoring API endpoints:
 
 - `POST /api/models/train`
+- `POST /api/models/{model_run_id}/score`
 - `GET /api/jobs/{job_id}`
 - `GET /api/models`
 - `GET /api/models/{model_run_id}`
+- `GET /api/models/{model_run_id}/scoring-status`
 - `GET /api/models/training-options`
+- `GET /api/scoring-runs`
+- `GET /api/scoring-runs/{scoring_run_id}`
 
 Contract highlights:
 
 - Submit returns `202 Accepted` with persisted queued snapshot details.
-- When a training job is already active, submit returns `409 Conflict`.
+- When a compute job is already active, conflicting submit calls return `409 Conflict`.
 - Model detail verifies persisted artifact existence and SHA-256 safely.
+- Scoring status/list/detail expose aggregate-only readiness and run summaries.
 - Artifact drift is surfaced as verification failure in detail payloads.
-- No customer- or person-level raw rows are returned by training/job/model APIs.
+- No customer- or person-level raw rows are returned by training/job/model/scoring APIs.
 
 ## Run tests
 
@@ -541,10 +548,14 @@ The example file is documentation only; no secrets are required for this POC.
 - `GET /api/historical/analyses`
 - `GET /api/historical/analyses/{analysis_run_id}`
 - `POST /api/models/train`
+- `POST /api/models/{model_run_id}/score`
 - `GET /api/jobs/{job_id}`
 - `GET /api/models`
 - `GET /api/models/{model_run_id}`
+- `GET /api/models/{model_run_id}/scoring-status`
 - `GET /api/models/training-options`
+- `GET /api/scoring-runs`
+- `GET /api/scoring-runs/{scoring_run_id}`
 - `GET /`
 
 ## Data generators
@@ -607,6 +618,18 @@ references a valid completed `analysis_run_id`, matches the frozen feature
 contract, and has an existing checksum-verified artifact. For role-policy-v2
 runs, `BAGGING_PU` remains PRIMARY and selected, while challenger/diagnostic
 metrics are retained for governance review.
+
+Step 7 hardening was rerun after demographic age-contract remediation and
+completed successfully through the real scoring API path. For the accepted run:
+`model_run_id=7`, `job_id=16`, `scoring_run_id=5`, scored rows = 5,000,000,
+duplicate IDs = 0, invalid demographic FK = 0, nonfinite = 0, score<0 = 0,
+score>1 = 0, and deterministic sample re-score verification passed
+(`sample_size=256`, `max_abs_diff=0.0`). Compute-lock conflict behavior remains
+enforced during active scoring (`409` for scoring-vs-scoring and
+training-vs-scoring submissions).
+
+With these gates satisfied, Phase 5 is a Go for Phase 6 handoff (pending a final
+baseline commit SHA selection for handoff bookkeeping).
 
 Before any prospect scoring phase, consumers must verify artifact path, SHA-256,
 payload compatibility, feature-contract version/hash, and selected estimator.

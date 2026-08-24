@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,8 @@ from app.ml.model_roles import (
 )
 from app.repositories.job_repository import JobRepository
 from app.repositories.model_run_repository import ModelRunRepository
+from app.repositories.prospect_scoring_repository import ProspectScoringRepository
+from app.repositories.scoring_repository import ScoringRepository
 from app.services.historical_analysis_service import list_historical_analysis_runs
 from app.services.model_job_service import (
     ACTIVE_JOB_CONFLICT_MESSAGE,
@@ -32,13 +35,49 @@ from app.services.model_job_service import (
     STALE_JOB_INTERRUPTION_MESSAGE,
     submit_model_training_job_request,
 )
+from app.services.model_scoring_compatibility import ModelScoreabilityValidationError
+from app.services.model_scoring_compatibility import validate_scoreable_model
+from app.services.scoring_job_service import (
+    ACTIVE_COMPUTE_JOB_CONFLICT_MESSAGE,
+    EXISTING_SCORING_RUN_CONFLICT_MESSAGE,
+    MODEL_NOT_SCOREABLE_MESSAGE,
+    ScoringJobConflictError,
+    ScoringJobSubmissionError,
+    ScoringJobValidationError,
+    submit_prospect_scoring_job_request,
+)
 from app.services.model_training_service import load_verified_model_artifact
 
 
 MODEL_TRAINING_FAILED_MESSAGE = "Model training could not be completed."
+MODEL_SCORING_FAILED_MESSAGE = "Prospect scoring could not be completed."
 ARTIFACT_VERIFICATION_FAILED_MESSAGE = "The model artifact could not be verified."
 JOB_NOT_FOUND_MESSAGE = "The requested job was not found."
 MODEL_RUN_NOT_FOUND_MESSAGE = "The requested model run was not found."
+SCORING_RUN_NOT_FOUND_MESSAGE = "The requested scoring run was not found."
+
+_FORBIDDEN_PUBLIC_PAYLOAD_KEYS = {
+    "customer_id",
+    "customer_ids",
+    "person_id",
+    "person_ids",
+    "email",
+    "phone_number",
+    "address_line_1",
+    "address_line_2",
+    "street",
+    "postal_code",
+    "train_matrix",
+    "validation_matrix",
+    "validation_scores",
+    "raw_features",
+    "propensity_scores",
+    "score_rows",
+    "sql",
+    "query",
+    "absolute_path",
+    "traceback",
+}
 
 
 class ModelApiError(RuntimeError):
@@ -68,6 +107,56 @@ def _decode_json_object(raw: Any, *, field_name: str) -> dict[str, Any]:
         raise ModelApiValidationError(f"{field_name} metadata is invalid.") from exc
     if not isinstance(decoded, dict):
         raise ModelApiValidationError(f"{field_name} metadata is invalid.")
+    if _contains_non_finite_numbers(decoded):
+        raise ModelApiValidationError(f"{field_name} metadata is invalid.")
+    return decoded
+
+
+def _contains_non_finite_numbers(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(_contains_non_finite_numbers(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_non_finite_numbers(item) for item in value)
+    if isinstance(value, float):
+        return not math.isfinite(value)
+    return False
+
+
+def _contains_forbidden_public_content(value: Any) -> bool:
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            if isinstance(key, str) and key.casefold() in _FORBIDDEN_PUBLIC_PAYLOAD_KEYS:
+                return True
+            if _contains_forbidden_public_content(nested):
+                return True
+        return False
+    if isinstance(value, list):
+        return any(_contains_forbidden_public_content(item) for item in value)
+    if isinstance(value, str):
+        normalized = value.casefold().strip()
+        if "traceback" in normalized:
+            return True
+        if "select " in normalized or "insert " in normalized or "update " in normalized:
+            return True
+        if "delete " in normalized or " from " in normalized:
+            return True
+        if normalized.startswith(("/", "\\\\")):
+            return True
+        if (
+            len(normalized) >= 3
+            and normalized[1] == ":"
+            and normalized[2] in {"/", "\\"}
+            and normalized[0].isalpha()
+        ):
+            return True
+        return False
+    return False
+
+
+def _decode_public_json_object(raw: Any, *, field_name: str) -> dict[str, Any]:
+    decoded = _decode_json_object(raw, field_name=field_name)
+    if _contains_forbidden_public_content(decoded):
+        raise ModelApiValidationError(f"{field_name} metadata is invalid.")
     return decoded
 
 
@@ -91,6 +180,10 @@ def _public_job_failure_message(row: dict[str, Any]) -> str | None:
     if row["status"] != "FAILED":
         return None
     raw_error = row.get("error_message")
+    if row.get("job_type") == "PROSPECT_SCORING":
+        if isinstance(raw_error, str) and "interrupted by application restart" in raw_error:
+            return "Prospect scoring was interrupted by application restart."
+        return MODEL_SCORING_FAILED_MESSAGE
     if not raw_error:
         return MODEL_TRAINING_FAILED_MESSAGE
     if isinstance(raw_error, str) and STALE_JOB_INTERRUPTION_MESSAGE in raw_error:
@@ -132,17 +225,196 @@ def submit_training_request(
     return _public_job_summary(job)
 
 
+def submit_scoring_request(
+    database_path: str | Path,
+    model_run_id: int,
+) -> dict[str, Any]:
+    if ModelRunRepository(database_path).fetch_run(model_run_id) is None:
+        raise ModelApiNotFoundError(MODEL_RUN_NOT_FOUND_MESSAGE)
+
+    try:
+        job = submit_prospect_scoring_job_request(
+            database_path,
+            {"model_run_id": model_run_id},
+        )
+    except ScoringJobConflictError as exc:
+        raise ModelApiConflictError(str(exc)) from exc
+    except ScoringJobValidationError as exc:
+        message = str(exc)
+        if message in {
+            MODEL_NOT_SCOREABLE_MESSAGE,
+            EXISTING_SCORING_RUN_CONFLICT_MESSAGE,
+            ACTIVE_COMPUTE_JOB_CONFLICT_MESSAGE,
+        }:
+            raise ModelApiConflictError(message) from exc
+        raise ModelApiValidationError(message) from exc
+    except ScoringJobSubmissionError as exc:
+        raise ModelApiError(MODEL_SCORING_FAILED_MESSAGE) from exc
+
+    return _public_job_summary(job)
+
+
 def get_job_detail(database_path: str | Path, job_id: int) -> dict[str, Any]:
     row = JobRepository(database_path).fetch_job(job_id)
     if row is None:
         raise ModelApiNotFoundError(JOB_NOT_FOUND_MESSAGE)
     result_payload: dict[str, Any] | None = None
     if row.get("result_json"):
-        result_payload = _decode_json_object(row["result_json"], field_name="result_json")
+        result_payload = _decode_public_json_object(
+            row["result_json"],
+            field_name="result_json",
+        )
     return {
         **_public_job_summary(row),
         "result": result_payload,
         "failure_message": _public_job_failure_message(row),
+    }
+
+
+def _public_completed_scoring_reference(row: dict[str, Any] | None) -> dict[str, Any] | None:
+    if row is None:
+        return None
+    return {
+        "scoring_run_id": int(row["scoring_run_id"]),
+        "status": str(row["status"]),
+        "completed_at": row.get("completed_at"),
+        "scored_person_count": int(row["scored_person_count"]),
+        "score_min": float(row["score_min"]),
+        "score_max": float(row["score_max"]),
+        "score_mean": float(row["score_mean"]),
+    }
+
+
+def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str, Any]:
+    model_row = ModelRunRepository(database_path).fetch_run(model_run_id)
+    if model_row is None:
+        raise ModelApiNotFoundError(MODEL_RUN_NOT_FOUND_MESSAGE)
+
+    demographic_count = ProspectScoringRepository(database_path).fetch_prospect_snapshot().demographic_snapshot_count
+    scoring_repository = ScoringRepository(database_path)
+    completed_scoring_run = scoring_repository.find_completed_run_for_model(model_run_id)
+    active_job = JobRepository(database_path).find_active_compute_job()
+
+    eligible = True
+    reason: str | None = None
+    artifact_feature_compatible = True
+    feature_contract_version: str | None = None
+    feature_contract_sha256: str | None = None
+    artifact_sha256: str | None = None
+    selected_candidate = model_row.get("selected_candidate")
+
+    try:
+        compatibility = validate_scoreable_model(database_path, model_run_id)
+        selected_candidate = compatibility.selected_candidate
+        feature_contract_version = compatibility.feature_contract_version
+        feature_contract_sha256 = compatibility.feature_contract_sha256
+        artifact_sha256 = compatibility.artifact_sha256
+    except ModelScoreabilityValidationError as exc:
+        artifact_feature_compatible = False
+        eligible = False
+        reason = str(exc)
+
+    if completed_scoring_run is not None:
+        eligible = False
+        reason = EXISTING_SCORING_RUN_CONFLICT_MESSAGE
+    elif active_job is not None:
+        eligible = False
+        reason = ACTIVE_COMPUTE_JOB_CONFLICT_MESSAGE
+
+    return {
+        "model_run_id": int(model_run_id),
+        "eligible": eligible,
+        "reason": reason,
+        "demographic_count": int(demographic_count),
+        "selected_candidate": selected_candidate,
+        "artifact_feature_compatible": artifact_feature_compatible,
+        "feature_contract_version": feature_contract_version,
+        "feature_contract_sha256": feature_contract_sha256,
+        "artifact_sha256": artifact_sha256,
+        "active_job": _public_job_summary(active_job) if active_job is not None else None,
+        "completed_scoring_run": _public_completed_scoring_reference(completed_scoring_run),
+    }
+
+
+def _public_scoring_run_summary(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "scoring_run_id": int(row["scoring_run_id"]),
+        "job_id": int(row["job_id"]),
+        "model_run_id": int(row["model_run_id"]),
+        "status": str(row["status"]),
+        "created_at": row["created_at"],
+        "completed_at": row.get("completed_at"),
+        "demographic_snapshot_count": int(row["demographic_snapshot_count"]),
+        "scored_person_count": int(row["scored_person_count"]),
+        "chunk_size": int(row["chunk_size"]),
+        "selected_candidate": str(row["selected_candidate"]),
+        "score_min": float(row["score_min"]) if row.get("score_min") is not None else None,
+        "score_max": float(row["score_max"]) if row.get("score_max") is not None else None,
+        "score_mean": float(row["score_mean"]) if row.get("score_mean") is not None else None,
+    }
+
+
+def list_scoring_run_summaries(
+    database_path: str | Path,
+    *,
+    limit: int,
+    offset: int,
+    status: str | None,
+    model_run_id: int | None,
+) -> list[dict[str, Any]]:
+    rows = ScoringRepository(database_path).list_scoring_runs(
+        limit=limit,
+        offset=offset,
+        status=status,
+        model_run_id=model_run_id,
+    )
+    return [_public_scoring_run_summary(row) for row in rows]
+
+
+def get_scoring_run_detail(database_path: str | Path, scoring_run_id: int) -> dict[str, Any]:
+    row = ScoringRepository(database_path).fetch_scoring_run(scoring_run_id)
+    if row is None:
+        raise ModelApiNotFoundError(SCORING_RUN_NOT_FOUND_MESSAGE)
+
+    score_summary_payload: dict[str, Any] | None = None
+    if row.get("score_summary_json"):
+        score_summary_payload = _decode_public_json_object(
+            row["score_summary_json"],
+            field_name="score_summary_json",
+        )
+
+    job_row = JobRepository(database_path).fetch_job(int(row["job_id"]))
+    return {
+        "identity": {
+            "scoring_run_id": int(row["scoring_run_id"]),
+            "job_id": int(row["job_id"]),
+            "model_run_id": int(row["model_run_id"]),
+            "status": str(row["status"]),
+            "created_at": row["created_at"],
+            "completed_at": row.get("completed_at"),
+            "failure_message": (
+                MODEL_SCORING_FAILED_MESSAGE if row["status"] == "FAILED" else None
+            ),
+        },
+        "population": {
+            "demographic_snapshot_count": int(row["demographic_snapshot_count"]),
+            "scored_person_count": int(row["scored_person_count"]),
+            "chunk_size": int(row["chunk_size"]),
+        },
+        "model_contract": {
+            "selected_candidate": str(row["selected_candidate"]),
+            "model_role_policy_version": str(row["model_role_policy_version"]),
+            "feature_contract_version": str(row["feature_contract_version"]),
+            "feature_contract_sha256": str(row["feature_contract_sha256"]),
+            "artifact_sha256": str(row["artifact_sha256"]),
+        },
+        "score_summary": {
+            "score_min": float(row["score_min"]) if row.get("score_min") is not None else None,
+            "score_max": float(row["score_max"]) if row.get("score_max") is not None else None,
+            "score_mean": float(row["score_mean"]) if row.get("score_mean") is not None else None,
+            "summary_payload": score_summary_payload,
+        },
+        "job": _public_job_summary(job_row) if job_row is not None else None,
     }
 
 
@@ -273,7 +545,7 @@ def get_model_run_detail(database_path: str | Path, model_run_id: int) -> dict[s
 def get_model_training_options(database_path: str | Path) -> dict[str, Any]:
     analyses = list_historical_analysis_runs(database_path, limit=100, offset=0)
     completed = [item for item in analyses if item["status"] == "COMPLETED"]
-    active_job = JobRepository(database_path).find_active_training_job()
+    active_job = JobRepository(database_path).find_active_compute_job()
 
     return {
         "completed_analyses": [
@@ -309,15 +581,21 @@ def get_model_training_options(database_path: str | Path) -> dict[str, Any]:
 __all__ = (
     "ARTIFACT_VERIFICATION_FAILED_MESSAGE",
     "JOB_NOT_FOUND_MESSAGE",
+    "MODEL_SCORING_FAILED_MESSAGE",
     "MODEL_RUN_NOT_FOUND_MESSAGE",
     "MODEL_TRAINING_FAILED_MESSAGE",
+    "SCORING_RUN_NOT_FOUND_MESSAGE",
     "ModelApiConflictError",
     "ModelApiError",
     "ModelApiNotFoundError",
     "ModelApiValidationError",
+    "get_scoring_run_detail",
+    "get_scoring_status",
     "get_job_detail",
     "get_model_run_detail",
     "get_model_training_options",
+    "list_scoring_run_summaries",
     "list_model_summaries",
+    "submit_scoring_request",
     "submit_training_request",
 )

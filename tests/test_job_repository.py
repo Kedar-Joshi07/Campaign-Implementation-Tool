@@ -192,13 +192,14 @@ def test_find_active_job_returns_newest_when_multiple_exist(database_path: Path)
             """
             INSERT INTO jobs (
                 job_type, status, progress_percent, stage,
-                analysis_run_id, created_at, request_json
-            ) VALUES (?, 'RUNNING', 25, 'PREPROCESSING', ?, ?, ?)
+                    analysis_run_id, created_at, started_at, request_json
+                ) VALUES (?, 'RUNNING', 25, 'PREPROCESSING', ?, ?, ?, ?)
             """,
             (
                 JOB_TYPE_MODEL_TRAINING,
                 analysis_run_id,
                 "2026-08-21T01:00:01Z",
+                    "2026-08-21T01:00:01Z",
                 '{"analysis_run_id":1,"model_name":null,"random_seed":42,'
                 '"run_elkan_challenger":true,"validation_fraction":0.2}',
             ),

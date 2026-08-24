@@ -15,6 +15,7 @@ from app.repositories.job_repository import (
     JobRepository,
     JobValidationError,
 )
+from app.repositories.scoring_repository import ScoringRepository
 
 
 ANALYSIS_NOT_AVAILABLE_MESSAGE = "The selected historical analysis is not available for training."
@@ -22,6 +23,9 @@ ACTIVE_JOB_CONFLICT_MESSAGE = "A model training job is already active."
 SUBMISSION_FAILURE_MESSAGE = "Model training could not be completed."
 STALE_JOB_INTERRUPTION_MESSAGE = (
     "Model training was interrupted by application restart."
+)
+STALE_SCORING_INTERRUPTION_MESSAGE = (
+    "Prospect scoring was interrupted by application restart."
 )
 MAXIMUM_INTERNAL_ERROR_LENGTH = 4_096
 
@@ -118,13 +122,17 @@ def submit_model_training_job_request(
 def reconcile_stale_model_training_jobs(
     database_path: str | Path | None,
 ) -> int:
-    """Fail any stale QUEUED/RUNNING jobs during process startup."""
+    """Fail stale active compute jobs and stale RUNNING scoring runs at startup."""
     path = initialize_database(database_path)
-    repository = JobRepository(path)
-    return repository.fail_stale_active_jobs(
+    stale_jobs_failed = JobRepository(path).fail_stale_active_jobs(
         finished_at=_utc_timestamp(),
         error_message=STALE_JOB_INTERRUPTION_MESSAGE,
     )
+    ScoringRepository(path).fail_running_scoring_runs(
+        completed_at=_utc_timestamp(),
+        error_message=STALE_SCORING_INTERRUPTION_MESSAGE,
+    )
+    return stale_jobs_failed
 
 
 __all__ = (
@@ -134,6 +142,7 @@ __all__ = (
     "ModelJobServiceError",
     "ModelJobSubmissionError",
     "ModelJobValidationError",
+    "STALE_SCORING_INTERRUPTION_MESSAGE",
     "STALE_JOB_INTERRUPTION_MESSAGE",
     "SUBMISSION_FAILURE_MESSAGE",
     "reconcile_stale_model_training_jobs",

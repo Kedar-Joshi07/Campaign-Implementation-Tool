@@ -16,7 +16,7 @@ from app.database.connection import get_connection
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 4
+CURRENT_SCHEMA_VERSION = 5
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -28,6 +28,8 @@ EXPECTED_TABLES = (
     "historical_analysis_runs",
     "model_runs",
     "jobs",
+    "scoring_runs",
+    "propensity_scores",
 )
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
@@ -91,6 +93,38 @@ JOB_COLUMNS = (
     "request_json",
     "result_json",
     "error_message",
+)
+
+SCORING_RUN_COLUMNS = (
+    "scoring_run_id",
+    "job_id",
+    "model_run_id",
+    "created_at",
+    "completed_at",
+    "status",
+    "demographic_snapshot_count",
+    "demographic_min_person_id",
+    "demographic_max_person_id",
+    "scored_person_count",
+    "chunk_size",
+    "last_person_id",
+    "selected_candidate",
+    "model_role_policy_version",
+    "feature_contract_version",
+    "feature_contract_sha256",
+    "artifact_sha256",
+    "score_min",
+    "score_max",
+    "score_mean",
+    "score_summary_json",
+    "error_message",
+)
+
+PROPENSITY_SCORE_COLUMNS = (
+    "scoring_run_id",
+    "model_run_id",
+    "person_id",
+    "propensity_score",
 )
 
 CUSTOMER_COLUMNS = (
@@ -422,11 +456,35 @@ PHASE_FOUR_REQUIRED_INDEX_STATEMENTS = {
     ),
 }
 
+PHASE_FIVE_REQUIRED_INDEX_STATEMENTS = {
+    "idx_scoring_runs_newest": (
+        "CREATE INDEX IF NOT EXISTS idx_scoring_runs_newest "
+        "ON scoring_runs (created_at DESC, scoring_run_id DESC)"
+    ),
+    "idx_scoring_runs_model_newest": (
+        "CREATE INDEX IF NOT EXISTS idx_scoring_runs_model_newest "
+        "ON scoring_runs (model_run_id, created_at DESC, scoring_run_id DESC)"
+    ),
+    "idx_scoring_runs_status": (
+        "CREATE INDEX IF NOT EXISTS idx_scoring_runs_status "
+        "ON scoring_runs (status, created_at DESC, scoring_run_id DESC)"
+    ),
+    "idx_scoring_runs_completed_model_unique": (
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_scoring_runs_completed_model_unique "
+        "ON scoring_runs (model_run_id) WHERE status = 'COMPLETED'"
+    ),
+    "idx_propensity_scores_run_score_person": (
+        "CREATE INDEX IF NOT EXISTS idx_propensity_scores_run_score_person "
+        "ON propensity_scores (scoring_run_id, propensity_score DESC, person_id ASC)"
+    ),
+}
+
 REQUIRED_INDEX_STATEMENTS = {
     **PHASE_ONE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_TWO_REQUIRED_INDEX_STATEMENTS,
     **PHASE_THREE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_FOUR_REQUIRED_INDEX_STATEMENTS,
+    **PHASE_FIVE_REQUIRED_INDEX_STATEMENTS,
 }
 
 
@@ -714,10 +772,288 @@ def _migrate_to_version_4(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_5(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE jobs_v5 (
+            job_id INTEGER PRIMARY KEY,
+            job_type TEXT NOT NULL
+                CHECK (job_type IN ('MODEL_TRAINING', 'PROSPECT_SCORING')),
+            status TEXT NOT NULL
+                CHECK (status IN ('QUEUED', 'RUNNING', 'COMPLETED', 'FAILED')),
+            progress_percent INTEGER NOT NULL DEFAULT 0
+                CHECK (progress_percent BETWEEN 0 AND 100),
+            stage TEXT NOT NULL
+                CHECK (stage IN (
+                    'QUEUED',
+                    'STARTING',
+                    'RECONSTRUCTING_COHORT',
+                    'SPLITTING_DATA',
+                    'PREPROCESSING',
+                    'TRAINING_PRIMARY',
+                    'TRAINING_CHALLENGER',
+                    'TRAINING_DIAGNOSTIC',
+                    'EVALUATING',
+                    'PERSISTING_ARTIFACT',
+                    'VERIFYING_ARTIFACT',
+                    'VALIDATING_MODEL',
+                    'PREPARING_SCORING_RUN',
+                    'SCORING_PROSPECTS',
+                    'FINALIZING_SCORES',
+                    'VERIFYING_COMPLETENESS',
+                    'COMPLETED',
+                    'FAILED'
+                )),
+            message TEXT,
+            analysis_run_id INTEGER,
+            model_run_id INTEGER,
+            created_at TEXT NOT NULL,
+            started_at TEXT,
+            finished_at TEXT,
+            request_json TEXT NOT NULL,
+            result_json TEXT,
+            error_message TEXT,
+            FOREIGN KEY (analysis_run_id)
+                REFERENCES historical_analysis_runs (analysis_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (model_run_id)
+                REFERENCES model_runs (model_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            CHECK (analysis_run_id IS NULL OR analysis_run_id > 0),
+            CHECK (model_run_id IS NULL OR model_run_id > 0),
+            CHECK (
+                job_type != 'MODEL_TRAINING'
+                OR analysis_run_id IS NOT NULL
+            ),
+            CHECK (
+                job_type != 'PROSPECT_SCORING'
+                OR (
+                    analysis_run_id IS NULL
+                    AND model_run_id IS NOT NULL
+                )
+            ),
+            CHECK (
+                job_type != 'MODEL_TRAINING'
+                OR stage IN (
+                    'QUEUED',
+                    'STARTING',
+                    'RECONSTRUCTING_COHORT',
+                    'SPLITTING_DATA',
+                    'PREPROCESSING',
+                    'TRAINING_PRIMARY',
+                    'TRAINING_CHALLENGER',
+                    'TRAINING_DIAGNOSTIC',
+                    'EVALUATING',
+                    'PERSISTING_ARTIFACT',
+                    'VERIFYING_ARTIFACT',
+                    'COMPLETED',
+                    'FAILED'
+                )
+            ),
+            CHECK (
+                job_type != 'PROSPECT_SCORING'
+                OR stage IN (
+                    'QUEUED',
+                    'STARTING',
+                    'VALIDATING_MODEL',
+                    'PREPARING_SCORING_RUN',
+                    'SCORING_PROSPECTS',
+                    'FINALIZING_SCORES',
+                    'VERIFYING_COMPLETENESS',
+                    'COMPLETED',
+                    'FAILED'
+                )
+            ),
+            CHECK (
+                status != 'QUEUED'
+                OR (
+                    progress_percent = 0
+                    AND started_at IS NULL
+                    AND finished_at IS NULL
+                    AND stage = 'QUEUED'
+                )
+            ),
+            CHECK (
+                status != 'RUNNING'
+                OR (
+                    progress_percent BETWEEN 1 AND 99
+                    AND started_at IS NOT NULL
+                    AND finished_at IS NULL
+                    AND stage NOT IN ('QUEUED', 'COMPLETED', 'FAILED')
+                )
+            ),
+            CHECK (
+                status != 'COMPLETED'
+                OR (
+                    progress_percent = 100
+                    AND finished_at IS NOT NULL
+                    AND result_json IS NOT NULL
+                    AND error_message IS NULL
+                    AND stage = 'COMPLETED'
+                )
+            ),
+            CHECK (
+                status != 'FAILED'
+                OR (
+                    progress_percent <= 99
+                    AND finished_at IS NOT NULL
+                    AND error_message IS NOT NULL
+                    AND stage = 'FAILED'
+                )
+            )
+        )
+        """
+    )
+    connection.execute(
+        """
+        INSERT INTO jobs_v5 (
+            job_id,
+            job_type,
+            status,
+            progress_percent,
+            stage,
+            message,
+            analysis_run_id,
+            model_run_id,
+            created_at,
+            started_at,
+            finished_at,
+            request_json,
+            result_json,
+            error_message
+        )
+        SELECT
+            job_id,
+            job_type,
+            status,
+            progress_percent,
+            stage,
+            message,
+            analysis_run_id,
+            model_run_id,
+            created_at,
+            started_at,
+            finished_at,
+            request_json,
+            result_json,
+            error_message
+        FROM jobs
+        ORDER BY job_id
+        """
+    )
+    old_job_count = connection.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
+    new_job_count = connection.execute("SELECT COUNT(*) FROM jobs_v5").fetchone()[0]
+    if old_job_count != new_job_count:
+        raise RuntimeError("Job migration lost rows while upgrading to schema version 5.")
+
+    connection.execute("DROP TABLE jobs")
+    connection.execute("ALTER TABLE jobs_v5 RENAME TO jobs")
+    for statement in PHASE_FOUR_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+
+    connection.execute(
+        """
+        CREATE TABLE scoring_runs (
+            scoring_run_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_id INTEGER NOT NULL UNIQUE,
+            model_run_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            completed_at TEXT,
+            status TEXT NOT NULL
+                CHECK (status IN ('RUNNING', 'COMPLETED', 'FAILED')),
+            demographic_snapshot_count INTEGER NOT NULL
+                CHECK (demographic_snapshot_count >= 0),
+            demographic_min_person_id TEXT,
+            demographic_max_person_id TEXT,
+            scored_person_count INTEGER NOT NULL DEFAULT 0
+                CHECK (scored_person_count >= 0),
+            chunk_size INTEGER NOT NULL
+                CHECK (chunk_size BETWEEN 1000 AND 100000),
+            last_person_id TEXT,
+            selected_candidate TEXT NOT NULL,
+            model_role_policy_version TEXT NOT NULL,
+            feature_contract_version TEXT NOT NULL,
+            feature_contract_sha256 TEXT NOT NULL
+                CHECK (length(feature_contract_sha256) = 64),
+            artifact_sha256 TEXT NOT NULL
+                CHECK (length(artifact_sha256) = 64),
+            score_min REAL,
+            score_max REAL,
+            score_mean REAL,
+            score_summary_json TEXT,
+            error_message TEXT,
+            FOREIGN KEY (job_id)
+                REFERENCES jobs (job_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (model_run_id)
+                REFERENCES model_runs (model_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            UNIQUE (scoring_run_id, model_run_id),
+            CHECK (scored_person_count <= demographic_snapshot_count),
+            CHECK (
+                status != 'RUNNING'
+                OR (
+                    completed_at IS NULL
+                    AND error_message IS NULL
+                )
+            ),
+            CHECK (
+                status != 'COMPLETED'
+                OR (
+                    completed_at IS NOT NULL
+                    AND error_message IS NULL
+                    AND scored_person_count = demographic_snapshot_count
+                    AND score_min IS NOT NULL
+                    AND score_max IS NOT NULL
+                    AND score_mean IS NOT NULL
+                )
+            ),
+            CHECK (
+                status != 'FAILED'
+                OR (
+                    completed_at IS NOT NULL
+                    AND error_message IS NOT NULL
+                )
+            ),
+            CHECK (score_min IS NULL OR (score_min = score_min AND score_min BETWEEN 0 AND 1)),
+            CHECK (score_max IS NULL OR (score_max = score_max AND score_max BETWEEN 0 AND 1)),
+            CHECK (score_mean IS NULL OR (score_mean = score_mean AND score_mean BETWEEN 0 AND 1)),
+            CHECK (score_min IS NULL OR score_max IS NULL OR score_min <= score_max),
+            CHECK (score_mean IS NULL OR score_min IS NULL OR score_mean >= score_min),
+            CHECK (score_mean IS NULL OR score_max IS NULL OR score_mean <= score_max)
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE propensity_scores (
+            scoring_run_id INTEGER NOT NULL,
+            model_run_id INTEGER NOT NULL,
+            person_id TEXT NOT NULL,
+            propensity_score REAL NOT NULL
+                CHECK (
+                    propensity_score = propensity_score
+                    AND propensity_score BETWEEN 0 AND 1
+                ),
+            PRIMARY KEY (scoring_run_id, person_id),
+            FOREIGN KEY (scoring_run_id, model_run_id)
+                REFERENCES scoring_runs (scoring_run_id, model_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (person_id)
+                REFERENCES demographics (person_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT
+        )
+        """
+    )
+    for statement in PHASE_FIVE_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
     4: _migrate_to_version_4,
+    5: _migrate_to_version_5,
 }
 
 

@@ -255,7 +255,7 @@ def _v2_metrics(selected_candidate: str, *, challenger_status: str) -> dict[str,
     }
 
 
-def test_openapi_exposes_phase4_model_and_job_endpoints(client: TestClient) -> None:
+def test_openapi_exposes_phase5_model_job_and_scoring_endpoints(client: TestClient) -> None:
     schema = client.get("/openapi.json")
 
     assert schema.status_code == 200
@@ -264,16 +264,23 @@ def test_openapi_exposes_phase4_model_and_job_endpoints(client: TestClient) -> N
         (path, method)
         for path, operations in paths.items()
         for method in operations
-        if path.startswith("/api/models") or path.startswith("/api/jobs")
+        if (
+            path.startswith("/api/models")
+            or path.startswith("/api/jobs")
+            or path.startswith("/api/scoring-runs")
+        )
     }
     assert model_operations == {
         ("/api/models/train", "post"),
+        ("/api/models/{model_run_id}/score", "post"),
+        ("/api/models/{model_run_id}/scoring-status", "get"),
         ("/api/jobs/{job_id}", "get"),
         ("/api/models", "get"),
         ("/api/models/{model_run_id}", "get"),
         ("/api/models/training-options", "get"),
+        ("/api/scoring-runs", "get"),
+        ("/api/scoring-runs/{scoring_run_id}", "get"),
     }
-    assert "/api/models/{model_run_id}/score" not in paths
 
 
 def test_train_returns_202_and_persists_queued_job_immediately(

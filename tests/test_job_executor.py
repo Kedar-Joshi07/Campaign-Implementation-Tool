@@ -64,9 +64,26 @@ def test_submit_forwards_worker_and_job_arguments(
     assert args == ("relative.db", 7)
 
 
+def test_submit_scoring_forwards_worker_and_job_arguments(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_executor = _FakeExecutor(max_workers=1)
+    monkeypatch.setattr(executor_module, "get_model_training_executor", lambda: fake_executor)
+
+    future = executor_module.submit_prospect_scoring_job(Path("relative.db"), 9)
+
+    assert future == {"submitted": True, "args": ("relative.db", 9)}
+    assert len(fake_executor.submit_calls) == 1
+    fn, args = fake_executor.submit_calls[0]
+    assert fn is executor_module.run_prospect_scoring_job
+    assert args == ("relative.db", 9)
+
+
 def test_submit_rejects_invalid_job_id() -> None:
     with pytest.raises(ValueError):
         executor_module.submit_model_training_job("db.sqlite", 0)
+    with pytest.raises(ValueError):
+        executor_module.submit_prospect_scoring_job("db.sqlite", -1)
 
 
 def test_shutdown_is_idempotent_and_clears_instance(

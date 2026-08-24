@@ -1,0 +1,135 @@
+{
+  "pack": "Phase 5 Campaign Implementation Tool Prompt Pack",
+  "repository": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git",
+  "authoritative_phase4_baseline": "fdae4a7a40c846e4038a8ebe656257eb4164cd5d",
+  "feature_contract_version": "1",
+  "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+  "file_count_excluding_manifest": 25,
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 2482,
+      "sha256": "7ef45d46accebe56a7271f63a9b62a913e70046fc03fd8224461d0a34e577fb0"
+    },
+    {
+      "file": "01_PHASE_5_FREEZE_AND_BOUNDARIES.md",
+      "bytes": 4604,
+      "sha256": "81a90845484a685a8a42099e92cc94555ec2eac31bec55be6339329e14274216"
+    },
+    {
+      "file": "02_AGENT_OPERATING_INSTRUCTIONS.md",
+      "bytes": 2042,
+      "sha256": "6cab131d90db1e2a213cda7580410762f632b61fa7a3fae54423f8957a870f09"
+    },
+    {
+      "file": "03_STEP_01_BASELINE_SCHEMA_V5.md",
+      "bytes": 2815,
+      "sha256": "0bb346e7e025a5b93ce7fdf930e8ed60b9636757ce92ac2d14143d23af82b895"
+    },
+    {
+      "file": "04_STEP_02_SCORING_DATA_ACCESS_FEATURE_COMPATIBILITY.md",
+      "bytes": 1437,
+      "sha256": "3568f287b7fe51dafbc977baca99acac50c9eb1f26027f2fe29271ccf22e3908"
+    },
+    {
+      "file": "05_STEP_03_CHUNKED_SCORING_ENGINE.md",
+      "bytes": 1989,
+      "sha256": "49a26367b81aa75eaaec32e7b6526f5749c1528ed1a48ad3a41942011c1bd9c1"
+    },
+    {
+      "file": "06_STEP_04_SCORING_JOB_ORCHESTRATION.md",
+      "bytes": 1445,
+      "sha256": "cbcb87774ed4285e0560c209fd91503d2cbf4dbfe1cf5765dcbc44f56819b7dc"
+    },
+    {
+      "file": "07_STEP_05_SCORING_APIS.md",
+      "bytes": 1236,
+      "sha256": "26ba41513c1076412805e5e6c5450bfa834a860437c1fa2978b1e20f187a47a4"
+    },
+    {
+      "file": "08_STEP_06_SCORING_UI.md",
+      "bytes": 1287,
+      "sha256": "74e00e4dc0eba847421fa91546962c8969ac5712eade4d6bfb03fe76bf156133"
+    },
+    {
+      "file": "09_STEP_07_HARDENING_FULL_5M_VALIDATION.md",
+      "bytes": 1552,
+      "sha256": "ceeef532c0fb93420d5eaabb28aa6b0b6c357593ca1c6712d2c6615f6cb286e2"
+    },
+    {
+      "file": "10_PROGRESS_TRACKER.md",
+      "bytes": 1952,
+      "sha256": "5cbfe13b3408e93b856b6982de618a9ca2833de39e620694b30142c4d6f00aa8"
+    },
+    {
+      "file": "11_SCHEMA_V5_CONTRACT.md",
+      "bytes": 1375,
+      "sha256": "ed42f31d714b5749a03f7a680b1fc7f173ab7eb8018d9af35cebefd3cc1861f8"
+    },
+    {
+      "file": "12_SCORING_MODEL_AND_FEATURE_CONTRACT.md",
+      "bytes": 1231,
+      "sha256": "74dc82735ce991f0cfd3fc3ee24d1277e96f765aede82f7464357693d90a186c"
+    },
+    {
+      "file": "13_SCORE_SEMANTICS_AND_SUMMARY_CONTRACT.md",
+      "bytes": 624,
+      "sha256": "443833d785d0f66b24581ac31f54c7308521ccaad21cca125cef0c48c16868cb"
+    },
+    {
+      "file": "14_SCORING_JOB_LIFECYCLE_CONTRACT.md",
+      "bytes": 628,
+      "sha256": "cefffb02e6973c40f79ed1b1d1f2dd1aa7c4945da0e480e8ad6543b7844375c8"
+    },
+    {
+      "file": "15_SCORING_API_CONTRACT.md",
+      "bytes": 826,
+      "sha256": "7904995e682e26fcd10f664249aac0b647a449fc180d0e8d4f54339fc403e054"
+    },
+    {
+      "file": "16_SCORING_UI_CONTRACT.md",
+      "bytes": 789,
+      "sha256": "6d75cf26abebd8ab5c9282ed2a9b201b8a1cf19197e654f2a27089494ef54dd9"
+    },
+    {
+      "file": "17_PERFORMANCE_MEMORY_SQLITE_CONTRACT.md",
+      "bytes": 963,
+      "sha256": "10f41d0b2f8c607d65985f5ad05980b25dcef92c03a191a2976357b9fa6e98a3"
+    },
+    {
+      "file": "18_SECURITY_PRIVACY_BOUNDARY.md",
+      "bytes": 695,
+      "sha256": "b0e644424b4263da47284d9a6745593461f5901cbdbb30d84066aff2be52760e"
+    },
+    {
+      "file": "19_PHASE_5_ACCEPTANCE_CHECKLIST.md",
+      "bytes": 2983,
+      "sha256": "7333517c19eb919fd2aaefb2d354d5753cd2e92d1e1028ad55774f3a72333173"
+    },
+    {
+      "file": "20_PHASE_6_HANDOFF_CONTRACT.md",
+      "bytes": 1122,
+      "sha256": "c53550989f64bcf53304a7f7d79ddf00eb555659eb74f7cf9a4ac0ed8a2984d5"
+    },
+    {
+      "file": "21_EXPECTED_FILE_STRUCTURE.md",
+      "bytes": 887,
+      "sha256": "10d1eee6bda726dd98cb55d9c987293107ece84cc3f2b87b58d952f46c837801"
+    },
+    {
+      "file": "22_SINGLE_MASTER_PHASE5_PROMPT.md",
+      "bytes": 1646,
+      "sha256": "dee5c535fada14c6c106f9a8f662ba7d3fb820e39c65b8bef0fe5824874b3ca8"
+    },
+    {
+      "file": "23_PHASE5_START_PROMPT.md",
+      "bytes": 1324,
+      "sha256": "95d6e7041ca588b68fbffde6eb7e00fe1a7be9f48a8971f0e83644440cac92bd"
+    },
+    {
+      "file": "24_LIBRARY_LICENSE_NOTES.md",
+      "bytes": 563,
+      "sha256": "641189d470b206b00c346619fc6719fae4897b68c1b46314d80e96afb049d9d6"
+    }
+  ]
+}

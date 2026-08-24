@@ -560,9 +560,9 @@
 
             <section id="model-job-panel" class="panel model-job-panel" aria-labelledby="model-job-title">
               <div class="panel-heading">
-                <div><p class="eyebrow">Execution</p><h3 id="model-job-title">3. Active Job / Progress</h3></div>
+                <div><p class="eyebrow">Execution</p><h3 id="model-job-title">3. Active Compute Job / Progress</h3></div>
               </div>
-              <div id="model-job-empty" class="compact-empty">No active model-training job.</div>
+              <div id="model-job-empty" class="compact-empty">No active compute job.</div>
               <div id="model-job-content" hidden>
                 <div class="analysis-run-identity">
                   <span id="model-job-status" class="status-badge is-neutral">—</span>
@@ -636,6 +636,51 @@
                 </table>
               </div>
               <p id="diagnostic-candidate-note" class="panel-note">DIAGNOSTIC Naive is diagnostic-only and non-selection-eligible.</p>
+            </section>
+
+            <section id="prospect-scoring-panel" class="analysis-results prospect-scoring-panel" hidden aria-labelledby="prospect-scoring-title">
+              <div class="analysis-results-heading">
+                <div>
+                  <p class="eyebrow">Prospect scoring</p>
+                  <h3 id="prospect-scoring-title">6. Prospect Scoring</h3>
+                  <p id="prospect-scoring-caption">Evaluate scoring readiness and run a governed prospect-universe score.</p>
+                </div>
+              </div>
+
+              <div class="analysis-metric-grid scoring-availability-grid">
+                <article><span>Model run ID</span><strong id="scoring-model-run-id">—</strong></article>
+                <article><span>Selected PRIMARY</span><strong id="scoring-selected-primary">—</strong></article>
+                <article><span>Artifact + feature compatibility</span><strong id="scoring-artifact-compatibility">—</strong></article>
+                <article><span>Prospect universe</span><strong id="scoring-demographic-count">—</strong></article>
+                <article><span>Scoring availability</span><strong id="scoring-availability">—</strong></article>
+                <article><span>Completed scoring run</span><strong id="scoring-completed-run">—</strong></article>
+              </div>
+
+              <p id="scoring-status-reason" class="panel-note" hidden></p>
+
+              <div id="prospect-scoring-actions" class="analysis-form-actions">
+                <button id="score-prospect-submit" class="button button-primary" type="button">Score Prospect Universe</button>
+                <span id="scoring-announcement" role="status" aria-live="polite">Load a completed model to evaluate scoring readiness.</span>
+              </div>
+
+              <section id="scoring-completed-summary" class="scoring-completed-summary" hidden aria-labelledby="scoring-completed-summary-title">
+                <h4 id="scoring-completed-summary-title">Completion aggregate</h4>
+                <div class="analysis-metric-grid scoring-summary-grid">
+                  <article><span>Scored prospects</span><strong id="scoring-summary-scored-count">—</strong></article>
+                  <article><span>Reconciliation</span><strong id="scoring-summary-reconciliation">—</strong></article>
+                  <article><span>Minimum score</span><strong id="scoring-summary-min">—</strong></article>
+                  <article><span>Mean score</span><strong id="scoring-summary-mean">—</strong></article>
+                  <article><span>Maximum score</span><strong id="scoring-summary-max">—</strong></article>
+                  <article><span>Total runtime</span><strong id="scoring-summary-runtime">—</strong></article>
+                  <article><span>Rows per second</span><strong id="scoring-summary-rows-per-second">—</strong></article>
+                  <article><span>Feature contract</span><strong id="scoring-summary-feature-contract">—</strong></article>
+                  <article><span>Artifact SHA-256</span><strong id="scoring-summary-artifact-sha">—</strong></article>
+                </div>
+                <div class="notice scoring-relative-note" role="note">
+                  <span class="notice-icon" aria-hidden="true">i</span>
+                  <p>Propensity scores are relative look-alike affinity scores, not guaranteed purchase probabilities.</p>
+                </div>
+              </section>
             </section>
           </div>
         </section>

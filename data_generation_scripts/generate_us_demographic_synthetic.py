@@ -160,6 +160,42 @@ def age_weights(st):
     return np.r_[u18*YOUNG_SPLIT, mid*MID_BASE/MID_BASE.sum(), o65*OLD_SPLIT]
 AGE_W={s:age_weights(s) for s in STATE_CODES}
 
+# Enforce downstream model feature contract by remediating any out-of-range ages
+# with randomized adult ages shaped by employment status, income, and marital status.
+def contract_age_base(emp_status, rng):
+    if emp_status=='Retired': return int(rng.integers(60,95))
+    if emp_status=='Employed full-time': return int(rng.integers(25,65))
+    if emp_status=='Employed part-time': return int(rng.integers(20,60))
+    if emp_status=='Student': return int(rng.integers(18,30))
+    if emp_status=='Unemployed - seeking work': return int(rng.integers(22,61))
+    if emp_status=='Homemaker/Caregiver': return int(rng.integers(24,69))
+    if emp_status=='Not in labor force': return int(rng.integers(22,76))
+    if emp_status=='Minor / not in labor force': return int(rng.integers(18,25))
+    return int(rng.integers(18,71))
+
+def contract_adjusted_age(emp_status, income, marital_status, rng):
+    age=contract_age_base(emp_status,rng)
+    if income>=200000: age += int(rng.integers(6,12))
+    elif income>=120000: age += int(rng.integers(3,9))
+    elif income>=80000: age += int(rng.integers(1,5))
+    elif income<=5000: age -= int(rng.integers(1,4))
+    elif income<=20000: age -= int(rng.integers(0,3))
+
+    if marital_status=='Widowed': age += int(rng.integers(8,15))
+    elif marital_status=='Separated/Divorced': age += int(rng.integers(3,9))
+    elif marital_status=='Married': age += int(rng.integers(1,6))
+    elif marital_status=='Never married': age -= int(rng.integers(0,3))
+    return int(np.clip(age,18,100))
+
+def enforce_age_contract(ages, employment_status, individual_income, marital_status, rng):
+    invalid=(ages<18)|(ages>100)
+    idx=np.where(invalid)[0]
+    for i in idx:
+        ages[i]=contract_adjusted_age(str(employment_status[i]),float(individual_income[i]),str(marital_status[i]),rng)
+    if np.any((ages<18)|(ages>100)):
+        raise RuntimeError('Age contract enforcement failed to bring all rows into 18..100 range')
+    return int(idx.size)
+
 def edu_probs(st):
     ba=CFG[st][4]
     hi=np.array([.62,.28,.10])*ba
@@ -181,6 +217,7 @@ state_count=np.zeros(len(STATE_CODES),dtype=np.int64)
 eth_count={x:0 for x in ETHNICITIES}
 gender_count={'Male':0,'Female':0,'Non-binary/Other':0}
 age_sum=0; income_sum=0; family_income_sum=0; employed=0; sample_lines=[]
+age_contract_adjusted_rows=0
 
 start=time.time()
 compressed_output=gzip.open(OUT,'wb',compresslevel=3)
@@ -328,6 +365,8 @@ for base in range(0,N_ROWS,CHUNK):
     individual=np.clip(individual,0,2500000)
     individual=np.round(individual/100)*100
 
+    age_contract_adjusted_rows += enforce_age_contract(ages,empstat,individual,marital,rng)
+
     # Family income: correlated with state median, adults, education, individual income and marital status.
     fam_base=med_income*1.12*(.72+.28*np.sqrt(adults))*(.95+.06*np.minimum(children,3))
     fam=fam_base*rng.lognormal(mean=-.08,sigma=.48,size=n)
@@ -378,6 +417,7 @@ compressed_output.close()
 summary={
  'rows':N_ROWS,'columns':len(headers),'seed':SEED,'id_offset':ID_OFFSET,'id_start':ID_OFFSET+1,'id_end':ID_OFFSET+N_ROWS,'file':str(OUT),'file_size_bytes':OUT.stat().st_size,
  'mean_age':age_sum/N_ROWS,'mean_individual_yearly_income':income_sum/N_ROWS,'mean_family_yearly_income':family_income_sum/N_ROWS,
+ 'age_contract_range':'18..100','age_contract_adjusted_rows':age_contract_adjusted_rows,
  'employed_share':employed/N_ROWS,'gender_distribution':{k:v/N_ROWS for k,v in gender_count.items()},
  'ethnicity_distribution':{k:v/N_ROWS for k,v in eth_count.items()},
  'state_distribution':{STATE_CODES[i]:{'state':URBAN[STATE_CODES[i]][0],'rows':int(state_count[i]),'share':float(state_count[i]/N_ROWS)} for i in range(len(STATE_CODES))},

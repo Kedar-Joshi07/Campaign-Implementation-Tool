@@ -276,7 +276,7 @@ def test_populated_version_one_database_migrates_without_phase_one_data_loss(
 
     assert counts_after == counts_before
     assert customer_after == customer_before
-    assert stored_version == "4"
+    assert stored_version == "5"
 
 
 def test_historical_analysis_table_columns_constraints_and_indexes(database_path: Path) -> None:
@@ -364,7 +364,7 @@ def test_future_schema_version_is_rejected(database_path: Path) -> None:
             "UPDATE app_metadata SET value = '999' WHERE key = 'schema_version'"
         )
 
-    with pytest.raises(UnsupportedSchemaVersionError, match="newer than supported version 4"):
+    with pytest.raises(UnsupportedSchemaVersionError, match="newer than supported version 5"):
         initialize_database(database_path)
 
 
