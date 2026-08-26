@@ -1,0 +1,53 @@
+{
+  "pack": "Pre-Phase-6 Phase 5 Final Corrections Prompt Pack",
+  "repository": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git",
+  "required_starting_sha": "eeed03d052cc75987cc8926b088d906ae0fb7ccc",
+  "substantive_prephase6_sha": "28aa03952e92d74dbe9e4fe0cf0ba0ed87764035",
+  "original_phase5_sha": "0d1425da0bacd020decb79b5d2d7b201b0c894e0",
+  "feature_contract_version": "1",
+  "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+  "recommended_order": [
+    "01_STEP_01_ATOMIC_DEMOGRAPHIC_REPLACEMENT.md",
+    "02_STEP_02_SCORING_CANONICAL_LIFECYCLE.md",
+    "03_STEP_03_API_CURRENT_SOURCE_SEMANTICS.md",
+    "04_STEP_04_REGRESSION_AND_REAL_VALIDATION.md",
+    "05_STEP_05_FINAL_ACCEPTANCE_AND_BASELINE_FREEZE.md"
+  ],
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 1908,
+      "sha256": "9fe01cf193a91b45bdfe43ec6aaad5889b62460630ed0c4471fd815180d8f11b"
+    },
+    {
+      "file": "01_STEP_01_ATOMIC_DEMOGRAPHIC_REPLACEMENT.md",
+      "bytes": 3267,
+      "sha256": "e07e718a95961c541c83e93a3173491207d789ef4708b02878322daaf0bb7386"
+    },
+    {
+      "file": "02_STEP_02_SCORING_CANONICAL_LIFECYCLE.md",
+      "bytes": 2767,
+      "sha256": "4d2d4c08a5fe90f6eb4eb60df5e643379f1293c5325ed29cdad47f37a31e8445"
+    },
+    {
+      "file": "03_STEP_03_API_CURRENT_SOURCE_SEMANTICS.md",
+      "bytes": 1749,
+      "sha256": "666cd110f6d2d058c969e1cebb0f63420a41826b9f8e9171172ba25d5d450e1c"
+    },
+    {
+      "file": "04_STEP_04_REGRESSION_AND_REAL_VALIDATION.md",
+      "bytes": 2166,
+      "sha256": "f7b3e4b3311848ece6a1f6b715e6eab82c8a257c8689fd8c338077f1685f2176"
+    },
+    {
+      "file": "05_STEP_05_FINAL_ACCEPTANCE_AND_BASELINE_FREEZE.md",
+      "bytes": 2765,
+      "sha256": "e16f427d15e591a684035d5783fa4c52ec6d1adc034c091748c0a4ae7791f1c3"
+    },
+    {
+      "file": "06_SINGLE_MASTER_CORRECTION_PROMPT.md",
+      "bytes": 2394,
+      "sha256": "a162e6bf379782cf1898ba7f1feae77e16fa17a3ede6ec3abcd23e96c72fe8df"
+    }
+  ]
+}
