@@ -2,22 +2,27 @@
 
 from __future__ import annotations
 
+import json
 import math
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
+from string import hexdigits
 from time import perf_counter
 from typing import Any, Callable
 
 import numpy as np
 
+from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.ml.feature_contract import validate_and_normalize_feature_frame
 from app.ml.pu_estimators import positive_class_scores
 from app.repositories.prospect_scoring_repository import (
+    DemographicImportProvenance,
     MAX_SCORING_CHUNK_LIMIT,
     ProspectPopulationSnapshot,
     ProspectScoringRepository,
+    ProspectScoringValidationError,
 )
 from app.repositories.scoring_repository import (
     ScoringRepository,
@@ -45,6 +50,27 @@ SCORING_PROGRESS_MAX = 90
 MAXIMUM_INTERNAL_ERROR_LENGTH = 4_096
 SCORE_COMPARISON_RELATIVE_TOLERANCE = 1e-12
 SCORE_COMPARISON_ABSOLUTE_TOLERANCE = 1e-12
+CANONICAL_SCORE_SUMMARY_REQUIRED_KEYS = (
+    "demographic_import_id",
+    "demographic_source_checksum",
+    "demographic_snapshot_count",
+    "demographic_min_person_id",
+    "demographic_max_person_id",
+    "model_run_id",
+    "selected_candidate",
+    "feature_contract_version",
+    "feature_contract_sha256",
+    "artifact_sha256",
+    "chunk_size",
+    "chunk_count",
+    "score_count",
+    "score_min",
+    "score_mean",
+    "score_max",
+    "total_seconds",
+    "rows_per_second",
+    "age_semantics_note",
+)
 
 AGE_SEMANTICS_NOTE = (
     "For this synthetic POC, demographic age is treated as compatible prospect "
@@ -148,6 +174,7 @@ def _build_summary_payload(
     feature_contract_version: str,
     feature_contract_sha256: str,
     artifact_sha256: str,
+    provenance: DemographicImportProvenance,
 ) -> dict[str, Any]:
     safe_total_seconds = max(float(total_seconds), 0.0)
     rows_per_second = 0.0 if score_count == 0 or safe_total_seconds == 0 else score_count / safe_total_seconds
@@ -168,9 +195,39 @@ def _build_summary_payload(
         "feature_contract_version": feature_contract_version,
         "feature_contract_sha256": feature_contract_sha256,
         "artifact_sha256": artifact_sha256,
+        "demographic_import_id": int(provenance.demographic_import_id),
+        "demographic_source_checksum": provenance.demographic_source_checksum,
+        "demographic_snapshot_count": int(provenance.demographic_snapshot_count),
+        "demographic_min_person_id": provenance.demographic_min_person_id,
+        "demographic_max_person_id": provenance.demographic_max_person_id,
+        "demographic_source_verified": True,
         "score_semantics": "LOOK_ALIKE_PROPENSITY_SCORE",
         "age_semantics_note": AGE_SEMANTICS_NOTE,
     }
+
+
+def _is_valid_sha256(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    normalized = value.strip().lower()
+    return len(normalized) == 64 and all(character in hexdigits for character in normalized)
+
+
+def _validate_provenance_stability(
+    *,
+    captured: DemographicImportProvenance,
+    current: DemographicImportProvenance,
+) -> None:
+    if current.demographic_import_id != captured.demographic_import_id:
+        raise ProspectScoringExecutionError("Demographic import provenance changed during scoring.")
+    if current.demographic_source_checksum != captured.demographic_source_checksum:
+        raise ProspectScoringExecutionError("Demographic source checksum changed during scoring.")
+    if current.demographic_snapshot_count != captured.demographic_snapshot_count:
+        raise ProspectScoringExecutionError("Demographic source count changed during scoring.")
+    if current.demographic_min_person_id != captured.demographic_min_person_id:
+        raise ProspectScoringExecutionError("Demographic source minimum person_id changed during scoring.")
+    if current.demographic_max_person_id != captured.demographic_max_person_id:
+        raise ProspectScoringExecutionError("Demographic source maximum person_id changed during scoring.")
 
 
 def _reconcile_completion(
@@ -222,6 +279,7 @@ def run_chunked_prospect_scoring(
 
     progress_state: dict[str, Any] = {"stage": None, "progress": None}
     scoring_run_id: int | None = None
+    captured_provenance: DemographicImportProvenance | None = None
     scored_count = 0
     chunk_count = 0
     largest_chunk_rows = 0
@@ -261,6 +319,14 @@ def run_chunked_prospect_scoring(
         snapshot = prospect_repository.fetch_prospect_snapshot()
         if snapshot.demographic_snapshot_count <= 0:
             raise ModelScoreabilityValidationError("Prospect scoring requires at least one demographic row.")
+        try:
+            captured_provenance = prospect_repository.fetch_completed_demographic_import_provenance()
+        except ProspectScoringValidationError as exc:
+            raise ModelScoreabilityValidationError(str(exc)) from exc
+        if captured_provenance.demographic_snapshot_count != snapshot.demographic_snapshot_count:
+            raise ModelScoreabilityValidationError(
+                "Demographics import provenance count does not match scoring snapshot."
+            )
 
         scoring_run_id = scoring_repository.create_scoring_run(
             job_id=job_id,
@@ -369,6 +435,10 @@ def run_chunked_prospect_scoring(
             aggregates=aggregates,
             last_person_id=last_person_id,
         )
+        current_provenance = prospect_repository.fetch_completed_demographic_import_provenance()
+        if captured_provenance is None:
+            raise ProspectScoringExecutionError("Demographic source provenance capture is missing.")
+        _validate_provenance_stability(captured=captured_provenance, current=current_provenance)
 
         total_seconds = perf_counter() - started
         summary_payload = _build_summary_payload(
@@ -387,6 +457,7 @@ def run_chunked_prospect_scoring(
             feature_contract_version=compatibility.feature_contract_version,
             feature_contract_sha256=compatibility.feature_contract_sha256,
             artifact_sha256=compatibility.artifact_sha256,
+            provenance=captured_provenance,
         )
         scoring_repository.mark_completed(
             scoring_run_id=scoring_run_id,
@@ -427,6 +498,16 @@ def run_chunked_prospect_scoring(
                         "partial_scored_person_count": scored_count,
                         "chunk_size": normalized_chunk_size,
                         "chunk_count": chunk_count,
+                        "demographic_import_id": (
+                            int(captured_provenance.demographic_import_id)
+                            if captured_provenance is not None
+                            else None
+                        ),
+                        "demographic_source_checksum": (
+                            captured_provenance.demographic_source_checksum
+                            if captured_provenance is not None
+                            else None
+                        ),
                         "age_semantics_note": AGE_SEMANTICS_NOTE,
                     },
                 )
@@ -505,11 +586,166 @@ def verify_scoring_run_sample(
     }
 
 
+def validate_completed_scoring_run_provenance(
+    database_path: str | Path,
+    *,
+    scoring_run_id: int,
+    verify_current_source_match: bool = True,
+) -> dict[str, Any]:
+    """Validate whether a completed scoring run has canonical source and model provenance."""
+    if isinstance(scoring_run_id, bool) or not isinstance(scoring_run_id, int) or scoring_run_id <= 0:
+        raise ProspectScoringVerificationError("scoring_run_id must be a positive integer.")
+
+    initialized_path = initialize_database(database_path)
+    scoring_repository = ScoringRepository(initialized_path)
+    prospect_repository = ProspectScoringRepository(initialized_path)
+
+    row = scoring_repository.fetch_scoring_run(scoring_run_id)
+    if row is None:
+        raise ProspectScoringVerificationError("Scoring run was not found.")
+
+    issues: list[str] = []
+    if row["status"] != "COMPLETED":
+        issues.append("status is not COMPLETED")
+
+    summary_raw = row.get("score_summary_json")
+    summary_payload: dict[str, Any] = {}
+    if not isinstance(summary_raw, str) or not summary_raw.strip():
+        issues.append("score_summary_json is missing")
+    else:
+        try:
+            decoded = json.loads(summary_raw)
+        except (TypeError, ValueError):
+            issues.append("score_summary_json is invalid JSON")
+        else:
+            if not isinstance(decoded, dict):
+                issues.append("score_summary_json must decode to an object")
+            else:
+                summary_payload = decoded
+
+    missing_keys = [
+        key for key in CANONICAL_SCORE_SUMMARY_REQUIRED_KEYS if key not in summary_payload
+    ]
+    if missing_keys:
+        issues.append(f"score_summary_json missing required keys: {', '.join(sorted(missing_keys))}")
+
+    score_count = summary_payload.get("score_count")
+    if isinstance(score_count, bool) or not isinstance(score_count, int) or score_count < 0:
+        issues.append("score_count is invalid")
+    elif score_count != int(row["scored_person_count"]):
+        issues.append("score_count does not match scored_person_count")
+
+    summary_snapshot_count = summary_payload.get("demographic_snapshot_count")
+    if (
+        isinstance(summary_snapshot_count, bool)
+        or not isinstance(summary_snapshot_count, int)
+        or summary_snapshot_count < 0
+    ):
+        issues.append("demographic_snapshot_count is invalid")
+    elif summary_snapshot_count != int(row["demographic_snapshot_count"]):
+        issues.append("demographic_snapshot_count does not match scoring_runs snapshot")
+
+    if summary_payload.get("model_run_id") != int(row["model_run_id"]):
+        issues.append("model_run_id does not match scoring_runs record")
+    if summary_payload.get("selected_candidate") != row["selected_candidate"]:
+        issues.append("selected_candidate does not match scoring_runs record")
+    if summary_payload.get("feature_contract_version") != row["feature_contract_version"]:
+        issues.append("feature_contract_version does not match scoring_runs record")
+    if summary_payload.get("feature_contract_sha256") != row["feature_contract_sha256"]:
+        issues.append("feature_contract_sha256 does not match scoring_runs record")
+    if summary_payload.get("artifact_sha256") != row["artifact_sha256"]:
+        issues.append("artifact_sha256 does not match scoring_runs record")
+
+    for key in ("feature_contract_sha256", "artifact_sha256", "demographic_source_checksum"):
+        if key in summary_payload and not _is_valid_sha256(summary_payload.get(key)):
+            issues.append(f"{key} is invalid")
+
+    for key in ("score_min", "score_mean", "score_max"):
+        value = summary_payload.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            issues.append(f"{key} is invalid")
+            continue
+        if not math.isfinite(float(value)) or not 0.0 <= float(value) <= 1.0:
+            issues.append(f"{key} is outside [0, 1]")
+    if all(key in summary_payload for key in ("score_min", "score_mean", "score_max")):
+        score_min = float(summary_payload["score_min"])
+        score_mean = float(summary_payload["score_mean"])
+        score_max = float(summary_payload["score_max"])
+        if not score_min <= score_mean <= score_max:
+            issues.append("score_min/score_mean/score_max ordering is invalid")
+
+    aggregates = scoring_repository.fetch_score_aggregates(scoring_run_id)
+    aggregate_score_count = int(aggregates["score_count"])
+    aggregate_distinct_count = int(aggregates["distinct_person_count"])
+    if aggregate_score_count != int(row["scored_person_count"]):
+        issues.append("persisted score row count does not match scored_person_count")
+    if aggregate_distinct_count != aggregate_score_count:
+        issues.append("persisted score rows contain duplicate person_id values")
+
+    demographic_import_id = summary_payload.get("demographic_import_id")
+    import_row: dict[str, Any] | None = None
+    if isinstance(demographic_import_id, bool) or not isinstance(demographic_import_id, int) or demographic_import_id <= 0:
+        issues.append("demographic_import_id is invalid")
+    else:
+        with get_connection(initialized_path) as connection:
+            found = connection.execute(
+                """
+                SELECT
+                    import_id,
+                    dataset_name,
+                    status,
+                    rows_inserted,
+                    source_checksum
+                FROM data_import_runs
+                WHERE import_id = ?
+                """,
+                (demographic_import_id,),
+            ).fetchone()
+        if found is None:
+            issues.append("demographic_import_id does not exist")
+        else:
+            import_row = dict(found)
+            if import_row.get("dataset_name") != "demographics":
+                issues.append("demographic_import_id is not a demographics import")
+            if import_row.get("status") != "COMPLETED":
+                issues.append("demographic_import_id is not COMPLETED")
+            if int(import_row.get("rows_inserted") or -1) != int(row["demographic_snapshot_count"]):
+                issues.append("demographic import rows_inserted does not match snapshot count")
+
+            import_checksum = import_row.get("source_checksum")
+            if not _is_valid_sha256(import_checksum):
+                issues.append("demographic import source_checksum is invalid")
+            elif str(import_checksum).strip().lower() != summary_payload.get("demographic_source_checksum"):
+                issues.append("demographic_source_checksum does not match import provenance")
+
+    if verify_current_source_match:
+        current_source = prospect_repository.fetch_completed_demographic_import_provenance()
+        if summary_payload.get("demographic_import_id") != current_source.demographic_import_id:
+            issues.append("current demographics import_id does not match completed scoring provenance")
+        if summary_payload.get("demographic_source_checksum") != current_source.demographic_source_checksum:
+            issues.append("current demographics checksum does not match completed scoring provenance")
+        if summary_payload.get("demographic_snapshot_count") != current_source.demographic_snapshot_count:
+            issues.append("current demographics count does not match completed scoring provenance")
+        if summary_payload.get("demographic_min_person_id") != current_source.demographic_min_person_id:
+            issues.append("current demographics min person_id does not match completed scoring provenance")
+        if summary_payload.get("demographic_max_person_id") != current_source.demographic_max_person_id:
+            issues.append("current demographics max person_id does not match completed scoring provenance")
+
+    return {
+        "scoring_run_id": int(scoring_run_id),
+        "status": str(row["status"]),
+        "is_canonical": len(issues) == 0,
+        "demographic_source_verified": len(issues) == 0,
+        "issues": issues,
+    }
+
+
 __all__ = (
     "DEFAULT_SCORING_CHUNK_SIZE",
     "ProspectScoringExecutionError",
     "ProspectScoringServiceError",
     "ProspectScoringVerificationError",
     "run_chunked_prospect_scoring",
+    "validate_completed_scoring_run_provenance",
     "verify_scoring_run_sample",
 )

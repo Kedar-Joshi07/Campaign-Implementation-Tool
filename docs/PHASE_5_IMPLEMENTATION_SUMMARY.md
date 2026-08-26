@@ -152,54 +152,82 @@ Confirmed absent from backend/frontend runtime surfaces:
 - campaign export/activation adapters
 - identity linkage between customer_id and person_id
 
-### Step 7 rerun after data remediation (GO evidence)
+### Step 7 rerun after data remediation (historical GO evidence)
 
-- Real-path rerun evidence artifacts: `logs/phase5_step7_rerun_report.json` (full JSON evidence) and `logs/phase5_step7_validation.log` (concise run ledger).
-- Preflight (rerun):
-  - database_path: `data/campaign_poc.db`
-  - database_size_bytes: `3342602240`
-  - free_disk_bytes: `326868164608`
-  - demographic_count: `5000000`
-  - model_run_id: `7`
-  - selected_candidate: `BAGGING_PU`
-  - model_role_policy_version: `2`
-  - evaluation_contract_version: `2`
-  - feature_contract_version/SHA: `1` / `a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`
-  - artifact_sha256: `a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210`
-- Real API path (rerun):
-  - `POST /api/models/7/score` -> `202` (`job_id=16`)
-  - Poll `GET /api/jobs/16` -> terminal `COMPLETED`
-  - Completed scoring run: `scoring_run_id=5`
-  - `GET /api/scoring-runs/5` returned `COMPLETED` detail
-  - `GET /api/models/7/scoring-status` now returns `completed_scoring_run` and ineligible-for-resubmit reason
-- Exact 5M reconciliation (required target): all met
-  - demographic_snapshot_count = 5,000,000
-  - scored_person_count = 5,000,000
-  - score rows = 5,000,000
-  - duplicate person IDs = 0
-  - invalid demographic FK = 0
-  - nonfinite = 0
-  - score < 0 = 0
-  - score > 1 = 0
-- Scoring summary (rerun completed run):
-  - score_min = 0.006214199504618037
-  - score_mean = 0.04663573730897857
-  - score_max = 0.9908241192195328
-  - chunk_size = 25,000
-  - chunk_count = 200
-  - largest_chunk_rows = 25,000
-  - largest_transformed_matrix_bytes = 3,280,796
-  - total_seconds = 2,591.537831999998
-  - rows_per_second = 1,929.3563606367618
-- Concurrency conflict behavior remained enforced during rerun:
-  - scoring submit while active scoring -> `409`
-  - training submit while active scoring -> `409`
-- Deterministic direct re-score verification passed:
-  - `verify_scoring_run_sample(scoring_run_id=5, sample_size=256)`
-  - `max_abs_diff=0.0`, `verified=true`
+- Historical rerun evidence artifacts retained: `logs/phase5_step7_rerun_report.json` and `logs/phase5_step7_validation.log`.
+- Historical real API path completed on `model_run_id=7` with `job_id=16`, `scoring_run_id=5` and exact 5M reconciliation.
+- This remains preserved as historical evidence and was not deleted.
 
-## Phase 6 handoff status
+## Pre-Phase-6 Phase 5 Finalization
 
-- Step 7 Go/No-Go decision: GO.
-- Rationale: post-remediation rerun completed real 5M scoring with exact reconciliation targets met, conflict guards validated, and deterministic sample re-score verification passed.
-- Baseline note: a dedicated Phase 5 baseline commit should still be created before formally stamping the Phase 6 baseline SHA.
+### Root cause timeline
+
+- Original failure: full 5M scoring failed because demographics violated frozen feature age contract (`age` outside 18..100).
+- First remediation issue: post-hoc age mutation restored contract bounds but could drift from source-governed semantics.
+- Final correction: demographics were regenerated adult-from-source (no post-hoc age rewriting), then reimported through the authoritative import pipeline.
+
+### Provenance hardening
+
+- Demographics imports now persist `source_checksum` and are linked as completed import provenance.
+- Scoring completion payload now records canonical provenance keys including:
+  - `demographic_import_id`
+  - `demographic_source_checksum`
+  - `demographic_snapshot_count`
+  - `model_run_id`
+  - `artifact_sha256`
+  - `feature_contract_version`
+  - `feature_contract_sha256`
+- Scoring completion and API status handling are now canonical-aware for provenance and conflict gating.
+
+### Final real 5M rerun evidence
+
+- Step 3 evidence artifact: `logs/phase5_prephase6_step3_rerun_report.json`.
+- Corrected demographics import:
+  - `demographic_import_id=5`
+  - `source_checksum=7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`
+  - `rows_read=5,000,000`, `rows_inserted=5,000,000`, `rows_rejected=0`
+- Final canonical scoring run:
+  - `model_run_id=6`
+  - `job_id=18`
+  - `scoring_run_id=7`
+  - `selected_candidate=BAGGING_PU`
+  - `model_role_policy_version=2`
+  - `feature_contract_version=1`
+  - `feature_contract_sha256=a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`
+  - `artifact_sha256=a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210`
+- Exact reconciliation and quality:
+  - demographics count = `5,000,000`
+  - distinct demographics person_id = `5,000,000`
+  - age `<18` = `0`, age `>100` = `0`
+  - minor-employment count = `0`
+  - child-only education count = `0`
+  - negative individual income count = `0`
+  - invalid family member count = `0`
+  - `demographic_snapshot_count=5,000,000`
+  - `scored_person_count=5,000,000`
+  - score rows = `5,000,000`
+  - duplicate person_id count = `0`
+  - invalid demographic FK count = `0`
+  - nonfinite score count = `0`
+  - score `<0` = `0`, score `>1` = `0`
+- Score/runtime/performance:
+  - `score_min=0.006140909845521252`
+  - `score_mean=0.044244679521142034`
+  - `score_max=0.9943604573869449`
+  - `chunk_size=25000`
+  - `chunk_count=200`
+  - `largest_chunk_rows=25000`
+  - `largest_transformed_matrix_bytes=3396428`
+  - `total_seconds=1572.4510145999993`
+  - `rows_per_second=3179.749291758956`
+- Deterministic verification:
+  - `verify_scoring_run_sample(scoring_run_id=7, sample_size=256)` -> `verified=true`, `max_abs_diff=0.0`
+- Concurrency guards during active scoring remained enforced:
+  - second scoring submit -> `409`
+  - training submit -> `409`
+
+## Phase 6 Handoff Status
+
+- Finalization decision: GO.
+- Rationale: adult-from-source data regeneration, source-checksum provenance hardening, and canonical real-path 5M scoring completion all validated with deterministic re-score and full regression gates.
+- Scope guard: no Phase 6 functionality has been implemented in this finalization pass.

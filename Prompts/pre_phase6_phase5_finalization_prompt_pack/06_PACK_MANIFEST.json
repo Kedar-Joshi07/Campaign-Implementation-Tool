@@ -1,0 +1,39 @@
+{
+  "pack": "Pre-Phase-6 Phase 5 Finalization Prompt Pack",
+  "repository": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git",
+  "starting_sha": "0d1425da0bacd020decb79b5d2d7b201b0c894e0",
+  "feature_contract_version": "1",
+  "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 905,
+      "sha256": "7043cc3b28b2ac6f9f73a7df55e6ae80f73e35c4afd06c8d1a6dbf190ab8553b"
+    },
+    {
+      "file": "01_STEP_01_ADULT_DEMOGRAPHIC_REGENERATION.md",
+      "bytes": 2953,
+      "sha256": "7da2d1b6b18325b4def1cd20c52844ba9ee5dd104bbd66050b8b914cdc9a389d"
+    },
+    {
+      "file": "02_STEP_02_SCORING_SOURCE_PROVENANCE.md",
+      "bytes": 2736,
+      "sha256": "ac427af24f73e5e1a317e488917b7ec951f5b831a36c80e5f37091ad3cec0ecf"
+    },
+    {
+      "file": "03_STEP_03_REIMPORT_AND_FULL_5M_RERUN.md",
+      "bytes": 3148,
+      "sha256": "fafebb051d4f7dbdee012d15d8e48b47e058ed2f9f7d66a6df12a8c5257cb42d"
+    },
+    {
+      "file": "04_STEP_04_FINAL_ACCEPTANCE_AND_PHASE6_FREEZE.md",
+      "bytes": 2878,
+      "sha256": "1efe1ced94c79519450b6c1faaae72ccad3a0228fedbc987f609691b5b0e34cf"
+    },
+    {
+      "file": "05_SINGLE_MASTER_FINALIZATION_PROMPT.md",
+      "bytes": 2465,
+      "sha256": "d4c32ba08d0de6a8bf4baa0620cda8e2ac40d108e9c3eac1ecfd360c8ef526c4"
+    }
+  ]
+}

@@ -101,6 +101,86 @@ def _insert_model_run(database_path: Path, analysis_run_id: int, *, status: str 
         return int(cursor.lastrowid)
 
 
+def _insert_demographic_person(database_path: Path, person_id: str) -> None:
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            INSERT INTO demographics (
+                person_id,
+                age,
+                gender,
+                state,
+                individual_yearly_income,
+                marital_status,
+                education,
+                employment_status,
+                resident_status,
+                resident_type,
+                family_member_count,
+                number_of_children_in_family,
+                number_of_adults_in_family,
+                type_of_employment,
+                family_yearly_income
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                person_id,
+                35,
+                "Female",
+                "Ohio",
+                75_000.0,
+                "Single",
+                "Bachelors",
+                "Employed",
+                "Citizen by birth",
+                "Inner suburban",
+                2,
+                0,
+                2,
+                "Private sector",
+                102_000.0,
+            ),
+        )
+
+
+def _insert_completed_demographic_import(
+    database_path: Path,
+    *,
+    rows_inserted: int,
+    source_checksum: str = "d" * 64,
+) -> int:
+    with get_connection(database_path, write=True) as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name,
+                source_path,
+                started_at,
+                completed_at,
+                status,
+                rows_read,
+                rows_inserted,
+                rows_rejected,
+                error_message,
+                source_checksum
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "demographics",
+                "data/fixture_demographics.csv.gz",
+                "2026-08-27T00:40:00Z",
+                "2026-08-27T00:40:10Z",
+                "COMPLETED",
+                rows_inserted,
+                rows_inserted,
+                0,
+                None,
+                source_checksum,
+            ),
+        )
+    return int(cursor.lastrowid)
+
+
 def _mark_training_job_completed(repository: JobRepository, *, job_id: int, model_run_id: int) -> None:
     repository.mark_running(
         job_id=job_id,
@@ -208,6 +288,12 @@ def test_scoring_submit_rejects_when_completed_canonical_run_exists(
         lambda *_args, **_kwargs: object(),
     )
 
+    _insert_demographic_person(database_path, "PER_000001")
+    demographic_import_id = _insert_completed_demographic_import(
+        database_path,
+        rows_inserted=1,
+    )
+
     seed_job_id = job_repository.create_scoring_job(
         created_at="2026-08-27T01:00:00Z",
         request_payload={"model_run_id": model_run_id},
@@ -241,7 +327,33 @@ def test_scoring_submit_rejects_when_completed_canonical_run_exists(
         score_min=0.5,
         score_max=0.5,
         score_mean=0.5,
-        summary_payload={"seed": True},
+        summary_payload={
+            "demographic_import_id": demographic_import_id,
+            "demographic_source_checksum": "d" * 64,
+            "demographic_snapshot_count": 1,
+            "demographic_min_person_id": "PER_000001",
+            "demographic_max_person_id": "PER_000001",
+            "model_run_id": model_run_id,
+            "selected_candidate": "BAGGING_PU",
+            "feature_contract_version": "1",
+            "feature_contract_sha256": "a" * 64,
+            "artifact_sha256": "a" * 64,
+            "chunk_size": 1000,
+            "chunk_count": 1,
+            "score_count": 1,
+            "score_min": 0.5,
+            "score_mean": 0.5,
+            "score_max": 0.5,
+            "total_seconds": 0.1,
+            "rows_per_second": 10.0,
+            "age_semantics_note": "fixture",
+        },
+    )
+    scoring_repository.insert_scores_chunk(
+        scoring_run_id=scoring_run_id,
+        model_run_id=model_run_id,
+        person_ids=["PER_000001"],
+        propensity_scores=[0.5],
     )
 
     with pytest.raises(ScoringJobConflictError, match=EXISTING_SCORING_RUN_CONFLICT_MESSAGE):
@@ -250,6 +362,98 @@ def test_scoring_submit_rejects_when_completed_canonical_run_exists(
             {"model_run_id": model_run_id},
             submitter=lambda *_: None,
         )
+
+
+def test_scoring_submit_allows_new_run_when_only_legacy_completed_run_exists(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+    job_repository = JobRepository(database_path)
+    scoring_repository = ScoringRepository(database_path)
+
+    monkeypatch.setattr(
+        "app.services.scoring_job_service.validate_scoreable_model",
+        lambda *_args, **_kwargs: object(),
+    )
+
+    _insert_demographic_person(database_path, "PER_000001")
+    _insert_completed_demographic_import(database_path, rows_inserted=1)
+
+    seed_job_id = job_repository.create_scoring_job(
+        created_at="2026-08-27T01:20:00Z",
+        request_payload={"model_run_id": model_run_id},
+    )
+    scoring_run_id = scoring_repository.create_scoring_run(
+        job_id=seed_job_id,
+        model_run_id=model_run_id,
+        created_at="2026-08-27T01:20:01Z",
+        demographic_snapshot_count=1,
+        demographic_min_person_id="PER_000001",
+        demographic_max_person_id="PER_000001",
+        chunk_size=1000,
+        selected_candidate="BAGGING_PU",
+        model_role_policy_version="2",
+        feature_contract_version="1",
+        feature_contract_sha256="a" * 64,
+        artifact_sha256="a" * 64,
+    )
+    scoring_repository.update_counters(
+        scoring_run_id=scoring_run_id,
+        scored_person_count=1,
+        last_person_id="PER_000001",
+        score_min=0.4,
+        score_max=0.4,
+        score_mean=0.4,
+    )
+    scoring_repository.mark_completed(
+        scoring_run_id=scoring_run_id,
+        completed_at="2026-08-27T01:20:03Z",
+        scored_person_count=1,
+        score_min=0.4,
+        score_max=0.4,
+        score_mean=0.4,
+        summary_payload={"legacy": True},
+    )
+    scoring_repository.insert_scores_chunk(
+        scoring_run_id=scoring_run_id,
+        model_run_id=model_run_id,
+        person_ids=["PER_000001"],
+        propensity_scores=[0.4],
+    )
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            UPDATE jobs
+            SET status = 'COMPLETED',
+                progress_percent = 100,
+                stage = 'COMPLETED',
+                started_at = '2026-08-27T01:20:01Z',
+                finished_at = '2026-08-27T01:20:03Z',
+                result_json = ?
+            WHERE job_id = ?
+            """,
+            (
+                json.dumps(
+                    {
+                        "scoring_run_id": scoring_run_id,
+                        "model_run_id": model_run_id,
+                        "scored_person_count": 1,
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ),
+                seed_job_id,
+            ),
+        )
+
+    queued = submit_prospect_scoring_job_request(
+        database_path,
+        {"model_run_id": model_run_id},
+        submitter=lambda *_: None,
+    )
+    assert queued["status"] == "QUEUED"
 
 
 def test_scoring_submit_failure_marks_queued_job_failed(

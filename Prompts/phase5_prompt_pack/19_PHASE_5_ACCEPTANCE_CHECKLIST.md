@@ -74,6 +74,8 @@ Any failed **Critical** item = **No-Go for Phase 6**.
 - [x] min/mean/max valid.
 - [x] runtime/throughput/chunk/memory/DB-growth evidence.
 - [x] artifact and feature SHA recorded.
+- [x] coherent adult source regenerated (no post-hoc age mutation path).
+- [x] completed demographics provenance captured (import_id + source_checksum).
 
 ## Direct verification
 - [x] deterministic sample re-score within tolerance.
@@ -88,9 +90,13 @@ Any failed **Critical** item = **No-Go for Phase 6**.
 
 ## Final
 - Critical failures: none.
-- full scoring job_id: 16.
-- scoring_run_id/model_run_id: 5 / 7.
-- scored rows/runtime/rows-sec/DB growth: 5,000,000 rows / 2,591.537831999998s / 1,929.3563606367618 rows/s / 3,342,602,240 -> 3,812,544,512 bytes (delta +469,942,272 bytes).
-- residual risks: local SQLite single-user throughput characteristics; no new functional blockers for Phase 5 acceptance.
-- final SHA: fdae4a7a40c846e4038a8ebe656257eb4164cd5d (working tree contains uncommitted Phase 5 changes).
+- canonical demographics import: `import_id=5`, checksum `7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`.
+- canonical scoring identifiers: `job_id=18`, `scoring_run_id=7`, `model_run_id=6`.
+- exact reconciliation: demographics snapshot 5,000,000; scored 5,000,000; score rows 5,000,000; duplicates 0; invalid FK 0.
+- score summary: min `0.006140909845521252`, mean `0.044244679521142034`, max `0.9943604573869449`.
+- runtime + throughput: `1572.4510145999993s`, `3179.749291758956 rows/s`.
+- chunk/memory: `chunk_size=25000`, `chunk_count=200`, `largest_chunk_rows=25000`, `largest_transformed_matrix_bytes=3396428`.
+- deterministic re-score: `verify_scoring_run_sample(scoring_run_id=7, sample_size=256)` -> `verified=true`, `max_abs_diff=0.0`.
+- provenance verification: canonical payload present and current demographics source match confirmed.
+- residual risks: local SQLite single-user throughput characteristics; no functional blockers for Phase 5 acceptance.
 - **Go / Conditional Go / No-Go Phase 6:** Go.

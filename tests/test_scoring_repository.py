@@ -348,6 +348,52 @@ def test_transition_guards_and_validation_errors(database_path: Path) -> None:
         )
 
 
+def test_mark_completed_requires_non_empty_summary_payload(database_path: Path) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+    job_id = _insert_scoring_job(
+        database_path,
+        model_run_id=model_run_id,
+        created_at="2026-08-26T03:30:00Z",
+    )
+
+    repository = ScoringRepository(database_path)
+    scoring_run_id = repository.create_scoring_run(
+        job_id=job_id,
+        model_run_id=model_run_id,
+        created_at="2026-08-26T03:30:10Z",
+        demographic_snapshot_count=1,
+        demographic_min_person_id="PER_001",
+        demographic_max_person_id="PER_001",
+        chunk_size=10_000,
+        selected_candidate="BAGGING_PU",
+        model_role_policy_version="2",
+        feature_contract_version="1",
+        feature_contract_sha256="a" * 64,
+        artifact_sha256="b" * 64,
+    )
+
+    repository.update_counters(
+        scoring_run_id=scoring_run_id,
+        scored_person_count=1,
+        last_person_id="PER_001",
+        score_min=0.5,
+        score_max=0.5,
+        score_mean=0.5,
+    )
+
+    with pytest.raises(ScoringValidationError, match="non-empty"):
+        repository.mark_completed(
+            scoring_run_id=scoring_run_id,
+            completed_at="2026-08-26T03:30:20Z",
+            scored_person_count=1,
+            score_min=0.5,
+            score_max=0.5,
+            score_mean=0.5,
+            summary_payload=None,
+        )
+
+
 def test_insert_scores_chunk_and_fetch_aggregates(database_path: Path) -> None:
     analysis_run_id = _insert_completed_analysis(database_path)
     model_run_id = _insert_model_run(database_path, analysis_run_id)

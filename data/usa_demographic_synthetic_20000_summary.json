@@ -1,169 +1,169 @@
 {
-  "rows": 5000000,
+  "rows": 20000,
   "columns": 28,
   "seed": 20260818,
   "id_offset": 0,
   "id_start": 1,
-  "id_end": 5000000,
-  "file": "data\\usa_demographic_synthetic_5000000_rows.csv.gz",
-  "file_size_bytes": 333670576,
-  "mean_age": 48.6629524,
-  "mean_individual_yearly_income": 43249.85366,
-  "mean_family_yearly_income": 114660.26592,
+  "id_end": 20000,
+  "file": "data\\usa_demographic_synthetic_20000_rows.csv.gz",
+  "file_size_bytes": 1336637,
+  "mean_age": 48.67505,
+  "mean_individual_yearly_income": 43168.15,
+  "mean_family_yearly_income": 115340.61,
   "population_age_contract": "ADULT_18_100",
   "age_contract_range": "18..100",
   "age_contract_adjusted_rows": 0,
   "age_contract_mode": "GENERATED_VALID_FROM_SOURCE",
-  "employed_share": 0.6431178,
+  "employed_share": 0.6437,
   "gender_distribution": {
-    "Male": 0.487533,
-    "Female": 0.502211,
-    "Non-binary/Other": 0.010256
+    "Male": 0.48425,
+    "Female": 0.5062,
+    "Non-binary/Other": 0.00955
   },
   "ethnicity_distribution": {
-    "White (Non-Hispanic)": 0.544767,
-    "Hispanic/Latino": 0.2152874,
-    "Black/African American (Non-Hispanic)": 0.127771,
-    "Asian (Non-Hispanic)": 0.068966,
-    "American Indian/Alaska Native (Non-Hispanic)": 0.0053708,
-    "Native Hawaiian/Pacific Islander (Non-Hispanic)": 0.0017972,
-    "Multiracial/Other (Non-Hispanic)": 0.0360406
+    "White (Non-Hispanic)": 0.54475,
+    "Hispanic/Latino": 0.21645,
+    "Black/African American (Non-Hispanic)": 0.12805,
+    "Asian (Non-Hispanic)": 0.06835,
+    "American Indian/Alaska Native (Non-Hispanic)": 0.00525,
+    "Native Hawaiian/Pacific Islander (Non-Hispanic)": 0.00195,
+    "Multiracial/Other (Non-Hispanic)": 0.0352
   },
   "state_distribution": {
     "CA": {
       "state": "California",
-      "rows": 796073,
-      "share": 0.1592146
+      "rows": 3213,
+      "share": 0.16065
     },
     "TX": {
       "state": "Texas",
-      "rows": 520524,
-      "share": 0.1041048
+      "rows": 2043,
+      "share": 0.10215
     },
     "FL": {
       "state": "Florida",
-      "rows": 421550,
-      "share": 0.08431
+      "rows": 1726,
+      "share": 0.0863
     },
     "NY": {
       "state": "New York",
-      "rows": 376845,
-      "share": 0.075369
+      "rows": 1516,
+      "share": 0.0758
     },
     "IL": {
       "state": "Illinois",
-      "rows": 238055,
-      "share": 0.047611
+      "rows": 979,
+      "share": 0.04895
     },
     "PA": {
       "state": "Pennsylvania",
-      "rows": 212150,
-      "share": 0.04243
+      "rows": 829,
+      "share": 0.04145
     },
     "OH": {
       "state": "Ohio",
-      "rows": 192115,
-      "share": 0.038423
+      "rows": 778,
+      "share": 0.0389
     },
     "NJ": {
       "state": "New Jersey",
-      "rows": 186471,
-      "share": 0.0372942
+      "rows": 746,
+      "share": 0.0373
     },
     "GA": {
       "state": "Georgia",
-      "rows": 169793,
-      "share": 0.0339586
+      "rows": 660,
+      "share": 0.033
     },
     "MI": {
       "state": "Michigan",
-      "rows": 158327,
-      "share": 0.0316654
+      "rows": 615,
+      "share": 0.03075
     },
     "NC": {
       "state": "North Carolina",
-      "rows": 148968,
-      "share": 0.0297936
+      "rows": 560,
+      "share": 0.028
     },
     "VA": {
       "state": "Virginia",
-      "rows": 139063,
-      "share": 0.0278126
+      "rows": 579,
+      "share": 0.02895
     },
     "WA": {
       "state": "Washington",
-      "rows": 136818,
-      "share": 0.0273636
+      "rows": 530,
+      "share": 0.0265
     },
     "MA": {
       "state": "Massachusetts",
-      "rows": 136773,
-      "share": 0.0273546
+      "rows": 555,
+      "share": 0.02775
     },
     "AZ": {
       "state": "Arizona",
-      "rows": 136250,
-      "share": 0.02725
+      "rows": 549,
+      "share": 0.02745
     },
     "MD": {
       "state": "Maryland",
-      "rows": 113178,
-      "share": 0.0226356
+      "rows": 445,
+      "share": 0.02225
     },
     "CO": {
       "state": "Colorado",
-      "rows": 105747,
-      "share": 0.0211494
+      "rows": 451,
+      "share": 0.02255
     },
     "IN": {
       "state": "Indiana",
-      "rows": 103096,
-      "share": 0.0206192
+      "rows": 398,
+      "share": 0.0199
     },
     "TN": {
       "state": "Tennessee",
-      "rows": 98019,
-      "share": 0.0196038
+      "rows": 402,
+      "share": 0.0201
     },
     "MO": {
       "state": "Missouri",
-      "rows": 91138,
-      "share": 0.0182276
+      "rows": 328,
+      "share": 0.0164
     },
     "MN": {
       "state": "Minnesota",
-      "rows": 87556,
-      "share": 0.0175112
+      "rows": 389,
+      "share": 0.01945
     },
     "WI": {
       "state": "Wisconsin",
-      "rows": 84279,
-      "share": 0.0168558
+      "rows": 347,
+      "share": 0.01735
     },
     "SC": {
       "state": "South Carolina",
-      "rows": 73933,
-      "share": 0.0147866
+      "rows": 282,
+      "share": 0.0141
     },
     "OR": {
       "state": "Oregon",
-      "rows": 72491,
-      "share": 0.0144982
+      "rows": 292,
+      "share": 0.0146
     },
     "LA": {
       "state": "Louisiana",
-      "rows": 71110,
-      "share": 0.014222
+      "rows": 275,
+      "share": 0.01375
     },
     "CT": {
       "state": "Connecticut",
-      "rows": 66805,
-      "share": 0.013361
+      "rows": 273,
+      "share": 0.01365
     },
     "UT": {
       "state": "Utah",
-      "rows": 62873,
-      "share": 0.0125746
+      "rows": 240,
+      "share": 0.012
     }
   },
   "contact_safety": "Emails use IANA-reserved example.com/example.net/example.org domains. Phones use the fictional 555-0100..0199 exchange range. Addresses are algorithmically synthesized, not copied from address records.",

@@ -244,6 +244,86 @@ def _insert_scoring_run(
         return int(cursor.lastrowid)
 
 
+def _insert_demographic_person(database_path: Path, person_id: str) -> None:
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            INSERT INTO demographics (
+                person_id,
+                age,
+                gender,
+                state,
+                individual_yearly_income,
+                marital_status,
+                education,
+                employment_status,
+                resident_status,
+                resident_type,
+                family_member_count,
+                number_of_children_in_family,
+                number_of_adults_in_family,
+                type_of_employment,
+                family_yearly_income
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                person_id,
+                35,
+                "Female",
+                "Ohio",
+                72_000.0,
+                "Single",
+                "Bachelors",
+                "Employed",
+                "Citizen by birth",
+                "Inner suburban",
+                2,
+                0,
+                2,
+                "Private sector",
+                95_000.0,
+            ),
+        )
+
+
+def _insert_completed_demographic_import(
+    database_path: Path,
+    *,
+    rows_inserted: int,
+    source_checksum: str = "d" * 64,
+) -> int:
+    with get_connection(database_path, write=True) as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name,
+                source_path,
+                started_at,
+                completed_at,
+                status,
+                rows_read,
+                rows_inserted,
+                rows_rejected,
+                error_message,
+                source_checksum
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "demographics",
+                "data/fixture_demographics.csv.gz",
+                "2026-08-28T01:00:00Z",
+                "2026-08-28T01:00:10Z",
+                "COMPLETED",
+                rows_inserted,
+                rows_inserted,
+                0,
+                None,
+                source_checksum,
+            ),
+        )
+    return int(cursor.lastrowid)
+
+
 def _scoreable_context(model_run_id: int) -> ScoreableModelContext:
     return ScoreableModelContext(
         model_run_id=model_run_id,
@@ -452,6 +532,16 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
         completed_at="2026-08-28T01:01:05Z",
         score_summary_json=json.dumps(
             {
+                "demographic_import_id": 1,
+                "demographic_source_checksum": "d" * 64,
+                "demographic_snapshot_count": 3,
+                "demographic_min_person_id": "PER_000001",
+                "demographic_max_person_id": "PER_000003",
+                "model_run_id": model_run_id,
+                "selected_candidate": "BAGGING_PU",
+                "feature_contract_version": "1",
+                "feature_contract_sha256": "a" * 64,
+                "artifact_sha256": "b" * 64,
                 "score_count": 3,
                 "score_min": 0.1,
                 "score_max": 0.9,
@@ -462,11 +552,7 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
                 "chunk_count": 1,
                 "largest_chunk_rows": 3,
                 "largest_transformed_matrix_bytes": 128,
-                "selected_candidate": "BAGGING_PU",
                 "model_role_policy_version": "2",
-                "feature_contract_version": "1",
-                "feature_contract_sha256": "a" * 64,
-                "artifact_sha256": "a" * 64,
                 "score_semantics": "LOOK_ALIKE_PROPENSITY_SCORE",
                 "age_semantics_note": "fixture",
             },
@@ -476,12 +562,34 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
         error_message=None,
     )
 
+    _insert_demographic_person(database_path, "PER_000001")
+    _insert_demographic_person(database_path, "PER_000002")
+    _insert_demographic_person(database_path, "PER_000003")
+    _insert_completed_demographic_import(database_path, rows_inserted=3)
+    with get_connection(database_path, write=True) as connection:
+        connection.executemany(
+            """
+            INSERT INTO propensity_scores (
+                scoring_run_id,
+                model_run_id,
+                person_id,
+                propensity_score
+            ) VALUES (?, ?, ?, ?)
+            """,
+            [
+                (completed_run_id, model_run_id, "PER_000001", 0.1),
+                (completed_run_id, model_run_id, "PER_000002", 0.2),
+                (completed_run_id, model_run_id, "PER_000003", 0.9),
+            ],
+        )
+
     completed = client.get(f"/api/models/{model_run_id}/scoring-status")
     assert completed.status_code == 200
     completed_payload = completed.json()
     assert completed_payload["eligible"] is False
     assert completed_payload["reason"] == EXISTING_SCORING_RUN_CONFLICT_MESSAGE
     assert completed_payload["completed_scoring_run"]["scoring_run_id"] == completed_run_id
+    assert completed_payload["completed_scoring_run"]["demographic_source_verified"] is True
 
 
 def test_scoring_status_handles_unscoreable_and_missing_models(

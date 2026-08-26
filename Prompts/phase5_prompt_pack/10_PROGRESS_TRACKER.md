@@ -94,3 +94,20 @@ Status: COMPLETE (GO)
 - scope scan: no individual score API; no Audience Explorer/bands/percentiles/audience/campaign/export/activation/linkage surfaces activated.
 - final SHA: working tree remains uncommitted; baseline commit still `fdae4a7a40c846e4038a8ebe656257eb4164cd5d` until a Phase 5 baseline commit is created.
 - Go/No-Go Phase 6: GO.
+
+## Pre-Phase-6 Phase 5 Finalization
+Status: COMPLETE (GO)
+- starting implementation SHA: `0d1425da0bacd020decb79b5d2d7b201b0c894e0`.
+- dataset regeneration: demographics source regenerated adult-from-source under frozen age contract (18..100), with no post-hoc age mutation.
+- canonical demographics import: `import_id=5`, `source_checksum=7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`, `rows_read=5,000,000`, `rows_inserted=5,000,000`, `rows_rejected=0`.
+- canonical model/job/scoring identifiers: `model_run_id=6`, `job_id=18`, `scoring_run_id=7`.
+- reconciliation: demographic snapshot `5,000,000`; scored `5,000,000`; score rows `5,000,000`; duplicate person IDs `0`; invalid demographic FK `0`; nonfinite `0`; below-zero `0`; above-one `0`.
+- score stats: min `0.006140909845521252`, mean `0.044244679521142034`, max `0.9943604573869449`.
+- runtime and throughput: `total_seconds=1572.4510145999993`, `rows_per_second=3179.749291758956`.
+- chunk and memory profile: `chunk_size=25000`, `chunk_count=200`, `largest_chunk_rows=25000`, `largest_transformed_matrix_bytes=3396428`.
+- direct deterministic re-score: `verify_scoring_run_sample(scoring_run_id=7, sample_size=256)` -> `verified=true`, `max_abs_diff=0.0`.
+- provenance verification: `demographic_import_id`, `demographic_source_checksum`, `demographic_snapshot_count`, `model_run_id`, `artifact_sha256`, `feature_contract_version`, and `feature_contract_sha256` all present and matched current loaded demographics source.
+- conflict evidence during active scoring: second scoring submit `409`; training submit `409`.
+- evidence artifact: `logs/phase5_prephase6_step3_rerun_report.json`.
+- post-run gates: `python -m pip check` clean; `python -m pytest -q` 318 passed, 1 warning; `python -m compileall -q app scripts tests` clean; `git diff --check` no whitespace errors (line-ending warnings only); `python scripts/validate_data.py --json` overall_status `OK`.
+- scope lock: no Phase 6 functionality implemented (Audience Explorer, person lookup, score bands/percentiles/deciles, audience selection/persistence, campaign builder, export, activation all remain absent/disabled).

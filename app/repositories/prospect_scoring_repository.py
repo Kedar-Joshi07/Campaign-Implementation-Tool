@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from string import hexdigits
 from typing import Any
 
 import pandas as pd
@@ -62,6 +63,15 @@ class ProspectPopulationSnapshot:
     demographic_max_person_id: str | None
 
 
+@dataclass(frozen=True)
+class DemographicImportProvenance:
+    demographic_import_id: int
+    demographic_source_checksum: str
+    demographic_snapshot_count: int
+    demographic_min_person_id: str | None
+    demographic_max_person_id: str | None
+
+
 class ProspectScoringRepositoryError(RuntimeError):
     """Base class for prospect-scoring repository failures."""
 
@@ -112,6 +122,54 @@ class ProspectScoringRepository:
             demographic_snapshot_count=int(row["demographic_snapshot_count"]),
             demographic_min_person_id=row["demographic_min_person_id"],
             demographic_max_person_id=row["demographic_max_person_id"],
+        )
+
+    def fetch_completed_demographic_import_provenance(self) -> DemographicImportProvenance:
+        snapshot = self.fetch_prospect_snapshot()
+        with get_connection(self.database_path) as connection:
+            row = connection.execute(
+                """
+                SELECT
+                    import_id,
+                    dataset_name,
+                    status,
+                    rows_inserted,
+                    source_checksum
+                FROM data_import_runs
+                WHERE dataset_name = 'demographics' AND status = 'COMPLETED'
+                ORDER BY import_id DESC
+                LIMIT 1
+                """
+            ).fetchone()
+
+        if row is None:
+            raise ProspectScoringValidationError(
+                "A completed demographics import provenance record is required before scoring."
+            )
+
+        checksum = row["source_checksum"]
+        if not isinstance(checksum, str):
+            raise ProspectScoringValidationError(
+                "Demographics import provenance checksum is missing."
+            )
+        normalized_checksum = checksum.strip().lower()
+        if len(normalized_checksum) != 64 or any(char not in hexdigits for char in normalized_checksum):
+            raise ProspectScoringValidationError(
+                "Demographics import provenance checksum is invalid."
+            )
+
+        rows_inserted = int(row["rows_inserted"])
+        if rows_inserted != snapshot.demographic_snapshot_count:
+            raise ProspectScoringValidationError(
+                "Demographics import provenance does not match current demographic snapshot count."
+            )
+
+        return DemographicImportProvenance(
+            demographic_import_id=int(row["import_id"]),
+            demographic_source_checksum=normalized_checksum,
+            demographic_snapshot_count=snapshot.demographic_snapshot_count,
+            demographic_min_person_id=snapshot.demographic_min_person_id,
+            demographic_max_person_id=snapshot.demographic_max_person_id,
         )
 
     def fetch_scoring_chunk(
@@ -222,6 +280,7 @@ class ProspectScoringRepository:
 
 
 __all__ = (
+    "DemographicImportProvenance",
     "ProspectPopulationSnapshot",
     "ProspectScoringRepository",
     "ProspectScoringRepositoryError",

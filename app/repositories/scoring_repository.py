@@ -400,6 +400,8 @@ class ScoringRepository:
         if not normalized_score_min <= normalized_score_mean <= normalized_score_max:
             raise ScoringValidationError("score_mean must lie between score_min and score_max.")
 
+        if summary_payload is None or not isinstance(summary_payload, dict) or not summary_payload:
+            raise ScoringValidationError("Completed runs require a non-empty score_summary_json payload.")
         summary_json = _canonical_summary_json(summary_payload)
 
         with get_connection(self.database_path, write=True) as connection:

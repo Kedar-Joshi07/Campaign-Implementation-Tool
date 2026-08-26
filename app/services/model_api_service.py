@@ -47,6 +47,7 @@ from app.services.scoring_job_service import (
     submit_prospect_scoring_job_request,
 )
 from app.services.model_training_service import load_verified_model_artifact
+from app.services.prospect_scoring_service import validate_completed_scoring_run_provenance
 
 
 MODEL_TRAINING_FAILED_MESSAGE = "Model training could not be completed."
@@ -271,10 +272,14 @@ def get_job_detail(database_path: str | Path, job_id: int) -> dict[str, Any]:
     }
 
 
-def _public_completed_scoring_reference(row: dict[str, Any] | None) -> dict[str, Any] | None:
+def _public_completed_scoring_reference(
+    row: dict[str, Any] | None,
+    *,
+    demographic_source_verified: bool | None = None,
+) -> dict[str, Any] | None:
     if row is None:
         return None
-    return {
+    payload = {
         "scoring_run_id": int(row["scoring_run_id"]),
         "status": str(row["status"]),
         "completed_at": row.get("completed_at"),
@@ -283,6 +288,9 @@ def _public_completed_scoring_reference(row: dict[str, Any] | None) -> dict[str,
         "score_max": float(row["score_max"]),
         "score_mean": float(row["score_mean"]),
     }
+    if demographic_source_verified is not None:
+        payload["demographic_source_verified"] = bool(demographic_source_verified)
+    return payload
 
 
 def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str, Any]:
@@ -293,6 +301,14 @@ def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str
     demographic_count = ProspectScoringRepository(database_path).fetch_prospect_snapshot().demographic_snapshot_count
     scoring_repository = ScoringRepository(database_path)
     completed_scoring_run = scoring_repository.find_completed_run_for_model(model_run_id)
+    completed_scoring_run_canonical = False
+    if completed_scoring_run is not None:
+        provenance_check = validate_completed_scoring_run_provenance(
+            database_path,
+            scoring_run_id=int(completed_scoring_run["scoring_run_id"]),
+            verify_current_source_match=False,
+        )
+        completed_scoring_run_canonical = bool(provenance_check["is_canonical"])
     active_job = JobRepository(database_path).find_active_compute_job()
 
     eligible = True
@@ -314,7 +330,7 @@ def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str
         eligible = False
         reason = str(exc)
 
-    if completed_scoring_run is not None:
+    if completed_scoring_run_canonical:
         eligible = False
         reason = EXISTING_SCORING_RUN_CONFLICT_MESSAGE
     elif active_job is not None:
@@ -332,7 +348,12 @@ def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str
         "feature_contract_sha256": feature_contract_sha256,
         "artifact_sha256": artifact_sha256,
         "active_job": _public_job_summary(active_job) if active_job is not None else None,
-        "completed_scoring_run": _public_completed_scoring_reference(completed_scoring_run),
+        "completed_scoring_run": _public_completed_scoring_reference(
+            completed_scoring_run,
+            demographic_source_verified=(
+                True if completed_scoring_run_canonical else False
+            ) if completed_scoring_run is not None else None,
+        ),
     }
 
 
@@ -376,6 +397,12 @@ def get_scoring_run_detail(database_path: str | Path, scoring_run_id: int) -> di
     if row is None:
         raise ModelApiNotFoundError(SCORING_RUN_NOT_FOUND_MESSAGE)
 
+    provenance_check = validate_completed_scoring_run_provenance(
+        database_path,
+        scoring_run_id=int(row["scoring_run_id"]),
+        verify_current_source_match=False,
+    )
+
     score_summary_payload: dict[str, Any] | None = None
     if row.get("score_summary_json"):
         score_summary_payload = _decode_public_json_object(
@@ -413,6 +440,7 @@ def get_scoring_run_detail(database_path: str | Path, scoring_run_id: int) -> di
             "score_max": float(row["score_max"]) if row.get("score_max") is not None else None,
             "score_mean": float(row["score_mean"]) if row.get("score_mean") is not None else None,
             "summary_payload": score_summary_payload,
+            "demographic_source_verified": bool(provenance_check["demographic_source_verified"]),
         },
         "job": _public_job_summary(job_row) if job_row is not None else None,
     }

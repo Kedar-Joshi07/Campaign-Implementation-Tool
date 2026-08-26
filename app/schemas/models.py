@@ -70,6 +70,7 @@ class CompletedScoringRunReferenceResponse(ModelApiResponseModel):
     score_min: float = Field(ge=0, le=1)
     score_max: float = Field(ge=0, le=1)
     score_mean: float = Field(ge=0, le=1)
+    demographic_source_verified: bool | None = None
 
 
 class ScoringStatusResponse(ModelApiResponseModel):
@@ -131,6 +132,7 @@ class ScoringRunScoreSummaryResponse(ModelApiResponseModel):
     score_max: float | None = Field(default=None, ge=0, le=1)
     score_mean: float | None = Field(default=None, ge=0, le=1)
     summary_payload: dict[str, Any] | None = None
+    demographic_source_verified: bool = False
 
 
 class ScoringRunDetailResponse(ModelApiResponseModel):

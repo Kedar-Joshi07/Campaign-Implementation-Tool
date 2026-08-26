@@ -17,6 +17,7 @@ from app.services.model_scoring_compatibility import ModelScoreabilityValidation
 from app.services.prospect_scoring_service import (
     ProspectScoringExecutionError,
     ProspectScoringVerificationError,
+    validate_completed_scoring_run_provenance,
 )
 
 
@@ -159,6 +160,44 @@ def _insert_scoring_job(database_path: Path, *, model_run_id: int) -> int:
         return int(cursor.lastrowid)
 
 
+def _insert_demographic_import_provenance(
+    database_path: Path,
+    *,
+    rows_inserted: int,
+    source_checksum: str = "d" * 64,
+) -> int:
+    with get_connection(database_path, write=True) as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name,
+                source_path,
+                started_at,
+                completed_at,
+                status,
+                rows_read,
+                rows_inserted,
+                rows_rejected,
+                error_message,
+                source_checksum
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "demographics",
+                "data/fixture_demographics.csv.gz",
+                "2026-08-26T00:30:00Z",
+                "2026-08-26T00:30:10Z",
+                "COMPLETED",
+                rows_inserted,
+                rows_inserted,
+                0,
+                None,
+                source_checksum,
+            ),
+        )
+    return int(cursor.lastrowid)
+
+
 def _insert_demographic(
     database_path: Path,
     *,
@@ -260,6 +299,8 @@ def _seed_demographics(database_path: Path, count: int) -> None:
             """,
             rows,
         )
+
+    _insert_demographic_import_provenance(database_path, rows_inserted=count)
 
 
 def _scoreable_context(*, model_run_id: int, preprocessor: Any, estimator: Any) -> ScoreableModelContext:
@@ -534,7 +575,7 @@ def test_snapshot_drift_detected_at_completion(database_path: Path, monkeypatch:
         nonlocal call_count
         call_count += 1
         snapshot = original_snapshot(self)
-        if call_count >= 2:
+        if call_count >= 3:
             return type(snapshot)(
                 demographic_snapshot_count=snapshot.demographic_snapshot_count + 1,
                 demographic_min_person_id=snapshot.demographic_min_person_id,
@@ -563,3 +604,264 @@ def test_snapshot_drift_detected_at_completion(database_path: Path, monkeypatch:
         ).fetchone()
 
     assert run["status"] == "FAILED"
+
+
+def test_missing_demographic_import_provenance_rejected_before_scoring_run_creation(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+    job_id = _insert_scoring_job(database_path, model_run_id=model_run_id)
+    _insert_demographic(
+        database_path,
+        person_id="PER_000001",
+        age=31,
+        income=70_000.0,
+        family_member_count=2,
+        state="Ohio",
+    )
+
+    monkeypatch.setattr(
+        scoring_service,
+        "validate_scoreable_model",
+        lambda *_args, **_kwargs: _scoreable_context(
+            model_run_id=model_run_id,
+            preprocessor=_TrackingPreprocessor(),
+            estimator=_TrackingEstimator(),
+        ),
+    )
+
+    with pytest.raises(ModelScoreabilityValidationError, match="provenance"):
+        scoring_service.run_chunked_prospect_scoring(
+            database_path,
+            model_run_id=model_run_id,
+            job_id=job_id,
+            chunk_size=1_000,
+        )
+
+    with get_connection(database_path) as connection:
+        row = connection.execute(
+            "SELECT 1 FROM scoring_runs WHERE job_id = ?",
+            (job_id,),
+        ).fetchone()
+    assert row is None
+
+
+def test_invalid_demographic_import_checksum_rejected_before_scoring_run_creation(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+    job_id = _insert_scoring_job(database_path, model_run_id=model_run_id)
+    _insert_demographic(
+        database_path,
+        person_id="PER_000001",
+        age=31,
+        income=70_000.0,
+        family_member_count=2,
+        state="Ohio",
+    )
+    _insert_demographic_import_provenance(
+        database_path,
+        rows_inserted=1,
+        source_checksum="not-a-checksum",
+    )
+
+    monkeypatch.setattr(
+        scoring_service,
+        "validate_scoreable_model",
+        lambda *_args, **_kwargs: _scoreable_context(
+            model_run_id=model_run_id,
+            preprocessor=_TrackingPreprocessor(),
+            estimator=_TrackingEstimator(),
+        ),
+    )
+
+    with pytest.raises(ModelScoreabilityValidationError, match="checksum"):
+        scoring_service.run_chunked_prospect_scoring(
+            database_path,
+            model_run_id=model_run_id,
+            job_id=job_id,
+            chunk_size=1_000,
+        )
+
+
+def test_import_checksum_drift_detected_at_completion(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+    job_id = _insert_scoring_job(database_path, model_run_id=model_run_id)
+    _seed_demographics(database_path, 5)
+
+    monkeypatch.setattr(
+        scoring_service,
+        "validate_scoreable_model",
+        lambda *_args, **_kwargs: _scoreable_context(
+            model_run_id=model_run_id,
+            preprocessor=_TrackingPreprocessor(),
+            estimator=_TrackingEstimator(),
+        ),
+    )
+
+    original_fetch = scoring_service.ProspectScoringRepository.fetch_completed_demographic_import_provenance
+    call_count = 0
+
+    def _drifting_provenance(self: Any) -> Any:
+        nonlocal call_count
+        call_count += 1
+        provenance = original_fetch(self)
+        if call_count >= 2:
+            return type(provenance)(
+                demographic_import_id=provenance.demographic_import_id,
+                demographic_source_checksum="e" * 64,
+                demographic_snapshot_count=provenance.demographic_snapshot_count,
+                demographic_min_person_id=provenance.demographic_min_person_id,
+                demographic_max_person_id=provenance.demographic_max_person_id,
+            )
+        return provenance
+
+    monkeypatch.setattr(
+        scoring_service.ProspectScoringRepository,
+        "fetch_completed_demographic_import_provenance",
+        _drifting_provenance,
+    )
+
+    with pytest.raises(ProspectScoringExecutionError):
+        scoring_service.run_chunked_prospect_scoring(
+            database_path,
+            model_run_id=model_run_id,
+            job_id=job_id,
+            chunk_size=1_000,
+        )
+
+    with get_connection(database_path) as connection:
+        run = connection.execute(
+            "SELECT * FROM scoring_runs WHERE job_id = ?",
+            (job_id,),
+        ).fetchone()
+    assert run is not None
+    assert run["status"] == "FAILED"
+
+
+def test_validate_completed_scoring_run_provenance_marks_canonical_run(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+    job_id = _insert_scoring_job(database_path, model_run_id=model_run_id)
+    _seed_demographics(database_path, 6)
+
+    monkeypatch.setattr(
+        scoring_service,
+        "validate_scoreable_model",
+        lambda *_args, **_kwargs: _scoreable_context(
+            model_run_id=model_run_id,
+            preprocessor=_TrackingPreprocessor(),
+            estimator=_TrackingEstimator(),
+        ),
+    )
+
+    result = scoring_service.run_chunked_prospect_scoring(
+        database_path,
+        model_run_id=model_run_id,
+        job_id=job_id,
+        chunk_size=1_000,
+    )
+
+    validation = validate_completed_scoring_run_provenance(
+        database_path,
+        scoring_run_id=int(result["scoring_run_id"]),
+    )
+    assert validation["is_canonical"] is True
+    assert validation["demographic_source_verified"] is True
+    assert validation["issues"] == []
+
+
+def test_validate_completed_scoring_run_provenance_treats_legacy_summary_as_non_canonical(
+    database_path: Path,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+    job_id = _insert_scoring_job(database_path, model_run_id=model_run_id)
+    _seed_demographics(database_path, 1)
+
+    with get_connection(database_path, write=True) as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO scoring_runs (
+                job_id,
+                model_run_id,
+                created_at,
+                completed_at,
+                status,
+                demographic_snapshot_count,
+                demographic_min_person_id,
+                demographic_max_person_id,
+                scored_person_count,
+                chunk_size,
+                last_person_id,
+                selected_candidate,
+                model_role_policy_version,
+                feature_contract_version,
+                feature_contract_sha256,
+                artifact_sha256,
+                score_min,
+                score_max,
+                score_mean,
+                score_summary_json,
+                error_message
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                job_id,
+                model_run_id,
+                "2026-08-26T09:00:00Z",
+                "2026-08-26T09:00:10Z",
+                "COMPLETED",
+                1,
+                "PER_000001",
+                "PER_000001",
+                1,
+                1_000,
+                "PER_000001",
+                "BAGGING_PU",
+                "2",
+                "1",
+                FEATURE_CONTRACT_SHA256,
+                "a" * 64,
+                0.2,
+                0.2,
+                0.2,
+                json.dumps({"score_count": 1}, sort_keys=True, separators=(",", ":")),
+                None,
+            ),
+        )
+        scoring_run_id = int(cursor.lastrowid)
+        connection.execute(
+            """
+            INSERT INTO propensity_scores (
+                scoring_run_id,
+                model_run_id,
+                person_id,
+                propensity_score
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (
+                scoring_run_id,
+                model_run_id,
+                "PER_000001",
+                0.2,
+            ),
+        )
+
+    validation = validate_completed_scoring_run_provenance(
+        database_path,
+        scoring_run_id=scoring_run_id,
+    )
+    assert validation["is_canonical"] is False
+    assert validation["issues"]

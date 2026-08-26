@@ -148,53 +148,47 @@ for i in range(1200): streets.append(f'{prefix[i%len(prefix)]} {100+i%900} {suff
 male_names=np.array(male_names,dtype=object); female_names=np.array(female_names,dtype=object); neutral_names=np.array(neutral_names,dtype=object)
 last_names=np.array(last_names,dtype=object); streets=np.array(streets,dtype=object)
 
-# age bins and within-bin sampling
-AGE_BINS=[(0,4),(5,17),(18,24),(25,34),(35,44),(45,54),(55,64),(65,74),(75,84),(85,94)]
+# Adult-only age bins (18..100) generated from source.
+AGE_BINS=[(18,24),(25,34),(35,44),(45,54),(55,64),(65,74),(75,84),(85,94),(95,100)]
 MID_BASE=np.array([.091,.138,.129,.124,.127]) # 18-64 bins
-YOUNG_SPLIT=np.array([.26,.74])
-OLD_SPLIT=np.array([.57,.31,.12])
+OLD_SPLIT=np.array([.52,.29,.14,.05]) # 65-74, 75-84, 85-94, 95-100
 
 def age_weights(st):
     _,u18,o65,_,_,_,_=CFG[st]
     mid=1-u18-o65
-    return np.r_[u18*YOUNG_SPLIT, mid*MID_BASE/MID_BASE.sum(), o65*OLD_SPLIT]
+    adult_w=np.r_[mid*MID_BASE/MID_BASE.sum(), o65*OLD_SPLIT]
+    adult_w=adult_w/adult_w.sum()
+    return adult_w
 AGE_W={s:age_weights(s) for s in STATE_CODES}
 
-# Enforce downstream model feature contract by remediating any out-of-range ages
-# with randomized adult ages shaped by employment status, income, and marital status.
-def contract_age_base(emp_status, rng):
-    if emp_status=='Retired': return int(rng.integers(60,95))
-    if emp_status=='Employed full-time': return int(rng.integers(25,65))
-    if emp_status=='Employed part-time': return int(rng.integers(20,60))
-    if emp_status=='Student': return int(rng.integers(18,30))
-    if emp_status=='Unemployed - seeking work': return int(rng.integers(22,61))
-    if emp_status=='Homemaker/Caregiver': return int(rng.integers(24,69))
-    if emp_status=='Not in labor force': return int(rng.integers(22,76))
-    if emp_status=='Minor / not in labor force': return int(rng.integers(18,25))
-    return int(rng.integers(18,71))
-
-def contract_adjusted_age(emp_status, income, marital_status, rng):
-    age=contract_age_base(emp_status,rng)
-    if income>=200000: age += int(rng.integers(6,12))
-    elif income>=120000: age += int(rng.integers(3,9))
-    elif income>=80000: age += int(rng.integers(1,5))
-    elif income<=5000: age -= int(rng.integers(1,4))
-    elif income<=20000: age -= int(rng.integers(0,3))
-
-    if marital_status=='Widowed': age += int(rng.integers(8,15))
-    elif marital_status=='Separated/Divorced': age += int(rng.integers(3,9))
-    elif marital_status=='Married': age += int(rng.integers(1,6))
-    elif marital_status=='Never married': age -= int(rng.integers(0,3))
-    return int(np.clip(age,18,100))
-
-def enforce_age_contract(ages, employment_status, individual_income, marital_status, rng):
-    invalid=(ages<18)|(ages>100)
-    idx=np.where(invalid)[0]
-    for i in idx:
-        ages[i]=contract_adjusted_age(str(employment_status[i]),float(individual_income[i]),str(marital_status[i]),rng)
-    if np.any((ages<18)|(ages>100)):
-        raise RuntimeError('Age contract enforcement failed to bring all rows into 18..100 range')
-    return int(idx.size)
+def validate_adult_contract(ages, employment_status, education, family_member_count, number_of_adults_in_family, number_of_children_in_family, individual_income):
+    invalid_age_low=int(np.sum(ages<18))
+    invalid_age_high=int(np.sum(ages>100))
+    invalid_minor_employment=int(np.sum(employment_status=='Minor / not in labor force'))
+    invalid_edu_not_yet=int(np.sum(education=='Not yet in school'))
+    invalid_edu_primary=int(np.sum(education=='Primary/Middle school'))
+    invalid_family_size=int(np.sum(family_member_count<1))
+    invalid_adults=int(np.sum(number_of_adults_in_family<1))
+    invalid_children=int(np.sum(number_of_children_in_family<0))
+    invalid_income=int(np.sum(individual_income<0))
+    if any((
+        invalid_age_low,
+        invalid_age_high,
+        invalid_minor_employment,
+        invalid_edu_not_yet,
+        invalid_edu_primary,
+        invalid_family_size,
+        invalid_adults,
+        invalid_children,
+        invalid_income,
+    )):
+        raise RuntimeError(
+            'Adult generation contract violated: '
+            f'age_lt_18={invalid_age_low}, age_gt_100={invalid_age_high}, '
+            f'minor_employment={invalid_minor_employment}, edu_not_yet={invalid_edu_not_yet}, '
+            f'edu_primary={invalid_edu_primary}, family_member_count_lt_1={invalid_family_size}, '
+            f'adults_lt_1={invalid_adults}, children_lt_0={invalid_children}, income_lt_0={invalid_income}'
+        )
 
 def edu_probs(st):
     ba=CFG[st][4]
@@ -242,8 +236,8 @@ for base in range(0,N_ROWS,CHUNK):
         if not len(ix): continue
         m=len(ix); med,u18,o65,female,ba,foreign,race=CFG[st]
         med_income[ix]=med; ba_target[ix]=ba
-        # Age by calibrated state bands
-        bins=rng.choice(10,size=m,p=AGE_W[st])
+        # Adult age assignment by calibrated state bands.
+        bins=rng.choice(len(AGE_BINS),size=m,p=AGE_W[st])
         lo=np.array([AGE_BINS[b][0] for b in bins]); hi=np.array([AGE_BINS[b][1] for b in bins])
         ages[ix]=lo + (rng.random(m)*(hi-lo+1)).astype(np.int16)
         # Gender: small non-binary/other synthetic category, binary split anchored to female share
@@ -274,12 +268,10 @@ for base in range(0,N_ROWS,CHUNK):
         core=float(np.clip(core,.40,.58)); inner=.34; outer=1-core-inner
         resident_type[ix]=rng.choice(['Urban core','Inner suburban','Outer suburban/peri-urban'],size=m,p=[core,inner,outer])
         religions[ix]=rng.choice(REL,size=m,p=REL_W[st])
-        # education
+        # Adult-only education assignments; child-only education values are excluded.
         a=ages[ix]
         edu=np.empty(m,dtype=object)
-        k=a<16; edu[k]=np.where(a[k]<5,'Not yet in school',np.where(a[k]<14,'Primary/Middle school','High school student'))
-        k=(a>=16)&(a<18); edu[k]=rng.choice(['High school student','High school diploma/GED'],size=k.sum(),p=[.86,.14])
-        k=(a>=18)&(a<25); edu[k]=rng.choice(['High school diploma/GED','Some college - no degree','Associate degree','Bachelor degree'],size=k.sum(),p=[.25,.42,.13,.20])
+        k=(a>=18)&(a<25); edu[k]=rng.choice(['High school student','High school diploma/GED','Some college - no degree','Associate degree','Bachelor degree'],size=k.sum(),p=[.12,.23,.38,.10,.17])
         k=a>=25; edu[k]=rng.choice(EDU,size=k.sum(),p=EDU_W[st])
         education[ix]=edu
 
@@ -302,12 +294,9 @@ for base in range(0,N_ROWS,CHUNK):
     married=marital=='Married'; adults[married]=2
     # Some multigenerational/rooming-family adults
     adults += (rng.random(n)<np.where(ages<25,.18,.08)).astype(np.int16)
-    child_prob=np.where(ages<18,1.0,np.where((ages>=25)&(ages<45),.54,np.where((ages>=45)&(ages<55),.28,.06)))
+    child_prob=np.where((ages>=25)&(ages<45),.54,np.where((ages>=45)&(ages<55),.28,.06))
     haskids=rng.random(n)<child_prob
     children[haskids]=1+rng.binomial(3,.33,size=haskids.sum()).astype(np.int16)
-    # minors are part of a family with at least one adult; their row describes family composition, not just themselves
-    children[ages<18]=np.maximum(children[ages<18],1)
-    adults[ages<18]=np.maximum(adults[ages<18],1 + (rng.random((ages<18).sum())<.72).astype(np.int16))
     family_count=adults+children
     # small cap for realism
     over=family_count>8
@@ -316,10 +305,7 @@ for base in range(0,N_ROWS,CHUNK):
     # Employment status by age and education; state income does not directly force employment.
     u=rng.random(n)
     empstat=np.full(n,'Not in labor force',dtype=object)
-    empstat[ages<16]='Minor / not in labor force'
-    k=(ages>=16)&(ages<19)
-    empstat[k]=np.where(u[k]<.24,'Employed part-time',np.where(u[k]<.30,'Employed full-time',np.where(u[k]<.83,'Student',np.where(u[k]<.88,'Unemployed - seeking work','Not in labor force'))))
-    k=(ages>=19)&(ages<25)
+    k=(ages>=18)&(ages<25)
     empstat[k]=np.where(u[k]<.41,'Employed full-time',np.where(u[k]<.63,'Employed part-time',np.where(u[k]<.78,'Student',np.where(u[k]<.84,'Unemployed - seeking work','Not in labor force'))))
     k=(ages>=25)&(ages<55)
     empstat[k]=np.where(u[k]<.72,'Employed full-time',np.where(u[k]<.83,'Employed part-time',np.where(u[k]<.88,'Unemployed - seeking work',np.where(u[k]<.93,'Homemaker/Caregiver','Not in labor force'))))
@@ -354,7 +340,6 @@ for base in range(0,N_ROWS,CHUNK):
     individual=base_income*noise
     individual[empstat=='Employed part-time']*=.48
     individual[empstat=='Student']*=rng.uniform(0,.18,size=(empstat=='Student').sum())
-    individual[empstat=='Minor / not in labor force']*=rng.uniform(0,.05,size=(empstat=='Minor / not in labor force').sum())
     individual[empstat=='Homemaker/Caregiver']*=rng.uniform(0,.10,size=(empstat=='Homemaker/Caregiver').sum())
     individual[empstat=='Not in labor force']*=rng.uniform(0,.12,size=(empstat=='Not in labor force').sum())
     individual[empstat=='Unemployed - seeking work']*=rng.uniform(.02,.20,size=(empstat=='Unemployed - seeking work').sum())
@@ -365,7 +350,7 @@ for base in range(0,N_ROWS,CHUNK):
     individual=np.clip(individual,0,2500000)
     individual=np.round(individual/100)*100
 
-    age_contract_adjusted_rows += enforce_age_contract(ages,empstat,individual,marital,rng)
+    validate_adult_contract(ages,empstat,education,family_count,adults,children,individual)
 
     # Family income: correlated with state median, adults, education, individual income and marital status.
     fam_base=med_income*1.12*(.72+.28*np.sqrt(adults))*(.95+.06*np.minimum(children,3))
@@ -417,7 +402,7 @@ compressed_output.close()
 summary={
  'rows':N_ROWS,'columns':len(headers),'seed':SEED,'id_offset':ID_OFFSET,'id_start':ID_OFFSET+1,'id_end':ID_OFFSET+N_ROWS,'file':str(OUT),'file_size_bytes':OUT.stat().st_size,
  'mean_age':age_sum/N_ROWS,'mean_individual_yearly_income':income_sum/N_ROWS,'mean_family_yearly_income':family_income_sum/N_ROWS,
- 'age_contract_range':'18..100','age_contract_adjusted_rows':age_contract_adjusted_rows,
+ 'population_age_contract':'ADULT_18_100','age_contract_range':'18..100','age_contract_adjusted_rows':age_contract_adjusted_rows,'age_contract_mode':'GENERATED_VALID_FROM_SOURCE',
  'employed_share':employed/N_ROWS,'gender_distribution':{k:v/N_ROWS for k,v in gender_count.items()},
  'ethnicity_distribution':{k:v/N_ROWS for k,v in eth_count.items()},
  'state_distribution':{STATE_CODES[i]:{'state':URBAN[STATE_CODES[i]][0],'rows':int(state_count[i]),'share':float(state_count[i]/N_ROWS)} for i in range(len(STATE_CODES))},

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import gzip
+import hashlib
 import logging
 import sqlite3
 import time
@@ -221,12 +222,28 @@ def _start_import_run(
         return int(cursor.lastrowid)
 
 
+def _compute_source_checksum(source_paths: tuple[Path, ...]) -> str:
+    checksum = hashlib.sha256()
+    for source_path in source_paths:
+        checksum.update(source_path.name.encode("utf-8"))
+        checksum.update(b"\0")
+        with source_path.open("rb") as handle:
+            while True:
+                block = handle.read(1_048_576)
+                if not block:
+                    break
+                checksum.update(block)
+        checksum.update(b"\0")
+    return checksum.hexdigest()
+
+
 def _finish_import_run(
     database_path: Path,
     import_id: int,
     status: str,
     progress: ImportProgress,
     error_message: str | None = None,
+    source_checksum: str | None = None,
 ) -> None:
     with get_connection(database_path, write=True) as connection:
         connection.execute(
@@ -237,7 +254,8 @@ def _finish_import_run(
                 rows_read = ?,
                 rows_inserted = ?,
                 rows_rejected = ?,
-                error_message = ?
+                error_message = ?,
+                source_checksum = ?
             WHERE import_id = ?
             """,
             (
@@ -247,6 +265,7 @@ def _finish_import_run(
                 progress.rows_inserted,
                 progress.rows_rejected,
                 error_message,
+                source_checksum,
                 import_id,
             ),
         )
@@ -261,7 +280,8 @@ def _prepare_target(
     spec: DatasetSpec,
     *,
     replace: bool,
-) -> None:
+) -> bool:
+    use_demographic_upsert_replace = False
     with get_connection(database_path, write=True) as connection:
         target_count = _table_count(connection, spec.table_name)
 
@@ -285,21 +305,44 @@ def _prepare_target(
                     "Cannot replace customers while campaign_sales contains rows; "
                     "replace/clear campaign_sales first"
                 )
-            connection.execute(f'DELETE FROM "{spec.table_name}"')
-            logger.warning("Explicit replace cleared target table | table=%s", spec.table_name)
+            if spec is DEMOGRAPHIC_SPEC:
+                use_demographic_upsert_replace = True
+                logger.warning(
+                    "Explicit replace for demographics is using FK-safe upsert mode | table=%s",
+                    spec.table_name,
+                )
+            else:
+                connection.execute(f'DELETE FROM "{spec.table_name}"')
+                logger.warning("Explicit replace cleared target table | table=%s", spec.table_name)
+    return use_demographic_upsert_replace
 
 
 def _insert_batch(
     connection: sqlite3.Connection,
     spec: DatasetSpec,
     batch: list[tuple[object, ...]],
+    *,
+    use_demographic_upsert_replace: bool,
 ) -> None:
     placeholders = ", ".join("?" for _ in spec.columns)
     columns = ", ".join(f'"{column}"' for column in spec.columns)
-    connection.executemany(
-        f'INSERT INTO "{spec.table_name}" ({columns}) VALUES ({placeholders})',
-        batch,
-    )
+    if use_demographic_upsert_replace and spec is DEMOGRAPHIC_SPEC:
+        update_columns = [column for column in spec.columns if column != "person_id"]
+        update_set = ", ".join(
+            f'"{column}" = excluded."{column}"' for column in update_columns
+        )
+        connection.executemany(
+            (
+                f'INSERT INTO "{spec.table_name}" ({columns}) VALUES ({placeholders}) '
+                f'ON CONFLICT(person_id) DO UPDATE SET {update_set}'
+            ),
+            batch,
+        )
+    else:
+        connection.executemany(
+            f'INSERT INTO "{spec.table_name}" ({columns}) VALUES ({placeholders})',
+            batch,
+        )
     connection.commit()
 
 
@@ -311,11 +354,21 @@ def _stream_sources(
     *,
     batch_size: int,
     progress_every: int,
+    use_demographic_upsert_replace: bool,
 ) -> None:
     batch: list[tuple[object, ...]] = []
 
     with get_connection(database_path, write=True) as connection:
         connection.execute("PRAGMA synchronous = NORMAL")
+        if use_demographic_upsert_replace and spec is DEMOGRAPHIC_SPEC:
+            connection.execute(
+                """
+                CREATE TEMP TABLE IF NOT EXISTS _demographic_import_seen_ids (
+                    person_id TEXT PRIMARY KEY
+                )
+                """
+            )
+            connection.execute("DELETE FROM _demographic_import_seen_ids")
         for source_path in source_paths:
             logger.info("Reading import source | dataset=%s path=%s", spec.dataset_name, source_path)
             try:
@@ -343,7 +396,18 @@ def _stream_sources(
 
                         if len(batch) >= batch_size:
                             try:
-                                _insert_batch(connection, spec, batch)
+                                if use_demographic_upsert_replace and spec is DEMOGRAPHIC_SPEC:
+                                    connection.executemany(
+                                        "INSERT OR IGNORE INTO _demographic_import_seen_ids (person_id) VALUES (?)",
+                                        [(str(row[0]),) for row in batch],
+                                    )
+                                _insert_batch(
+                                    connection,
+                                    spec,
+                                    batch,
+                                    use_demographic_upsert_replace=use_demographic_upsert_replace,
+                                )
+
                             except sqlite3.IntegrityError as exc:
                                 progress.rows_rejected += 1
                                 raise DataImportError(
@@ -366,7 +430,17 @@ def _stream_sources(
 
         if batch:
             try:
-                _insert_batch(connection, spec, batch)
+                if use_demographic_upsert_replace and spec is DEMOGRAPHIC_SPEC:
+                    connection.executemany(
+                        "INSERT OR IGNORE INTO _demographic_import_seen_ids (person_id) VALUES (?)",
+                        [(str(row[0]),) for row in batch],
+                    )
+                _insert_batch(
+                    connection,
+                    spec,
+                    batch,
+                    use_demographic_upsert_replace=use_demographic_upsert_replace,
+                )
             except sqlite3.IntegrityError as exc:
                 progress.rows_rejected += 1
                 raise DataImportError(
@@ -374,6 +448,24 @@ def _stream_sources(
                 ) from exc
             progress.rows_inserted += len(batch)
             batch.clear()
+
+        if use_demographic_upsert_replace and spec is DEMOGRAPHIC_SPEC:
+            try:
+                connection.execute(
+                    """
+                    DELETE FROM demographics
+                    WHERE person_id NOT IN (
+                        SELECT person_id FROM _demographic_import_seen_ids
+                    )
+                    """
+                )
+                connection.execute("DROP TABLE IF EXISTS _demographic_import_seen_ids")
+                connection.commit()
+            except sqlite3.IntegrityError as exc:
+                raise DataImportError(
+                    "Demographic replace cleanup failed due dependent score references; "
+                    "reload requires canonical rerun governance."
+                ) from exc
 
 
 def _import_dataset(
@@ -418,6 +510,7 @@ def _import_dataset(
         raise DataImportError(message) from exc
     progress = ImportProgress()
     started = time.perf_counter()
+    source_checksum: str | None = None
 
     logger.info(
         "Import started | import_id=%s dataset=%s replace=%s",
@@ -427,8 +520,9 @@ def _import_dataset(
     )
     try:
         validated_sources = _validate_source_paths(raw_sources)
+        source_checksum = _compute_source_checksum(validated_sources)
         _preflight_sources(spec, validated_sources, full_read=replace)
-        _prepare_target(path, spec, replace=replace)
+        use_demographic_upsert_replace = _prepare_target(path, spec, replace=replace)
         _stream_sources(
             path,
             spec,
@@ -436,10 +530,18 @@ def _import_dataset(
             progress,
             batch_size=batch_size,
             progress_every=progress_every,
+            use_demographic_upsert_replace=use_demographic_upsert_replace,
         )
     except Exception as exc:
         message = str(exc)
-        _finish_import_run(path, import_id, "FAILED", progress, message)
+        _finish_import_run(
+            path,
+            import_id,
+            "FAILED",
+            progress,
+            message,
+            source_checksum=source_checksum,
+        )
         logger.error(
             "Import failed | import_id=%s dataset=%s rows_read=%s rows_inserted=%s error=%s",
             import_id,
@@ -452,7 +554,13 @@ def _import_dataset(
             raise
         raise DataImportError(message) from exc
 
-    _finish_import_run(path, import_id, "COMPLETED", progress)
+    _finish_import_run(
+        path,
+        import_id,
+        "COMPLETED",
+        progress,
+        source_checksum=source_checksum,
+    )
     duration = time.perf_counter() - started
     logger.info(
         "Import completed | import_id=%s dataset=%s rows=%s duration_seconds=%.2f",
