@@ -16,7 +16,7 @@ from app.database.connection import get_connection
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 5
+CURRENT_SCHEMA_VERSION = 6
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -470,8 +470,9 @@ PHASE_FIVE_REQUIRED_INDEX_STATEMENTS = {
         "ON scoring_runs (status, created_at DESC, scoring_run_id DESC)"
     ),
     "idx_scoring_runs_completed_model_unique": (
-        "CREATE UNIQUE INDEX IF NOT EXISTS idx_scoring_runs_completed_model_unique "
-        "ON scoring_runs (model_run_id) WHERE status = 'COMPLETED'"
+        "CREATE INDEX IF NOT EXISTS idx_scoring_runs_completed_model_unique "
+        "ON scoring_runs (model_run_id, completed_at DESC, scoring_run_id DESC) "
+        "WHERE status = 'COMPLETED'"
     ),
     "idx_propensity_scores_run_score_person": (
         "CREATE INDEX IF NOT EXISTS idx_propensity_scores_run_score_person "
@@ -1049,11 +1050,18 @@ def _migrate_to_version_5(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_6(connection: sqlite3.Connection) -> None:
+    # Replace legacy one-completed-run-per-model uniqueness with lookup indexing.
+    connection.execute("DROP INDEX IF EXISTS idx_scoring_runs_completed_model_unique")
+    connection.execute(PHASE_FIVE_REQUIRED_INDEX_STATEMENTS["idx_scoring_runs_completed_model_unique"])
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
     4: _migrate_to_version_4,
     5: _migrate_to_version_5,
+    6: _migrate_to_version_6,
 }
 
 

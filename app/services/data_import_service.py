@@ -12,6 +12,7 @@ from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from string import hexdigits
 from typing import TextIO
 
 from app.config import DATABASE_PATH
@@ -237,6 +238,43 @@ def _compute_source_checksum(source_paths: tuple[Path, ...]) -> str:
     return checksum.hexdigest()
 
 
+def _is_valid_sha256(value: str | None) -> bool:
+    if not isinstance(value, str):
+        return False
+    normalized = value.strip().lower()
+    return len(normalized) == 64 and all(char in hexdigits for char in normalized)
+
+
+def _demographic_staging_table_name(import_id: int) -> str:
+    return f"_demographics_import_staging_{import_id}"
+
+
+def _create_demographic_staging_table(database_path: Path, *, import_id: int) -> str:
+    staging_table_name = _demographic_staging_table_name(import_id)
+    staging_index_name = f"{staging_table_name}_person_id_uq"
+    columns = ", ".join(f'"{column}"' for column in DEMOGRAPHIC_COLUMNS)
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(f'DROP TABLE IF EXISTS "{staging_table_name}"')
+        connection.execute(
+            (
+                f'CREATE TABLE "{staging_table_name}" AS '
+                f'SELECT {columns} FROM "demographics" WHERE 1 = 0'
+            )
+        )
+        connection.execute(
+            (
+                f'CREATE UNIQUE INDEX "{staging_index_name}" '
+                f'ON "{staging_table_name}" (person_id)'
+            )
+        )
+    return staging_table_name
+
+
+def _drop_demographic_staging_table(database_path: Path, *, staging_table_name: str) -> None:
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(f'DROP TABLE IF EXISTS "{staging_table_name}"')
+
+
 def _finish_import_run(
     database_path: Path,
     import_id: int,
@@ -280,8 +318,7 @@ def _prepare_target(
     spec: DatasetSpec,
     *,
     replace: bool,
-) -> bool:
-    use_demographic_upsert_replace = False
+) -> None:
     with get_connection(database_path, write=True) as connection:
         target_count = _table_count(connection, spec.table_name)
 
@@ -306,44 +343,131 @@ def _prepare_target(
                     "replace/clear campaign_sales first"
                 )
             if spec is DEMOGRAPHIC_SPEC:
-                use_demographic_upsert_replace = True
                 logger.warning(
-                    "Explicit replace for demographics is using FK-safe upsert mode | table=%s",
+                    "Explicit replace for demographics will use staging + atomic live transaction | table=%s",
                     spec.table_name,
                 )
             else:
                 connection.execute(f'DELETE FROM "{spec.table_name}"')
                 logger.warning("Explicit replace cleared target table | table=%s", spec.table_name)
-    return use_demographic_upsert_replace
 
 
 def _insert_batch(
     connection: sqlite3.Connection,
-    spec: DatasetSpec,
-    batch: list[tuple[object, ...]],
     *,
-    use_demographic_upsert_replace: bool,
+    table_name: str,
+    columns: tuple[str, ...],
+    batch: list[tuple[object, ...]],
 ) -> None:
-    placeholders = ", ".join("?" for _ in spec.columns)
-    columns = ", ".join(f'"{column}"' for column in spec.columns)
-    if use_demographic_upsert_replace and spec is DEMOGRAPHIC_SPEC:
-        update_columns = [column for column in spec.columns if column != "person_id"]
-        update_set = ", ".join(
-            f'"{column}" = excluded."{column}"' for column in update_columns
+    placeholders = ", ".join("?" for _ in columns)
+    quoted_columns = ", ".join(f'"{column}"' for column in columns)
+    connection.executemany(
+        f'INSERT INTO "{table_name}" ({quoted_columns}) VALUES ({placeholders})',
+        batch,
+    )
+
+
+def _replace_demographics_from_staging(
+    connection: sqlite3.Connection,
+    *,
+    staging_table_name: str,
+) -> None:
+    columns = ", ".join(f'"{column}"' for column in DEMOGRAPHIC_COLUMNS)
+    update_columns = [column for column in DEMOGRAPHIC_COLUMNS if column != "person_id"]
+    update_set = ", ".join(f'"{column}" = excluded."{column}"' for column in update_columns)
+
+    connection.execute(
+        (
+            f'INSERT INTO "demographics" ({columns}) '
+            f'SELECT {columns} FROM "{staging_table_name}" WHERE 1 = 1 '
+            f'ON CONFLICT(person_id) DO UPDATE SET {update_set}'
         )
-        connection.executemany(
-            (
-                f'INSERT INTO "{spec.table_name}" ({columns}) VALUES ({placeholders}) '
-                f'ON CONFLICT(person_id) DO UPDATE SET {update_set}'
-            ),
-            batch,
+    )
+    connection.execute(
+        (
+            """
+            DELETE FROM demographics
+            WHERE person_id NOT IN (
+                SELECT person_id FROM """
+            + f'"{staging_table_name}"'
+            + """
+            )
+            AND person_id NOT IN (
+                SELECT DISTINCT person_id FROM propensity_scores
+            )
+            """
         )
-    else:
-        connection.executemany(
-            f'INSERT INTO "{spec.table_name}" ({columns}) VALUES ({placeholders})',
-            batch,
+    )
+    blocked_row = connection.execute(
+        (
+            """
+            SELECT COUNT(*)
+            FROM demographics
+            WHERE person_id NOT IN (
+                SELECT person_id FROM """
+            + f'"{staging_table_name}"'
+            + """
+            )
+            """
         )
-    connection.commit()
+    ).fetchone()
+    blocked_source_absent = int(blocked_row[0])
+    if blocked_source_absent > 0:
+        raise DataImportError(
+            "Demographic replace blocked because source-absent person_id values are still referenced by historical propensity scores."
+        )
+
+    live_count = _table_count(connection, "demographics")
+    staged_count = _table_count(connection, staging_table_name)
+    if live_count != staged_count:
+        raise DataImportError(
+            "Demographic replace reconciliation failed; live demographics does not match staged source count."
+        )
+
+
+def _validate_demographic_staging_before_swap(
+    database_path: Path,
+    *,
+    staging_table_name: str,
+    progress: ImportProgress,
+    source_checksum: str | None,
+) -> None:
+    if progress.rows_rejected != 0:
+        raise DataImportError("Demographic staging rejected one or more rows; aborting replace.")
+    if not _is_valid_sha256(source_checksum):
+        raise DataImportError("Demographic replace requires a valid source checksum.")
+
+    with get_connection(database_path) as connection:
+        staged_count_row = connection.execute(
+            f'SELECT COUNT(*) FROM "{staging_table_name}"'
+        ).fetchone()
+        staged_distinct_row = connection.execute(
+            f'SELECT COUNT(DISTINCT person_id) FROM "{staging_table_name}"'
+        ).fetchone()
+
+    staged_count = int(staged_count_row[0])
+    staged_distinct = int(staged_distinct_row[0])
+    if staged_count != progress.rows_inserted:
+        raise DataImportError(
+            "Demographic staging count does not match inserted row count; aborting replace."
+        )
+    if staged_distinct != staged_count:
+        raise DataImportError(
+            "Demographic staging contains duplicate person_id values; aborting replace."
+        )
+
+
+def _apply_atomic_demographic_replace(
+    database_path: Path,
+    *,
+    staging_table_name: str,
+) -> None:
+    with get_connection(database_path, write=True) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        _replace_demographics_from_staging(
+            connection,
+            staging_table_name=staging_table_name,
+        )
 
 
 def _stream_sources(
@@ -354,21 +478,12 @@ def _stream_sources(
     *,
     batch_size: int,
     progress_every: int,
-    use_demographic_upsert_replace: bool,
+    table_name: str,
 ) -> None:
     batch: list[tuple[object, ...]] = []
 
     with get_connection(database_path, write=True) as connection:
         connection.execute("PRAGMA synchronous = NORMAL")
-        if use_demographic_upsert_replace and spec is DEMOGRAPHIC_SPEC:
-            connection.execute(
-                """
-                CREATE TEMP TABLE IF NOT EXISTS _demographic_import_seen_ids (
-                    person_id TEXT PRIMARY KEY
-                )
-                """
-            )
-            connection.execute("DELETE FROM _demographic_import_seen_ids")
         for source_path in source_paths:
             logger.info("Reading import source | dataset=%s path=%s", spec.dataset_name, source_path)
             try:
@@ -396,17 +511,13 @@ def _stream_sources(
 
                         if len(batch) >= batch_size:
                             try:
-                                if use_demographic_upsert_replace and spec is DEMOGRAPHIC_SPEC:
-                                    connection.executemany(
-                                        "INSERT OR IGNORE INTO _demographic_import_seen_ids (person_id) VALUES (?)",
-                                        [(str(row[0]),) for row in batch],
-                                    )
                                 _insert_batch(
                                     connection,
-                                    spec,
-                                    batch,
-                                    use_demographic_upsert_replace=use_demographic_upsert_replace,
+                                    table_name=table_name,
+                                    columns=spec.columns,
+                                    batch=batch,
                                 )
+                                connection.commit()
 
                             except sqlite3.IntegrityError as exc:
                                 progress.rows_rejected += 1
@@ -430,17 +541,13 @@ def _stream_sources(
 
         if batch:
             try:
-                if use_demographic_upsert_replace and spec is DEMOGRAPHIC_SPEC:
-                    connection.executemany(
-                        "INSERT OR IGNORE INTO _demographic_import_seen_ids (person_id) VALUES (?)",
-                        [(str(row[0]),) for row in batch],
-                    )
                 _insert_batch(
                     connection,
-                    spec,
-                    batch,
-                    use_demographic_upsert_replace=use_demographic_upsert_replace,
+                    table_name=table_name,
+                    columns=spec.columns,
+                    batch=batch,
                 )
+                connection.commit()
             except sqlite3.IntegrityError as exc:
                 progress.rows_rejected += 1
                 raise DataImportError(
@@ -448,24 +555,6 @@ def _stream_sources(
                 ) from exc
             progress.rows_inserted += len(batch)
             batch.clear()
-
-        if use_demographic_upsert_replace and spec is DEMOGRAPHIC_SPEC:
-            try:
-                connection.execute(
-                    """
-                    DELETE FROM demographics
-                    WHERE person_id NOT IN (
-                        SELECT person_id FROM _demographic_import_seen_ids
-                    )
-                    """
-                )
-                connection.execute("DROP TABLE IF EXISTS _demographic_import_seen_ids")
-                connection.commit()
-            except sqlite3.IntegrityError as exc:
-                raise DataImportError(
-                    "Demographic replace cleanup failed due dependent score references; "
-                    "reload requires canonical rerun governance."
-                ) from exc
 
 
 def _import_dataset(
@@ -522,16 +611,44 @@ def _import_dataset(
         validated_sources = _validate_source_paths(raw_sources)
         source_checksum = _compute_source_checksum(validated_sources)
         _preflight_sources(spec, validated_sources, full_read=replace)
-        use_demographic_upsert_replace = _prepare_target(path, spec, replace=replace)
-        _stream_sources(
-            path,
-            spec,
-            validated_sources,
-            progress,
-            batch_size=batch_size,
-            progress_every=progress_every,
-            use_demographic_upsert_replace=use_demographic_upsert_replace,
-        )
+        _prepare_target(path, spec, replace=replace)
+        if spec is DEMOGRAPHIC_SPEC and replace:
+            staging_table_name = _create_demographic_staging_table(path, import_id=import_id)
+            try:
+                _stream_sources(
+                    path,
+                    spec,
+                    validated_sources,
+                    progress,
+                    batch_size=batch_size,
+                    progress_every=progress_every,
+                    table_name=staging_table_name,
+                )
+                _validate_demographic_staging_before_swap(
+                    path,
+                    staging_table_name=staging_table_name,
+                    progress=progress,
+                    source_checksum=source_checksum,
+                )
+                _apply_atomic_demographic_replace(
+                    path,
+                    staging_table_name=staging_table_name,
+                )
+            finally:
+                _drop_demographic_staging_table(
+                    path,
+                    staging_table_name=staging_table_name,
+                )
+        else:
+            _stream_sources(
+                path,
+                spec,
+                validated_sources,
+                progress,
+                batch_size=batch_size,
+                progress_every=progress_every,
+                table_name=spec.table_name,
+            )
     except Exception as exc:
         message = str(exc)
         _finish_import_run(
@@ -540,7 +657,7 @@ def _import_dataset(
             "FAILED",
             progress,
             message,
-            source_checksum=source_checksum,
+            source_checksum=None,
         )
         logger.error(
             "Import failed | import_id=%s dataset=%s rows_read=%s rows_inserted=%s error=%s",

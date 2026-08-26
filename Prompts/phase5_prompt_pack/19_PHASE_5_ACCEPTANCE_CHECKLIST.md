@@ -13,7 +13,8 @@ Any failed **Critical** item = **No-Go for Phase 6**.
 - [x] scoring_runs/propensity_scores constraints/FKs correct.
 - [x] [0,1] DB score constraint.
 - [x] ranking index.
-- [x] one COMPLETED score set per model.
+- [x] multiple historical COMPLETED score sets per model are allowed when source differs.
+- [x] exactly one current canonical COMPLETED run is resolved for model + current source.
 - [x] rollback/idempotence.
 
 ## Scoreability
@@ -55,6 +56,9 @@ Any failed **Critical** item = **No-Go for Phase 6**.
 - [x] training APIs unchanged.
 - [x] active/already-scored/unscoreable conflicts.
 - [x] bounded pagination.
+- [x] scoring-status current-source verification is explicit.
+- [x] stale historical completed run does not disable rescoring.
+- [x] run detail current-source verification reflects stale/current correctly.
 
 ## API privacy
 - [x] **Critical** no person_id/customer_id/PII/individual scores/raw features/SQL/traceback/absolute path.
@@ -98,5 +102,7 @@ Any failed **Critical** item = **No-Go for Phase 6**.
 - chunk/memory: `chunk_size=25000`, `chunk_count=200`, `largest_chunk_rows=25000`, `largest_transformed_matrix_bytes=3396428`.
 - deterministic re-score: `verify_scoring_run_sample(scoring_run_id=7, sample_size=256)` -> `verified=true`, `max_abs_diff=0.0`.
 - provenance verification: canonical payload present and current demographics source match confirmed.
+- final sanitized validation evidence: `docs/evidence/phase5_final_corrections_validation.json`.
+- same-model historical coexistence: confirmed (`COMPLETED` historical + current canonical run per source-aware lifecycle).
 - residual risks: local SQLite single-user throughput characteristics; no functional blockers for Phase 5 acceptance.
 - **Go / Conditional Go / No-Go Phase 6:** Go.

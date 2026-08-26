@@ -77,6 +77,7 @@ class ScoringStatusResponse(ModelApiResponseModel):
     model_run_id: int = Field(gt=0)
     eligible: bool
     reason: str | None = None
+    demographic_source_verified: bool = False
     demographic_count: int = Field(ge=0)
     selected_candidate: str | None = None
     artifact_feature_compatible: bool

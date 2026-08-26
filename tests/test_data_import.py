@@ -16,6 +16,8 @@ from app.database.schema import (
     DEMOGRAPHIC_COLUMNS,
     initialize_database,
 )
+from app.repositories.prospect_scoring_repository import ProspectScoringRepository
+from app.services import data_import_service as data_import_service_module
 from app.services.data_import_service import (
     DataImportError,
     import_campaign_sales,
@@ -140,6 +142,170 @@ def _latest_import(database_path: Path, dataset_name: str):
             """,
             (dataset_name,),
         ).fetchone()
+
+
+def _seed_completed_scoring_history(
+    database_path: Path,
+    *,
+    person_id: str,
+) -> None:
+    with get_connection(database_path, write=True) as connection:
+        analysis_run_id = int(
+            connection.execute(
+                """
+                INSERT INTO historical_analysis_runs (
+                    analysis_name,
+                    created_at,
+                    completed_at,
+                    status,
+                    conversion_definition,
+                    filters_json,
+                    results_json,
+                    observation_count,
+                    selected_customer_count,
+                    positive_customer_count,
+                    unlabeled_customer_count,
+                    positive_customer_rate
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "Data import scoring fixture",
+                    "2026-08-26T00:00:00Z",
+                    "2026-08-26T00:00:03Z",
+                    "COMPLETED",
+                    "ATTRIBUTED_PURCHASE",
+                    "{}",
+                    "{}",
+                    100,
+                    20,
+                    5,
+                    15,
+                    0.25,
+                ),
+            ).lastrowid
+        )
+        model_run_id = int(
+            connection.execute(
+                """
+                INSERT INTO model_runs (
+                    analysis_run_id,
+                    model_name,
+                    created_at,
+                    status,
+                    random_seed,
+                    validation_fraction
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    analysis_run_id,
+                    "Data import model fixture",
+                    "2026-08-26T00:00:05Z",
+                    "RUNNING",
+                    42,
+                    0.2,
+                ),
+            ).lastrowid
+        )
+        job_id = int(
+            connection.execute(
+                """
+                INSERT INTO jobs (
+                    job_type,
+                    status,
+                    progress_percent,
+                    stage,
+                    analysis_run_id,
+                    model_run_id,
+                    created_at,
+                    started_at,
+                    finished_at,
+                    request_json,
+                    result_json,
+                    error_message
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "PROSPECT_SCORING",
+                    "COMPLETED",
+                    100,
+                    "COMPLETED",
+                    None,
+                    model_run_id,
+                    "2026-08-26T00:01:00Z",
+                    "2026-08-26T00:01:02Z",
+                    "2026-08-26T00:01:20Z",
+                    "{}",
+                    "{}",
+                    None,
+                ),
+            ).lastrowid
+        )
+        scoring_run_id = int(
+            connection.execute(
+                """
+                INSERT INTO scoring_runs (
+                    job_id,
+                    model_run_id,
+                    created_at,
+                    completed_at,
+                    status,
+                    demographic_snapshot_count,
+                    demographic_min_person_id,
+                    demographic_max_person_id,
+                    scored_person_count,
+                    chunk_size,
+                    selected_candidate,
+                    model_role_policy_version,
+                    feature_contract_version,
+                    feature_contract_sha256,
+                    artifact_sha256,
+                    score_min,
+                    score_max,
+                    score_mean,
+                    score_summary_json,
+                    error_message
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    job_id,
+                    model_run_id,
+                    "2026-08-26T00:01:04Z",
+                    "2026-08-26T00:01:20Z",
+                    "COMPLETED",
+                    1,
+                    person_id,
+                    person_id,
+                    1,
+                    10_000,
+                    "BAGGING_PU",
+                    "2",
+                    "1",
+                    "a" * 64,
+                    "b" * 64,
+                    0.25,
+                    0.25,
+                    0.25,
+                    "{}",
+                    None,
+                ),
+            ).lastrowid
+        )
+        connection.execute(
+            """
+            INSERT INTO propensity_scores (
+                scoring_run_id,
+                model_run_id,
+                person_id,
+                propensity_score
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (
+                scoring_run_id,
+                model_run_id,
+                person_id,
+                0.25,
+            ),
+        )
 
 
 def test_successful_customer_gzip_import(tmp_path: Path, database_path: Path) -> None:
@@ -570,3 +736,254 @@ def test_demographic_replace_preflights_every_part_before_deletion(
             row[0] for row in connection.execute("SELECT person_id FROM demographics")
         ]
     assert person_ids == ["US_OLD"]
+
+
+def test_demographic_replace_invalid_row_preserves_existing_rows(
+    tmp_path: Path,
+    database_path: Path,
+) -> None:
+    _seed_history(tmp_path, database_path)
+    original = _write_source(
+        tmp_path / "original_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [_demographic_row("US_OLD")],
+    )
+    import_demographics((original,), database_path=database_path)
+
+    malformed = _demographic_row("US_NEW")
+    malformed["family_member_count"] = "4"
+    replacement = _write_source(
+        tmp_path / "replacement_demo_bad.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [malformed],
+    )
+
+    with pytest.raises(DataImportError, match="must equal family_member_count"):
+        import_demographics((replacement,), database_path=database_path, replace=True)
+
+    latest = _latest_import(database_path, "demographics")
+    assert latest["status"] == "FAILED"
+    assert latest["source_checksum"] is None
+    with get_connection(database_path) as connection:
+        person_ids = [
+            row[0] for row in connection.execute("SELECT person_id FROM demographics")
+        ]
+    assert person_ids == ["US_OLD"]
+
+
+def test_demographic_replace_staging_batch_failure_is_atomic(
+    tmp_path: Path,
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _seed_history(tmp_path, database_path)
+    original = _write_source(
+        tmp_path / "original_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [_demographic_row("US_OLD_01"), _demographic_row("US_OLD_02")],
+    )
+    import_demographics((original,), database_path=database_path)
+
+    replacement = _write_source(
+        tmp_path / "replacement_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [
+            _demographic_row("US_NEW_01"),
+            _demographic_row("US_NEW_02"),
+            _demographic_row("US_NEW_03"),
+        ],
+    )
+
+    original_insert_batch = data_import_service_module._insert_batch
+    staging_batch_calls = 0
+
+    def _flaky_insert_batch(
+        connection: sqlite3.Connection,
+        *,
+        table_name: str,
+        columns: tuple[str, ...],
+        batch: list[tuple[object, ...]],
+    ) -> None:
+        nonlocal staging_batch_calls
+        if table_name.startswith("_demographics_import_staging_"):
+            staging_batch_calls += 1
+            if staging_batch_calls >= 2:
+                raise sqlite3.IntegrityError("simulated staging batch failure")
+        original_insert_batch(
+            connection,
+            table_name=table_name,
+            columns=columns,
+            batch=batch,
+        )
+
+    monkeypatch.setattr(data_import_service_module, "_insert_batch", _flaky_insert_batch)
+
+    with pytest.raises(DataImportError, match="simulated staging batch failure"):
+        import_demographics(
+            (replacement,),
+            database_path=database_path,
+            replace=True,
+            batch_size=2,
+        )
+
+    assert staging_batch_calls >= 2
+    latest = _latest_import(database_path, "demographics")
+    assert latest["status"] == "FAILED"
+    with get_connection(database_path) as connection:
+        person_ids = [
+            row[0]
+            for row in connection.execute(
+                "SELECT person_id FROM demographics ORDER BY person_id"
+            )
+        ]
+        staging_tables = connection.execute(
+            """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table' AND name LIKE '_demographics_import_staging_%'
+            """
+        ).fetchone()[0]
+    assert person_ids == ["US_OLD_01", "US_OLD_02"]
+    assert staging_tables == 0
+
+
+def test_demographic_replace_final_swap_failure_rolls_back_completely(
+    tmp_path: Path,
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _seed_history(tmp_path, database_path)
+    original_row = _demographic_row("US_STABLE")
+    original_row["city"] = "Old City"
+    original = _write_source(
+        tmp_path / "original_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [original_row],
+    )
+    import_demographics((original,), database_path=database_path)
+
+    replacement_row = _demographic_row("US_STABLE")
+    replacement_row["city"] = "New City"
+    replacement = _write_source(
+        tmp_path / "replacement_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [replacement_row],
+    )
+
+    def _fail_after_mutation(
+        connection: sqlite3.Connection,
+        *,
+        staging_table_name: str,
+    ) -> None:
+        connection.execute(
+            "UPDATE demographics SET city = 'MUTATED_DURING_SWAP' WHERE person_id = 'US_STABLE'"
+        )
+        raise RuntimeError("simulated final swap failure")
+
+    monkeypatch.setattr(
+        data_import_service_module,
+        "_replace_demographics_from_staging",
+        _fail_after_mutation,
+    )
+
+    with pytest.raises(DataImportError, match="simulated final swap failure"):
+        import_demographics((replacement,), database_path=database_path, replace=True)
+
+    latest = _latest_import(database_path, "demographics")
+    assert latest["status"] == "FAILED"
+    with get_connection(database_path) as connection:
+        row = connection.execute(
+            "SELECT person_id, city FROM demographics WHERE person_id = 'US_STABLE'"
+        ).fetchone()
+    assert row["person_id"] == "US_STABLE"
+    assert row["city"] == "Old City"
+
+
+def test_demographic_replace_success_matches_source_ids_and_count(
+    tmp_path: Path,
+    database_path: Path,
+) -> None:
+    _seed_history(tmp_path, database_path)
+    original = _write_source(
+        tmp_path / "original_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [_demographic_row("US_OLD_A"), _demographic_row("US_OLD_B")],
+    )
+    import_demographics((original,), database_path=database_path)
+
+    replacement = _write_source(
+        tmp_path / "replacement_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [_demographic_row("US_NEW_B"), _demographic_row("US_NEW_C")],
+    )
+    result = import_demographics((replacement,), database_path=database_path, replace=True)
+
+    latest = _latest_import(database_path, "demographics")
+    checksum = data_import_service_module._compute_source_checksum((replacement.resolve(),))
+    assert result.status == "COMPLETED"
+    assert latest["status"] == "COMPLETED"
+    assert latest["rows_inserted"] == 2
+    assert latest["rows_rejected"] == 0
+    assert latest["source_checksum"] == checksum
+
+    with get_connection(database_path) as connection:
+        person_ids = [
+            row[0]
+            for row in connection.execute(
+                "SELECT person_id FROM demographics ORDER BY person_id"
+            )
+        ]
+        count = connection.execute("SELECT COUNT(*) FROM demographics").fetchone()[0]
+    assert person_ids == ["US_NEW_B", "US_NEW_C"]
+    assert count == 2
+
+
+def test_failed_demographic_replace_never_becomes_authoritative_provenance(
+    tmp_path: Path,
+    database_path: Path,
+) -> None:
+    _seed_history(tmp_path, database_path)
+    completed_source = _write_source(
+        tmp_path / "completed_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [_demographic_row("US_KEEP"), _demographic_row("US_HIST")],
+    )
+    import_demographics((completed_source,), database_path=database_path)
+    completed_import = _latest_import(database_path, "demographics")
+    _seed_completed_scoring_history(database_path, person_id="US_HIST")
+
+    failing_source = _write_source(
+        tmp_path / "failing_demo.csv",
+        DEMOGRAPHIC_COLUMNS,
+        [_demographic_row("US_KEEP")],
+    )
+
+    with pytest.raises(DataImportError, match="source-absent person_id"):
+        import_demographics((failing_source,), database_path=database_path, replace=True)
+
+    latest = _latest_import(database_path, "demographics")
+    assert latest["status"] == "FAILED"
+    assert latest["source_checksum"] is None
+
+    provenance = ProspectScoringRepository(database_path).fetch_completed_demographic_import_provenance()
+    assert provenance.demographic_import_id == int(completed_import["import_id"])
+    assert provenance.demographic_source_checksum == str(completed_import["source_checksum"])
+    assert provenance.demographic_snapshot_count == 2
+
+    with get_connection(database_path) as connection:
+        person_ids = [
+            row[0]
+            for row in connection.execute(
+                "SELECT person_id FROM demographics ORDER BY person_id"
+            )
+        ]
+        propensity_count = connection.execute(
+            "SELECT COUNT(*) FROM propensity_scores"
+        ).fetchone()[0]
+        customer_count = connection.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+        campaign_count = connection.execute("SELECT COUNT(*) FROM campaign_sales").fetchone()[0]
+
+    assert person_ids == ["US_HIST", "US_KEEP"]
+    assert propensity_count == 1
+    assert customer_count == 1
+    assert campaign_count == 1

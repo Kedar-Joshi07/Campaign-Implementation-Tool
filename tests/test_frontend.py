@@ -224,10 +224,14 @@ def test_model_training_script_handles_active_job_failure_advisory_and_safety(
 
     assert "trainSubmit.disabled = trainingDisabled" in script
     assert "scoreSubmit.disabled = scoreDisabled" in script
+    assert "statusSnapshot?.demographic_source_verified === true" in script
+    assert "statusSnapshot?.demographic_source_verified === false" in script
     assert "scoreSubmit.hidden = hasCompletedScoring && scoringPanelVisible" in script
     assert "Training is unavailable while job #" in script
     assert "Scoring is unavailable while job #" in script
-    assert "A completed scoring run already exists for this model." in script
+    assert "A completed scoring run already exists for the current demographics source." in script
+    assert "Historical scoring exists for a previous demographics source. Rescoring is available." in script
+    assert "if (status.demographic_source_verified && status.completed_scoring_run?.scoring_run_id)" in script
     assert "Model training failed safely." in script
     assert "Prospect scoring failed safely." in script
     assert "CHALLENGER_OUTPERFORMED_PRIMARY" in script

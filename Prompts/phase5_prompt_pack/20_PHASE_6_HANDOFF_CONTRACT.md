@@ -1,6 +1,6 @@
 # Phase 6 Handoff Contract — Audience Explorer
 
-Phase 6 consumes the canonical COMPLETED Phase 5 scoring output only when scored count equals prospect snapshot and source provenance still matches the currently loaded demographics source.
+Phase 6 may consume a Phase 5 scoring run only when all canonical usability rules are satisfied against the current demographics source.
 
 Canonical Phase 5 finalization reference (pre-Phase-6):
 - `model_run_id=6`
@@ -12,6 +12,16 @@ Canonical Phase 5 finalization reference (pre-Phase-6):
 - feature contract version/hash = `1` / `a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`
 - artifact SHA = `a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210`
 
+Canonical usability rule for Phase 6:
+- `status = COMPLETED`;
+- score row count reconciles to scored count and demographic snapshot;
+- model/artifact/feature governance remains valid;
+- demographic import provenance is valid;
+- `demographic_source_checksum` matches the current source;
+- demographic count and min/max `person_id` envelope match the current source.
+
+Any stale completed run (source mismatch) is audit history only and must be rejected for Phase 6 audience actions.
+
 Phase 6 must reject any score set whose provenance does not match loaded demographics:
 - reject when `demographic_import_id` differs,
 - reject when `demographic_source_checksum` differs,
@@ -19,6 +29,8 @@ Phase 6 must reject any score set whose provenance does not match loaded demogra
 - reject when demographic min/max `person_id` envelope differs.
 
 Historical scoring evidence remains preserved (`scoring_run_id=5` on `model_run_id=7`) and is not canonical for Phase 6.
+
+Final correction validation evidence is recorded at `docs/evidence/phase5_final_corrections_validation.json`.
 
 Phase 6 may then separately freeze and implement paginated scored-prospect retrieval, search/filter, ranking, score thresholds, percentiles/bands, aggregate audience profiling, top-N selection, and Audience Explorer UI.
 

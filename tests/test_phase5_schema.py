@@ -51,6 +51,23 @@ def _create_version_four_database(database_path: Path) -> None:
         )
 
 
+def _create_legacy_version_five_database(database_path: Path) -> None:
+    _create_version_four_database(database_path)
+    with get_connection(database_path, write=True) as connection:
+        MIGRATIONS[5](connection)
+        connection.execute(
+            "UPDATE app_metadata SET value = '5' WHERE key = 'schema_version'"
+        )
+        connection.execute("DROP INDEX IF EXISTS idx_scoring_runs_completed_model_unique")
+        connection.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_scoring_runs_completed_model_unique
+            ON scoring_runs (model_run_id)
+            WHERE status = 'COMPLETED'
+            """
+        )
+
+
 def _insert_completed_analysis(connection: sqlite3.Connection) -> int:
     cursor = connection.execute(
         """
@@ -213,7 +230,7 @@ def test_migration_from_v4_preserves_jobs_and_is_idempotent(database_path: Path)
             ).fetchall()
         }
 
-    assert schema_version == "5"
+    assert schema_version == "6"
     assert jobs_count == 1
     assert job_columns == JOB_COLUMNS
     assert scoring_columns == SCORING_RUN_COLUMNS
@@ -251,6 +268,203 @@ def test_failed_v5_migration_rolls_back_schema_and_version(
     assert "migration_should_rollback_v5" not in tables
     assert "scoring_runs" not in tables
     assert "propensity_scores" not in tables
+
+
+def test_legacy_v5_completed_run_uniqueness_migrates_to_v6_non_unique_preserving_rows(
+    database_path: Path,
+) -> None:
+    _create_legacy_version_five_database(database_path)
+
+    with get_connection(database_path, write=True) as connection:
+        analysis_run_id = _insert_completed_analysis(connection)
+        model_run_id = _insert_model_run(connection, analysis_run_id)
+        _insert_demographic_person(connection, "PER_001")
+
+        first_job_id = _insert_scoring_job(
+            connection,
+            model_run_id=model_run_id,
+            created_at="2026-08-25T01:10:00Z",
+        )
+        second_job_id = _insert_scoring_job(
+            connection,
+            model_run_id=model_run_id,
+            created_at="2026-08-25T01:10:01Z",
+        )
+
+        connection.execute(
+            """
+            INSERT INTO scoring_runs (
+                job_id,
+                model_run_id,
+                created_at,
+                completed_at,
+                status,
+                demographic_snapshot_count,
+                demographic_min_person_id,
+                demographic_max_person_id,
+                scored_person_count,
+                chunk_size,
+                selected_candidate,
+                model_role_policy_version,
+                feature_contract_version,
+                feature_contract_sha256,
+                artifact_sha256,
+                score_min,
+                score_max,
+                score_mean,
+                score_summary_json,
+                error_message
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                first_job_id,
+                model_run_id,
+                "2026-08-25T01:10:05Z",
+                "2026-08-25T01:10:20Z",
+                "COMPLETED",
+                1,
+                "PER_001",
+                "PER_001",
+                1,
+                10_000,
+                "BAGGING_PU",
+                "2",
+                "1",
+                "a" * 64,
+                "b" * 64,
+                0.20,
+                0.80,
+                0.45,
+                "{}",
+                None,
+            ),
+        )
+
+        with pytest.raises(sqlite3.IntegrityError):
+            connection.execute(
+                """
+                INSERT INTO scoring_runs (
+                    job_id,
+                    model_run_id,
+                    created_at,
+                    completed_at,
+                    status,
+                    demographic_snapshot_count,
+                    demographic_min_person_id,
+                    demographic_max_person_id,
+                    scored_person_count,
+                    chunk_size,
+                    selected_candidate,
+                    model_role_policy_version,
+                    feature_contract_version,
+                    feature_contract_sha256,
+                    artifact_sha256,
+                    score_min,
+                    score_max,
+                    score_mean,
+                    score_summary_json,
+                    error_message
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    second_job_id,
+                    model_run_id,
+                    "2026-08-25T01:10:06Z",
+                    "2026-08-25T01:10:21Z",
+                    "COMPLETED",
+                    1,
+                    "PER_001",
+                    "PER_001",
+                    1,
+                    10_000,
+                    "BAGGING_PU",
+                    "2",
+                    "1",
+                    "c" * 64,
+                    "d" * 64,
+                    0.25,
+                    0.85,
+                    0.50,
+                    "{}",
+                    None,
+                ),
+            )
+
+    initialize_database(database_path)
+
+    with get_connection(database_path, write=True) as connection:
+        schema_version = connection.execute(
+            "SELECT value FROM app_metadata WHERE key = 'schema_version'"
+        ).fetchone()[0]
+        index_row = connection.execute(
+            """
+            SELECT "unique"
+            FROM pragma_index_list('scoring_runs')
+            WHERE name = 'idx_scoring_runs_completed_model_unique'
+            """
+        ).fetchone()
+        assert index_row is not None
+        assert int(index_row["unique"]) == 0
+
+        connection.execute(
+            """
+            INSERT INTO scoring_runs (
+                job_id,
+                model_run_id,
+                created_at,
+                completed_at,
+                status,
+                demographic_snapshot_count,
+                demographic_min_person_id,
+                demographic_max_person_id,
+                scored_person_count,
+                chunk_size,
+                selected_candidate,
+                model_role_policy_version,
+                feature_contract_version,
+                feature_contract_sha256,
+                artifact_sha256,
+                score_min,
+                score_max,
+                score_mean,
+                score_summary_json,
+                error_message
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                second_job_id,
+                model_run_id,
+                "2026-08-25T01:10:06Z",
+                "2026-08-25T01:10:21Z",
+                "COMPLETED",
+                1,
+                "PER_001",
+                "PER_001",
+                1,
+                10_000,
+                "BAGGING_PU",
+                "2",
+                "1",
+                "c" * 64,
+                "d" * 64,
+                0.25,
+                0.85,
+                0.50,
+                "{}",
+                None,
+            ),
+        )
+        completed_count = connection.execute(
+            """
+            SELECT COUNT(*)
+            FROM scoring_runs
+            WHERE model_run_id = ? AND status = 'COMPLETED'
+            """,
+            (model_run_id,),
+        ).fetchone()[0]
+
+    assert schema_version == "6"
+    assert completed_count == 2
 
 
 def test_scoring_runs_and_propensity_scores_constraints(database_path: Path) -> None:
@@ -358,59 +572,60 @@ def test_scoring_runs_and_propensity_scores_constraints(database_path: Path) -> 
             ),
         )
 
-        with pytest.raises(sqlite3.IntegrityError):
-            connection.execute(
-                """
-                INSERT INTO scoring_runs (
-                    job_id,
-                    model_run_id,
-                    created_at,
-                    completed_at,
-                    status,
-                    demographic_snapshot_count,
-                    demographic_min_person_id,
-                    demographic_max_person_id,
-                    scored_person_count,
-                    chunk_size,
-                    selected_candidate,
-                    model_role_policy_version,
-                    feature_contract_version,
-                    feature_contract_sha256,
-                    artifact_sha256,
-                    score_min,
-                    score_max,
-                    score_mean,
-                    score_summary_json,
-                    error_message
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    _insert_scoring_job(
-                        connection,
-                        model_run_id=model_run_id,
-                        created_at="2026-08-25T01:00:02Z",
-                    ),
-                    model_run_id,
-                    "2026-08-25T01:00:12Z",
-                    "2026-08-25T01:00:25Z",
-                    "COMPLETED",
-                    1,
-                    "PER_001",
-                    "PER_001",
-                    1,
-                    10_000,
-                    "BAGGING_PU",
-                    "2",
-                    "1",
-                    "e" * 64,
-                    "f" * 64,
-                    0.25,
-                    0.85,
-                    0.50,
-                    "{}",
-                    None,
+        second_completed_run_id = connection.execute(
+            """
+            INSERT INTO scoring_runs (
+                job_id,
+                model_run_id,
+                created_at,
+                completed_at,
+                status,
+                demographic_snapshot_count,
+                demographic_min_person_id,
+                demographic_max_person_id,
+                scored_person_count,
+                chunk_size,
+                selected_candidate,
+                model_role_policy_version,
+                feature_contract_version,
+                feature_contract_sha256,
+                artifact_sha256,
+                score_min,
+                score_max,
+                score_mean,
+                score_summary_json,
+                error_message
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                _insert_scoring_job(
+                    connection,
+                    model_run_id=model_run_id,
+                    created_at="2026-08-25T01:00:02Z",
                 ),
-            )
+                model_run_id,
+                "2026-08-25T01:00:12Z",
+                "2026-08-25T01:00:25Z",
+                "COMPLETED",
+                1,
+                "PER_001",
+                "PER_001",
+                1,
+                10_000,
+                "BAGGING_PU",
+                "2",
+                "1",
+                "e" * 64,
+                "f" * 64,
+                0.25,
+                0.85,
+                0.50,
+                "{}",
+                None,
+            ),
+        ).lastrowid
+
+        assert second_completed_run_id != first_run_id
 
         connection.execute(
             """

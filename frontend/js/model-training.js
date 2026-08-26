@@ -218,6 +218,20 @@ function hideScoringPanel() {
   setScoringAnnouncement("Load a completed model to evaluate scoring readiness.");
 }
 
+function hasCurrentCanonicalScoring(statusSnapshot = scoringStatusSnapshot) {
+  return Boolean(
+    statusSnapshot?.completed_scoring_run
+    && statusSnapshot?.demographic_source_verified === true,
+  );
+}
+
+function hasStaleHistoricalScoring(statusSnapshot = scoringStatusSnapshot) {
+  return Boolean(
+    statusSnapshot?.completed_scoring_run
+    && statusSnapshot?.demographic_source_verified === false,
+  );
+}
+
 function applySubmitDisabledState() {
   const activeJob = activeComputeJob();
   const hasActiveJob = Boolean(activeJob);
@@ -226,7 +240,7 @@ function applySubmitDisabledState() {
   trainSubmit.disabled = trainingDisabled;
 
   const scoringPanelVisible = !document.querySelector("#prospect-scoring-panel").hidden;
-  const hasCompletedScoring = Boolean(scoringStatusSnapshot?.completed_scoring_run);
+  const hasCompletedScoring = hasCurrentCanonicalScoring();
   const scoreReady = Boolean(scoringPanelVisible && scoringStatusSnapshot?.eligible);
   const scoreDisabled = Boolean(loadingJob || hasActiveJob || !scoreReady || hasCompletedScoring);
   const scoreSubmit = document.querySelector("#score-prospect-submit");
@@ -248,7 +262,9 @@ function applySubmitDisabledState() {
       if (!selectedModelRunId) {
         setScoringAnnouncement("Load a completed model to evaluate scoring readiness.");
       } else if (hasCompletedScoring) {
-        setScoringAnnouncement("A completed scoring run already exists for this model.");
+        setScoringAnnouncement("A completed scoring run already exists for the current demographics source.");
+      } else if (hasStaleHistoricalScoring()) {
+        setScoringAnnouncement("Historical scoring exists for a previous demographics source. Rescoring is available.");
       } else if (scoreReady) {
         setScoringAnnouncement("Ready to score prospect universe.");
       } else if (scoringStatusSnapshot?.reason) {
@@ -394,10 +410,18 @@ function renderScoringStatus(status) {
 
   if (status.completed_scoring_run) {
     const completed = status.completed_scoring_run;
-    setScoringText(
-      "#scoring-completed-run",
-      `#${completed.scoring_run_id} · ${formatDate(completed.completed_at, true)}`,
-    );
+    const completionStamp = formatDate(completed.completed_at, true);
+    if (status.demographic_source_verified) {
+      setScoringText(
+        "#scoring-completed-run",
+        `#${completed.scoring_run_id} · ${completionStamp}`,
+      );
+    } else {
+      setScoringText(
+        "#scoring-completed-run",
+        `#${completed.scoring_run_id} · Historical (${completionStamp})`,
+      );
+    }
   } else {
     setScoringText("#scoring-completed-run", "-");
   }
@@ -410,7 +434,7 @@ function renderScoringStatus(status) {
     reason.hidden = true;
   }
 
-  if (!status.completed_scoring_run) {
+  if (!status.demographic_source_verified) {
     document.querySelector("#scoring-completed-summary").hidden = true;
     resetScoringSummary();
   }
@@ -456,7 +480,7 @@ async function loadScoringStatus(modelRunId, { force = false } = {}) {
     selectedModelRunId = modelRunId;
     renderScoringStatus(status);
 
-    if (status.completed_scoring_run?.scoring_run_id) {
+    if (status.demographic_source_verified && status.completed_scoring_run?.scoring_run_id) {
       await loadScoringRunDetail(status.completed_scoring_run.scoring_run_id, { silent: true });
     }
     dispatchBackendStatus("is-online", "Backend online");

@@ -125,7 +125,7 @@ def test_first_normal_database_access_initializes_current_schema(
             "SELECT value FROM app_metadata WHERE key = 'schema_version'"
         ).fetchone()[0]
 
-    assert schema_version == "5"
+    assert schema_version == "6"
 
 
 def test_unexpected_api_exception_is_logged_and_sanitized(

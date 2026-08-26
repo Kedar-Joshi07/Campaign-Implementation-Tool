@@ -1,0 +1,70 @@
+{
+  "bounded_lifecycle": {
+    "failed_replacement": {
+      "demographics_row_count_preserved": true,
+      "failed_import_record_incremented": true,
+      "forced_failure_batches": 2,
+      "forced_failure_detected": true,
+      "last_import_checksum_recorded": false,
+      "last_import_rows_inserted": 1,
+      "last_import_status": "FAILED",
+      "run_b_verified_after_failed_replace": true,
+      "status_after_failed_replace_eligible": false
+    },
+    "model_run_id": 1,
+    "same_model_coexistence": {
+      "completed_runs_for_model": 2,
+      "run_a_still_completed_historical": true,
+      "run_b_current_canonical": true,
+      "supports_multiple_completed_runs": true
+    },
+    "source_change": {
+      "canonical_run_id_after_run_b": 2,
+      "run_a_id": 1,
+      "run_a_verified_after_source_change": false,
+      "run_a_verified_before_source_change": true,
+      "run_b_id": 2,
+      "run_b_verified_after_completion": true,
+      "status_after_run_b_eligible": false,
+      "status_after_source_change_eligible": true,
+      "status_before_source_change_eligible": false
+    }
+  },
+  "canonical_evidence": {
+    "demographic_import_id": 5,
+    "deterministic_max_abs_diff": 0.0,
+    "deterministic_sample_size": 64,
+    "deterministic_verified": true,
+    "import_rows_inserted": 5000000,
+    "import_status": "COMPLETED",
+    "model_run_id": 6,
+    "model_run_status": "COMPLETED",
+    "provenance_canonical": true,
+    "provenance_issues_count": 0,
+    "score_row_count": 5000000,
+    "scored_person_count": 5000000,
+    "scoring_run_completed": true,
+    "scoring_run_id": 7,
+    "scoring_run_status": "COMPLETED",
+    "summary_import_matches_current_source": true,
+    "summary_import_matches_expected_id": true
+  },
+  "scope_scan": {
+    "disabled_later_phase_navigation_present": true,
+    "disallowed_feature_signals": {
+      "audience_explorer_api": false,
+      "audience_selection_api": false,
+      "campaign_activation_api": false,
+      "campaign_builder_api": false,
+      "csv_export_feature": false,
+      "decile_api": false,
+      "score_band_or_percentile_api": false,
+      "scored_prospect_browser_api": false
+    },
+    "scanned_roots": [
+      "app",
+      "frontend"
+    ],
+    "scope_clean": true
+  }
+}

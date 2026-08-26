@@ -14,12 +14,11 @@ from app.repositories.job_repository import (
     JobRepository,
     JobValidationError,
 )
-from app.repositories.scoring_repository import ScoringRepository
 from app.services.model_scoring_compatibility import (
     ModelScoreabilityValidationError,
     validate_scoreable_model,
 )
-from app.services.prospect_scoring_service import validate_completed_scoring_run_provenance
+from app.services.prospect_scoring_service import find_current_canonical_run_for_model
 
 
 MODEL_NOT_SCOREABLE_MESSAGE = "The selected model is not available for prospect scoring."
@@ -85,16 +84,12 @@ def submit_prospect_scoring_job_request(
     except ModelScoreabilityValidationError as exc:
         raise ScoringJobValidationError(MODEL_NOT_SCOREABLE_MESSAGE) from exc
 
-    scoring_repository = ScoringRepository(path)
-    completed_run = scoring_repository.find_completed_run_for_model(model_run_id)
-    if completed_run is not None:
-        provenance_check = validate_completed_scoring_run_provenance(
-            path,
-            scoring_run_id=int(completed_run["scoring_run_id"]),
-            verify_current_source_match=False,
-        )
-        if provenance_check["is_canonical"]:
-            raise ScoringJobConflictError(EXISTING_SCORING_RUN_CONFLICT_MESSAGE)
+    current_canonical_run = find_current_canonical_run_for_model(
+        path,
+        model_run_id=model_run_id,
+    )
+    if current_canonical_run is not None:
+        raise ScoringJobConflictError(EXISTING_SCORING_RUN_CONFLICT_MESSAGE)
 
     repository = JobRepository(path)
     if repository.find_active_compute_job() is not None:

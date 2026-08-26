@@ -457,6 +457,7 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
     assert "reason" not in eligible_payload
     assert eligible_payload["model_run_id"] == model_run_id
     assert eligible_payload["artifact_feature_compatible"] is True
+    assert eligible_payload["demographic_source_verified"] is False
     assert "completed_scoring_run" not in eligible_payload
 
     queued_job_id = _insert_scoring_job(
@@ -476,6 +477,7 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
     active_payload = active.json()
     assert active_payload["eligible"] is False
     assert active_payload["reason"] == ACTIVE_COMPUTE_JOB_CONFLICT_MESSAGE
+    assert active_payload["demographic_source_verified"] is False
     assert active_payload["active_job"]["job_id"] == queued_job_id
 
     with get_connection(database_path, write=True) as connection:
@@ -588,8 +590,107 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
     completed_payload = completed.json()
     assert completed_payload["eligible"] is False
     assert completed_payload["reason"] == EXISTING_SCORING_RUN_CONFLICT_MESSAGE
+    assert completed_payload["demographic_source_verified"] is True
     assert completed_payload["completed_scoring_run"]["scoring_run_id"] == completed_run_id
     assert completed_payload["completed_scoring_run"]["demographic_source_verified"] is True
+
+
+def test_scoring_status_stale_completed_history_keeps_rescoring_eligible(
+    client: TestClient,
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_analysis_run(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+
+    monkeypatch.setattr(
+        model_api_service_module,
+        "validate_scoreable_model",
+        lambda *_args, **_kwargs: _scoreable_context(model_run_id),
+    )
+
+    for person_id in ("PER_000001", "PER_000002", "PER_000003"):
+        _insert_demographic_person(database_path, person_id)
+    current_import_id = _insert_completed_demographic_import(
+        database_path,
+        rows_inserted=3,
+        source_checksum="e" * 64,
+    )
+
+    stale_job_id = _insert_scoring_job(
+        database_path,
+        model_run_id=model_run_id,
+        status="COMPLETED",
+        created_at="2026-08-28T01:06:00Z",
+        started_at="2026-08-28T01:06:00Z",
+        finished_at="2026-08-28T01:06:05Z",
+        progress_percent=100,
+        stage="COMPLETED",
+        result_payload={"scoring_run_id": 9, "model_run_id": model_run_id, "scored_person_count": 3},
+        error_message=None,
+    )
+    stale_run_id = _insert_scoring_run(
+        database_path,
+        job_id=stale_job_id,
+        model_run_id=model_run_id,
+        status="COMPLETED",
+        created_at="2026-08-28T01:06:01Z",
+        completed_at="2026-08-28T01:06:05Z",
+        score_summary_json=json.dumps(
+            {
+                "demographic_import_id": current_import_id,
+                "demographic_source_checksum": "d" * 64,
+                "demographic_snapshot_count": 3,
+                "demographic_min_person_id": "PER_000001",
+                "demographic_max_person_id": "PER_000003",
+                "model_run_id": model_run_id,
+                "selected_candidate": "BAGGING_PU",
+                "feature_contract_version": "1",
+                "feature_contract_sha256": "a" * 64,
+                "artifact_sha256": "b" * 64,
+                "score_count": 3,
+                "score_min": 0.12,
+                "score_max": 0.92,
+                "score_mean": 0.42,
+                "total_seconds": 1.0,
+                "rows_per_second": 3.0,
+                "chunk_size": 1000,
+                "chunk_count": 1,
+                "largest_chunk_rows": 3,
+                "largest_transformed_matrix_bytes": 128,
+                "model_role_policy_version": "2",
+                "score_semantics": "LOOK_ALIKE_PROPENSITY_SCORE",
+                "age_semantics_note": "fixture",
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+        error_message=None,
+    )
+    with get_connection(database_path, write=True) as connection:
+        connection.executemany(
+            """
+            INSERT INTO propensity_scores (
+                scoring_run_id,
+                model_run_id,
+                person_id,
+                propensity_score
+            ) VALUES (?, ?, ?, ?)
+            """,
+            [
+                (stale_run_id, model_run_id, "PER_000001", 0.12),
+                (stale_run_id, model_run_id, "PER_000002", 0.22),
+                (stale_run_id, model_run_id, "PER_000003", 0.92),
+            ],
+        )
+
+    response = client.get(f"/api/models/{model_run_id}/scoring-status")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["eligible"] is True
+    assert payload["demographic_source_verified"] is False
+    assert payload["completed_scoring_run"]["scoring_run_id"] == stale_run_id
+    assert payload["completed_scoring_run"]["demographic_source_verified"] is False
 
 
 def test_scoring_status_handles_unscoreable_and_missing_models(
@@ -616,6 +717,176 @@ def test_scoring_status_handles_unscoreable_and_missing_models(
     assert payload["eligible"] is False
     assert payload["reason"] == "artifact or feature contract mismatch"
     assert payload["artifact_feature_compatible"] is False
+
+
+def test_scoring_status_prefers_current_source_canonical_run_over_newer_stale_run(
+    client: TestClient,
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_analysis_run(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+
+    monkeypatch.setattr(
+        model_api_service_module,
+        "validate_scoreable_model",
+        lambda *_args, **_kwargs: _scoreable_context(model_run_id),
+    )
+
+    for person_id in ("PER_000001", "PER_000002", "PER_000003"):
+        _insert_demographic_person(database_path, person_id)
+    canonical_import_id = _insert_completed_demographic_import(
+        database_path,
+        rows_inserted=3,
+        source_checksum="e" * 64,
+    )
+
+    canonical_job_id = _insert_scoring_job(
+        database_path,
+        model_run_id=model_run_id,
+        status="COMPLETED",
+        created_at="2026-08-28T01:02:00Z",
+        started_at="2026-08-28T01:02:00Z",
+        finished_at="2026-08-28T01:02:05Z",
+        progress_percent=100,
+        stage="COMPLETED",
+        result_payload={"scoring_run_id": 7, "model_run_id": model_run_id, "scored_person_count": 3},
+        error_message=None,
+    )
+    canonical_run_id = _insert_scoring_run(
+        database_path,
+        job_id=canonical_job_id,
+        model_run_id=model_run_id,
+        status="COMPLETED",
+        created_at="2026-08-28T01:02:01Z",
+        completed_at="2026-08-28T01:02:05Z",
+        score_summary_json=json.dumps(
+            {
+                "demographic_import_id": canonical_import_id,
+                "demographic_source_checksum": "e" * 64,
+                "demographic_snapshot_count": 3,
+                "demographic_min_person_id": "PER_000001",
+                "demographic_max_person_id": "PER_000003",
+                "model_run_id": model_run_id,
+                "selected_candidate": "BAGGING_PU",
+                "feature_contract_version": "1",
+                "feature_contract_sha256": "a" * 64,
+                "artifact_sha256": "b" * 64,
+                "score_count": 3,
+                "score_min": 0.1,
+                "score_max": 0.9,
+                "score_mean": 0.4,
+                "total_seconds": 1.0,
+                "rows_per_second": 3.0,
+                "chunk_size": 1000,
+                "chunk_count": 1,
+                "largest_chunk_rows": 3,
+                "largest_transformed_matrix_bytes": 128,
+                "model_role_policy_version": "2",
+                "score_semantics": "LOOK_ALIKE_PROPENSITY_SCORE",
+                "age_semantics_note": "fixture",
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+        error_message=None,
+    )
+    with get_connection(database_path, write=True) as connection:
+        connection.executemany(
+            """
+            INSERT INTO propensity_scores (
+                scoring_run_id,
+                model_run_id,
+                person_id,
+                propensity_score
+            ) VALUES (?, ?, ?, ?)
+            """,
+            [
+                (canonical_run_id, model_run_id, "PER_000001", 0.1),
+                (canonical_run_id, model_run_id, "PER_000002", 0.2),
+                (canonical_run_id, model_run_id, "PER_000003", 0.9),
+            ],
+        )
+
+    stale_job_id = _insert_scoring_job(
+        database_path,
+        model_run_id=model_run_id,
+        status="COMPLETED",
+        created_at="2026-08-28T01:04:00Z",
+        started_at="2026-08-28T01:04:00Z",
+        finished_at="2026-08-28T01:04:05Z",
+        progress_percent=100,
+        stage="COMPLETED",
+        result_payload={"scoring_run_id": 8, "model_run_id": model_run_id, "scored_person_count": 3},
+        error_message=None,
+    )
+    stale_run_id = _insert_scoring_run(
+        database_path,
+        job_id=stale_job_id,
+        model_run_id=model_run_id,
+        status="COMPLETED",
+        created_at="2026-08-28T01:04:01Z",
+        completed_at="2026-08-28T01:04:05Z",
+        score_summary_json=json.dumps(
+            {
+                "demographic_import_id": canonical_import_id,
+                "demographic_source_checksum": "d" * 64,
+                "demographic_snapshot_count": 3,
+                "demographic_min_person_id": "PER_000001",
+                "demographic_max_person_id": "PER_000003",
+                "model_run_id": model_run_id,
+                "selected_candidate": "BAGGING_PU",
+                "feature_contract_version": "1",
+                "feature_contract_sha256": "a" * 64,
+                "artifact_sha256": "b" * 64,
+                "score_count": 3,
+                "score_min": 0.11,
+                "score_max": 0.91,
+                "score_mean": 0.41,
+                "total_seconds": 1.0,
+                "rows_per_second": 3.0,
+                "chunk_size": 1000,
+                "chunk_count": 1,
+                "largest_chunk_rows": 3,
+                "largest_transformed_matrix_bytes": 128,
+                "model_role_policy_version": "2",
+                "score_semantics": "LOOK_ALIKE_PROPENSITY_SCORE",
+                "age_semantics_note": "fixture",
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+        error_message=None,
+    )
+    with get_connection(database_path, write=True) as connection:
+        connection.executemany(
+            """
+            INSERT INTO propensity_scores (
+                scoring_run_id,
+                model_run_id,
+                person_id,
+                propensity_score
+            ) VALUES (?, ?, ?, ?)
+            """,
+            [
+                (stale_run_id, model_run_id, "PER_000001", 0.11),
+                (stale_run_id, model_run_id, "PER_000002", 0.21),
+                (stale_run_id, model_run_id, "PER_000003", 0.91),
+            ],
+        )
+
+    response = client.get(f"/api/models/{model_run_id}/scoring-status")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["eligible"] is False
+    assert payload["reason"] == EXISTING_SCORING_RUN_CONFLICT_MESSAGE
+    assert payload["demographic_source_verified"] is True
+    assert payload["completed_scoring_run"]["scoring_run_id"] == canonical_run_id
+    assert payload["completed_scoring_run"]["demographic_source_verified"] is True
+
+    stale_detail = client.get(f"/api/scoring-runs/{stale_run_id}")
+    assert stale_detail.status_code == 200
+    assert stale_detail.json()["score_summary"]["demographic_source_verified"] is False
 
 
 def test_scoring_runs_list_and_detail_support_filters_and_newest_first(

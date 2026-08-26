@@ -263,6 +263,10 @@ def test_update_counters_and_mark_completed(database_path: Path) -> None:
     assert completed is not None
     assert completed["scoring_run_id"] == scoring_run_id
 
+    completed_runs = repository.find_completed_runs_for_model(model_run_id)
+    assert len(completed_runs) == 1
+    assert completed_runs[0]["scoring_run_id"] == scoring_run_id
+
 
 def test_transition_guards_and_validation_errors(database_path: Path) -> None:
     analysis_run_id = _insert_completed_analysis(database_path)

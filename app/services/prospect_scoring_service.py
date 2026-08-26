@@ -719,17 +719,21 @@ def validate_completed_scoring_run_provenance(
                 issues.append("demographic_source_checksum does not match import provenance")
 
     if verify_current_source_match:
-        current_source = prospect_repository.fetch_completed_demographic_import_provenance()
-        if summary_payload.get("demographic_import_id") != current_source.demographic_import_id:
-            issues.append("current demographics import_id does not match completed scoring provenance")
-        if summary_payload.get("demographic_source_checksum") != current_source.demographic_source_checksum:
-            issues.append("current demographics checksum does not match completed scoring provenance")
-        if summary_payload.get("demographic_snapshot_count") != current_source.demographic_snapshot_count:
-            issues.append("current demographics count does not match completed scoring provenance")
-        if summary_payload.get("demographic_min_person_id") != current_source.demographic_min_person_id:
-            issues.append("current demographics min person_id does not match completed scoring provenance")
-        if summary_payload.get("demographic_max_person_id") != current_source.demographic_max_person_id:
-            issues.append("current demographics max person_id does not match completed scoring provenance")
+        try:
+            current_source = prospect_repository.fetch_completed_demographic_import_provenance()
+        except ProspectScoringValidationError:
+            issues.append("current demographics provenance is unavailable")
+        else:
+            if summary_payload.get("demographic_import_id") != current_source.demographic_import_id:
+                issues.append("current demographics import_id does not match completed scoring provenance")
+            if summary_payload.get("demographic_source_checksum") != current_source.demographic_source_checksum:
+                issues.append("current demographics checksum does not match completed scoring provenance")
+            if summary_payload.get("demographic_snapshot_count") != current_source.demographic_snapshot_count:
+                issues.append("current demographics count does not match completed scoring provenance")
+            if summary_payload.get("demographic_min_person_id") != current_source.demographic_min_person_id:
+                issues.append("current demographics min person_id does not match completed scoring provenance")
+            if summary_payload.get("demographic_max_person_id") != current_source.demographic_max_person_id:
+                issues.append("current demographics max person_id does not match completed scoring provenance")
 
     return {
         "scoring_run_id": int(scoring_run_id),
@@ -740,8 +744,36 @@ def validate_completed_scoring_run_provenance(
     }
 
 
+def find_current_canonical_run_for_model(
+    database_path: str | Path,
+    *,
+    model_run_id: int,
+    limit: int = 100,
+) -> dict[str, Any] | None:
+    """Return the completed scoring run matching the current demographics source."""
+    if isinstance(model_run_id, bool) or not isinstance(model_run_id, int) or model_run_id <= 0:
+        raise ProspectScoringVerificationError("model_run_id must be a positive integer.")
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 1000:
+        raise ProspectScoringVerificationError("limit must be an integer between 1 and 1000.")
+
+    initialized_path = initialize_database(database_path)
+    scoring_repository = ScoringRepository(initialized_path)
+    completed_runs = scoring_repository.find_completed_runs_for_model(model_run_id, limit=limit)
+
+    for row in completed_runs:
+        provenance = validate_completed_scoring_run_provenance(
+            initialized_path,
+            scoring_run_id=int(row["scoring_run_id"]),
+            verify_current_source_match=True,
+        )
+        if provenance["is_canonical"]:
+            return row
+    return None
+
+
 __all__ = (
     "DEFAULT_SCORING_CHUNK_SIZE",
+    "find_current_canonical_run_for_model",
     "ProspectScoringExecutionError",
     "ProspectScoringServiceError",
     "ProspectScoringVerificationError",

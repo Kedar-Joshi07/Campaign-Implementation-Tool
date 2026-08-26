@@ -508,20 +508,32 @@ class ScoringRepository:
             if cursor.rowcount != 1:
                 raise ScoringStateTransitionError("Scoring run could not transition to FAILED.")
 
-    def find_completed_run_for_model(self, model_run_id: int) -> dict[str, Any] | None:
+    def find_completed_runs_for_model(
+        self,
+        model_run_id: int,
+        *,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
         normalized_model_run_id = _require_positive_int(model_run_id, field_name="model_run_id")
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 1000:
+            raise ScoringValidationError("limit must be an integer between 1 and 1000.")
         with get_connection(self.database_path) as connection:
-            row = connection.execute(
+            rows = connection.execute(
                 """
                 SELECT *
                 FROM scoring_runs
                 WHERE model_run_id = ? AND status = 'COMPLETED'
                 ORDER BY completed_at DESC, scoring_run_id DESC
-                LIMIT 1
+                LIMIT ?
                 """,
-                (normalized_model_run_id,),
-            ).fetchone()
-        return dict(row) if row is not None else None
+                (normalized_model_run_id, limit),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def find_completed_run_for_model(self, model_run_id: int) -> dict[str, Any] | None:
+        normalized_model_run_id = _require_positive_int(model_run_id, field_name="model_run_id")
+        rows = self.find_completed_runs_for_model(normalized_model_run_id, limit=1)
+        return rows[0] if rows else None
 
     def find_running_run_for_model(self, model_run_id: int) -> dict[str, Any] | None:
         normalized_model_run_id = _require_positive_int(model_run_id, field_name="model_run_id")

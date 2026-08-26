@@ -111,3 +111,27 @@ Status: COMPLETE (GO)
 - evidence artifact: `logs/phase5_prephase6_step3_rerun_report.json`.
 - post-run gates: `python -m pip check` clean; `python -m pytest -q` 318 passed, 1 warning; `python -m compileall -q app scripts tests` clean; `git diff --check` no whitespace errors (line-ending warnings only); `python scripts/validate_data.py --json` overall_status `OK`.
 - scope lock: no Phase 6 functionality implemented (Audience Explorer, person lookup, score bands/percentiles/deciles, audience selection/persistence, campaign builder, export, activation all remain absent/disabled).
+
+## Step 5 — Final Acceptance and Phase 6 Baseline Freeze
+Status: COMPLETE (GO)
+- starting SHA for this correction stream: `eeed03d052cc75987cc8926b088d906ae0fb7ccc`.
+- final acceptance artifact: `docs/evidence/phase5_final_corrections_validation.json` (sanitized; no absolute paths, PII, SQL, raw IDs, or tracebacks).
+- required final gates:
+	- `python -m pip check` clean;
+	- `python -m pytest -q` -> `328 passed`;
+	- `python -m compileall -q app scripts tests` clean;
+	- `git diff --check` no whitespace/conflict errors (line-ending warnings only);
+	- `python scripts/validate_data.py --json` -> `overall_status=OK`.
+- canonical live evidence revalidated:
+	- `model_run_id=6` status `COMPLETED`;
+	- `scoring_run_id=7` status `COMPLETED`;
+	- `demographic_import_id=5` status `COMPLETED`;
+	- `scored_person_count=5,000,000`, persisted score rows `5,000,000`;
+	- current-source provenance match `true`;
+	- deterministic sample verify `true` (`max_abs_diff=0.0`).
+- source-change lifecycle confirmed (bounded DB): stale historical run remains queryable/non-canonical, model becomes eligible after source change, and new canonical run completes.
+- failed replacement lifecycle confirmed (bounded DB): multi-batch forced staging failure preserves live source, records FAILED import, and retains canonical verification for live source-aligned run.
+- same-model coexistence confirmed: multiple `COMPLETED` runs per model across sources with one current canonical run.
+- API semantics confirmed: stale history does not disable score submit, current canonical blocks duplicate scoring, run detail verification reflects current source.
+- scope freeze confirmed: no Phase 6 implementation activated.
+- authoritative Phase 6 baseline: final HEAD from this step's dedicated freeze commit.

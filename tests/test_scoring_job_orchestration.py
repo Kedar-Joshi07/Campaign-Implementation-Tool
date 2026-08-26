@@ -19,6 +19,7 @@ from app.services.model_job_service import (
     reconcile_stale_model_training_jobs,
     submit_model_training_job_request,
 )
+from app.services.prospect_scoring_service import find_current_canonical_run_for_model
 from app.services.scoring_job_service import (
     ACTIVE_COMPUTE_JOB_CONFLICT_MESSAGE,
     EXISTING_SCORING_RUN_CONFLICT_MESSAGE,
@@ -179,6 +180,111 @@ def _insert_completed_demographic_import(
             ),
         )
     return int(cursor.lastrowid)
+
+
+def _complete_scoring_run(
+    database_path: Path,
+    *,
+    model_run_id: int,
+    created_at: str,
+    completed_at: str,
+    person_id: str,
+    score: float,
+    demographic_import_id: int,
+    source_checksum: str,
+) -> int:
+    job_repository = JobRepository(database_path)
+    scoring_repository = ScoringRepository(database_path)
+
+    job_id = job_repository.create_scoring_job(
+        created_at=created_at,
+        request_payload={"model_run_id": model_run_id},
+    )
+    scoring_run_id = scoring_repository.create_scoring_run(
+        job_id=job_id,
+        model_run_id=model_run_id,
+        created_at=created_at,
+        demographic_snapshot_count=1,
+        demographic_min_person_id=person_id,
+        demographic_max_person_id=person_id,
+        chunk_size=1000,
+        selected_candidate="BAGGING_PU",
+        model_role_policy_version="2",
+        feature_contract_version="1",
+        feature_contract_sha256="a" * 64,
+        artifact_sha256="a" * 64,
+    )
+    scoring_repository.update_counters(
+        scoring_run_id=scoring_run_id,
+        scored_person_count=1,
+        last_person_id=person_id,
+        score_min=score,
+        score_max=score,
+        score_mean=score,
+    )
+    scoring_repository.mark_completed(
+        scoring_run_id=scoring_run_id,
+        completed_at=completed_at,
+        scored_person_count=1,
+        score_min=score,
+        score_max=score,
+        score_mean=score,
+        summary_payload={
+            "demographic_import_id": demographic_import_id,
+            "demographic_source_checksum": source_checksum,
+            "demographic_snapshot_count": 1,
+            "demographic_min_person_id": person_id,
+            "demographic_max_person_id": person_id,
+            "model_run_id": model_run_id,
+            "selected_candidate": "BAGGING_PU",
+            "feature_contract_version": "1",
+            "feature_contract_sha256": "a" * 64,
+            "artifact_sha256": "a" * 64,
+            "chunk_size": 1000,
+            "chunk_count": 1,
+            "score_count": 1,
+            "score_min": score,
+            "score_mean": score,
+            "score_max": score,
+            "total_seconds": 0.1,
+            "rows_per_second": 10.0,
+            "age_semantics_note": "fixture",
+        },
+    )
+    scoring_repository.insert_scores_chunk(
+        scoring_run_id=scoring_run_id,
+        model_run_id=model_run_id,
+        person_ids=[person_id],
+        propensity_scores=[score],
+    )
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            UPDATE jobs
+            SET status = 'COMPLETED',
+                progress_percent = 100,
+                stage = 'COMPLETED',
+                started_at = ?,
+                finished_at = ?,
+                result_json = ?
+            WHERE job_id = ?
+            """,
+            (
+                created_at,
+                completed_at,
+                json.dumps(
+                    {
+                        "scoring_run_id": scoring_run_id,
+                        "model_run_id": model_run_id,
+                        "scored_person_count": 1,
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ),
+                job_id,
+            ),
+        )
+    return scoring_run_id
 
 
 def _mark_training_job_completed(repository: JobRepository, *, job_id: int, model_run_id: int) -> None:
@@ -454,6 +560,100 @@ def test_scoring_submit_allows_new_run_when_only_legacy_completed_run_exists(
         submitter=lambda *_: None,
     )
     assert queued["status"] == "QUEUED"
+
+
+def test_scoring_submit_allows_rescore_when_completed_run_is_for_old_source(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+
+    monkeypatch.setattr(
+        "app.services.scoring_job_service.validate_scoreable_model",
+        lambda *_args, **_kwargs: object(),
+    )
+
+    _insert_demographic_person(database_path, "PER_000001")
+    source_a_import_id = _insert_completed_demographic_import(
+        database_path,
+        rows_inserted=1,
+        source_checksum="d" * 64,
+    )
+    _complete_scoring_run(
+        database_path,
+        model_run_id=model_run_id,
+        created_at="2026-08-27T01:40:01Z",
+        completed_at="2026-08-27T01:40:03Z",
+        person_id="PER_000001",
+        score=0.5,
+        demographic_import_id=source_a_import_id,
+        source_checksum="d" * 64,
+    )
+
+    # Source B replaces Source A while preserving identity envelope.
+    _insert_completed_demographic_import(
+        database_path,
+        rows_inserted=1,
+        source_checksum="e" * 64,
+    )
+
+    queued = submit_prospect_scoring_job_request(
+        database_path,
+        {"model_run_id": model_run_id},
+        submitter=lambda *_: None,
+    )
+    assert queued["status"] == "QUEUED"
+
+    with get_connection(database_path) as connection:
+        completed_runs = connection.execute(
+            "SELECT COUNT(*) FROM scoring_runs WHERE model_run_id = ? AND status = 'COMPLETED'",
+            (model_run_id,),
+        ).fetchone()[0]
+    assert completed_runs == 1
+
+
+def test_current_canonical_resolver_ignores_newer_stale_run(
+    database_path: Path,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+
+    _insert_demographic_person(database_path, "PER_000001")
+    source_import_id = _insert_completed_demographic_import(
+        database_path,
+        rows_inserted=1,
+        source_checksum="f" * 64,
+    )
+
+    canonical_run_id = _complete_scoring_run(
+        database_path,
+        model_run_id=model_run_id,
+        created_at="2026-08-27T01:50:01Z",
+        completed_at="2026-08-27T01:50:03Z",
+        person_id="PER_000001",
+        score=0.41,
+        demographic_import_id=source_import_id,
+        source_checksum="f" * 64,
+    )
+
+    _complete_scoring_run(
+        database_path,
+        model_run_id=model_run_id,
+        created_at="2026-08-27T01:55:01Z",
+        completed_at="2026-08-27T01:55:03Z",
+        person_id="PER_000001",
+        score=0.42,
+        demographic_import_id=source_import_id,
+        source_checksum="d" * 64,
+    )
+
+    resolved = find_current_canonical_run_for_model(
+        database_path,
+        model_run_id=model_run_id,
+    )
+    assert resolved is not None
+    assert int(resolved["scoring_run_id"]) == canonical_run_id
 
 
 def test_scoring_submit_failure_marks_queued_job_failed(

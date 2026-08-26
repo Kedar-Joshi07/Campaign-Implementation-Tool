@@ -112,7 +112,7 @@ def test_fresh_initialization_creates_schema_version_four_with_jobs(database_pat
             ).fetchall()
         }
 
-    assert schema_version == "5"
+    assert schema_version == "6"
     assert "jobs" in tables
     assert "scoring_runs" in tables
     assert "propensity_scores" in tables
@@ -190,7 +190,7 @@ def test_populated_version_three_database_migrates_to_version_four_additively(
         ).fetchone()[0]
         jobs_count = connection.execute("SELECT COUNT(1) FROM jobs").fetchone()[0]
 
-    assert schema_version == "5"
+    assert schema_version == "6"
     assert after_counts == before_counts
     assert jobs_count == 0
 

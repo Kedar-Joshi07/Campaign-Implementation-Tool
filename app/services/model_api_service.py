@@ -47,7 +47,10 @@ from app.services.scoring_job_service import (
     submit_prospect_scoring_job_request,
 )
 from app.services.model_training_service import load_verified_model_artifact
-from app.services.prospect_scoring_service import validate_completed_scoring_run_provenance
+from app.services.prospect_scoring_service import (
+    find_current_canonical_run_for_model,
+    validate_completed_scoring_run_provenance,
+)
 
 
 MODEL_TRAINING_FAILED_MESSAGE = "Model training could not be completed."
@@ -300,15 +303,25 @@ def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str
 
     demographic_count = ProspectScoringRepository(database_path).fetch_prospect_snapshot().demographic_snapshot_count
     scoring_repository = ScoringRepository(database_path)
-    completed_scoring_run = scoring_repository.find_completed_run_for_model(model_run_id)
-    completed_scoring_run_canonical = False
+    latest_completed_scoring_run = scoring_repository.find_completed_run_for_model(model_run_id)
+    current_canonical_scoring_run = find_current_canonical_run_for_model(
+        database_path,
+        model_run_id=model_run_id,
+    )
+    completed_scoring_run_canonical = current_canonical_scoring_run is not None
+    completed_scoring_run = (
+        current_canonical_scoring_run
+        if current_canonical_scoring_run is not None
+        else latest_completed_scoring_run
+    )
+    completed_scoring_run_source_verified: bool | None = None
     if completed_scoring_run is not None:
         provenance_check = validate_completed_scoring_run_provenance(
             database_path,
             scoring_run_id=int(completed_scoring_run["scoring_run_id"]),
-            verify_current_source_match=False,
+            verify_current_source_match=True,
         )
-        completed_scoring_run_canonical = bool(provenance_check["is_canonical"])
+        completed_scoring_run_source_verified = bool(provenance_check["demographic_source_verified"])
     active_job = JobRepository(database_path).find_active_compute_job()
 
     eligible = True
@@ -341,6 +354,7 @@ def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str
         "model_run_id": int(model_run_id),
         "eligible": eligible,
         "reason": reason,
+        "demographic_source_verified": bool(completed_scoring_run_source_verified),
         "demographic_count": int(demographic_count),
         "selected_candidate": selected_candidate,
         "artifact_feature_compatible": artifact_feature_compatible,
@@ -350,9 +364,7 @@ def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str
         "active_job": _public_job_summary(active_job) if active_job is not None else None,
         "completed_scoring_run": _public_completed_scoring_reference(
             completed_scoring_run,
-            demographic_source_verified=(
-                True if completed_scoring_run_canonical else False
-            ) if completed_scoring_run is not None else None,
+            demographic_source_verified=completed_scoring_run_source_verified,
         ),
     }
 
@@ -400,7 +412,7 @@ def get_scoring_run_detail(database_path: str | Path, scoring_run_id: int) -> di
     provenance_check = validate_completed_scoring_run_provenance(
         database_path,
         scoring_run_id=int(row["scoring_run_id"]),
-        verify_current_source_match=False,
+        verify_current_source_match=True,
     )
 
     score_summary_payload: dict[str, Any] | None = None

@@ -231,3 +231,63 @@ Confirmed absent from backend/frontend runtime surfaces:
 - Finalization decision: GO.
 - Rationale: adult-from-source data regeneration, source-checksum provenance hardening, and canonical real-path 5M scoring completion all validated with deterministic re-score and full regression gates.
 - Scope guard: no Phase 6 functionality has been implemented in this finalization pass.
+
+## Pre-Phase-6 Final Corrections Acceptance and Baseline Freeze
+
+### Acceptance scope closed
+
+- Demographic source lifecycle:
+  - adult-from-source generation remains contract compliant (`age` within 18..100);
+  - replacement path is failure-atomic via staging + transactional live swap;
+  - failed replacement leaves current live demographics unchanged;
+  - completed import provenance becomes authoritative only after successful live replacement.
+- Scoring lifecycle:
+  - schema/runtime supports multiple historical `COMPLETED` scoring runs per model across source changes;
+  - canonical run is resolved by current demographics source provenance match, not by newest timestamp;
+  - stale completed runs remain queryable and auditable but are non-canonical;
+  - same model can be rescored after source change when no current canonical run exists.
+- API/UI semantics:
+  - scoring readiness is current-source aware;
+  - stale historical scoring does not disable rescoring;
+  - scoring-run detail exposes current-source verification accurately;
+  - duplicate scoring is blocked only when a current canonical run exists;
+  - aggregate-only/privacy-safe contracts remain enforced.
+
+### Regression and lifecycle evidence
+
+- Sanitized final validation artifact: `docs/evidence/phase5_final_corrections_validation.json`.
+- Full gates at freeze point:
+  - `python -m pip check` -> clean;
+  - `python -m pytest -q` -> `328 passed`;
+  - `python -m compileall -q app scripts tests` -> clean;
+  - `git diff --check` -> no whitespace/conflict errors (line-ending warnings only);
+  - `python scripts/validate_data.py --json` -> `overall_status=OK`.
+- Canonical evidence (live DB):
+  - `model_run_id=6` status `COMPLETED`;
+  - `scoring_run_id=7` status `COMPLETED`;
+  - `demographic_import_id=5` status `COMPLETED`;
+  - `scored_person_count=5,000,000`, persisted score rows `=5,000,000`;
+  - current-source provenance verification `true`;
+  - deterministic bounded re-score verification `verified=true`, `max_abs_diff=0.0`.
+- Bounded source-change simulation:
+  - Run A becomes stale/non-current after Source B replace;
+  - model becomes eligible and Run B completes as current canonical;
+  - both runs remain `COMPLETED` (historical coexistence preserved).
+- Bounded failed-replacement simulation:
+  - forced multi-batch staging failure yields `FAILED` import;
+  - live demographics remain unchanged;
+  - failed import does not write authoritative checksum;
+  - previously canonical run remains current-source verified.
+
+### Phase 6 baseline rule
+
+A Phase 5 scoring run is Phase 6-usable only when all hold:
+
+- `status = COMPLETED`;
+- score row count reconciles to scored count and demographic snapshot;
+- model/artifact/feature governance remains valid;
+- demographic import provenance is valid;
+- `demographic_source_checksum` matches current source;
+- demographic count and min/max `person_id` envelope match current source.
+
+Stale completed runs are audit history only.
