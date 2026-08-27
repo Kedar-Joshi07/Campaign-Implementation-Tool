@@ -92,6 +92,7 @@
     "scoring_run_id": 8,
     "verified": true
   },
+  "evidence_generated_before_freeze_commit": true,
   "final_gates": {
     "compileall": "OK",
     "git_diff_check": "OK (line ending warnings only)",
@@ -99,7 +100,7 @@
     "pytest_q": "344 passed",
     "validate_data_json": "overall_status=OK"
   },
-  "final_sha": "5f54c5e7138afaf615984babd32cac3a6bf2a99b",
+  "freeze_commit_sha": null,
   "frozen_contracts": {
     "artifact_sha256": "755e8f81bc1238673d17f59fb52044f44b5f00a8810fee82e694b4c4b8709d18",
     "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
@@ -140,6 +141,7 @@
       "status": "COMPLETED"
     }
   },
+  "integrity_pass_start_sha": "5f54c5e7138afaf615984babd32cac3a6bf2a99b",
   "phase6_scope_confirmed_absent": true,
   "schema_version": "8",
   "score_reconciliation": {
@@ -153,9 +155,35 @@
     "score_rows": 5000000,
     "scored_person_count": 5000000
   },
-  "starting_sha": "5f54c5e7138afaf615984babd32cac3a6bf2a99b",
+  "source_hash_semantics": {
+    "import_provenance_checksums": {
+      "campaign_sales": "58106df84855c66128559c5abdf5258a9fbd950c000152d67199e1397fdaaefb",
+      "customers": "3a3449e64f582aaa17765fae2bb3c44c5352cb7c6ff723797fab322665aa36b8",
+      "demographics": "7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db"
+    },
+    "note": "Raw SHA-256 hashes are file-byte hashes. Import provenance checksums are application lineage hashes (filename plus bytes).",
+    "tracked_source_files": {
+      "campaign_sales": {
+        "bytes": 6466293,
+        "file": "data\\campaign_sales_570000.csv.gz",
+        "raw_sha256": "d3997bf8e4d235dd002af3f50b3875532c93954ac94571da5ad007118fd84c4f"
+      },
+      "customers": {
+        "bytes": 6145052,
+        "file": "data\\customer_master_125000.csv.gz",
+        "raw_sha256": "5e80e1f25e433373f5f4b066e4d8d3a723cb4ae8d5af028895ea469d3c533a2e"
+      },
+      "demographics": {
+        "bytes": 333670576,
+        "file": "data\\usa_demographic_synthetic_5000000_rows.csv.gz",
+        "raw_sha256": "7f896e56e7d0b16149718111cabc53868ecd1584429a0f76e2480e4c6bfe9c35"
+      }
+    }
+  },
   "underage_campaign_contacts": {
     "after": 0,
     "before": 5453
-  }
+  },
+  "validated_repository_state_sha": "c114b8442c3d09585a7ac3094df17c704fc678d9",
+  "validation_sha_note": "The authoritative final Phase 6 baseline is the Git commit or tag containing this evidence artifact. The commit SHA is intentionally not self-embedded in this file."
 }

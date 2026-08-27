@@ -109,7 +109,7 @@ not required for the normal setup flow.
 | File | Expected bytes | SHA-256 |
 |---|---:|---|
 | `customer_master_125000.csv.gz` | `6145052` | `5e80e1f25e433373f5f4b066e4d8d3a723cb4ae8d5af028895ea469d3c533a2e` |
-| `campaign_sales_570000.csv.gz` | `6465596` | `16aace571676765f358ecb3e981ec273ae08653fc9397229856cc4e27dfd500c` |
+| `campaign_sales_570000.csv.gz` | `6466293` | `d3997bf8e4d235dd002af3f50b3875532c93954ac94571da5ad007118fd84c4f` |
 | `usa_demographic_synthetic_5000000_rows.csv.gz` | `333670576` | `7f896e56e7d0b16149718111cabc53868ecd1584429a0f76e2480e4c6bfe9c35` |
 
 Allow disk space for approximately 344 MB of compressed LFS inputs, about 2.9 GB
@@ -150,6 +150,12 @@ Completed imports persist source checksums and row counts. The current runtime
 uses this provenance in historical-analysis, training, and scoring workflows to
 enforce source-currentness and to prevent silent reuse of stale completed runs
 after source drift.
+
+For Phase 5 freeze reproducibility, the tracked source files under `data/` are
+the authoritative clone-time inputs. Their raw file SHA-256 values (manifest
+above) differ from the import-provenance checksums persisted in
+`data_import_runs`; import provenance is computed by the application over source
+filename plus bytes and is the canonical cross-phase lineage key.
 
 Before any explicit replacement clears existing rows, every source is opened and
 its header is checked. Replacement sources also receive a complete streaming

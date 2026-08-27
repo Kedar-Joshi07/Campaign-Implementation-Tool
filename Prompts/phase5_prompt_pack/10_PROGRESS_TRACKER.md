@@ -97,10 +97,11 @@ Status: COMPLETE (GO)
 
 ## Pre-Phase-6 Phase 5 Finalization
 Status: COMPLETE (GO)
+- Note: This section records the canonical state at that historical checkpoint. It is no longer the current Phase 6 handoff baseline and is superseded by the Step 8 current canonical chain below.
 - starting implementation SHA: `0d1425da0bacd020decb79b5d2d7b201b0c894e0`.
 - dataset regeneration: demographics source regenerated adult-from-source under frozen age contract (18..100), with no post-hoc age mutation.
 - canonical demographics import: `import_id=5`, `source_checksum=7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`, `rows_read=5,000,000`, `rows_inserted=5,000,000`, `rows_rejected=0`.
-- canonical model/job/scoring identifiers: `model_run_id=6`, `job_id=18`, `scoring_run_id=7`.
+- historical canonical at that checkpoint: `model_run_id=6`, `job_id=18`, `scoring_run_id=7` (superseded by Step 8 current canonical chain).
 - reconciliation: demographic snapshot `5,000,000`; scored `5,000,000`; score rows `5,000,000`; duplicate person IDs `0`; invalid demographic FK `0`; nonfinite `0`; below-zero `0`; above-one `0`.
 - score stats: min `0.006140909845521252`, mean `0.044244679521142034`, max `0.9943604573869449`.
 - runtime and throughput: `total_seconds=1572.4510145999993`, `rows_per_second=3179.749291758956`.
@@ -123,8 +124,8 @@ Status: COMPLETE (GO)
 	- `git diff --check` no whitespace/conflict errors (line-ending warnings only);
 	- `python scripts/validate_data.py --json` -> `overall_status=OK`.
 - canonical live evidence revalidated:
-	- `model_run_id=6` status `COMPLETED`;
-	- `scoring_run_id=7` status `COMPLETED`;
+	- historical canonical-at-that-checkpoint `model_run_id=6` status `COMPLETED`;
+	- historical canonical-at-that-checkpoint `scoring_run_id=7` status `COMPLETED`;
 	- `demographic_import_id=5` status `COMPLETED`;
 	- `scored_person_count=5,000,000`, persisted score rows `5,000,000`;
 	- current-source provenance match `true`;

@@ -1,5 +1,15 @@
 # Phase 5 Implementation Summary
 
+## Current Canonical Phase 6 Handoff
+
+- analysis_run_id = 12
+- training job_id = 20
+- model_run_id = 8
+- scoring job_id = 21
+- scoring_run_id = 8
+- campaign import_id = 9
+- demographic import_id = 5
+
 ## Scope and baseline
 
 - Repository: https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git
@@ -234,6 +244,10 @@ Confirmed absent from backend/frontend runtime surfaces:
 
 ## Pre-Phase-6 Final Corrections Acceptance and Baseline Freeze
 
+Historical / superseded checkpoint note: this section preserves an earlier
+canonical-at-the-time state and is superseded by the Final Step 8 freeze
+addendum current canonical chain.
+
 ### Acceptance scope closed
 
 - Demographic source lifecycle:
@@ -263,8 +277,8 @@ Confirmed absent from backend/frontend runtime surfaces:
   - `git diff --check` -> no whitespace/conflict errors (line-ending warnings only);
   - `python scripts/validate_data.py --json` -> `overall_status=OK`.
 - Canonical evidence (live DB):
-  - `model_run_id=6` status `COMPLETED`;
-  - `scoring_run_id=7` status `COMPLETED`;
+  - historical canonical-at-that-checkpoint `model_run_id=6` status `COMPLETED`;
+  - historical canonical-at-that-checkpoint `scoring_run_id=7` status `COMPLETED`;
   - `demographic_import_id=5` status `COMPLETED`;
   - `scored_person_count=5,000,000`, persisted score rows `=5,000,000`;
   - current-source provenance verification `true`;

@@ -6,6 +6,9 @@ Canonical Phase 5 finalization reference (pre-Phase-6):
 - `model_run_id=8`
 - `job_id=21`
 - `scoring_run_id=8`
+- `analysis_run_id=12`
+- `customer_import_id=8`
+- `campaign_sales_import_id=9`
 - `demographic_import_id=5`
 - `demographic_source_checksum=7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`
 - scored count = snapshot count = `5,000,000`
@@ -16,6 +19,7 @@ Canonical usability rule for Phase 6:
 - `status = COMPLETED`;
 - score row count reconciles to scored count and demographic snapshot;
 - model/artifact/feature governance remains valid;
+- linked historical analysis provenance remains current against customer and campaign imports;
 - demographic import provenance is valid;
 - `demographic_source_checksum` matches the current source;
 - demographic count and min/max `person_id` envelope match the current source.

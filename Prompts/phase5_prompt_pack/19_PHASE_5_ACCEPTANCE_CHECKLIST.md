@@ -97,8 +97,8 @@ Any failed **Critical** item = **No-Go for Phase 6**.
 - canonical demographics import: `import_id=5`, checksum `7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`.
 - canonical scoring identifiers: `job_id=21`, `scoring_run_id=8`, `model_run_id=8`.
 - exact reconciliation: demographics snapshot 5,000,000; scored 5,000,000; score rows 5,000,000; duplicates 0; invalid FK 0.
-- score summary: min `0.006140909845521252`, mean `0.044244679521142034`, max `0.9943604573869449`.
-- runtime + throughput: `1572.4510145999993s`, `3179.749291758956 rows/s`.
+- score summary: min `0.06774103945805435`, mean `0.20595671379862576`, max `0.9782832402557606`.
+- runtime + throughput: `988.2875189000006s`, `5059.256445497945 rows/s`.
 - chunk/memory: `chunk_size=25000`, `chunk_count=200`, `largest_chunk_rows=25000`, `largest_transformed_matrix_bytes=3396428`.
 - deterministic re-score: `verify_scoring_run_sample(scoring_run_id=8, sample_size=256)` -> `verified=true`, `max_abs_diff=0.0`.
 - provenance verification: canonical payload present and current demographics source match confirmed.
@@ -106,6 +106,12 @@ Any failed **Critical** item = **No-Go for Phase 6**.
 - same-model historical coexistence: confirmed (`COMPLETED` historical + current canonical run per source-aware lifecycle).
 - residual risks: local SQLite single-user throughput characteristics; no functional blockers for Phase 5 acceptance.
 - **Go / Conditional Go / No-Go Phase 6:** Go.
+
+## Historical / Superseded Phase 5 Scoring Evidence
+- prior historical canonical scoring identifiers: `model_run_id=6`, `job_id=18`, `scoring_run_id=7`.
+- prior historical score summary: min `0.006140909845521252`, mean `0.044244679521142034`, max `0.9943604573869449`.
+- prior historical runtime + throughput: `1572.4510145999993s`, `3179.749291758956 rows/s`.
+- prior historical chunk/memory: `chunk_size=25000`, `chunk_count=200`, `largest_chunk_rows=25000`, `largest_transformed_matrix_bytes=3396428`.
 
 ## Step 8 Freeze Update (Current Canonical)
 - final integrity evidence: `docs/evidence/phase1_to_phase5_final_integrity.json`.
