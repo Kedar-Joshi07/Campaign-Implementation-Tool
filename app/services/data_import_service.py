@@ -249,30 +249,92 @@ def _demographic_staging_table_name(import_id: int) -> str:
     return f"_demographics_import_staging_{import_id}"
 
 
-def _create_demographic_staging_table(database_path: Path, *, import_id: int) -> str:
-    staging_table_name = _demographic_staging_table_name(import_id)
-    staging_index_name = f"{staging_table_name}_person_id_uq"
-    columns = ", ".join(f'"{column}"' for column in DEMOGRAPHIC_COLUMNS)
+def _dataset_staging_table_name(dataset_name: str, import_id: int) -> str:
+    if dataset_name == DEMOGRAPHIC_SPEC.dataset_name:
+        return _demographic_staging_table_name(import_id)
+    return f"_{dataset_name}_import_staging_{import_id}"
+
+
+def _create_dataset_staging_table(
+    database_path: Path,
+    *,
+    spec: DatasetSpec,
+    import_id: int,
+) -> str:
+    staging_table_name = _dataset_staging_table_name(spec.dataset_name, import_id)
+    columns = ", ".join(f'"{column}"' for column in spec.columns)
     with get_connection(database_path, write=True) as connection:
         connection.execute(f'DROP TABLE IF EXISTS "{staging_table_name}"')
         connection.execute(
             (
                 f'CREATE TABLE "{staging_table_name}" AS '
-                f'SELECT {columns} FROM "demographics" WHERE 1 = 0'
+                f'SELECT {columns} FROM "{spec.table_name}" WHERE 1 = 0'
             )
         )
-        connection.execute(
-            (
-                f'CREATE UNIQUE INDEX "{staging_index_name}" '
-                f'ON "{staging_table_name}" (person_id)'
+        if spec is DEMOGRAPHIC_SPEC:
+            staging_index_name = f"{staging_table_name}_person_id_uq"
+            connection.execute(
+                (
+                    f'CREATE UNIQUE INDEX "{staging_index_name}" '
+                    f'ON "{staging_table_name}" (person_id)'
+                )
             )
-        )
     return staging_table_name
+
+
+def _create_demographic_staging_table(database_path: Path, *, import_id: int) -> str:
+    return _create_dataset_staging_table(
+        database_path,
+        spec=DEMOGRAPHIC_SPEC,
+        import_id=import_id,
+    )
 
 
 def _drop_demographic_staging_table(database_path: Path, *, staging_table_name: str) -> None:
     with get_connection(database_path, write=True) as connection:
         connection.execute(f'DROP TABLE IF EXISTS "{staging_table_name}"')
+
+
+def _drop_dataset_staging_table(database_path: Path, *, staging_table_name: str) -> None:
+    _drop_demographic_staging_table(
+        database_path,
+        staging_table_name=staging_table_name,
+    )
+
+
+def _finish_import_run_on_connection(
+    connection: sqlite3.Connection,
+    import_id: int,
+    status: str,
+    progress: ImportProgress,
+    error_message: str | None = None,
+    source_checksum: str | None = None,
+) -> None:
+    cursor = connection.execute(
+        """
+        UPDATE data_import_runs
+        SET completed_at = ?,
+            status = ?,
+            rows_read = ?,
+            rows_inserted = ?,
+            rows_rejected = ?,
+            error_message = ?,
+            source_checksum = ?
+        WHERE import_id = ?
+        """,
+        (
+            _utc_timestamp(),
+            status,
+            progress.rows_read,
+            progress.rows_inserted,
+            progress.rows_rejected,
+            error_message,
+            source_checksum,
+            import_id,
+        ),
+    )
+    if cursor.rowcount != 1:
+        raise DataImportError("Unable to finalize import metadata for import_id.")
 
 
 def _finish_import_run(
@@ -284,28 +346,13 @@ def _finish_import_run(
     source_checksum: str | None = None,
 ) -> None:
     with get_connection(database_path, write=True) as connection:
-        connection.execute(
-            """
-            UPDATE data_import_runs
-            SET completed_at = ?,
-                status = ?,
-                rows_read = ?,
-                rows_inserted = ?,
-                rows_rejected = ?,
-                error_message = ?,
-                source_checksum = ?
-            WHERE import_id = ?
-            """,
-            (
-                _utc_timestamp(),
-                status,
-                progress.rows_read,
-                progress.rows_inserted,
-                progress.rows_rejected,
-                error_message,
-                source_checksum,
-                import_id,
-            ),
+        _finish_import_run_on_connection(
+            connection,
+            import_id,
+            status,
+            progress,
+            error_message=error_message,
+            source_checksum=source_checksum,
         )
 
 
@@ -348,8 +395,10 @@ def _prepare_target(
                     spec.table_name,
                 )
             else:
-                connection.execute(f'DELETE FROM "{spec.table_name}"')
-                logger.warning("Explicit replace cleared target table | table=%s", spec.table_name)
+                logger.warning(
+                    "Explicit replace will use staging + atomic live transaction | table=%s",
+                    spec.table_name,
+                )
 
 
 def _insert_batch(
@@ -461,12 +510,87 @@ def _apply_atomic_demographic_replace(
     database_path: Path,
     *,
     staging_table_name: str,
+    import_id: int,
+    progress: ImportProgress,
+    source_checksum: str,
 ) -> None:
     with get_connection(database_path, write=True) as connection:
         connection.execute("BEGIN IMMEDIATE")
         _replace_demographics_from_staging(
             connection,
             staging_table_name=staging_table_name,
+        )
+        _finish_import_run_on_connection(
+            connection,
+            import_id,
+            "COMPLETED",
+            progress,
+            source_checksum=source_checksum,
+        )
+
+
+def _replace_dataset_from_staging(
+    connection: sqlite3.Connection,
+    *,
+    spec: DatasetSpec,
+    staging_table_name: str,
+    replace: bool,
+) -> None:
+    if spec is DEMOGRAPHIC_SPEC:
+        _replace_demographics_from_staging(
+            connection,
+            staging_table_name=staging_table_name,
+        )
+    else:
+        live_count = _table_count(connection, spec.table_name)
+        if replace:
+            connection.execute(f'DELETE FROM "{spec.table_name}"')
+        elif live_count > 0:
+            raise DataImportError(
+                f"Target table {spec.table_name} already contains {live_count:,} rows; "
+                "rerun with --replace only if an explicit reload is intended"
+            )
+        columns = ", ".join(f'"{column}"' for column in spec.columns)
+        connection.execute(
+            (
+                f'INSERT INTO "{spec.table_name}" ({columns}) '
+                f'SELECT {columns} FROM "{staging_table_name}"'
+            )
+        )
+
+    live_count_after = _table_count(connection, spec.table_name)
+    staged_count = _table_count(connection, staging_table_name)
+    if live_count_after != staged_count:
+        raise DataImportError(
+            f"{spec.dataset_name} replace reconciliation failed; "
+            "live table does not match staged source count."
+        )
+
+
+def _apply_atomic_dataset_publish_and_complete_import(
+    database_path: Path,
+    *,
+    spec: DatasetSpec,
+    staging_table_name: str,
+    replace: bool,
+    import_id: int,
+    progress: ImportProgress,
+    source_checksum: str,
+) -> None:
+    with get_connection(database_path, write=True) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        _replace_dataset_from_staging(
+            connection,
+            spec=spec,
+            staging_table_name=staging_table_name,
+            replace=replace,
+        )
+        _finish_import_run_on_connection(
+            connection,
+            import_id,
+            "COMPLETED",
+            progress,
+            source_checksum=source_checksum,
         )
 
 
@@ -612,34 +736,12 @@ def _import_dataset(
         source_checksum = _compute_source_checksum(validated_sources)
         _preflight_sources(spec, validated_sources, full_read=replace)
         _prepare_target(path, spec, replace=replace)
-        if spec is DEMOGRAPHIC_SPEC and replace:
-            staging_table_name = _create_demographic_staging_table(path, import_id=import_id)
-            try:
-                _stream_sources(
-                    path,
-                    spec,
-                    validated_sources,
-                    progress,
-                    batch_size=batch_size,
-                    progress_every=progress_every,
-                    table_name=staging_table_name,
-                )
-                _validate_demographic_staging_before_swap(
-                    path,
-                    staging_table_name=staging_table_name,
-                    progress=progress,
-                    source_checksum=source_checksum,
-                )
-                _apply_atomic_demographic_replace(
-                    path,
-                    staging_table_name=staging_table_name,
-                )
-            finally:
-                _drop_demographic_staging_table(
-                    path,
-                    staging_table_name=staging_table_name,
-                )
-        else:
+        staging_table_name = _create_dataset_staging_table(
+            path,
+            spec=spec,
+            import_id=import_id,
+        )
+        try:
             _stream_sources(
                 path,
                 spec,
@@ -647,7 +749,36 @@ def _import_dataset(
                 progress,
                 batch_size=batch_size,
                 progress_every=progress_every,
-                table_name=spec.table_name,
+                table_name=staging_table_name,
+            )
+            if spec is DEMOGRAPHIC_SPEC and replace:
+                _validate_demographic_staging_before_swap(
+                    path,
+                    staging_table_name=staging_table_name,
+                    progress=progress,
+                    source_checksum=source_checksum,
+                )
+            if not _is_valid_sha256(source_checksum):
+                raise DataImportError(
+                    "Import source checksum is invalid; refusing authoritative publish."
+                )
+            try:
+                _apply_atomic_dataset_publish_and_complete_import(
+                    path,
+                    spec=spec,
+                    staging_table_name=staging_table_name,
+                    replace=replace,
+                    import_id=import_id,
+                    progress=progress,
+                    source_checksum=source_checksum,
+                )
+            except sqlite3.IntegrityError as exc:
+                progress.rows_rejected += 1
+                raise DataImportError(str(exc)) from exc
+        finally:
+            _drop_dataset_staging_table(
+                path,
+                staging_table_name=staging_table_name,
             )
     except Exception as exc:
         message = str(exc)
@@ -671,13 +802,6 @@ def _import_dataset(
             raise
         raise DataImportError(message) from exc
 
-    _finish_import_run(
-        path,
-        import_id,
-        "COMPLETED",
-        progress,
-        source_checksum=source_checksum,
-    )
     duration = time.perf_counter() - started
     logger.info(
         "Import completed | import_id=%s dataset=%s rows=%s duration_seconds=%.2f",

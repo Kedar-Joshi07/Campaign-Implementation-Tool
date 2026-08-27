@@ -4,12 +4,14 @@ Campaign Implementation Intelligence is a local proof of concept for building,
 validating, and extending a campaign-analysis data foundation. It uses FastAPI,
 SQLite, and a static HTML/CSS/Vanilla JavaScript frontend.
 
-This repository contains the completed Phase 1 data foundation, Phase 2
-historical campaign analysis, and Phase 3 positive-unlabeled (PU) modeling
-foundation. Users can inspect aggregate historical performance, define a
-reproducible distinct-customer cohort, distinguish known-positive from unlabeled
-customers, review aggregate profiles, reopen saved analyses, and train a governed
-local look-alike model from a completed analysis run.
+This repository contains implemented and frozen Phase 1 through Phase 5
+capabilities: data foundation, historical campaign analysis, governed
+positive-unlabeled (PU) modeling, asynchronous training/scoring orchestration,
+and bounded 5-million-row prospect scoring. Users can inspect aggregate
+historical performance, define reproducible distinct-customer cohorts,
+distinguish known-positive from unlabeled customers, reopen saved analyses,
+train governed local look-alike models, and execute provenance-aware prospect
+scoring runs.
 
 ## Prerequisites
 
@@ -80,7 +82,7 @@ python3 -m venv .venv
 
 ## Initialize SQLite
 
-Create or verify the current schema (version 5):
+Create or verify the current schema (version 8):
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\init_db.py
@@ -108,7 +110,7 @@ not required for the normal setup flow.
 |---|---:|---|
 | `customer_master_125000.csv.gz` | `6145052` | `5e80e1f25e433373f5f4b066e4d8d3a723cb4ae8d5af028895ea469d3c533a2e` |
 | `campaign_sales_570000.csv.gz` | `6465596` | `16aace571676765f358ecb3e981ec273ae08653fc9397229856cc4e27dfd500c` |
-| `usa_demographic_synthetic_5000000_rows.csv.gz` | `331342839` | `b5ff7051dda391f60188838ff91cb13e75c1cd855ef57461b2b0ad0a0786cd1d` |
+| `usa_demographic_synthetic_5000000_rows.csv.gz` | `333670576` | `7f896e56e7d0b16149718111cabc53868ecd1584429a0f76e2480e4c6bfe9c35` |
 
 Allow disk space for approximately 344 MB of compressed LFS inputs, about 2.9 GB
 for the populated SQLite database, and additional working headroom for imports,
@@ -143,6 +145,11 @@ instead of duplicating data. Customer replacement is refused after campaign rows
 exist; for a complete clean reload, initialize a new database path and import all
 three datasets in order. Campaign replacement clears only campaign rows, and
 demographic replacement clears only the independent demographic table.
+
+Completed imports persist source checksums and row counts. The current runtime
+uses this provenance in historical-analysis, training, and scoring workflows to
+enforce source-currentness and to prevent silent reuse of stale completed runs
+after source drift.
 
 Before any explicit replacement clears existing rows, every source is opened and
 its header is checked. Replacement sources also receive a complete streaming
@@ -620,16 +627,20 @@ runs, `BAGGING_PU` remains PRIMARY and selected, while challenger/diagnostic
 metrics are retained for governance review.
 
 Step 7 hardening was rerun after demographic age-contract remediation and
-completed successfully through the real scoring API path. For the accepted run:
-`model_run_id=7`, `job_id=16`, `scoring_run_id=5`, scored rows = 5,000,000,
-duplicate IDs = 0, invalid demographic FK = 0, nonfinite = 0, score<0 = 0,
-score>1 = 0, and deterministic sample re-score verification passed
-(`sample_size=256`, `max_abs_diff=0.0`). Compute-lock conflict behavior remains
-enforced during active scoring (`409` for scoring-vs-scoring and
-training-vs-scoring submissions).
+completed successfully through the real scoring API path. For preserved
+historical evidence, `model_run_id=7`, `job_id=16`, and `scoring_run_id=5`
+completed with exact 5M reconciliation and deterministic sample verification.
 
-With these gates satisfied, Phase 5 is a Go for Phase 6 handoff (pending a final
-baseline commit SHA selection for handoff bookkeeping).
+The current canonical pre-Phase-6 baseline is the source-current completed run
+for `model_run_id=8`: `job_id=21`, `scoring_run_id=8`,
+`demographic_import_id=5`, and
+`demographic_source_checksum=7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`.
+
+Before any Phase 6 audience workflow, consumers must verify the scoring run is
+canonical for the currently loaded demographics source: completed status,
+source-checksum match, demographic envelope/count match, and preserved model
+artifact/feature-governance compatibility. Stale completed scoring runs remain
+audit history only.
 
 Before any prospect scoring phase, consumers must verify artifact path, SHA-256,
 payload compatibility, feature-contract version/hash, and selected estimator.

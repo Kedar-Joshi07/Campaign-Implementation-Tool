@@ -987,3 +987,131 @@ def test_failed_demographic_replace_never_becomes_authoritative_provenance(
     assert propensity_count == 1
     assert customer_count == 1
     assert campaign_count == 1
+
+
+def test_customer_replace_completion_metadata_failure_rolls_back_live_rows(
+    tmp_path: Path,
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original = _write_source(
+        tmp_path / "original_customers.csv",
+        CUSTOMER_COLUMNS,
+        [_customer_row("CUS_OLD")],
+    )
+    replacement = _write_source(
+        tmp_path / "replacement_customers.csv",
+        CUSTOMER_COLUMNS,
+        [_customer_row("CUS_NEW")],
+    )
+    import_customers(original, database_path=database_path)
+
+    original_finish = data_import_service_module._finish_import_run_on_connection
+
+    def _failing_finish(*args, **kwargs):
+        if len(args) >= 3 and args[2] == "COMPLETED":
+            raise RuntimeError("simulated completion metadata failure")
+        if kwargs.get("status") == "COMPLETED":
+            raise RuntimeError("simulated completion metadata failure")
+        return original_finish(*args, **kwargs)
+
+    monkeypatch.setattr(
+        data_import_service_module,
+        "_finish_import_run_on_connection",
+        _failing_finish,
+    )
+
+    with pytest.raises(DataImportError, match="simulated completion metadata failure"):
+        import_customers(replacement, database_path=database_path, replace=True)
+
+    latest = _latest_import(database_path, "customers")
+    assert latest["status"] == "FAILED"
+    with get_connection(database_path) as connection:
+        customer_ids = [
+            row[0] for row in connection.execute("SELECT customer_id FROM customers")
+        ]
+    assert customer_ids == ["CUS_OLD"]
+
+
+def test_campaign_replace_completion_metadata_update_failure_rolls_back_live_rows(
+    tmp_path: Path,
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _seed_history(tmp_path, database_path)
+    replacement = _write_source(
+        tmp_path / "replacement_campaign.csv",
+        CAMPAIGN_SALES_COLUMNS,
+        [_campaign_row("CS_NEW")],
+    )
+
+    original_finish = data_import_service_module._finish_import_run_on_connection
+
+    def _failing_finish(*args, **kwargs):
+        if len(args) >= 3 and args[2] == "COMPLETED":
+            raise sqlite3.OperationalError("simulated completion update failure")
+        if kwargs.get("status") == "COMPLETED":
+            raise sqlite3.OperationalError("simulated completion update failure")
+        return original_finish(*args, **kwargs)
+
+    monkeypatch.setattr(
+        data_import_service_module,
+        "_finish_import_run_on_connection",
+        _failing_finish,
+    )
+
+    with pytest.raises(DataImportError, match="simulated completion update failure"):
+        import_campaign_sales(replacement, database_path=database_path, replace=True)
+
+    latest = _latest_import(database_path, "campaign_sales")
+    assert latest["status"] == "FAILED"
+    with get_connection(database_path) as connection:
+        campaign_ids = [
+            row[0]
+            for row in connection.execute(
+                "SELECT campaign_sales_id FROM campaign_sales ORDER BY campaign_sales_id"
+            )
+        ]
+    assert campaign_ids == ["CS_TEST_001"]
+
+
+def test_campaign_replace_success_persists_checksum_and_matches_after_reopen(
+    tmp_path: Path,
+    database_path: Path,
+) -> None:
+    _seed_history(tmp_path, database_path)
+    replacement = _write_source(
+        tmp_path / "replacement_campaign.csv",
+        CAMPAIGN_SALES_COLUMNS,
+        [_campaign_row("CS_NEW")],
+    )
+
+    result = import_campaign_sales(replacement, database_path=database_path, replace=True)
+    expected_checksum = data_import_service_module._compute_source_checksum(
+        (replacement.resolve(),)
+    )
+    latest_before_reopen = _latest_import(database_path, "campaign_sales")
+    assert result.status == "COMPLETED"
+    assert latest_before_reopen["status"] == "COMPLETED"
+    assert latest_before_reopen["source_checksum"] == expected_checksum
+
+    initialize_database(database_path)
+
+    with get_connection(database_path) as connection:
+        campaign_count = connection.execute(
+            "SELECT COUNT(*) FROM campaign_sales"
+        ).fetchone()[0]
+        latest_completed = connection.execute(
+            """
+            SELECT import_id, rows_inserted, source_checksum
+            FROM data_import_runs
+            WHERE dataset_name = 'campaign_sales' AND status = 'COMPLETED'
+            ORDER BY import_id DESC
+            LIMIT 1
+            """
+        ).fetchone()
+
+    assert campaign_count == 1
+    assert latest_completed is not None
+    assert int(latest_completed["rows_inserted"]) == campaign_count
+    assert latest_completed["source_checksum"] == expected_checksum

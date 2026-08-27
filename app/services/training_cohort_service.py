@@ -17,10 +17,15 @@ from app.ml.feature_contract import (
 from app.repositories.model_training_repository import (
     ModelTrainingRepository,
 )
+from app.repositories.historical_repository import HistoricalRepository
 from app.services.historical_analysis_service import (
     HistoricalAnalysisError,
     HistoricalAnalysisNotFoundError,
     get_historical_analysis_run,
+)
+from app.services.historical_source_provenance_service import (
+    HistoricalSourceProvenanceError,
+    is_saved_analysis_provenance_current,
 )
 
 
@@ -148,6 +153,20 @@ def reconstruct_training_cohort(
         raise TrainingCohortRunError(
             "Model training requires a completed historical analysis run."
         )
+
+    analysis_row = HistoricalRepository(database_path).fetch_analysis_run(analysis_run_id)
+    if analysis_row is None:
+        raise TrainingCohortRunError("Historical analysis run was not found.")
+    try:
+        provenance_current, provenance_reason = is_saved_analysis_provenance_current(
+            database_path,
+            analysis_row,
+        )
+    except HistoricalSourceProvenanceError as exc:
+        raise TrainingCohortReconciliationError(str(exc)) from exc
+    if not provenance_current:
+        detail = provenance_reason or "Historical analysis source provenance is stale."
+        raise TrainingCohortReconciliationError(detail)
 
     filters = saved_run["filters"]
     reference_date = filters["contact_date_to"]

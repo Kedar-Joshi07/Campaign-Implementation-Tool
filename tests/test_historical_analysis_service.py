@@ -118,6 +118,58 @@ def _seed_cohort_fixture(database_path: Path) -> None:
             """,
             observations,
         )
+        connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name,
+                source_path,
+                started_at,
+                completed_at,
+                status,
+                rows_read,
+                rows_inserted,
+                rows_rejected,
+                source_checksum
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "customers",
+                "data/customers_fixture.csv",
+                "2026-08-26T00:00:00Z",
+                "2026-08-26T00:00:05Z",
+                "COMPLETED",
+                4,
+                4,
+                0,
+                "c" * 64,
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name,
+                source_path,
+                started_at,
+                completed_at,
+                status,
+                rows_read,
+                rows_inserted,
+                rows_rejected,
+                source_checksum
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "campaign_sales",
+                "data/campaign_sales_fixture.csv",
+                "2026-08-26T00:00:06Z",
+                "2026-08-26T00:00:10Z",
+                "COMPLETED",
+                7,
+                7,
+                0,
+                "d" * 64,
+            ),
+        )
 
 
 def _assert_customer_invariant(result: dict) -> None:

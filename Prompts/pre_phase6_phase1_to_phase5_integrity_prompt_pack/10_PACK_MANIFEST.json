@@ -1,0 +1,69 @@
+{
+  "pack": "Final Phase 1\u20135 Integrity Pass Before Phase 6",
+  "repository": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git",
+  "starting_sha": "5f54c5e7138afaf615984babd32cac3a6bf2a99b",
+  "feature_contract_version": "1",
+  "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+  "recommended_order": [
+    "01_STEP_01_",
+    "02_STEP_02_",
+    "03_STEP_03_",
+    "04_STEP_04_",
+    "05_STEP_05_",
+    "06_STEP_06_",
+    "07_STEP_07_",
+    "08_STEP_08_"
+  ],
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 3101,
+      "sha256": "546308954576f0e236064fe40e2819e145c83f3199cafb744b85b770b3a56993"
+    },
+    {
+      "file": "01_STEP_01_DYNAMIC_BASELINE_AND_CROSS_PHASE_AUDIT.md",
+      "bytes": 3161,
+      "sha256": "fcde494e2635006377d463b7d3da26ca7057e95cfba742af7505acd36ef55ced"
+    },
+    {
+      "file": "02_STEP_02_ATOMIC_LIVE_SWAP_AND_IMPORT_PROVENANCE.md",
+      "bytes": 4339,
+      "sha256": "c294741dd0d7beac2cb12ff77d67171a897fc6d3b7b4d754794e0ae63aa12866"
+    },
+    {
+      "file": "03_STEP_03_ADULT_HISTORICAL_CAMPAIGN_ELIGIBILITY.md",
+      "bytes": 2321,
+      "sha256": "92b51ba0bef5b1c844bac7832a5bfbe8937d6bb52d20b292e54e9775c5b913b1"
+    },
+    {
+      "file": "04_STEP_04_HISTORICAL_SOURCE_PROVENANCE_CHAIN.md",
+      "bytes": 4026,
+      "sha256": "d34a99c135ff18fe4156a85054079a5f23747ba6d8b3bda04bbf5986a6ebb2a5"
+    },
+    {
+      "file": "05_STEP_05_DEMOGRAPHIC_IMPORT_CONTRACT_ALIGNMENT.md",
+      "bytes": 1501,
+      "sha256": "622c111c642d3b9b8dc4ffa09cf214b8870baa42672f7f7947996c34a3320a9c"
+    },
+    {
+      "file": "06_STEP_06_CURRENT_STATE_DOCS_AND_SCHEMA_CLEANUP.md",
+      "bytes": 1832,
+      "sha256": "a37f99c0cf10fce168728a880c3755b5c750189c93a3d8f0b7b142bc7501f7cd"
+    },
+    {
+      "file": "07_STEP_07_DATA_REGENERATION_AND_END_TO_END_REBUILD.md",
+      "bytes": 3291,
+      "sha256": "1c9beb12d39a6871222d15ebde306edd5d504deca1b3ba7d6054460b74c8d1fe"
+    },
+    {
+      "file": "08_STEP_08_FINAL_PHASE1_TO_PHASE5_ACCEPTANCE_FREEZE.md",
+      "bytes": 2533,
+      "sha256": "e1b08b9a21d30a7b5cdad7929511e7ce537ed6c4892fd8da0a789423d8b7a1b6"
+    },
+    {
+      "file": "09_SINGLE_MASTER_INTEGRITY_PROMPT.md",
+      "bytes": 2678,
+      "sha256": "ee17640d037b064c790ba11b1837cc38ea2773eed57fcf29b23194246f1d8573"
+    }
+  ]
+}

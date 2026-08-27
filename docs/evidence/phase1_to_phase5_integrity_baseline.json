@@ -1,0 +1,453 @@
+{
+  "generated_at": "2026-08-27T05:51:10Z",
+  "baseline_sha": "5f54c5e7138afaf615984babd32cac3a6bf2a99b",
+  "baseline_checks": {
+    "git_status_short": "only_untracked_prompt_pack",
+    "pip_check": "OK",
+    "pytest_q": "328 passed",
+    "compileall": "OK",
+    "git_diff_check": "OK",
+    "validate_data_json": "overall_status=OK"
+  },
+  "schema_version": "6",
+  "table_counts": {
+    "customers": 125000,
+    "campaign_sales": 570000,
+    "demographics": 5000000
+  },
+  "latest_completed_imports": {
+    "customers": {
+      "import_id": 1,
+      "dataset_name": "customers",
+      "completed_at": "2026-08-20T11:02:40Z",
+      "rows_read": 125000,
+      "rows_inserted": 125000,
+      "rows_rejected": 0,
+      "source_checksum": null
+    },
+    "campaign_sales": {
+      "import_id": 2,
+      "dataset_name": "campaign_sales",
+      "completed_at": "2026-08-20T11:03:13Z",
+      "rows_read": 570000,
+      "rows_inserted": 570000,
+      "rows_rejected": 0,
+      "source_checksum": null
+    },
+    "demographics": {
+      "import_id": 5,
+      "dataset_name": "demographics",
+      "completed_at": "2026-08-26T11:28:42Z",
+      "rows_read": 5000000,
+      "rows_inserted": 5000000,
+      "rows_rejected": 0,
+      "source_checksum": "7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db"
+    }
+  },
+  "completed_runs": {
+    "analysis_run_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "model_run_ids": [
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "scoring_run_ids": [
+      7,
+      5
+    ]
+  },
+  "historical_adult_eligibility": {
+    "underage_campaign_contact_count": 5453,
+    "minimum_age_at_contact": 16,
+    "distinct_affected_customer_count": 2523,
+    "first_affected_contact_date": "2024-01-01",
+    "last_affected_contact_date": "2025-12-27",
+    "affected_campaign_count": 94
+  },
+  "training_reference_age_validation": {
+    "analyses_checked": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "rows": [
+      {
+        "analysis_run_id": 1,
+        "reference_date": "2025-12-31",
+        "observation_count": 563240,
+        "selected_customer_count": 120886,
+        "age_outside_18_100_count": 0,
+        "status": "OK"
+      },
+      {
+        "analysis_run_id": 2,
+        "reference_date": "2025-12-31",
+        "observation_count": 563240,
+        "selected_customer_count": 120886,
+        "age_outside_18_100_count": 0,
+        "status": "OK"
+      },
+      {
+        "analysis_run_id": 3,
+        "reference_date": "2025-12-31",
+        "observation_count": 563240,
+        "selected_customer_count": 120886,
+        "age_outside_18_100_count": 0,
+        "status": "OK"
+      },
+      {
+        "analysis_run_id": 4,
+        "reference_date": "2025-12-31",
+        "observation_count": 14037,
+        "selected_customer_count": 14037,
+        "age_outside_18_100_count": 0,
+        "status": "OK"
+      },
+      {
+        "analysis_run_id": 5,
+        "reference_date": "2025-12-31",
+        "observation_count": 14037,
+        "selected_customer_count": 14037,
+        "age_outside_18_100_count": 0,
+        "status": "OK"
+      },
+      {
+        "analysis_run_id": 6,
+        "reference_date": "2025-12-31",
+        "observation_count": 14037,
+        "selected_customer_count": 14037,
+        "age_outside_18_100_count": 0,
+        "status": "OK"
+      },
+      {
+        "analysis_run_id": 7,
+        "reference_date": "2025-12-31",
+        "observation_count": 563240,
+        "selected_customer_count": 120886,
+        "age_outside_18_100_count": 0,
+        "status": "OK"
+      },
+      {
+        "analysis_run_id": 8,
+        "reference_date": "2025-12-31",
+        "observation_count": 14037,
+        "selected_customer_count": 14037,
+        "age_outside_18_100_count": 0,
+        "status": "OK"
+      },
+      {
+        "analysis_run_id": 9,
+        "reference_date": "2025-12-31",
+        "observation_count": 14037,
+        "selected_customer_count": 14037,
+        "age_outside_18_100_count": 0,
+        "status": "OK"
+      },
+      {
+        "analysis_run_id": 10,
+        "reference_date": "2025-12-31",
+        "observation_count": 14037,
+        "selected_customer_count": 14037,
+        "age_outside_18_100_count": 0,
+        "status": "OK"
+      }
+    ],
+    "total_age_outside_18_100": 0
+  },
+  "historical_source_drift": {
+    "current_imports": {
+      "customers": {
+        "import_id": 1,
+        "dataset_name": "customers",
+        "completed_at": "2026-08-20T11:02:40Z",
+        "rows_read": 125000,
+        "rows_inserted": 125000,
+        "rows_rejected": 0,
+        "source_checksum": null
+      },
+      "campaign_sales": {
+        "import_id": 2,
+        "dataset_name": "campaign_sales",
+        "completed_at": "2026-08-20T11:03:13Z",
+        "rows_read": 570000,
+        "rows_inserted": 570000,
+        "rows_rejected": 0,
+        "source_checksum": null
+      }
+    },
+    "analyses": [
+      {
+        "analysis_run_id": 1,
+        "analysis_completed_at": "2026-08-20T18:23:58Z",
+        "historical_customer_import": {
+          "import_id": 1,
+          "completed_at": "2026-08-20T11:02:40Z",
+          "source_checksum": null
+        },
+        "historical_campaign_sales_import": {
+          "import_id": 2,
+          "completed_at": "2026-08-20T11:03:13Z",
+          "source_checksum": null
+        },
+        "current_customer_import_id": 1,
+        "current_campaign_sales_import_id": 2,
+        "predates_controlled_source_replacement": false
+      },
+      {
+        "analysis_run_id": 2,
+        "analysis_completed_at": "2026-08-20T19:44:50Z",
+        "historical_customer_import": {
+          "import_id": 1,
+          "completed_at": "2026-08-20T11:02:40Z",
+          "source_checksum": null
+        },
+        "historical_campaign_sales_import": {
+          "import_id": 2,
+          "completed_at": "2026-08-20T11:03:13Z",
+          "source_checksum": null
+        },
+        "current_customer_import_id": 1,
+        "current_campaign_sales_import_id": 2,
+        "predates_controlled_source_replacement": false
+      },
+      {
+        "analysis_run_id": 3,
+        "analysis_completed_at": "2026-08-20T19:45:50Z",
+        "historical_customer_import": {
+          "import_id": 1,
+          "completed_at": "2026-08-20T11:02:40Z",
+          "source_checksum": null
+        },
+        "historical_campaign_sales_import": {
+          "import_id": 2,
+          "completed_at": "2026-08-20T11:03:13Z",
+          "source_checksum": null
+        },
+        "current_customer_import_id": 1,
+        "current_campaign_sales_import_id": 2,
+        "predates_controlled_source_replacement": false
+      },
+      {
+        "analysis_run_id": 4,
+        "analysis_completed_at": "2026-08-20T19:46:00Z",
+        "historical_customer_import": {
+          "import_id": 1,
+          "completed_at": "2026-08-20T11:02:40Z",
+          "source_checksum": null
+        },
+        "historical_campaign_sales_import": {
+          "import_id": 2,
+          "completed_at": "2026-08-20T11:03:13Z",
+          "source_checksum": null
+        },
+        "current_customer_import_id": 1,
+        "current_campaign_sales_import_id": 2,
+        "predates_controlled_source_replacement": false
+      },
+      {
+        "analysis_run_id": 5,
+        "analysis_completed_at": "2026-08-20T19:46:09Z",
+        "historical_customer_import": {
+          "import_id": 1,
+          "completed_at": "2026-08-20T11:02:40Z",
+          "source_checksum": null
+        },
+        "historical_campaign_sales_import": {
+          "import_id": 2,
+          "completed_at": "2026-08-20T11:03:13Z",
+          "source_checksum": null
+        },
+        "current_customer_import_id": 1,
+        "current_campaign_sales_import_id": 2,
+        "predates_controlled_source_replacement": false
+      },
+      {
+        "analysis_run_id": 6,
+        "analysis_completed_at": "2026-08-20T19:46:20Z",
+        "historical_customer_import": {
+          "import_id": 1,
+          "completed_at": "2026-08-20T11:02:40Z",
+          "source_checksum": null
+        },
+        "historical_campaign_sales_import": {
+          "import_id": 2,
+          "completed_at": "2026-08-20T11:03:13Z",
+          "source_checksum": null
+        },
+        "current_customer_import_id": 1,
+        "current_campaign_sales_import_id": 2,
+        "predates_controlled_source_replacement": false
+      },
+      {
+        "analysis_run_id": 7,
+        "analysis_completed_at": "2026-08-20T19:54:37Z",
+        "historical_customer_import": {
+          "import_id": 1,
+          "completed_at": "2026-08-20T11:02:40Z",
+          "source_checksum": null
+        },
+        "historical_campaign_sales_import": {
+          "import_id": 2,
+          "completed_at": "2026-08-20T11:03:13Z",
+          "source_checksum": null
+        },
+        "current_customer_import_id": 1,
+        "current_campaign_sales_import_id": 2,
+        "predates_controlled_source_replacement": false
+      },
+      {
+        "analysis_run_id": 8,
+        "analysis_completed_at": "2026-08-20T19:56:55Z",
+        "historical_customer_import": {
+          "import_id": 1,
+          "completed_at": "2026-08-20T11:02:40Z",
+          "source_checksum": null
+        },
+        "historical_campaign_sales_import": {
+          "import_id": 2,
+          "completed_at": "2026-08-20T11:03:13Z",
+          "source_checksum": null
+        },
+        "current_customer_import_id": 1,
+        "current_campaign_sales_import_id": 2,
+        "predates_controlled_source_replacement": false
+      },
+      {
+        "analysis_run_id": 9,
+        "analysis_completed_at": "2026-08-20T19:57:09Z",
+        "historical_customer_import": {
+          "import_id": 1,
+          "completed_at": "2026-08-20T11:02:40Z",
+          "source_checksum": null
+        },
+        "historical_campaign_sales_import": {
+          "import_id": 2,
+          "completed_at": "2026-08-20T11:03:13Z",
+          "source_checksum": null
+        },
+        "current_customer_import_id": 1,
+        "current_campaign_sales_import_id": 2,
+        "predates_controlled_source_replacement": false
+      },
+      {
+        "analysis_run_id": 10,
+        "analysis_completed_at": "2026-08-20T20:04:25Z",
+        "historical_customer_import": {
+          "import_id": 1,
+          "completed_at": "2026-08-20T11:02:40Z",
+          "source_checksum": null
+        },
+        "historical_campaign_sales_import": {
+          "import_id": 2,
+          "completed_at": "2026-08-20T11:03:13Z",
+          "source_checksum": null
+        },
+        "current_customer_import_id": 1,
+        "current_campaign_sales_import_id": 2,
+        "predates_controlled_source_replacement": false
+      }
+    ]
+  },
+  "current_model_scoring_chain": {
+    "analysis_run_id": 10,
+    "model_run_id": 6,
+    "scoring_run_id": 7,
+    "demographic_import_id": 5,
+    "demographic_source_checksum": "7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db",
+    "model_artifact_sha256": "a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210",
+    "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+    "score_row_count": 5000000,
+    "historical_source_provenance": "UNPROVEN"
+  },
+  "categorical_diagnostics": {
+    "gender": {
+      "customer_category_count": 3,
+      "demographic_category_count": 3,
+      "customer_only_categories": [],
+      "demographic_only_categories": [],
+      "unknown_categories": "ignored_safely"
+    },
+    "state": {
+      "customer_category_count": 27,
+      "demographic_category_count": 27,
+      "customer_only_categories": [],
+      "demographic_only_categories": [],
+      "unknown_categories": "ignored_safely"
+    },
+    "marital_status": {
+      "customer_category_count": 4,
+      "demographic_category_count": 4,
+      "customer_only_categories": [],
+      "demographic_only_categories": [],
+      "unknown_categories": "ignored_safely"
+    },
+    "education": {
+      "customer_category_count": 7,
+      "demographic_category_count": 8,
+      "customer_only_categories": [],
+      "demographic_only_categories": [
+        "High school student"
+      ],
+      "unknown_categories": "ignored_safely"
+    },
+    "employment_status": {
+      "customer_category_count": 7,
+      "demographic_category_count": 7,
+      "customer_only_categories": [],
+      "demographic_only_categories": [],
+      "unknown_categories": "ignored_safely"
+    },
+    "resident_status": {
+      "customer_category_count": 4,
+      "demographic_category_count": 4,
+      "customer_only_categories": [],
+      "demographic_only_categories": [],
+      "unknown_categories": "ignored_safely"
+    },
+    "resident_type": {
+      "customer_category_count": 3,
+      "demographic_category_count": 3,
+      "customer_only_categories": [],
+      "demographic_only_categories": [],
+      "unknown_categories": "ignored_safely"
+    },
+    "type_of_employment": {
+      "customer_category_count": 6,
+      "demographic_category_count": 6,
+      "customer_only_categories": [],
+      "demographic_only_categories": [],
+      "unknown_categories": "ignored_safely"
+    }
+  },
+  "phase6_scope_scan": {
+    "api_phase6_features_present": false,
+    "frontend_placeholders_only": true,
+    "notes": [
+      "No Audience Explorer or activation API routes found.",
+      "Frontend contains later-phase placeholder text only."
+    ]
+  },
+  "step2_go_no_go": "GO"
+}

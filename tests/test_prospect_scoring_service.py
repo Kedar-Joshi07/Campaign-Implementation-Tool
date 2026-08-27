@@ -70,15 +70,73 @@ def database_path(tmp_path: Path) -> Path:
 
 def _insert_completed_analysis(database_path: Path) -> int:
     with get_connection(database_path, write=True) as connection:
+        customer_import_id = int(
+            connection.execute(
+                """
+                INSERT INTO data_import_runs (
+                    dataset_name,
+                    source_path,
+                    started_at,
+                    completed_at,
+                    status,
+                    rows_read,
+                    rows_inserted,
+                    rows_rejected,
+                    source_checksum
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "customers",
+                    "data/customers_fixture.csv",
+                    "2026-08-25T23:59:00Z",
+                    "2026-08-25T23:59:10Z",
+                    "COMPLETED",
+                    0,
+                    0,
+                    0,
+                    "c" * 64,
+                ),
+            ).lastrowid
+        )
+        campaign_import_id = int(
+            connection.execute(
+                """
+                INSERT INTO data_import_runs (
+                    dataset_name,
+                    source_path,
+                    started_at,
+                    completed_at,
+                    status,
+                    rows_read,
+                    rows_inserted,
+                    rows_rejected,
+                    source_checksum
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "campaign_sales",
+                    "data/campaign_sales_fixture.csv",
+                    "2026-08-25T23:59:11Z",
+                    "2026-08-25T23:59:20Z",
+                    "COMPLETED",
+                    0,
+                    0,
+                    0,
+                    "d" * 64,
+                ),
+            ).lastrowid
+        )
         cursor = connection.execute(
             """
             INSERT INTO historical_analysis_runs (
                 analysis_name, created_at, completed_at, status,
                 conversion_definition, filters_json, results_json,
+                customer_import_id, customer_source_checksum,
+                campaign_sales_import_id, campaign_sales_source_checksum,
                 observation_count, selected_customer_count,
                 positive_customer_count, unlabeled_customer_count,
                 positive_customer_rate
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 "Scoring service fixture",
@@ -88,6 +146,10 @@ def _insert_completed_analysis(database_path: Path) -> int:
                 "ATTRIBUTED_PURCHASE",
                 "{}",
                 "{}",
+                customer_import_id,
+                "c" * 64,
+                campaign_import_id,
+                "d" * 64,
                 100,
                 20,
                 5,
@@ -303,15 +365,26 @@ def _seed_demographics(database_path: Path, count: int) -> None:
     _insert_demographic_import_provenance(database_path, rows_inserted=count)
 
 
-def _scoreable_context(*, model_run_id: int, preprocessor: Any, estimator: Any) -> ScoreableModelContext:
+def _scoreable_context(
+    *,
+    model_run_id: int,
+    analysis_run_id: int,
+    preprocessor: Any,
+    estimator: Any,
+) -> ScoreableModelContext:
     return ScoreableModelContext(
         model_run_id=model_run_id,
+        analysis_run_id=analysis_run_id,
         selected_candidate="BAGGING_PU",
         model_role_policy_version="2",
         evaluation_contract_version="2",
         feature_contract_version="1",
         feature_contract_sha256=FEATURE_CONTRACT_SHA256,
         artifact_sha256="a" * 64,
+        customer_import_id=1,
+        customer_source_checksum="c" * 64,
+        campaign_sales_import_id=2,
+        campaign_sales_source_checksum="d" * 64,
         artifact_payload={
             "selected_candidate": "BAGGING_PU",
             "preprocessor": preprocessor,
@@ -333,6 +406,7 @@ def test_chunked_scoring_persists_all_scores_and_completes(database_path: Path, 
         "validate_scoreable_model",
         lambda *_args, **_kwargs: _scoreable_context(
             model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
             preprocessor=preprocessor,
             estimator=estimator,
         ),
@@ -408,6 +482,7 @@ def test_multiple_chunks_final_partial_and_verification_helper(database_path: Pa
         "validate_scoreable_model",
         lambda *_args, **_kwargs: _scoreable_context(
             model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
             preprocessor=preprocessor,
             estimator=estimator,
         ),
@@ -470,6 +545,7 @@ def test_scoring_failures_mark_run_failed_and_isolate_partial_rows(
         "validate_scoreable_model",
         lambda *_args, **_kwargs: _scoreable_context(
             model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
             preprocessor=preprocessor,
             estimator=estimator,
         ),
@@ -528,6 +604,7 @@ def test_zero_population_rejected_before_scoring_run_creation(
         "validate_scoreable_model",
         lambda *_args, **_kwargs: _scoreable_context(
             model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
             preprocessor=_TrackingPreprocessor(),
             estimator=_TrackingEstimator(),
         ),
@@ -563,6 +640,7 @@ def test_snapshot_drift_detected_at_completion(database_path: Path, monkeypatch:
         "validate_scoreable_model",
         lambda *_args, **_kwargs: _scoreable_context(
             model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
             preprocessor=preprocessor,
             estimator=estimator,
         ),
@@ -627,6 +705,7 @@ def test_missing_demographic_import_provenance_rejected_before_scoring_run_creat
         "validate_scoreable_model",
         lambda *_args, **_kwargs: _scoreable_context(
             model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
             preprocessor=_TrackingPreprocessor(),
             estimator=_TrackingEstimator(),
         ),
@@ -674,6 +753,7 @@ def test_invalid_demographic_import_checksum_rejected_before_scoring_run_creatio
         "validate_scoreable_model",
         lambda *_args, **_kwargs: _scoreable_context(
             model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
             preprocessor=_TrackingPreprocessor(),
             estimator=_TrackingEstimator(),
         ),
@@ -702,6 +782,7 @@ def test_import_checksum_drift_detected_at_completion(
         "validate_scoreable_model",
         lambda *_args, **_kwargs: _scoreable_context(
             model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
             preprocessor=_TrackingPreprocessor(),
             estimator=_TrackingEstimator(),
         ),
@@ -761,6 +842,7 @@ def test_validate_completed_scoring_run_provenance_marks_canonical_run(
         "validate_scoreable_model",
         lambda *_args, **_kwargs: _scoreable_context(
             model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
             preprocessor=_TrackingPreprocessor(),
             estimator=_TrackingEstimator(),
         ),

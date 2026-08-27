@@ -230,7 +230,7 @@ def test_migration_from_v4_preserves_jobs_and_is_idempotent(database_path: Path)
             ).fetchall()
         }
 
-    assert schema_version == "6"
+    assert schema_version == "8"
     assert jobs_count == 1
     assert job_columns == JOB_COLUMNS
     assert scoring_columns == SCORING_RUN_COLUMNS
@@ -396,13 +396,21 @@ def test_legacy_v5_completed_run_uniqueness_migrates_to_v6_non_unique_preserving
         schema_version = connection.execute(
             "SELECT value FROM app_metadata WHERE key = 'schema_version'"
         ).fetchone()[0]
-        index_row = connection.execute(
+        legacy_index_row = connection.execute(
             """
-            SELECT "unique"
+            SELECT name
             FROM pragma_index_list('scoring_runs')
             WHERE name = 'idx_scoring_runs_completed_model_unique'
             """
         ).fetchone()
+        index_row = connection.execute(
+            """
+            SELECT "unique"
+            FROM pragma_index_list('scoring_runs')
+            WHERE name = 'idx_scoring_runs_completed_model_newest'
+            """
+        ).fetchone()
+        assert legacy_index_row is None
         assert index_row is not None
         assert int(index_row["unique"]) == 0
 
@@ -463,7 +471,7 @@ def test_legacy_v5_completed_run_uniqueness_migrates_to_v6_non_unique_preserving
             (model_run_id,),
         ).fetchone()[0]
 
-    assert schema_version == "6"
+    assert schema_version == "8"
     assert completed_count == 2
 
 

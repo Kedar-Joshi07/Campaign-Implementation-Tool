@@ -135,3 +135,41 @@ Status: COMPLETE (GO)
 - API semantics confirmed: stale history does not disable score submit, current canonical blocks duplicate scoring, run detail verification reflects current source.
 - scope freeze confirmed: no Phase 6 implementation activated.
 - authoritative Phase 6 baseline: final HEAD from this step's dedicated freeze commit.
+
+## Step 8 — Final Phase 1-5 Acceptance Freeze (Current)
+Status: COMPLETE (GO)
+- starting SHA: `5f54c5e7138afaf615984babd32cac3a6bf2a99b`.
+- final SHA at freeze completion: `5f54c5e7138afaf615984babd32cac3a6bf2a99b`.
+- schema version: `8`.
+- campaign source decision: regenerated campaign history was promoted as current source for final baseline.
+- underage historical contact count: before `5453`, after `0`.
+- canonical current imports:
+	- customers: `import_id=8`, checksum `3a3449e64f582aaa17765fae2bb3c44c5352cb7c6ff723797fab322665aa36b8`.
+	- campaign_sales: `import_id=9`, checksum `58106df84855c66128559c5abdf5258a9fbd950c000152d67199e1397fdaaefb`.
+	- demographics: `import_id=5`, checksum `7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`.
+- canonical current derived chain:
+	- analysis: `analysis_run_id=12` (`COMPLETED`, source provenance captured).
+	- training: `job_id=20` (`COMPLETED`) -> `model_run_id=8`.
+	- scoring: `job_id=21` (`COMPLETED`) -> `scoring_run_id=8`.
+- frozen contracts and governance:
+	- selected candidate: `BAGGING_PU`.
+	- model role policy version: `2`.
+	- evaluation contract version: `2`.
+	- feature contract version/hash: `1` / `a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`.
+	- artifact SHA: `755e8f81bc1238673d17f59fb52044f44b5f00a8810fee82e694b4c4b8709d18`.
+- score reconciliation (`scoring_run_id=8`): snapshot `5,000,000`; scored `5,000,000`; score rows `5,000,000`; distinct IDs `5,000,000`; duplicates `0`; invalid FK `0`; nonfinite `0`; below-zero `0`; above-one `0`.
+- score summary: min `0.06774103945805435`, mean `0.20595671379862576`, max `0.9782832402557606`.
+- deterministic verification: `verify_scoring_run_sample(scoring_run_id=8, sample_size=256)` -> `verified=true`, `max_abs_diff=0.0`.
+- API path evidence:
+	- `GET /api/models/8/scoring-status` -> `200`, `eligible=false`, `demographic_source_verified=true`.
+	- `GET /api/scoring-runs/8` -> `200`, `status=COMPLETED`, `scored_person_count=5,000,000`.
+	- `GET /api/jobs/21` -> `200`, `status=COMPLETED`.
+	- duplicate `POST /api/models/8/score` -> `409`.
+- Step 8 gates:
+	- `python -m pip check` -> no broken requirements.
+	- `python -m pytest -q` -> `344 passed`.
+	- `python -m compileall -q app scripts tests` -> clean.
+	- `git diff --check` -> no whitespace/conflict failures (line-ending warnings only).
+	- `python scripts/validate_data.py --json` -> `overall_status=OK`.
+- final integrity evidence artifact: `docs/evidence/phase1_to_phase5_final_integrity.json`.
+- Phase 6 scope status: not implemented; freeze decision remains `GO`.

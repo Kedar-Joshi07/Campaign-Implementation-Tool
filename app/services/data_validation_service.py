@@ -211,8 +211,8 @@ def validate_demographic_row(row: Mapping[str, str]) -> tuple[object, ...]:
     values["state"] = _required_text(row, "state")
 
     age = _integer(row["age"], "age")
-    if age is None or not 0 <= age <= 120:
-        raise DataValidationError("age must be between 0 and 120")
+    if age is None or not 18 <= age <= 100:
+        raise DataValidationError("age must be between 18 and 100")
     values["age"] = age
 
     family_count = _integer(row["family_member_count"], "family_member_count")
@@ -224,8 +224,8 @@ def validate_demographic_row(row: Mapping[str, str]) -> tuple[object, ...]:
         raise DataValidationError("family_member_count must be at least 1")
     if children is None or children < 0:
         raise DataValidationError("number_of_children_in_family must be nonnegative")
-    if adults is None or adults < 0:
-        raise DataValidationError("number_of_adults_in_family must be nonnegative")
+    if adults is None or adults < 1:
+        raise DataValidationError("number_of_adults_in_family must be at least 1")
     if children + adults != family_count:
         raise DataValidationError(
             "number_of_children_in_family + number_of_adults_in_family "

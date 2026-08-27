@@ -225,7 +225,31 @@ def run_reconciliation(
             WHERE customer.customer_id IS NULL
             """,
         )
+        underage_contact_metrics, underage_contact_seconds = _timed_query(
+            connection,
+            "campaign_sales_underage_contacts",
+            """
+            SELECT COALESCE(SUM(
+                CASE
+                    WHEN (
+                        CAST(strftime('%Y', campaign.contact_date) AS INTEGER)
+                        - CAST(strftime('%Y', customer.date_of_birth) AS INTEGER)
+                        - CASE
+                            WHEN strftime('%m-%d', campaign.contact_date)
+                                 < strftime('%m-%d', customer.date_of_birth)
+                            THEN 1 ELSE 0
+                          END
+                    ) < 18
+                    THEN 1
+                    ELSE 0
+                END
+            ), 0) AS underage_campaign_contact_count
+            FROM campaign_sales AS campaign
+            JOIN customers AS customer ON customer.customer_id = campaign.customer_id
+            """,
+        )
         campaign_metrics.update(invalid_fk_metrics)
+        campaign_metrics.update(underage_contact_metrics)
         campaign_sales = _dataset_result(
             metrics=campaign_metrics,
             policy=policies["campaign_sales"],
@@ -238,8 +262,11 @@ def run_reconciliation(
                 "pu_consistency_violation_count": campaign_metrics[
                     "pu_consistency_violation_count"
                 ],
+                "underage_campaign_contact_count": campaign_metrics[
+                    "underage_campaign_contact_count"
+                ],
             },
-            query_seconds=campaign_seconds + invalid_fk_seconds,
+            query_seconds=campaign_seconds + invalid_fk_seconds + underage_contact_seconds,
         )
 
         demographic_metrics, demographic_seconds = _timed_query(
@@ -253,6 +280,13 @@ def run_reconciliation(
                 MAX(age) AS max_age,
                 MIN(individual_yearly_income) AS min_individual_yearly_income,
                 MAX(individual_yearly_income) AS max_individual_yearly_income,
+                COALESCE(SUM(CASE WHEN age < 18 THEN 1 ELSE 0 END), 0)
+                    AS age_below_18_count,
+                COALESCE(SUM(CASE WHEN age > 100 THEN 1 ELSE 0 END), 0)
+                    AS age_above_100_count,
+                COALESCE(SUM(
+                    CASE WHEN number_of_adults_in_family < 1 THEN 1 ELSE 0 END
+                ), 0) AS adult_count_below_1,
                 COALESCE(SUM(
                     CASE
                         WHEN family_member_count <>
@@ -280,6 +314,9 @@ def run_reconciliation(
                 "family_income_below_individual_violation_count": demographic_metrics[
                     "family_income_below_individual_violation_count"
                 ],
+                "age_below_18_count": demographic_metrics["age_below_18_count"],
+                "age_above_100_count": demographic_metrics["age_above_100_count"],
+                "adult_count_below_1": demographic_metrics["adult_count_below_1"],
             },
             query_seconds=demographic_seconds,
         )

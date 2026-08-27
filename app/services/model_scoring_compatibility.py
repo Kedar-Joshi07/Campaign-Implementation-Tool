@@ -27,9 +27,15 @@ from app.ml.model_roles import (
     PRIMARY_ROLE_GOVERNED_SELECTION,
 )
 from app.ml.pu_estimators import positive_class_scores
+from app.repositories.historical_repository import HistoricalRepository
 from app.repositories.model_run_repository import ModelRunRepository
 from app.repositories.prospect_scoring_repository import ProspectScoringRepository
 from app.repositories.prospect_scoring_repository import MAX_SCORING_CHUNK_LIMIT
+from app.services.historical_source_provenance_service import (
+    HistoricalSourceProvenanceError,
+    is_saved_analysis_provenance_current,
+    saved_analysis_source_provenance,
+)
 from app.services.model_training_service import load_verified_model_artifact
 
 
@@ -44,12 +50,17 @@ class ModelScoreabilityValidationError(ModelScoringCompatibilityError):
 @dataclass(frozen=True)
 class ScoreableModelContext:
     model_run_id: int
+    analysis_run_id: int
     selected_candidate: str
     model_role_policy_version: str
     evaluation_contract_version: str
     feature_contract_version: str
     feature_contract_sha256: str
     artifact_sha256: str
+    customer_import_id: int
+    customer_source_checksum: str
+    campaign_sales_import_id: int
+    campaign_sales_source_checksum: str
     artifact_payload: dict[str, Any]
 
 
@@ -153,6 +164,37 @@ def validate_scoreable_model(
         raise ModelScoreabilityValidationError("Model run was not found.")
 
     _assert_scoreable_status_and_candidate(row)
+
+    analysis_run_id = row.get("analysis_run_id")
+    if isinstance(analysis_run_id, bool) or not isinstance(analysis_run_id, int) or analysis_run_id <= 0:
+        raise ModelScoreabilityValidationError(
+            "The model historical analysis reference is invalid for prospect scoring."
+        )
+
+    analysis_row = HistoricalRepository(database_path).fetch_analysis_run(analysis_run_id)
+    if analysis_row is None or analysis_row.get("status") != "COMPLETED":
+        raise ModelScoreabilityValidationError(
+            "The model historical analysis run is unavailable for prospect scoring."
+        )
+    try:
+        saved_provenance = saved_analysis_source_provenance(analysis_row)
+        provenance_current, _ = is_saved_analysis_provenance_current(
+            database_path,
+            analysis_row,
+        )
+    except HistoricalSourceProvenanceError as exc:
+        raise ModelScoreabilityValidationError(
+            "The model historical source provenance could not be validated."
+        ) from exc
+    if saved_provenance is None:
+        raise ModelScoreabilityValidationError(
+            "The model historical analysis has no source provenance."
+        )
+    if not provenance_current:
+        raise ModelScoreabilityValidationError(
+            "The model historical analysis source provenance is stale."
+        )
+
     metrics = _decode_json_object(row.get("metrics_json"), field_name="metrics_json")
     _assert_governance(metrics)
     feature_contract = _decode_json_object(
@@ -187,12 +229,17 @@ def validate_scoreable_model(
 
     return ScoreableModelContext(
         model_run_id=model_run_id,
+        analysis_run_id=analysis_run_id,
         selected_candidate=PRIMARY_MODEL_NAME,
         model_role_policy_version=MODEL_ROLE_POLICY_VERSION,
         evaluation_contract_version=EVALUATION_CONTRACT_VERSION,
         feature_contract_version=FEATURE_CONTRACT_VERSION,
         feature_contract_sha256=FEATURE_CONTRACT_SHA256,
         artifact_sha256=str(row["artifact_sha256"]),
+        customer_import_id=saved_provenance.customer_import_id,
+        customer_source_checksum=saved_provenance.customer_source_checksum,
+        campaign_sales_import_id=saved_provenance.campaign_sales_import_id,
+        campaign_sales_source_checksum=saved_provenance.campaign_sales_source_checksum,
         artifact_payload=artifact_payload,
     )
 

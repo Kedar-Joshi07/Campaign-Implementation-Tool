@@ -41,7 +41,6 @@ _FILTER_COLUMNS = {
     "campaign_types": "campaign_type",
 }
 
-
 def build_matching_observations_cte(
     filters: dict[str, Any],
 ) -> tuple[str, tuple[Any, ...]]:
@@ -837,6 +836,10 @@ class HistoricalRepository:
         created_at: str,
         conversion_definition: str,
         filters_json: str,
+        customer_import_id: int | None = None,
+        customer_source_checksum: str | None = None,
+        campaign_sales_import_id: int | None = None,
+        campaign_sales_source_checksum: str | None = None,
     ) -> int:
         with get_connection(self.database_path, write=True) as connection:
             cursor = connection.execute(
@@ -846,10 +849,23 @@ class HistoricalRepository:
                     created_at,
                     status,
                     conversion_definition,
-                    filters_json
-                ) VALUES (?, ?, 'RUNNING', ?, ?)
+                    filters_json,
+                    customer_import_id,
+                    customer_source_checksum,
+                    campaign_sales_import_id,
+                    campaign_sales_source_checksum
+                ) VALUES (?, ?, 'RUNNING', ?, ?, ?, ?, ?, ?)
                 """,
-                (analysis_name, created_at, conversion_definition, filters_json),
+                (
+                    analysis_name,
+                    created_at,
+                    conversion_definition,
+                    filters_json,
+                    customer_import_id,
+                    customer_source_checksum,
+                    campaign_sales_import_id,
+                    campaign_sales_source_checksum,
+                ),
             )
             return int(cursor.lastrowid)
 
@@ -927,6 +943,10 @@ class HistoricalRepository:
                     conversion_definition,
                     filters_json,
                     results_json,
+                    customer_import_id,
+                    customer_source_checksum,
+                    campaign_sales_import_id,
+                    campaign_sales_source_checksum,
                     observation_count,
                     selected_customer_count,
                     positive_customer_count,
@@ -952,6 +972,10 @@ class HistoricalRepository:
                     status,
                     conversion_definition,
                     filters_json,
+                    customer_import_id,
+                    customer_source_checksum,
+                    campaign_sales_import_id,
+                    campaign_sales_source_checksum,
                     observation_count,
                     selected_customer_count,
                     positive_customer_count,

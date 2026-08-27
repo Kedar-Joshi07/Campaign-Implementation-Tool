@@ -100,6 +100,58 @@ def completed_analysis(tmp_path: Path) -> tuple[Path, int]:
             """,
             observations,
         )
+        connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name,
+                source_path,
+                started_at,
+                completed_at,
+                status,
+                rows_read,
+                rows_inserted,
+                rows_rejected,
+                source_checksum
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "customers",
+                "data/customers_model_fixture.csv",
+                "2026-08-26T00:00:00Z",
+                "2026-08-26T00:00:05Z",
+                "COMPLETED",
+                60,
+                60,
+                0,
+                "c" * 64,
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name,
+                source_path,
+                started_at,
+                completed_at,
+                status,
+                rows_read,
+                rows_inserted,
+                rows_rejected,
+                source_checksum
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "campaign_sales",
+                "data/campaign_sales_model_fixture.csv",
+                "2026-08-26T00:00:06Z",
+                "2026-08-26T00:00:10Z",
+                "COMPLETED",
+                60,
+                60,
+                0,
+                "d" * 64,
+            ),
+        )
     analysis = create_historical_analysis(database_path, {})
     return database_path, int(analysis["analysis_run_id"])
 

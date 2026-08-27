@@ -149,8 +149,20 @@ def test_valid_small_fixture_is_ok_and_reports_metrics(database_path: Path) -> N
     assert result["datasets"]["campaign_sales"]["metrics"][
         "invalid_customer_fk_count"
     ] == 0
+    assert result["datasets"]["campaign_sales"]["metrics"][
+        "underage_campaign_contact_count"
+    ] == 0
     assert result["datasets"]["demographics"]["metrics"][
         "family_arithmetic_violation_count"
+    ] == 0
+    assert result["datasets"]["demographics"]["structural_issues"][
+        "age_below_18_count"
+    ] == 0
+    assert result["datasets"]["demographics"]["structural_issues"][
+        "age_above_100_count"
+    ] == 0
+    assert result["datasets"]["demographics"]["structural_issues"][
+        "adult_count_below_1"
     ] == 0
     assert result["total_query_seconds"] >= 0
     assert all(
@@ -168,8 +180,80 @@ def test_deliberately_broken_fixture_is_error(database_path: Path) -> None:
     assert result["datasets"]["campaign_sales"]["structural_issues"][
         "pu_consistency_violation_count"
     ] == 1
+    assert result["datasets"]["campaign_sales"]["structural_issues"][
+        "underage_campaign_contact_count"
+    ] == 0
     assert result["datasets"]["demographics"]["status"] == STATUS_ERROR
     assert result["datasets"]["demographics"]["structural_error_count"] == 2
+    assert result["datasets"]["demographics"]["structural_issues"][
+        "age_below_18_count"
+    ] == 0
+    assert result["datasets"]["demographics"]["structural_issues"][
+        "age_above_100_count"
+    ] == 0
+    assert result["datasets"]["demographics"]["structural_issues"][
+        "adult_count_below_1"
+    ] == 0
+
+
+@pytest.mark.parametrize(
+    ("update_sql", "params", "expected_issue"),
+    (
+        (
+            "UPDATE demographics SET age = ? WHERE person_id = ?",
+            (17, "PER_001"),
+            "age_below_18_count",
+        ),
+        (
+            "UPDATE demographics SET age = ? WHERE person_id = ?",
+            (101, "PER_001"),
+            "age_above_100_count",
+        ),
+        (
+            """
+            UPDATE demographics
+            SET number_of_adults_in_family = ?,
+                number_of_children_in_family = ?,
+                family_member_count = ?
+            WHERE person_id = ?
+            """,
+            (0, 1, 1, "PER_001"),
+            "adult_count_below_1",
+        ),
+    ),
+)
+def test_demographic_contract_boundary_violations_are_structural_errors(
+    database_path: Path,
+    update_sql: str,
+    params: tuple[int | str, ...],
+    expected_issue: str,
+) -> None:
+    _seed_fixture(database_path)
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(update_sql, params)
+
+    result = run_reconciliation(database_path, _expected_counts())
+
+    assert result["overall_status"] == STATUS_ERROR
+    assert result["datasets"]["demographics"]["status"] == STATUS_ERROR
+    assert result["datasets"]["demographics"]["structural_issues"][expected_issue] == 1
+
+
+def test_campaign_underage_contact_is_structural_error(database_path: Path) -> None:
+    _seed_fixture(database_path)
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            "UPDATE customers SET date_of_birth = ? WHERE customer_id = ?",
+            ("2010-01-15", "CUS_001"),
+        )
+
+    result = run_reconciliation(database_path, _expected_counts())
+
+    assert result["overall_status"] == STATUS_ERROR
+    assert result["datasets"]["campaign_sales"]["status"] == STATUS_ERROR
+    assert result["datasets"]["campaign_sales"]["structural_issues"][
+        "underage_campaign_contact_count"
+    ] == 1
 
 
 def test_exact_expected_count_mismatch_is_warning(database_path: Path) -> None:

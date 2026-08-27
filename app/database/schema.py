@@ -16,7 +16,7 @@ from app.database.connection import get_connection
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 6
+CURRENT_SCHEMA_VERSION = 8
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -41,6 +41,10 @@ HISTORICAL_ANALYSIS_RUN_COLUMNS = (
     "conversion_definition",
     "filters_json",
     "results_json",
+    "customer_import_id",
+    "customer_source_checksum",
+    "campaign_sales_import_id",
+    "campaign_sales_source_checksum",
     "observation_count",
     "selected_customer_count",
     "positive_customer_count",
@@ -469,8 +473,8 @@ PHASE_FIVE_REQUIRED_INDEX_STATEMENTS = {
         "CREATE INDEX IF NOT EXISTS idx_scoring_runs_status "
         "ON scoring_runs (status, created_at DESC, scoring_run_id DESC)"
     ),
-    "idx_scoring_runs_completed_model_unique": (
-        "CREATE INDEX IF NOT EXISTS idx_scoring_runs_completed_model_unique "
+    "idx_scoring_runs_completed_model_newest": (
+        "CREATE INDEX IF NOT EXISTS idx_scoring_runs_completed_model_newest "
         "ON scoring_runs (model_run_id, completed_at DESC, scoring_run_id DESC) "
         "WHERE status = 'COMPLETED'"
     ),
@@ -589,6 +593,10 @@ def _migrate_to_version_2(connection: sqlite3.Connection) -> None:
                 )),
             filters_json TEXT NOT NULL,
             results_json TEXT,
+            customer_import_id INTEGER,
+            customer_source_checksum TEXT,
+            campaign_sales_import_id INTEGER,
+            campaign_sales_source_checksum TEXT,
             observation_count INTEGER NOT NULL DEFAULT 0
                 CHECK (observation_count >= 0),
             selected_customer_count INTEGER NOT NULL DEFAULT 0
@@ -602,6 +610,19 @@ def _migrate_to_version_2(connection: sqlite3.Connection) -> None:
             CHECK (
                 positive_customer_rate IS NULL
                 OR positive_customer_rate BETWEEN 0 AND 1
+            ),
+            CHECK (
+                customer_import_id IS NULL OR customer_import_id > 0
+            ),
+            CHECK (
+                campaign_sales_import_id IS NULL OR campaign_sales_import_id > 0
+            ),
+            CHECK (
+                customer_source_checksum IS NULL OR length(customer_source_checksum) = 64
+            ),
+            CHECK (
+                campaign_sales_source_checksum IS NULL
+                OR length(campaign_sales_source_checksum) = 64
             )
         )
         """
@@ -1053,7 +1074,57 @@ def _migrate_to_version_5(connection: sqlite3.Connection) -> None:
 def _migrate_to_version_6(connection: sqlite3.Connection) -> None:
     # Replace legacy one-completed-run-per-model uniqueness with lookup indexing.
     connection.execute("DROP INDEX IF EXISTS idx_scoring_runs_completed_model_unique")
-    connection.execute(PHASE_FIVE_REQUIRED_INDEX_STATEMENTS["idx_scoring_runs_completed_model_unique"])
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_scoring_runs_completed_model_unique
+        ON scoring_runs (model_run_id, completed_at DESC, scoring_run_id DESC)
+        WHERE status = 'COMPLETED'
+        """
+    )
+
+
+def _migrate_to_version_7(connection: sqlite3.Connection) -> None:
+    existing_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(historical_analysis_runs)").fetchall()
+    }
+    if "customer_import_id" not in existing_columns:
+        connection.execute(
+            """
+            ALTER TABLE historical_analysis_runs
+            ADD COLUMN customer_import_id INTEGER
+            """
+        )
+    if "customer_source_checksum" not in existing_columns:
+        connection.execute(
+            """
+            ALTER TABLE historical_analysis_runs
+            ADD COLUMN customer_source_checksum TEXT
+            """
+        )
+    if "campaign_sales_import_id" not in existing_columns:
+        connection.execute(
+            """
+            ALTER TABLE historical_analysis_runs
+            ADD COLUMN campaign_sales_import_id INTEGER
+            """
+        )
+    if "campaign_sales_source_checksum" not in existing_columns:
+        connection.execute(
+            """
+            ALTER TABLE historical_analysis_runs
+            ADD COLUMN campaign_sales_source_checksum TEXT
+            """
+        )
+
+
+def _migrate_to_version_8(connection: sqlite3.Connection) -> None:
+    connection.execute("DROP INDEX IF EXISTS idx_scoring_runs_completed_model_unique")
+    connection.execute(
+        PHASE_FIVE_REQUIRED_INDEX_STATEMENTS[
+            "idx_scoring_runs_completed_model_newest"
+        ]
+    )
 
 
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
@@ -1062,6 +1133,8 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     4: _migrate_to_version_4,
     5: _migrate_to_version_5,
     6: _migrate_to_version_6,
+    7: _migrate_to_version_7,
+    8: _migrate_to_version_8,
 }
 
 

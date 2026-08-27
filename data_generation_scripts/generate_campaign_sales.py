@@ -413,6 +413,17 @@ def customer_age_on(dob: pd.Series, campaign_date: date) -> np.ndarray:
     return ((ref - dob).dt.days.to_numpy(dtype=float) / 365.2425)
 
 
+def customer_completed_age_on(dob: pd.Series, reference_date: date) -> np.ndarray:
+    ref_year = reference_date.year
+    ref_month_day = reference_date.month * 100 + reference_date.day
+    dob_year = dob.dt.year.to_numpy(dtype=int)
+    dob_month_day = (dob.dt.month.to_numpy(dtype=int) * 100) + dob.dt.day.to_numpy(
+        dtype=int
+    )
+    had_birthday = ref_month_day >= dob_month_day
+    return ref_year - dob_year - (~had_birthday).astype(int)
+
+
 def target_segment_weight(
     segment: str,
     age: np.ndarray,
@@ -560,6 +571,11 @@ def generate(args: argparse.Namespace) -> None:
         print("WARNING: very small customer master; default calibration assumes a much larger population")
 
     customers["date_of_birth"] = pd.to_datetime(customers["date_of_birth"], errors="raise")
+    dob_year = customers["date_of_birth"].dt.year.to_numpy(dtype=int)
+    dob_month_day = (
+        customers["date_of_birth"].dt.month.to_numpy(dtype=int) * 100
+        + customers["date_of_birth"].dt.day.to_numpy(dtype=int)
+    )
     income = pd.to_numeric(customers["individual_yearly_income"], errors="raise").to_numpy(dtype=float)
     family = pd.to_numeric(customers["family_member_count"], errors="raise").to_numpy(dtype=float)
     education_score = customers["education"].map(EDUCATION_SCORE).fillna(.30).to_numpy(dtype=float)
@@ -613,6 +629,8 @@ def generate(args: argparse.Namespace) -> None:
     total_gross_margin = 0.0
     order_sequence = 0
     row_sequence = 0
+    underage_contact_count = 0
+    minimum_age_at_contact: int | None = None
 
     opener = gzip.open if str(out_file).endswith(".gz") else open
     with opener(out_file, "wt", encoding="utf-8", newline="") as fh:
@@ -624,6 +642,14 @@ def generate(args: argparse.Namespace) -> None:
             end = to_date(campaign.campaign_end_date)
             product = product_by_id[campaign.product_id]
             age = customer_age_on(customers["date_of_birth"], start)
+            completed_age_at_start = customer_completed_age_on(customers["date_of_birth"], start)
+            eligible_indices = np.flatnonzero(completed_age_at_start >= 18)
+            if campaign.target_row_count > int(eligible_indices.size):
+                raise ValueError(
+                    "Campaign target size exceeds customers age>=18 at campaign start; "
+                    f"campaign_id={campaign.campaign_id} target={campaign.target_row_count} "
+                    f"eligible={int(eligible_indices.size)}"
+                )
 
             affinity = product_affinity(
                 product.product_category, age, income, family, education_score,
@@ -657,12 +683,13 @@ def generate(args: argparse.Namespace) -> None:
             selection_w = normalize_weights(
                 segment_w * type_w * fatigue * (.55 + 1.15 * affinity) * np.exp(.12 * latent)
             )
+            eligible_selection_w = normalize_weights(selection_w[eligible_indices])
 
             selected = rng.choice(
-                n_customers,
+                eligible_indices,
                 size=campaign.target_row_count,
                 replace=False,
-                p=selection_w,
+                p=eligible_selection_w,
             )
 
             # Contact dates are within campaign window.
@@ -750,6 +777,16 @@ def generate(args: argparse.Namespace) -> None:
                 campaign_sales_id = f"CS{row_sequence:09d}"
                 customer_id = customer_ids[customer_idx]
                 contact_date = contact_dates[local_i]
+                contact_month_day = contact_date.month * 100 + contact_date.day
+                age_at_contact = (
+                    contact_date.year
+                    - int(dob_year[customer_idx])
+                    - int(contact_month_day < int(dob_month_day[customer_idx]))
+                )
+                if minimum_age_at_contact is None or age_at_contact < minimum_age_at_contact:
+                    minimum_age_at_contact = age_at_contact
+                if age_at_contact < 18:
+                    underage_contact_count += 1
 
                 engagement_flag = int(engaged[local_i])
                 response_flag = int(response[local_i])
@@ -878,6 +915,8 @@ def generate(args: argparse.Namespace) -> None:
 
     if row_sequence != args.n_rows:
         raise RuntimeError(f"Expected {args.n_rows:,} rows but wrote {row_sequence:,}")
+    if minimum_age_at_contact is None:
+        raise RuntimeError("No campaign contacts were generated.")
 
     with open(sample_file, "w", encoding="utf-8", newline="") as sf:
         sw = csv.writer(sf)
@@ -903,6 +942,8 @@ def generate(args: argparse.Namespace) -> None:
         "campaign_attributed_sales": positives,
         "pu_positive_rate": round(positives / row_sequence, 6),
         "pu_unlabeled_rows": row_sequence - positives,
+        "underage_contact_count": underage_contact_count,
+        "minimum_age_at_contact": int(minimum_age_at_contact),
         "total_net_sales": round(total_net_sales, 2),
         "total_gross_margin": round(total_gross_margin, 2),
         "campaign_type_distribution": dict(type_counter),

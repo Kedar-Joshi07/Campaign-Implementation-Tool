@@ -14,6 +14,11 @@ from pydantic import ValidationError
 
 from app.repositories.historical_repository import HistoricalRepository
 from app.schemas.historical import HistoricalAnalysisFilters
+from app.services.historical_source_provenance_service import (
+    HistoricalSourceProvenance,
+    HistoricalSourceProvenanceError,
+    resolve_current_historical_source_provenance,
+)
 from app.services.historical_service import _normalize_aggregate
 
 
@@ -110,6 +115,29 @@ class HistoricalAnalysisNotFoundError(HistoricalAnalysisError):
 
 class HistoricalSavedRunError(HistoricalAnalysisError):
     pass
+
+
+def _assert_historical_source_provenance_stable(
+    *,
+    captured: HistoricalSourceProvenance,
+    current: HistoricalSourceProvenance,
+) -> None:
+    if captured.customer_import_id != current.customer_import_id:
+        raise HistoricalDataIntegrityError(
+            "Historical customer import provenance changed during analysis execution."
+        )
+    if captured.customer_source_checksum != current.customer_source_checksum:
+        raise HistoricalDataIntegrityError(
+            "Historical customer source checksum changed during analysis execution."
+        )
+    if captured.campaign_sales_import_id != current.campaign_sales_import_id:
+        raise HistoricalDataIntegrityError(
+            "Historical campaign_sales import provenance changed during analysis execution."
+        )
+    if captured.campaign_sales_source_checksum != current.campaign_sales_source_checksum:
+        raise HistoricalDataIntegrityError(
+            "Historical campaign_sales source checksum changed during analysis execution."
+        )
 
 
 def _utc_timestamp() -> str:
@@ -476,6 +504,13 @@ def create_historical_analysis(
     value: HistoricalAnalysisFilters | dict[str, Any],
 ) -> dict[str, Any]:
     normalized = normalize_historical_filters(database_path, value)
+    try:
+        source_provenance = resolve_current_historical_source_provenance(database_path)
+    except HistoricalSourceProvenanceError as exc:
+        raise HistoricalDataNotReadyError(
+            "Historical customer/campaign import provenance is not ready."
+        ) from exc
+
     repository = HistoricalRepository(database_path)
     filters = normalized.filter_payload()
     created_at = _utc_timestamp()
@@ -484,11 +519,25 @@ def create_historical_analysis(
         created_at=created_at,
         conversion_definition=normalized.conversion_definition,
         filters_json=_stable_json(filters),
+        customer_import_id=source_provenance.customer_import_id,
+        customer_source_checksum=source_provenance.customer_source_checksum,
+        campaign_sales_import_id=source_provenance.campaign_sales_import_id,
+        campaign_sales_source_checksum=source_provenance.campaign_sales_source_checksum,
     )
 
     try:
         raw = repository.analyze_cohort(filters)
         results = _compose_analysis_result(raw)
+        try:
+            current_provenance = resolve_current_historical_source_provenance(database_path)
+        except HistoricalSourceProvenanceError as exc:
+            raise HistoricalDataIntegrityError(
+                "Historical source provenance became unavailable during analysis execution."
+            ) from exc
+        _assert_historical_source_provenance_stable(
+            captured=source_provenance,
+            current=current_provenance,
+        )
         completed_at = _utc_timestamp()
         repository.complete_analysis_run(
             analysis_run_id=analysis_run_id,

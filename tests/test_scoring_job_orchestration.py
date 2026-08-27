@@ -38,15 +38,73 @@ def database_path(tmp_path: Path) -> Path:
 
 def _insert_completed_analysis(database_path: Path) -> int:
     with get_connection(database_path, write=True) as connection:
+        customer_import_id = int(
+            connection.execute(
+                """
+                INSERT INTO data_import_runs (
+                    dataset_name,
+                    source_path,
+                    started_at,
+                    completed_at,
+                    status,
+                    rows_read,
+                    rows_inserted,
+                    rows_rejected,
+                    source_checksum
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "customers",
+                    "data/customers_fixture.csv",
+                    "2026-08-26T23:59:00Z",
+                    "2026-08-26T23:59:10Z",
+                    "COMPLETED",
+                    0,
+                    0,
+                    0,
+                    "c" * 64,
+                ),
+            ).lastrowid
+        )
+        campaign_import_id = int(
+            connection.execute(
+                """
+                INSERT INTO data_import_runs (
+                    dataset_name,
+                    source_path,
+                    started_at,
+                    completed_at,
+                    status,
+                    rows_read,
+                    rows_inserted,
+                    rows_rejected,
+                    source_checksum
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "campaign_sales",
+                    "data/campaign_sales_fixture.csv",
+                    "2026-08-26T23:59:11Z",
+                    "2026-08-26T23:59:20Z",
+                    "COMPLETED",
+                    0,
+                    0,
+                    0,
+                    "d" * 64,
+                ),
+            ).lastrowid
+        )
         cursor = connection.execute(
             """
             INSERT INTO historical_analysis_runs (
                 analysis_name, created_at, completed_at, status,
                 conversion_definition, filters_json, results_json,
+                customer_import_id, customer_source_checksum,
+                campaign_sales_import_id, campaign_sales_source_checksum,
                 observation_count, selected_customer_count,
                 positive_customer_count, unlabeled_customer_count,
                 positive_customer_rate
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 "Scoring orchestration fixture",
@@ -56,6 +114,10 @@ def _insert_completed_analysis(database_path: Path) -> int:
                 "ATTRIBUTED_PURCHASE",
                 "{}",
                 "{}",
+                customer_import_id,
+                "c" * 64,
+                campaign_import_id,
+                "d" * 64,
                 25,
                 10,
                 4,
@@ -196,6 +258,23 @@ def _complete_scoring_run(
     job_repository = JobRepository(database_path)
     scoring_repository = ScoringRepository(database_path)
 
+    with get_connection(database_path) as connection:
+        analysis_row = connection.execute(
+            """
+            SELECT
+                m.analysis_run_id,
+                h.customer_import_id,
+                h.customer_source_checksum,
+                h.campaign_sales_import_id,
+                h.campaign_sales_source_checksum
+            FROM model_runs m
+            JOIN historical_analysis_runs h ON h.analysis_run_id = m.analysis_run_id
+            WHERE m.model_run_id = ?
+            """,
+            (model_run_id,),
+        ).fetchone()
+    assert analysis_row is not None
+
     job_id = job_repository.create_scoring_job(
         created_at=created_at,
         request_payload={"model_run_id": model_run_id},
@@ -236,6 +315,11 @@ def _complete_scoring_run(
             "demographic_min_person_id": person_id,
             "demographic_max_person_id": person_id,
             "model_run_id": model_run_id,
+            "analysis_run_id": int(analysis_row["analysis_run_id"]),
+            "customer_import_id": int(analysis_row["customer_import_id"]),
+            "customer_source_checksum": str(analysis_row["customer_source_checksum"]),
+            "campaign_sales_import_id": int(analysis_row["campaign_sales_import_id"]),
+            "campaign_sales_source_checksum": str(analysis_row["campaign_sales_source_checksum"]),
             "selected_candidate": "BAGGING_PU",
             "feature_contract_version": "1",
             "feature_contract_sha256": "a" * 64,
@@ -440,6 +524,11 @@ def test_scoring_submit_rejects_when_completed_canonical_run_exists(
             "demographic_min_person_id": "PER_000001",
             "demographic_max_person_id": "PER_000001",
             "model_run_id": model_run_id,
+            "analysis_run_id": analysis_run_id,
+            "customer_import_id": 1,
+            "customer_source_checksum": "c" * 64,
+            "campaign_sales_import_id": 2,
+            "campaign_sales_source_checksum": "d" * 64,
             "selected_candidate": "BAGGING_PU",
             "feature_contract_version": "1",
             "feature_contract_sha256": "a" * 64,

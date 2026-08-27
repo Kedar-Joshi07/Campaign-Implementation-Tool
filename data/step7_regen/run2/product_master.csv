@@ -1,0 +1,49 @@
+product_id,product_name,product_category,product_subcategory,product_price,product_cost,product_tier,product_launch_date
+PRD001,Wireless Earbuds 01,Electronics,Audio,47.39,20.7,Economy,2022-01-24
+PRD002,Portable Speaker 02,Electronics,Audio,80.03,46.64,Economy,2022-01-26
+PRD003,Tablet 03,Electronics,Computing,168.41,83.22,Standard,2022-02-04
+PRD004,Laptop 04,Electronics,Computing,277.96,130.33,Standard,2022-02-25
+PRD005,Smart Watch 05,Electronics,Wearables,599.26,284.95,Premium,2022-02-28
+PRD006,Portable SSD 06,Electronics,Storage,993.43,403.55,Premium,2022-03-20
+PRD007,Air Fryer 07,Home & Kitchen,Kitchen Appliances,33.15,19.33,Economy,2022-03-21
+PRD008,Coffee Maker 08,Home & Kitchen,Kitchen Appliances,58.17,32.39,Economy,2022-03-28
+PRD009,Vacuum Cleaner 09,Home & Kitchen,Home Appliances,126.27,64.28,Standard,2022-05-04
+PRD010,Cookware Set 10,Home & Kitchen,Cookware,231.84,111.96,Standard,2022-05-15
+PRD011,Water Purifier 11,Home & Kitchen,Home Appliances,392.52,176.32,Premium,2022-09-23
+PRD012,Stand Mixer 12,Home & Kitchen,Kitchen Appliances,745.99,394.28,Premium,2022-11-07
+PRD013,Fitness Band 13,Fitness & Wellness,Wearables,27.44,17.25,Economy,2023-01-01
+PRD014,Yoga Kit 14,Fitness & Wellness,Fitness Accessories,50.95,21.98,Economy,2023-01-06
+PRD015,Adjustable Dumbbell Set 15,Fitness & Wellness,Strength Training,97.63,49.54,Standard,2023-01-10
+PRD016,Massage Device 16,Fitness & Wellness,Recovery,194.55,89.94,Standard,2023-01-27
+PRD017,Exercise Bike 17,Fitness & Wellness,Cardio Equipment,419.16,196.11,Premium,2023-02-17
+PRD018,Nutrition Blender 18,Fitness & Wellness,Wellness Appliances,919.53,419.7,Premium,2023-02-25
+PRD019,Electric Grooming Kit 19,Personal Care,Grooming,20.3,11.06,Economy,2023-03-04
+PRD020,Skin Care Set 20,Personal Care,Skin Care,31.89,17.22,Economy,2023-06-26
+PRD021,Hair Styling Tool 21,Personal Care,Hair Care,57.47,35.33,Standard,2023-07-03
+PRD022,Electric Toothbrush 22,Personal Care,Oral Care,106.3,50.86,Standard,2023-07-10
+PRD023,Personal Care Bundle 23,Personal Care,Personal Care,176.29,73.6,Premium,2023-07-13
+PRD024,Travel Grooming Kit 24,Personal Care,Grooming,299.97,124.95,Premium,2023-07-21
+PRD025,Everyday Jacket 25,Apparel & Accessories,Outerwear,23.38,11.36,Economy,2023-07-27
+PRD026,Performance Shoes 26,Apparel & Accessories,Footwear,37.11,19.31,Economy,2023-08-22
+PRD027,Travel Backpack 27,Apparel & Accessories,Bags,63.93,37.9,Standard,2023-11-13
+PRD028,Casual Watch 28,Apparel & Accessories,Accessories,111.99,64.52,Standard,2023-11-27
+PRD029,Premium Wallet 29,Apparel & Accessories,Accessories,184.24,96.46,Premium,2024-01-11
+PRD030,Athleisure Set 30,Apparel & Accessories,Activewear,258.35,106.25,Premium,2024-01-16
+PRD031,Camping Tent 31,Outdoor & Recreation,Camping,37.62,20.12,Economy,2024-02-16
+PRD032,Hiking Pack 32,Outdoor & Recreation,Hiking,67.26,41.14,Economy,2024-08-03
+PRD033,Portable Grill 33,Outdoor & Recreation,Outdoor Cooking,136.37,69.32,Standard,2024-09-05
+PRD034,Cycling Gear Set 34,Outdoor & Recreation,Cycling,268.39,148.15,Standard,2024-09-20
+PRD035,Cooler 35,Outdoor & Recreation,Outdoor Accessories,449.53,254.94,Premium,2024-10-10
+PRD036,Inflatable Paddle Board 36,Outdoor & Recreation,Water Recreation,912.88,491.32,Premium,2024-10-25
+PRD037,Ergonomic Chair 37,Office & Productivity,Office Furniture,27.28,13.74,Economy,2024-10-27
+PRD038,Mechanical Keyboard 38,Office & Productivity,Computer Accessories,46.72,19.73,Economy,2024-10-31
+PRD039,Monitor 39,Office & Productivity,Displays,95.56,49.17,Standard,2025-01-23
+PRD040,Webcam 40,Office & Productivity,Computer Accessories,218.54,139.11,Standard,2025-04-29
+PRD041,Desk Lamp 41,Office & Productivity,Office Accessories,427.72,235.45,Premium,2025-06-09
+PRD042,Document Scanner 42,Office & Productivity,Office Electronics,976.32,406.53,Premium,2025-06-17
+PRD043,Smart Speaker 43,Smart Home,Smart Assistants,23.37,11.33,Economy,2025-08-07
+PRD044,Smart Bulb Kit 44,Smart Home,Smart Lighting,40.7,25.19,Economy,2025-08-14
+PRD045,Video Doorbell 45,Smart Home,Home Security,76.51,43.67,Standard,2025-08-15
+PRD046,Smart Thermostat 46,Smart Home,Climate Control,140.72,88.64,Standard,2025-09-18
+PRD047,Indoor Camera 47,Smart Home,Home Security,253.03,134.32,Premium,2025-09-23
+PRD048,Smart Plug Pack 48,Smart Home,Smart Lighting,409.17,214.82,Premium,2025-09-26

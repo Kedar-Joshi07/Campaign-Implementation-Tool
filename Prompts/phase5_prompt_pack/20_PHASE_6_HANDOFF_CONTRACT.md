@@ -3,14 +3,14 @@
 Phase 6 may consume a Phase 5 scoring run only when all canonical usability rules are satisfied against the current demographics source.
 
 Canonical Phase 5 finalization reference (pre-Phase-6):
-- `model_run_id=6`
-- `job_id=18`
-- `scoring_run_id=7`
+- `model_run_id=8`
+- `job_id=21`
+- `scoring_run_id=8`
 - `demographic_import_id=5`
 - `demographic_source_checksum=7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`
 - scored count = snapshot count = `5,000,000`
 - feature contract version/hash = `1` / `a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`
-- artifact SHA = `a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210`
+- artifact SHA = `755e8f81bc1238673d17f59fb52044f44b5f00a8810fee82e694b4c4b8709d18`
 
 Canonical usability rule for Phase 6:
 - `status = COMPLETED`;
@@ -28,9 +28,9 @@ Phase 6 must reject any score set whose provenance does not match loaded demogra
 - reject when `demographic_snapshot_count` differs,
 - reject when demographic min/max `person_id` envelope differs.
 
-Historical scoring evidence remains preserved (`scoring_run_id=5` on `model_run_id=7`) and is not canonical for Phase 6.
+Historical scoring evidence remains preserved (`scoring_run_id=5` on `model_run_id=7` and `scoring_run_id=7` on `model_run_id=6`) and is not canonical for Phase 6.
 
-Final correction validation evidence is recorded at `docs/evidence/phase5_final_corrections_validation.json`.
+Final correction validation evidence is recorded at `docs/evidence/phase1_to_phase5_final_integrity.json`.
 
 Phase 6 may then separately freeze and implement paginated scored-prospect retrieval, search/filter, ranking, score thresholds, percentiles/bands, aggregate audience profiling, top-N selection, and Audience Explorer UI.
 

@@ -187,14 +187,14 @@ Confirmed absent from backend/frontend runtime surfaces:
   - `source_checksum=7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`
   - `rows_read=5,000,000`, `rows_inserted=5,000,000`, `rows_rejected=0`
 - Final canonical scoring run:
-  - `model_run_id=6`
-  - `job_id=18`
-  - `scoring_run_id=7`
+  - `model_run_id=8`
+  - `job_id=21`
+  - `scoring_run_id=8`
   - `selected_candidate=BAGGING_PU`
-  - `model_role_policy_version=2`
+  - `verify_scoring_run_sample(scoring_run_id=8, sample_size=256)` -> `verified=true`, `max_abs_diff=0.0`
   - `feature_contract_version=1`
-  - `feature_contract_sha256=a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`
-  - `artifact_sha256=a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210`
+	- `model_run_id=8` status `COMPLETED`;
+	- `scoring_run_id=8` status `COMPLETED`;
 - Exact reconciliation and quality:
   - demographics count = `5,000,000`
   - distinct demographics person_id = `5,000,000`
@@ -291,3 +291,68 @@ A Phase 5 scoring run is Phase 6-usable only when all hold:
 - demographic count and min/max `person_id` envelope match current source.
 
 Stale completed runs are audit history only.
+
+## Final Step 8 Freeze Addendum (Current Canonical Baseline)
+
+- Starting SHA: `5f54c5e7138afaf615984babd32cac3a6bf2a99b`
+- Final SHA at freeze completion: `5f54c5e7138afaf615984babd32cac3a6bf2a99b`
+- Schema version: `8`
+
+### Campaign regeneration and promotion decision
+
+- Measured historical underage contacts before final promotion: `5,453`.
+- Regenerated campaign source was promoted as current baseline source.
+- Underage contacts after promotion: `0`.
+
+### Current source provenance (main DB)
+
+- customers: `import_id=8`, checksum `3a3449e64f582aaa17765fae2bb3c44c5352cb7c6ff723797fab322665aa36b8`
+- campaign_sales: `import_id=9`, checksum `58106df84855c66128559c5abdf5258a9fbd950c000152d67199e1397fdaaefb`
+- demographics: `import_id=5`, checksum `7d57a02add836f448ed2d937e60bb6c0d38402c3c82e6f219b54e904e0e0c2db`
+
+### Current canonical derived chain
+
+- analysis: `analysis_run_id=12` (`COMPLETED`)
+- training: `job_id=20` (`COMPLETED`) -> `model_run_id=8`
+- scoring: `job_id=21` (`COMPLETED`) -> `scoring_run_id=8`
+
+Frozen contracts and governance:
+
+- selected candidate: `BAGGING_PU`
+- model role policy version: `2`
+- evaluation contract version: `2`
+- feature contract version/hash: `1` / `a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535`
+- artifact SHA: `755e8f81bc1238673d17f59fb52044f44b5f00a8810fee82e694b4c4b8709d18`
+
+### 5M reconciliation and deterministic verification
+
+- demographic snapshot count: `5,000,000`
+- scored person count: `5,000,000`
+- persisted score rows: `5,000,000`
+- distinct person IDs: `5,000,000`
+- duplicate person IDs: `0`
+- invalid demographic FK: `0`
+- nonfinite scores: `0`
+- score below `0`: `0`
+- score above `1`: `0`
+- score summary: min `0.06774103945805435`, mean `0.20595671379862576`, max `0.9782832402557606`
+- deterministic sample re-score: `verify_scoring_run_sample(scoring_run_id=8, sample_size=256)` -> `verified=true`, `max_abs_diff=0.0`
+
+### Step 8 gates and API-path evidence
+
+- `python -m pip check`: no broken requirements found.
+- `python -m pytest -q`: `344 passed`.
+- `python -m compileall -q app scripts tests`: clean.
+- `git diff --check`: no whitespace/conflict failures (line-ending warnings only).
+- `python scripts/validate_data.py --json`: `overall_status=OK`.
+
+Relevant API path outcomes:
+
+- `GET /api/models/8/scoring-status` -> `200`, `eligible=false`, `demographic_source_verified=true`
+- `GET /api/scoring-runs/8` -> `200`, `status=COMPLETED`, `scored_person_count=5,000,000`
+- `GET /api/jobs/21` -> `200`, `status=COMPLETED`
+- duplicate `POST /api/models/8/score` -> `409`
+
+Final integrity evidence artifact: `docs/evidence/phase1_to_phase5_final_integrity.json`.
+
+Phase 6 status at freeze: no Phase 6 functionality implemented; decision = `GO`.

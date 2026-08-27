@@ -52,15 +52,73 @@ def _insert_analysis_run(database_path: Path, *, status: str = "COMPLETED") -> i
     completed_at = "2026-08-28T00:00:02Z" if status != "RUNNING" else None
     results_json = "{}" if status == "COMPLETED" else None
     with get_connection(database_path, write=True) as connection:
+        customer_import_id = int(
+            connection.execute(
+                """
+                INSERT INTO data_import_runs (
+                    dataset_name,
+                    source_path,
+                    started_at,
+                    completed_at,
+                    status,
+                    rows_read,
+                    rows_inserted,
+                    rows_rejected,
+                    source_checksum
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "customers",
+                    "data/customers_fixture.csv",
+                    "2026-08-27T23:59:00Z",
+                    "2026-08-27T23:59:10Z",
+                    "COMPLETED",
+                    0,
+                    0,
+                    0,
+                    "c" * 64,
+                ),
+            ).lastrowid
+        )
+        campaign_import_id = int(
+            connection.execute(
+                """
+                INSERT INTO data_import_runs (
+                    dataset_name,
+                    source_path,
+                    started_at,
+                    completed_at,
+                    status,
+                    rows_read,
+                    rows_inserted,
+                    rows_rejected,
+                    source_checksum
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "campaign_sales",
+                    "data/campaign_sales_fixture.csv",
+                    "2026-08-27T23:59:11Z",
+                    "2026-08-27T23:59:20Z",
+                    "COMPLETED",
+                    0,
+                    0,
+                    0,
+                    "d" * 64,
+                ),
+            ).lastrowid
+        )
         cursor = connection.execute(
             """
             INSERT INTO historical_analysis_runs (
                 analysis_name, created_at, completed_at, status,
                 conversion_definition, filters_json, results_json,
+                customer_import_id, customer_source_checksum,
+                campaign_sales_import_id, campaign_sales_source_checksum,
                 observation_count, selected_customer_count,
                 positive_customer_count, unlabeled_customer_count,
                 positive_customer_rate
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 "Scoring API fixture",
@@ -70,6 +128,10 @@ def _insert_analysis_run(database_path: Path, *, status: str = "COMPLETED") -> i
                 "ATTRIBUTED_PURCHASE",
                 "{}",
                 results_json,
+                customer_import_id,
+                "c" * 64,
+                campaign_import_id,
+                "d" * 64,
                 12,
                 5,
                 2,
@@ -324,15 +386,20 @@ def _insert_completed_demographic_import(
     return int(cursor.lastrowid)
 
 
-def _scoreable_context(model_run_id: int) -> ScoreableModelContext:
+def _scoreable_context(model_run_id: int, analysis_run_id: int) -> ScoreableModelContext:
     return ScoreableModelContext(
         model_run_id=model_run_id,
+        analysis_run_id=analysis_run_id,
         selected_candidate="BAGGING_PU",
         model_role_policy_version="2",
         evaluation_contract_version="2",
         feature_contract_version="1",
         feature_contract_sha256=FEATURE_CONTRACT_SHA256,
         artifact_sha256="a" * 64,
+        customer_import_id=1,
+        customer_source_checksum="c" * 64,
+        campaign_sales_import_id=2,
+        campaign_sales_source_checksum="d" * 64,
         artifact_payload={"preprocessor": object(), "estimator": object()},
     )
 
@@ -447,7 +514,7 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
     monkeypatch.setattr(
         model_api_service_module,
         "validate_scoreable_model",
-        lambda *_args, **_kwargs: _scoreable_context(model_run_id),
+        lambda *_args, **_kwargs: _scoreable_context(model_run_id, analysis_run_id),
     )
 
     eligible = client.get(f"/api/models/{model_run_id}/scoring-status")
@@ -495,6 +562,11 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
             ),
         )
 
+    _insert_demographic_person(database_path, "PER_000001")
+    _insert_demographic_person(database_path, "PER_000002")
+    _insert_demographic_person(database_path, "PER_000003")
+    demographic_import_id = _insert_completed_demographic_import(database_path, rows_inserted=3)
+
     completed_job_id = _insert_scoring_job(
         database_path,
         model_run_id=model_run_id,
@@ -534,12 +606,17 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
         completed_at="2026-08-28T01:01:05Z",
         score_summary_json=json.dumps(
             {
-                "demographic_import_id": 1,
+                    "demographic_import_id": demographic_import_id,
                 "demographic_source_checksum": "d" * 64,
                 "demographic_snapshot_count": 3,
                 "demographic_min_person_id": "PER_000001",
                 "demographic_max_person_id": "PER_000003",
                 "model_run_id": model_run_id,
+                "analysis_run_id": analysis_run_id,
+                "customer_import_id": 1,
+                "customer_source_checksum": "c" * 64,
+                "campaign_sales_import_id": 2,
+                "campaign_sales_source_checksum": "d" * 64,
                 "selected_candidate": "BAGGING_PU",
                 "feature_contract_version": "1",
                 "feature_contract_sha256": "a" * 64,
@@ -563,11 +640,6 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
         ),
         error_message=None,
     )
-
-    _insert_demographic_person(database_path, "PER_000001")
-    _insert_demographic_person(database_path, "PER_000002")
-    _insert_demographic_person(database_path, "PER_000003")
-    _insert_completed_demographic_import(database_path, rows_inserted=3)
     with get_connection(database_path, write=True) as connection:
         connection.executemany(
             """
@@ -606,7 +678,7 @@ def test_scoring_status_stale_completed_history_keeps_rescoring_eligible(
     monkeypatch.setattr(
         model_api_service_module,
         "validate_scoreable_model",
-        lambda *_args, **_kwargs: _scoreable_context(model_run_id),
+        lambda *_args, **_kwargs: _scoreable_context(model_run_id, analysis_run_id),
     )
 
     for person_id in ("PER_000001", "PER_000002", "PER_000003"):
@@ -644,6 +716,11 @@ def test_scoring_status_stale_completed_history_keeps_rescoring_eligible(
                 "demographic_min_person_id": "PER_000001",
                 "demographic_max_person_id": "PER_000003",
                 "model_run_id": model_run_id,
+                "analysis_run_id": analysis_run_id,
+                "customer_import_id": 1,
+                "customer_source_checksum": "c" * 64,
+                "campaign_sales_import_id": 2,
+                "campaign_sales_source_checksum": "d" * 64,
                 "selected_candidate": "BAGGING_PU",
                 "feature_contract_version": "1",
                 "feature_contract_sha256": "a" * 64,
@@ -730,7 +807,7 @@ def test_scoring_status_prefers_current_source_canonical_run_over_newer_stale_ru
     monkeypatch.setattr(
         model_api_service_module,
         "validate_scoreable_model",
-        lambda *_args, **_kwargs: _scoreable_context(model_run_id),
+        lambda *_args, **_kwargs: _scoreable_context(model_run_id, analysis_run_id),
     )
 
     for person_id in ("PER_000001", "PER_000002", "PER_000003"):
@@ -768,6 +845,11 @@ def test_scoring_status_prefers_current_source_canonical_run_over_newer_stale_ru
                 "demographic_min_person_id": "PER_000001",
                 "demographic_max_person_id": "PER_000003",
                 "model_run_id": model_run_id,
+                "analysis_run_id": analysis_run_id,
+                "customer_import_id": 1,
+                "customer_source_checksum": "c" * 64,
+                "campaign_sales_import_id": 2,
+                "campaign_sales_source_checksum": "d" * 64,
                 "selected_candidate": "BAGGING_PU",
                 "feature_contract_version": "1",
                 "feature_contract_sha256": "a" * 64,
@@ -835,6 +917,11 @@ def test_scoring_status_prefers_current_source_canonical_run_over_newer_stale_ru
                 "demographic_min_person_id": "PER_000001",
                 "demographic_max_person_id": "PER_000003",
                 "model_run_id": model_run_id,
+                "analysis_run_id": analysis_run_id,
+                "customer_import_id": 1,
+                "customer_source_checksum": "c" * 64,
+                "campaign_sales_import_id": 2,
+                "campaign_sales_source_checksum": "d" * 64,
                 "selected_candidate": "BAGGING_PU",
                 "feature_contract_version": "1",
                 "feature_contract_sha256": "a" * 64,
