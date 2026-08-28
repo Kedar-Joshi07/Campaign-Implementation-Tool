@@ -636,7 +636,9 @@ def test_classification_helpers_handle_ties_and_bands(database_path: Path) -> No
     assert classify_decile(10) == 1
     assert classify_decile(11) == 2
 
-    assert classify_rank_band(1) == "TOP_10_PERCENT"
-    assert classify_rank_band(20) == "TOP_25_PERCENT"
-    assert classify_rank_band(40) == "TOP_50_PERCENT"
-    assert classify_rank_band(80) == "BOTTOM_50_PERCENT"
+    assert classify_rank_band(1) == "ELITE"
+    assert classify_rank_band(2) == "VERY_HIGH"
+    assert classify_rank_band(8) == "HIGH"
+    assert classify_rank_band(20) == "MEDIUM"
+    assert classify_rank_band(40) == "LOW"
+    assert classify_rank_band(80) == "VERY_LOW"

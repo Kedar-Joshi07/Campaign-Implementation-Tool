@@ -201,13 +201,17 @@ def classify_decile(bucket: int) -> int:
 def classify_rank_band(bucket: int) -> str:
     if isinstance(bucket, bool) or not isinstance(bucket, int) or not 1 <= bucket <= 100:
         raise AudiencePreparationValidationError("bucket must be an integer between 1 and 100.")
+    if bucket == 1:
+        return "ELITE"
+    if bucket <= 5:
+        return "VERY_HIGH"
     if bucket <= 10:
-        return "TOP_10_PERCENT"
+        return "HIGH"
     if bucket <= 25:
-        return "TOP_25_PERCENT"
+        return "MEDIUM"
     if bucket <= 50:
-        return "TOP_50_PERCENT"
-    return "BOTTOM_50_PERCENT"
+        return "LOW"
+    return "VERY_LOW"
 
 
 def _compute_boundaries_for_run(
