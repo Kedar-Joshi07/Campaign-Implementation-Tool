@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-08-28T13:31:58Z",
+  "scope": "phase6_step9_pre_run_gates",
+  "gates": {
+    "pip_check": {
+      "command": "python -m pip check",
+      "passed": true,
+      "summary": "No broken requirements found."
+    },
+    "pytest_q": {
+      "command": "python -m pytest -q",
+      "passed": true,
+      "summary": "413 passed in 457.37s"
+    },
+    "compileall": {
+      "command": "python -m compileall -q app scripts tests",
+      "passed": true,
+      "summary": "No compile errors."
+    },
+    "git_diff_check": {
+      "command": "git diff --check",
+      "passed": true,
+      "summary": "No blocking whitespace or conflict marker issues; CRLF warnings only."
+    },
+    "validate_data_json": {
+      "command": "python scripts/validate_data.py --json",
+      "passed": true,
+      "summary": "overall_status=OK; customers=125000; campaign_sales=570000; demographics=5000000; structural_issues all zero-violation."
+    }
+  }
+}

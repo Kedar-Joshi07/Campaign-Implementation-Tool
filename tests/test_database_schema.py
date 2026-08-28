@@ -7,6 +7,7 @@ import pytest
 
 from app.database.connection import get_connection
 from app.database.schema import (
+    AUDIENCE_RANK_BOUNDARY_COLUMNS,
     CAMPAIGN_SALES_COLUMNS,
     CREATE_TABLE_STATEMENTS,
     CUSTOMER_COLUMNS,
@@ -15,6 +16,8 @@ from app.database.schema import (
     HISTORICAL_ANALYSIS_RUN_COLUMNS,
     MIGRATIONS,
     PHASE_TWO_REQUIRED_INDEX_STATEMENTS,
+    PHASE_SIX_REQUIRED_INDEX_STATEMENTS,
+    SAVED_AUDIENCE_COLUMNS,
     SCHEMA_VERSION,
     UnsupportedSchemaVersionError,
     initialize_database,
@@ -276,7 +279,7 @@ def test_populated_version_one_database_migrates_without_phase_one_data_loss(
 
     assert counts_after == counts_before
     assert customer_after == customer_before
-    assert stored_version == "8"
+    assert stored_version == "9"
 
 
 def test_historical_analysis_table_columns_constraints_and_indexes(database_path: Path) -> None:
@@ -329,6 +332,25 @@ def test_historical_analysis_table_columns_constraints_and_indexes(database_path
                 )
 
 
+def test_phase_six_tables_columns_and_indexes_exist(database_path: Path) -> None:
+    initialize_database(database_path)
+
+    assert _column_names(database_path, "audience_rank_boundaries") == (
+        AUDIENCE_RANK_BOUNDARY_COLUMNS
+    )
+    assert _column_names(database_path, "saved_audiences") == SAVED_AUDIENCE_COLUMNS
+
+    with get_connection(database_path) as connection:
+        existing_indexes = {
+            row["name"]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'index'"
+            ).fetchall()
+        }
+
+    assert set(PHASE_SIX_REQUIRED_INDEX_STATEMENTS) <= existing_indexes
+
+
 def test_failed_migration_rolls_back_schema_and_version(
     database_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -364,7 +386,7 @@ def test_future_schema_version_is_rejected(database_path: Path) -> None:
             "UPDATE app_metadata SET value = '999' WHERE key = 'schema_version'"
         )
 
-    with pytest.raises(UnsupportedSchemaVersionError, match="newer than supported version 8"):
+    with pytest.raises(UnsupportedSchemaVersionError, match="newer than supported version 9"):
         initialize_database(database_path)
 
 

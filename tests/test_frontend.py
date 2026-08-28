@@ -45,6 +45,7 @@ def test_frontend_contains_functional_phase_one_views(client: TestClient) -> Non
         "/static/js/historical-overview.js",
         "/static/js/historical-analysis.js",
         "/static/js/model-training.js",
+        "/static/js/audience-explorer.js",
         "/static/js/data-status.js",
         "/static/js/app.js",
     ),
@@ -59,10 +60,12 @@ def test_frontend_assets_are_served(client: TestClient, asset_path: str) -> None
 def test_later_phase_navigation_is_visibly_disabled(client: TestClient) -> None:
     html = client.get("/").text
 
-    assert html.count('class="navigation-item is-disabled"') == 2
-    assert html.count("Later phase</small>") == 2
+    assert html.count('class="navigation-item is-disabled"') == 1
+    assert html.count("Later phase</small>") == 1
     assert 'data-view-target="model-training"' in html
+    assert 'data-view-target="audience-explorer"' in html
     assert "Phase 4</small>" in html
+    assert "Phase 6</small>" in html
     assert "Model Training" in html
     assert "Audience Explorer" in html
     assert "Campaigns" in html
@@ -220,7 +223,6 @@ def test_model_training_script_handles_active_job_failure_advisory_and_safety(
 ) -> None:
     script = client.get("/static/js/model-training.js").text
     html = client.get("/").text
-    combined = f"{html}\n{script}".casefold()
 
     assert "trainSubmit.disabled = trainingDisabled" in script
     assert "scoreSubmit.disabled = scoreDisabled" in script
@@ -240,18 +242,105 @@ def test_model_training_script_handles_active_job_failure_advisory_and_safety(
     assert "document.createElement" in script
     assert "replaceChildren" in script
     assert "innerHTML" not in script
-    assert "person_id" not in combined
-    assert "person_ids" not in combined
     assert "person_id" not in script
     assert "propensity_scores" not in script
-    for forbidden in (
-        "score band",
-        "percentile",
-        "top-percent",
-        "audience selection",
-        "audience export",
-        "csv export",
+    assert "audience export" not in script.casefold()
+    assert "csv export" not in script.casefold()
+
+
+def test_audience_explorer_workspace_contains_required_sections_and_controls(
+    client: TestClient,
+) -> None:
+    html = client.get("/").text
+
+    assert 'data-view="audience-explorer"' in html
+    assert 'data-view-target="audience-explorer"' in html
+    for control_id in (
+        "audience-explorer-refresh",
+        "audience-explorer-retry",
+        "audience-prepare-submit",
+        "audience-prepare-retry",
+        "audience-filter-form",
+        "audience-apply-filters",
+        "audience-filter-reset",
+        "audience-clear-filter-chips",
+        "audience-selection-all",
+        "audience-selection-topn",
+        "audience-target-count",
+        "audience-estimate-matching",
+        "audience-estimate-selected",
+        "audience-results-body",
+        "audience-load-more",
+        "audience-profile-dimension",
+        "audience-profile-bars",
+        "audience-traits-body",
+        "audience-save-form",
+        "audience-save-name",
+        "audience-save-description",
+        "audience-save-submit",
+        "saved-audience-list",
+        "saved-audience-detail",
+        "saved-audience-reopen",
+        "saved-audience-use-campaign",
     ):
-        assert forbidden not in combined
-    assert "5,000,000" not in combined
-    assert "5000000" not in combined
+        assert f'id="{control_id}"' in html
+
+    assert "Prepare Audience Explorer" in html
+    assert "Selected vs Universe" in html
+    assert "Selected vs Historical Positives" in html
+    assert "Aggregate demographic comparison only. No prospect is matched to a historical customer." in html
+    assert "Percentile 1 = top 1%. Decile 1 = top 10%. Propensity score is a relative model affinity score, not a purchase probability." in html
+    assert "Use in Campaign - Phase 7" in html
+    assert "No names/email/phone/address/city/postal/ethnicity/religion" not in html
+
+
+def test_audience_explorer_script_uses_required_endpoints_and_state_contracts(
+    client: TestClient,
+) -> None:
+    script = client.get("/static/js/audience-explorer.js").text
+
+    assert 'runs: "/api/audience/runs?limit=20&offset=0"' in script
+    assert 'options: (scoringRunId) => `/api/audience/options?scoring_run_id=${scoringRunId}`' in script
+    assert 'prepare: (scoringRunId) => `/api/audience/runs/${scoringRunId}/prepare`' in script
+    assert 'preparationStatus: (scoringRunId) => `/api/audience/runs/${scoringRunId}/preparation-status`' in script
+    assert 'estimate: "/api/audience/estimate"' in script
+    assert 'search: "/api/audience/search"' in script
+    assert 'profile: "/api/audience/profile"' in script
+    assert 'audiences: "/api/audiences?limit=20&offset=0"' in script
+    assert 'createAudience: "/api/audiences"' in script
+    assert 'audienceDetail: (audienceId) => `/api/audiences/${audienceId}`' in script
+    assert "setScreenState(\"loading\")" in script
+    assert "setScreenState(\"noRun\")" in script
+    assert "setScreenState(\"prepNeeded\")" in script
+    assert "setScreenState(\"prepRunning\")" in script
+    assert "setScreenState(\"prepFailed\")" in script
+    assert "setScreenState(\"workspace\")" in script
+    assert "POLL_INTERVAL_MS = 1500" in script
+    assert "window.setTimeout" in script
+    assert 'querySelector("#audience-load-more").addEventListener("click"' in script
+    assert 'querySelector("#audience-save-form").addEventListener("submit", submitSaveAudience)' in script
+
+
+def test_audience_explorer_script_enforces_safe_fields_and_dom_patterns(
+    client: TestClient,
+) -> None:
+    script = client.get("/static/js/audience-explorer.js").text
+    html = client.get("/").text
+    combined = f"{script}\n{html}".casefold()
+
+    assert "textContent" in script
+    assert "document.createElement" in script
+    assert "replaceChildren" in script
+    assert "innerHTML" not in script
+    assert "first_name" not in combined
+    assert "last_name" not in combined
+    assert "email" not in combined
+    assert "phone_number" not in combined
+    assert "address_line_1" not in combined
+    assert "address_line_2" not in combined
+    assert "postal_code" not in combined
+    assert "ethnicity" not in combined
+    assert "religion" not in combined
+    assert "86% chance to buy" not in combined
+    assert "csv export" not in combined
+    assert "audiences/export" not in combined

@@ -1,5 +1,6 @@
 import { getCachedJSON } from "./api.js";
 import { initializeDataStatus, loadDataStatus } from "./data-status.js";
+import { initializeAudienceExplorer, loadAudienceExplorer } from "./audience-explorer.js";
 import { initializeHistoricalAnalysis, loadHistoricalAnalysis } from "./historical-analysis.js";
 import { initializeModelTraining, loadModelTraining } from "./model-training.js";
 import { initializeOverview, loadOverview } from "./overview.js";
@@ -9,6 +10,7 @@ const viewTitles = {
   "data-status": "Data Status",
   "historical-analysis": "Historical Analysis",
   "model-training": "Model Training",
+  "audience-explorer": "Audience Explorer",
 };
 
 function setBackendStatus(state, text) {
@@ -55,6 +57,7 @@ function showView(viewName) {
   else if (safeView === "data-status") loadDataStatus();
   else if (safeView === "historical-analysis") loadHistoricalAnalysis();
   else if (safeView === "model-training") loadModelTraining();
+  else if (safeView === "audience-explorer") loadAudienceExplorer();
 }
 
 function requestedView() {
@@ -77,6 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeDataStatus();
   initializeHistoricalAnalysis();
   initializeModelTraining();
+  initializeAudienceExplorer();
   initializeNavigation();
   document.querySelector("#backend-status").addEventListener("click", () => checkBackendHealth(true));
   window.addEventListener("backend-status", (event) => {

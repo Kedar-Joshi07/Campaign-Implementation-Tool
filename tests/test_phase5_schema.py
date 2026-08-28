@@ -230,7 +230,7 @@ def test_migration_from_v4_preserves_jobs_and_is_idempotent(database_path: Path)
             ).fetchall()
         }
 
-    assert schema_version == "8"
+    assert schema_version == "9"
     assert jobs_count == 1
     assert job_columns == JOB_COLUMNS
     assert scoring_columns == SCORING_RUN_COLUMNS
@@ -471,7 +471,7 @@ def test_legacy_v5_completed_run_uniqueness_migrates_to_v6_non_unique_preserving
             (model_run_id,),
         ).fetchone()[0]
 
-    assert schema_version == "8"
+    assert schema_version == "9"
     assert completed_count == 2
 
 

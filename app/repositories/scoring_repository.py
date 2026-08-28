@@ -16,6 +16,26 @@ SCORING_STATUS_RUNNING = "RUNNING"
 SCORING_STATUS_COMPLETED = "COMPLETED"
 SCORING_STATUS_FAILED = "FAILED"
 
+MINIMUM_SCORE_SCAN_CHUNK_SIZE = 1_000
+MAXIMUM_SCORE_SCAN_CHUNK_SIZE = 100_000
+
+SCORE_SCAN_QUERY_INITIAL = """
+        SELECT person_id, propensity_score
+        FROM propensity_scores
+        WHERE scoring_run_id = ?
+        ORDER BY propensity_score DESC, person_id ASC
+        LIMIT ?
+"""
+
+SCORE_SCAN_QUERY_AFTER = """
+        SELECT person_id, propensity_score
+        FROM propensity_scores
+        WHERE scoring_run_id = ?
+            AND (propensity_score < ? OR (propensity_score = ? AND person_id > ?))
+        ORDER BY propensity_score DESC, person_id ASC
+        LIMIT ?
+"""
+
 MAXIMUM_ERROR_MESSAGE_LENGTH = 4_096
 MAXIMUM_SUMMARY_JSON_BYTES = 65_536
 
@@ -669,6 +689,65 @@ class ScoringRepository:
             ).fetchall()
         return [dict(row) for row in rows]
 
+    def fetch_rank_scan_chunk(
+        self,
+        *,
+        scoring_run_id: int,
+        limit: int,
+        after_score: float | None = None,
+        after_person_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        normalized_scoring_run_id = _require_positive_int(
+            scoring_run_id,
+            field_name="scoring_run_id",
+        )
+        if (
+            isinstance(limit, bool)
+            or not isinstance(limit, int)
+            or not MINIMUM_SCORE_SCAN_CHUNK_SIZE <= limit <= MAXIMUM_SCORE_SCAN_CHUNK_SIZE
+        ):
+            raise ScoringValidationError(
+                "limit must be an integer between "
+                f"{MINIMUM_SCORE_SCAN_CHUNK_SIZE} and {MAXIMUM_SCORE_SCAN_CHUNK_SIZE}."
+            )
+
+        cursor_score: float | None = None
+        cursor_person_id: str | None = None
+        if after_score is None and after_person_id is None:
+            pass
+        elif after_score is None or after_person_id is None:
+            raise ScoringValidationError(
+                "after_score and after_person_id must be provided together."
+            )
+        else:
+            cursor_score = _optional_score(after_score, field_name="after_score")
+            if cursor_score is None:
+                raise ScoringValidationError("after_score must be provided.")
+            cursor_person_id = _required_text(
+                after_person_id,
+                field_name="after_person_id",
+                maximum=128,
+            )
+
+        with get_connection(self.database_path) as connection:
+            if cursor_score is None:
+                rows = connection.execute(
+                    SCORE_SCAN_QUERY_INITIAL,
+                    (normalized_scoring_run_id, limit),
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    SCORE_SCAN_QUERY_AFTER,
+                    (
+                        normalized_scoring_run_id,
+                        cursor_score,
+                        cursor_score,
+                        cursor_person_id,
+                        limit,
+                    ),
+                ).fetchall()
+        return [dict(row) for row in rows]
+
     def fail_running_scoring_runs(
         self,
         *,
@@ -700,6 +779,10 @@ class ScoringRepository:
 
 
 __all__ = (
+    "MAXIMUM_SCORE_SCAN_CHUNK_SIZE",
+    "MINIMUM_SCORE_SCAN_CHUNK_SIZE",
+    "SCORE_SCAN_QUERY_AFTER",
+    "SCORE_SCAN_QUERY_INITIAL",
     "SCORING_STATUS_COMPLETED",
     "SCORING_STATUS_FAILED",
     "SCORING_STATUS_RUNNING",

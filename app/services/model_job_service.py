@@ -22,7 +22,7 @@ ANALYSIS_NOT_AVAILABLE_MESSAGE = "The selected historical analysis is not availa
 ACTIVE_JOB_CONFLICT_MESSAGE = "A model training job is already active."
 SUBMISSION_FAILURE_MESSAGE = "Model training could not be completed."
 STALE_JOB_INTERRUPTION_MESSAGE = (
-    "Model training was interrupted by application restart."
+    "Compute job was interrupted by application restart."
 )
 STALE_SCORING_INTERRUPTION_MESSAGE = (
     "Prospect scoring was interrupted by application restart."

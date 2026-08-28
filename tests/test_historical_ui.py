@@ -59,7 +59,8 @@ def test_historical_workspace_contains_complete_accessible_form_and_states(
         "historical-analysis-results",
     ):
         assert f'id="{state_id}"' in html
-    assert html.count('role="tablist"') == 2
+    assert 'id="analysis-breakdown-tabs" class="compact-tabs" role="tablist"' in html
+    assert 'id="profile-group-tabs" class="compact-tabs" role="tablist"' in html
     assert 'tabindex="-1">Analysis results</h2>' in html
     assert "Unlabeled customers are not confirmed negatives" in html
 

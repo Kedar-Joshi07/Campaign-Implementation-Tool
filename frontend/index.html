@@ -36,8 +36,8 @@
           </button>
 
           <p class="navigation-label">Later phases</p>
-          <button class="navigation-item is-disabled" type="button" disabled>
-            <span>Audience Explorer</span><small>Later phase</small>
+          <button class="navigation-item" type="button" data-view-target="audience-explorer">
+            <span class="nav-icon" aria-hidden="true">05</span><span>Audience Explorer</span><small>Phase 6</small>
           </button>
           <button class="navigation-item is-disabled" type="button" disabled>
             <span>Campaigns</span><small>Later phase</small>
@@ -679,6 +679,391 @@
                 <div class="notice scoring-relative-note" role="note">
                   <span class="notice-icon" aria-hidden="true">i</span>
                   <p>Propensity scores are relative look-alike affinity scores, not guaranteed purchase probabilities.</p>
+                </div>
+              </section>
+            </section>
+          </div>
+        </section>
+
+        <section id="audience-explorer-view" class="view" data-view="audience-explorer" aria-labelledby="audience-explorer-title" hidden>
+          <div id="audience-explorer-error" class="error-banner" role="alert" hidden>
+            <div>
+              <strong>Audience Explorer is unavailable</strong>
+              <p id="audience-explorer-error-message">The backend request could not be completed.</p>
+            </div>
+            <button id="audience-explorer-retry" class="button button-danger" type="button">Try again</button>
+          </div>
+
+          <section class="page-intro audience-explorer-shell">
+            <div>
+              <p class="eyebrow">Phase 6 · Audience exploration</p>
+              <h2 id="audience-explorer-title">Audience Explorer</h2>
+              <p>Filter, rank, and profile a governed prospect audience from the current canonical scored universe.</p>
+            </div>
+            <button id="audience-explorer-refresh" class="button button-secondary" type="button">Refresh audience workspace</button>
+          </section>
+
+          <div id="audience-explorer-loading" class="analysis-page-loading" role="status" aria-live="polite">
+            <span class="spinner" aria-hidden="true"></span>
+            <div><strong>Loading eligible scoring runs</strong><p>Preparing canonical run context and saved audience definitions.</p></div>
+          </div>
+
+          <div id="audience-explorer-no-run" class="historical-empty" role="status" hidden>
+            <span class="historical-empty-mark" aria-hidden="true">A</span>
+            <div><h3>No canonical scoring run is available</h3><p>Complete model training and prospect scoring before exploring audiences.</p></div>
+          </div>
+
+          <div id="audience-explorer-prep-needed" class="historical-empty" role="status" hidden>
+            <span class="historical-empty-mark" aria-hidden="true">R</span>
+            <div>
+              <h3>Audience rank boundaries are not prepared</h3>
+              <p>Prepare deterministic percentile boundaries for this scoring run before filtering and pagination.</p>
+              <div class="audience-actions-row">
+                <button id="audience-prepare-submit" class="button button-primary" type="button">Prepare Audience Explorer</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="audience-explorer-prep-running" class="analysis-running" role="status" aria-live="polite" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <div>
+              <strong id="audience-prep-running-title">Preparing audience rank boundaries</strong>
+              <p id="audience-prep-running-message">Queueing deterministic rank preparation.</p>
+            </div>
+          </div>
+
+          <div id="audience-explorer-prep-failed" class="historical-empty" role="status" hidden>
+            <span class="historical-empty-mark is-error" aria-hidden="true">!</span>
+            <div>
+              <h3>Audience preparation failed</h3>
+              <p id="audience-prep-failed-message">Audience preparation could not be completed.</p>
+              <div class="audience-actions-row">
+                <button id="audience-prepare-retry" class="button button-danger" type="button">Retry preparation</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="audience-explorer-workspace" hidden>
+            <section class="panel audience-context-panel" aria-labelledby="audience-context-title">
+              <div class="panel-heading">
+                <div><p class="eyebrow">Scoring context</p><h3 id="audience-context-title">Canonical scored universe</h3></div>
+                <span id="audience-source-verified" class="status-badge is-checking">Checking</span>
+              </div>
+              <div class="analysis-metric-grid audience-context-grid">
+                <article><span>Scoring run ID</span><strong id="audience-context-scoring-run">—</strong></article>
+                <article><span>Model run ID</span><strong id="audience-context-model-run">—</strong></article>
+                <article><span>Selected model role</span><strong id="audience-context-model-role">—</strong></article>
+                <article><span>Prospect universe</span><strong id="audience-context-population">—</strong></article>
+                <article><span>Score range</span><strong id="audience-context-score-range">—</strong></article>
+                <article><span>Average score</span><strong id="audience-context-score-mean">—</strong></article>
+              </div>
+              <div class="notice audience-semantics-note" role="note">
+                <span class="notice-icon" aria-hidden="true">i</span>
+                <p>Percentile 1 = top 1%. Decile 1 = top 10%. Propensity score is a relative model affinity score, not a purchase probability.</p>
+              </div>
+            </section>
+
+            <div class="audience-explorer-grid">
+              <form id="audience-filter-form" class="panel audience-filter-form" novalidate aria-labelledby="audience-filter-title">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Filters</p><h3 id="audience-filter-title">Audience filters and selection</h3></div>
+                  <button id="audience-filter-reset" class="button button-secondary" type="button">Reset filters</button>
+                </div>
+
+                <div id="audience-form-error" class="inline-form-error" role="alert" tabindex="-1" hidden></div>
+
+                <section class="audience-filter-section" aria-labelledby="audience-ranking-filter-title">
+                  <h4 id="audience-ranking-filter-title">Ranking filters</h4>
+                  <div class="audience-filter-grid">
+                    <div class="form-field">
+                      <label for="audience-score-min">Score min</label>
+                      <input id="audience-score-min" name="score_min" type="number" min="0" max="1" step="0.000001" inputmode="decimal">
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-score-max">Score max</label>
+                      <input id="audience-score-max" name="score_max" type="number" min="0" max="1" step="0.000001" inputmode="decimal">
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-top-percentile">Top percentile max</label>
+                      <input id="audience-top-percentile" name="top_percentile_max" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="1-100">
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-deciles">Deciles</label>
+                      <select id="audience-deciles" name="deciles" multiple size="5"></select>
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-rank-bands">Rank bands</label>
+                      <select id="audience-rank-bands" name="rank_bands" multiple size="6"></select>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="audience-filter-section" aria-labelledby="audience-numeric-filter-title">
+                  <h4 id="audience-numeric-filter-title">Numeric filters</h4>
+                  <div class="audience-filter-grid">
+                    <div class="form-field">
+                      <label for="audience-age-min">Age min</label>
+                      <input id="audience-age-min" name="age_min" type="number" min="0" step="1" inputmode="numeric">
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-age-max">Age max</label>
+                      <input id="audience-age-max" name="age_max" type="number" min="0" step="1" inputmode="numeric">
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-income-min">Income min</label>
+                      <input id="audience-income-min" name="individual_yearly_income_min" type="number" min="0" step="1000" inputmode="decimal">
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-income-max">Income max</label>
+                      <input id="audience-income-max" name="individual_yearly_income_max" type="number" min="0" step="1000" inputmode="decimal">
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-family-min">Family member count min</label>
+                      <input id="audience-family-min" name="family_member_count_min" type="number" min="0" step="1" inputmode="numeric">
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-family-max">Family member count max</label>
+                      <input id="audience-family-max" name="family_member_count_max" type="number" min="0" step="1" inputmode="numeric">
+                    </div>
+                  </div>
+                </section>
+
+                <section class="audience-filter-section" aria-labelledby="audience-categorical-filter-title">
+                  <h4 id="audience-categorical-filter-title">Categorical filters</h4>
+                  <div class="audience-filter-grid">
+                    <div class="form-field">
+                      <label for="audience-gender">Gender</label>
+                      <select id="audience-gender" name="gender" multiple size="4"></select>
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-state">State</label>
+                      <select id="audience-state" name="state" multiple size="5"></select>
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-marital-status">Marital status</label>
+                      <select id="audience-marital-status" name="marital_status" multiple size="4"></select>
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-education">Education</label>
+                      <select id="audience-education" name="education" multiple size="4"></select>
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-employment-status">Employment status</label>
+                      <select id="audience-employment-status" name="employment_status" multiple size="4"></select>
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-resident-status">Resident status</label>
+                      <select id="audience-resident-status" name="resident_status" multiple size="4"></select>
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-resident-type">Resident type</label>
+                      <select id="audience-resident-type" name="resident_type" multiple size="4"></select>
+                    </div>
+                    <div class="form-field">
+                      <label for="audience-type-of-employment">Type of employment</label>
+                      <select id="audience-type-of-employment" name="type_of_employment" multiple size="4"></select>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="audience-filter-section" aria-labelledby="audience-selection-title">
+                  <h4 id="audience-selection-title">Selection</h4>
+                  <div class="audience-selection-mode" role="radiogroup" aria-label="Audience selection mode">
+                    <label class="conversion-option" for="audience-selection-all">
+                      <input id="audience-selection-all" type="radio" name="audience_selection_mode" value="ALL_MATCHING" checked>
+                      <span><strong>All matching prospects</strong><small>Select every row that matches the current filters.</small></span>
+                    </label>
+                    <label class="conversion-option" for="audience-selection-topn">
+                      <input id="audience-selection-topn" type="radio" name="audience_selection_mode" value="TOP_N">
+                      <span><strong>Top N matching prospects</strong><small>Select highest-ranked rows after filters.</small></span>
+                    </label>
+                  </div>
+                  <div class="form-field audience-topn-field">
+                    <label for="audience-target-count">Top N target count</label>
+                    <input id="audience-target-count" name="target_count" type="number" min="1" step="1" inputmode="numeric" disabled>
+                  </div>
+                </section>
+
+                <div class="analysis-form-actions audience-actions">
+                  <button id="audience-apply-filters" class="button button-primary" type="submit">Apply filters</button>
+                  <button id="audience-clear-filter-chips" class="button button-secondary" type="button">Clear active chips</button>
+                  <span id="audience-announcement" role="status" aria-live="polite">Ready to explore.</span>
+                </div>
+
+                <section class="panel audience-estimate-panel" aria-labelledby="audience-estimate-title">
+                  <div class="panel-heading">
+                    <div><p class="eyebrow">Estimate</p><h4 id="audience-estimate-title">Selection estimate</h4></div>
+                  </div>
+                  <dl class="historical-summary-strip audience-estimate-strip">
+                    <div><dt>Matching count</dt><dd id="audience-estimate-matching">—</dd></div>
+                    <div><dt>Selected count</dt><dd id="audience-estimate-selected">—</dd></div>
+                    <div><dt>Score range</dt><dd id="audience-estimate-score-range">—</dd></div>
+                    <div><dt>Average score</dt><dd id="audience-estimate-score-mean">—</dd></div>
+                  </dl>
+                </section>
+
+                <section class="panel audience-filter-summary-panel" aria-labelledby="audience-filter-summary-title">
+                  <div class="panel-heading">
+                    <div><p class="eyebrow">Active filters</p><h4 id="audience-filter-summary-title">Filter summary</h4></div>
+                  </div>
+                  <p id="audience-filter-summary-text" class="panel-note">No active filters.</p>
+                  <div id="audience-filter-chips" class="audience-filter-chips" aria-live="polite"></div>
+                </section>
+              </form>
+
+              <aside class="panel audience-side-panel" aria-labelledby="saved-audiences-title">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Saved audiences</p><h3 id="saved-audiences-title">Saved definitions</h3></div>
+                  <button id="saved-audiences-refresh" class="button button-secondary" type="button">Refresh</button>
+                </div>
+
+                <form id="audience-save-form" class="audience-save-form" novalidate aria-labelledby="audience-save-title">
+                  <h4 id="audience-save-title">Save audience</h4>
+                  <div class="form-field">
+                    <label for="audience-save-name">Audience name</label>
+                    <input id="audience-save-name" name="audience_name" type="text" maxlength="120" required>
+                  </div>
+                  <div class="form-field">
+                    <label for="audience-save-description">Description <span>Optional</span></label>
+                    <input id="audience-save-description" name="description" type="text" maxlength="500">
+                  </div>
+                  <p id="audience-save-summary" class="panel-note">Selection summary will appear after estimate.</p>
+                  <div id="audience-save-error" class="inline-form-error" role="alert" tabindex="-1" hidden></div>
+                  <div class="analysis-form-actions">
+                    <button id="audience-save-submit" class="button button-primary" type="submit">Save audience</button>
+                    <span id="audience-save-status" role="status" aria-live="polite">Not saved.</span>
+                  </div>
+                </form>
+
+                <div class="notice" role="note">
+                  <span class="notice-icon" aria-hidden="true">i</span>
+                  <p>Stale definitions are read-only historical context until current inputs are explicitly resolved.</p>
+                </div>
+
+                <div id="saved-audience-list-loading" class="recent-loading" role="status" aria-live="polite" hidden>
+                  <span class="spinner" aria-hidden="true"></span> Loading saved audiences
+                </div>
+                <div id="saved-audience-list-empty" class="compact-empty" hidden>No saved audiences yet.</div>
+                <div id="saved-audience-list" class="saved-audience-list" aria-live="polite"></div>
+
+                <div id="saved-audience-detail" class="panel saved-audience-detail" hidden>
+                  <div class="panel-heading">
+                    <div><p class="eyebrow">Saved detail</p><h4 id="saved-audience-detail-title">Audience detail</h4></div>
+                    <span id="saved-audience-currentness" class="status-badge is-neutral">—</span>
+                  </div>
+                  <p id="saved-audience-detail-meta" class="panel-note">—</p>
+                  <p id="saved-audience-stale-message" class="inline-form-error" hidden></p>
+                  <div class="analysis-form-actions">
+                    <button id="saved-audience-reopen" class="button button-secondary" type="button">Reopen definition</button>
+                    <button id="saved-audience-use-campaign" class="button button-secondary" type="button" disabled>Use in Campaign - Phase 7</button>
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+            <section class="analysis-results audience-results" aria-labelledby="audience-results-title">
+              <div class="analysis-results-heading">
+                <div>
+                  <p class="eyebrow">Ranked prospects</p>
+                  <h3 id="audience-results-title" tabindex="-1">Audience result set</h3>
+                  <p id="audience-results-caption">Ranked rows based on normalized filters and deterministic ordering.</p>
+                </div>
+              </div>
+
+              <div id="audience-search-loading" class="analysis-running" role="status" aria-live="polite" hidden>
+                <span class="spinner" aria-hidden="true"></span>
+                <div><strong>Loading matching prospects</strong><p>Retrieving deterministic ranked rows from the scored universe.</p></div>
+              </div>
+
+              <div id="audience-search-empty" class="historical-empty" role="status" hidden>
+                <span class="historical-empty-mark" aria-hidden="true">0</span>
+                <div><h3>No prospects match current filters</h3><p>Adjust score, rank, or demographic filters and try again.</p></div>
+              </div>
+
+              <div id="audience-search-table-wrap">
+                <div class="table-scroll audience-table-scroll">
+                  <table aria-label="Audience search results">
+                    <thead>
+                      <tr>
+                        <th scope="col" class="numeric">Score</th>
+                        <th scope="col">Rank band</th>
+                        <th scope="col" class="numeric">Percentile</th>
+                        <th scope="col" class="numeric">Decile</th>
+                        <th scope="col">Person ID</th>
+                        <th scope="col" class="numeric">Age</th>
+                        <th scope="col">Gender</th>
+                        <th scope="col">State</th>
+                        <th scope="col" class="numeric">Income</th>
+                        <th scope="col">Marital status</th>
+                        <th scope="col">Education</th>
+                        <th scope="col">Employment</th>
+                        <th scope="col">Resident status</th>
+                        <th scope="col">Resident type</th>
+                        <th scope="col" class="numeric">Family size</th>
+                        <th scope="col">Employment type</th>
+                      </tr>
+                    </thead>
+                    <tbody id="audience-results-body"></tbody>
+                  </table>
+                </div>
+                <div class="analysis-form-actions audience-load-more-row">
+                  <button id="audience-load-more" class="button button-secondary" type="button" hidden>Load more</button>
+                  <span id="audience-load-more-status" role="status" aria-live="polite"></span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel audience-profile-panel" aria-labelledby="audience-profile-title">
+              <div class="analysis-profile-heading">
+                <div><p class="eyebrow">Audience profile</p><h3 id="audience-profile-title">Aggregate comparison</h3></div>
+                <div class="form-field compact-select-field">
+                  <label for="audience-profile-dimension">Profile dimension</label>
+                  <select id="audience-profile-dimension"></select>
+                </div>
+              </div>
+
+              <div class="notice audience-profile-disclaimer" role="note">
+                <span class="notice-icon" aria-hidden="true">i</span>
+                <p>Aggregate demographic comparison only. No prospect is matched to a historical customer.</p>
+              </div>
+
+              <div class="analysis-metric-grid audience-profile-kpis">
+                <article><span>Universe count</span><strong id="audience-kpi-universe-count">—</strong></article>
+                <article><span>Matching count</span><strong id="audience-kpi-matching-count">—</strong></article>
+                <article><span>Selected count</span><strong id="audience-kpi-selected-count">—</strong></article>
+                <article><span>Historical positives</span><strong id="audience-kpi-positive-count">—</strong></article>
+                <article><span>Selected avg age</span><strong id="audience-kpi-selected-age">—</strong></article>
+                <article><span>Selected avg income</span><strong id="audience-kpi-selected-income">—</strong></article>
+                <article><span>Selected avg family size</span><strong id="audience-kpi-selected-family">—</strong></article>
+                <article><span>Selected avg score</span><strong id="audience-kpi-selected-score">—</strong></article>
+              </div>
+
+              <div id="audience-profile-comparison-tabs" class="compact-tabs" role="tablist" aria-label="Audience profile comparison">
+                <button type="button" role="tab" aria-selected="true" data-audience-profile-comparison="selected_vs_universe">Selected vs Universe</button>
+                <button type="button" role="tab" aria-selected="false" data-audience-profile-comparison="selected_vs_historical_positives" tabindex="-1">Selected vs Historical Positives</button>
+              </div>
+
+              <div id="audience-profile-summary" class="profile-group-summary" role="status"></div>
+              <div id="audience-profile-bars" class="profile-chart" role="tabpanel" tabindex="0"></div>
+
+              <section class="panel audience-traits-panel" aria-labelledby="audience-traits-title">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Traits</p><h4 id="audience-traits-title">Top over-indexed traits</h4></div>
+                </div>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Comparison</th>
+                        <th scope="col">Dimension</th>
+                        <th scope="col">Category</th>
+                        <th scope="col" class="numeric">Selected share</th>
+                        <th scope="col" class="numeric">Reference share</th>
+                        <th scope="col" class="numeric">Index</th>
+                      </tr>
+                    </thead>
+                    <tbody id="audience-traits-body"></tbody>
+                  </table>
                 </div>
               </section>
             </section>

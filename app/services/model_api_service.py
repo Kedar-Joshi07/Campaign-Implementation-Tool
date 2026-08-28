@@ -46,6 +46,32 @@ from app.services.scoring_job_service import (
     ScoringJobValidationError,
     submit_prospect_scoring_job_request,
 )
+from app.services.audience_preparation_service import (
+    SCORING_RUN_NOT_FOUND_MESSAGE as AUDIENCE_SCORING_RUN_NOT_FOUND_MESSAGE,
+    AudiencePreparationConflictError,
+    AudiencePreparationSubmissionError,
+    AudiencePreparationValidationError,
+    get_audience_preparation_status,
+    list_audience_preparation_runs,
+    submit_audience_preparation_job_request,
+)
+from app.services.audience_query_service import (
+    AudienceQueryConflictError,
+    AudienceQueryValidationError,
+    estimate_audience,
+    get_audience_filter_options,
+    profile_audience,
+    search_audience,
+)
+from app.services.saved_audience_service import (
+    SavedAudienceServiceConflictError,
+    SavedAudienceServiceNotFoundError,
+    SavedAudienceServiceValidationError,
+    get_saved_audience_detail,
+    list_saved_audiences,
+    save_audience,
+    validate_saved_audience_currentness,
+)
 from app.services.model_training_service import load_verified_model_artifact
 from app.services.prospect_scoring_service import (
     find_current_canonical_run_for_model,
@@ -59,18 +85,28 @@ ARTIFACT_VERIFICATION_FAILED_MESSAGE = "The model artifact could not be verified
 JOB_NOT_FOUND_MESSAGE = "The requested job was not found."
 MODEL_RUN_NOT_FOUND_MESSAGE = "The requested model run was not found."
 SCORING_RUN_NOT_FOUND_MESSAGE = "The requested scoring run was not found."
+SAVED_AUDIENCE_NOT_FOUND_MESSAGE = "The requested saved audience was not found."
 
 _FORBIDDEN_PUBLIC_PAYLOAD_KEYS = {
     "customer_id",
     "customer_ids",
     "person_id",
     "person_ids",
+    "first_name",
+    "last_name",
+    "city",
     "email",
     "phone_number",
     "address_line_1",
     "address_line_2",
     "street",
     "postal_code",
+    "ethnicity",
+    "religion",
+    "occupation_industry",
+    "family_yearly_income",
+    "number_of_children_in_family",
+    "number_of_adults_in_family",
     "train_matrix",
     "validation_matrix",
     "validation_scores",
@@ -143,6 +179,8 @@ def _contains_forbidden_public_content(value: Any) -> bool:
         if "select " in normalized or "insert " in normalized or "update " in normalized:
             return True
         if "delete " in normalized or " from " in normalized:
+            return True
+        if "sqlite" in normalized and ("\\" in normalized or "/" in normalized):
             return True
         if normalized.startswith(("/", "\\\\")):
             return True
@@ -256,6 +294,171 @@ def submit_scoring_request(
         raise ModelApiError(MODEL_SCORING_FAILED_MESSAGE) from exc
 
     return _public_job_summary(job)
+
+
+def submit_audience_preparation_request(
+    database_path: str | Path,
+    scoring_run_id: int,
+    rank_contract_version: str,
+) -> dict[str, Any]:
+    try:
+        job = submit_audience_preparation_job_request(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "rank_contract_version": rank_contract_version,
+            },
+        )
+    except AudiencePreparationConflictError as exc:
+        raise ModelApiConflictError(str(exc)) from exc
+    except AudiencePreparationValidationError as exc:
+        message = str(exc)
+        if message == AUDIENCE_SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(SCORING_RUN_NOT_FOUND_MESSAGE) from exc
+        raise ModelApiValidationError(message) from exc
+    except AudiencePreparationSubmissionError as exc:
+        raise ModelApiError("Audience preparation could not be completed.") from exc
+
+    return job
+
+
+def get_audience_options(
+    database_path: str | Path,
+    *,
+    scoring_run_id: int,
+) -> dict[str, Any]:
+    try:
+        return get_audience_filter_options(
+            database_path,
+            scoring_run_id=scoring_run_id,
+        )
+    except AudienceQueryConflictError as exc:
+        message = str(exc)
+        if message == SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(message) from exc
+        raise ModelApiConflictError(message) from exc
+    except AudienceQueryValidationError as exc:
+        message = str(exc)
+        if message == SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(message) from exc
+        raise ModelApiValidationError(message) from exc
+
+
+def estimate_audience_population(
+    database_path: str | Path,
+    request_payload: dict[str, Any],
+) -> dict[str, Any]:
+    try:
+        return estimate_audience(database_path, request_payload)
+    except AudienceQueryConflictError as exc:
+        message = str(exc)
+        if message == SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(message) from exc
+        raise ModelApiConflictError(message) from exc
+    except AudienceQueryValidationError as exc:
+        message = str(exc)
+        if message == SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(message) from exc
+        raise ModelApiValidationError(message) from exc
+
+
+def search_audience_rows(
+    database_path: str | Path,
+    request_payload: dict[str, Any],
+) -> dict[str, Any]:
+    try:
+        return search_audience(database_path, request_payload)
+    except AudienceQueryConflictError as exc:
+        message = str(exc)
+        if message == SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(message) from exc
+        raise ModelApiConflictError(message) from exc
+    except AudienceQueryValidationError as exc:
+        message = str(exc)
+        if message == SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(message) from exc
+        raise ModelApiValidationError(message) from exc
+
+
+def profile_audience_population(
+    database_path: str | Path,
+    request_payload: dict[str, Any],
+) -> dict[str, Any]:
+    try:
+        return profile_audience(database_path, request_payload)
+    except AudienceQueryConflictError as exc:
+        message = str(exc)
+        if message == SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(message) from exc
+        raise ModelApiConflictError(message) from exc
+    except AudienceQueryValidationError as exc:
+        message = str(exc)
+        if message == SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(message) from exc
+        raise ModelApiValidationError(message) from exc
+
+
+def create_saved_audience(
+    database_path: str | Path,
+    request_payload: dict[str, Any],
+) -> dict[str, Any]:
+    try:
+        return save_audience(database_path, request_payload)
+    except SavedAudienceServiceConflictError as exc:
+        raise ModelApiConflictError(str(exc)) from exc
+    except SavedAudienceServiceNotFoundError as exc:
+        raise ModelApiNotFoundError(str(exc)) from exc
+    except SavedAudienceServiceValidationError as exc:
+        message = str(exc)
+        if message == SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(message) from exc
+        raise ModelApiValidationError(message) from exc
+
+
+def list_saved_audience_summaries(
+    database_path: str | Path,
+    *,
+    limit: int,
+    offset: int,
+    scoring_run_id: int | None,
+    model_run_id: int | None,
+) -> list[dict[str, Any]]:
+    try:
+        return list_saved_audiences(
+            database_path,
+            limit=limit,
+            offset=offset,
+            scoring_run_id=scoring_run_id,
+            model_run_id=model_run_id,
+        )
+    except SavedAudienceServiceValidationError as exc:
+        raise ModelApiValidationError(str(exc)) from exc
+
+
+def get_saved_audience(
+    database_path: str | Path,
+    *,
+    audience_id: int,
+) -> dict[str, Any]:
+    try:
+        return get_saved_audience_detail(database_path, audience_id=audience_id)
+    except SavedAudienceServiceNotFoundError as exc:
+        raise ModelApiNotFoundError(str(exc)) from exc
+    except SavedAudienceServiceValidationError as exc:
+        raise ModelApiValidationError(str(exc)) from exc
+
+
+def get_saved_audience_currentness(
+    database_path: str | Path,
+    *,
+    audience_id: int,
+) -> dict[str, Any]:
+    try:
+        return validate_saved_audience_currentness(database_path, audience_id=audience_id)
+    except SavedAudienceServiceNotFoundError as exc:
+        raise ModelApiNotFoundError(str(exc)) from exc
+    except SavedAudienceServiceValidationError as exc:
+        raise ModelApiValidationError(str(exc)) from exc
 
 
 def get_job_detail(database_path: str | Path, job_id: int) -> dict[str, Any]:
@@ -458,6 +661,68 @@ def get_scoring_run_detail(database_path: str | Path, scoring_run_id: int) -> di
     }
 
 
+def get_audience_run_preparation_status(
+    database_path: str | Path,
+    *,
+    scoring_run_id: int,
+    rank_contract_version: str,
+) -> dict[str, Any]:
+    try:
+        payload = get_audience_preparation_status(
+            database_path,
+            scoring_run_id=scoring_run_id,
+            rank_contract_version=rank_contract_version,
+        )
+    except AudiencePreparationConflictError as exc:
+        raise ModelApiConflictError(str(exc)) from exc
+    except AudiencePreparationValidationError as exc:
+        message = str(exc)
+        if message == AUDIENCE_SCORING_RUN_NOT_FOUND_MESSAGE:
+            raise ModelApiNotFoundError(SCORING_RUN_NOT_FOUND_MESSAGE) from exc
+        raise ModelApiValidationError(message) from exc
+
+    active_job = payload.get("active_job")
+    return {
+        "scoring_run_id": int(payload["scoring_run_id"]),
+        "model_run_id": int(payload["model_run_id"]),
+        "status": str(payload["status"]),
+        "rank_contract_version": str(payload["rank_contract_version"]),
+        "prepared": bool(payload["prepared"]),
+        "boundary_count": int(payload["boundary_count"]),
+        "total_population": int(payload["total_population"]),
+        "active_job": _public_job_summary(active_job) if active_job is not None else None,
+    }
+
+
+def list_audience_run_preparation_summaries(
+    database_path: str | Path,
+    *,
+    limit: int,
+    offset: int,
+) -> list[dict[str, Any]]:
+    try:
+        rows = list_audience_preparation_runs(
+            database_path,
+            limit=limit,
+            offset=offset,
+        )
+    except AudiencePreparationValidationError as exc:
+        raise ModelApiValidationError(str(exc)) from exc
+
+    return [
+        {
+            "scoring_run_id": int(row["scoring_run_id"]),
+            "model_run_id": int(row["model_run_id"]),
+            "completed_at": row.get("completed_at"),
+            "scored_person_count": int(row["scored_person_count"]),
+            "prepared": bool(row["prepared"]),
+            "rank_contract_version": row.get("rank_contract_version"),
+            "boundary_count": int(row["boundary_count"]),
+        }
+        for row in rows
+    ]
+
+
 def list_model_summaries(
     database_path: str | Path,
     *,
@@ -624,18 +889,26 @@ __all__ = (
     "MODEL_SCORING_FAILED_MESSAGE",
     "MODEL_RUN_NOT_FOUND_MESSAGE",
     "MODEL_TRAINING_FAILED_MESSAGE",
+    "SAVED_AUDIENCE_NOT_FOUND_MESSAGE",
+        "create_saved_audience",
+        "get_saved_audience",
+        "get_saved_audience_currentness",
     "SCORING_RUN_NOT_FOUND_MESSAGE",
     "ModelApiConflictError",
     "ModelApiError",
     "ModelApiNotFoundError",
     "ModelApiValidationError",
+    "get_audience_run_preparation_status",
     "get_scoring_run_detail",
     "get_scoring_status",
     "get_job_detail",
     "get_model_run_detail",
     "get_model_training_options",
+    "list_audience_run_preparation_summaries",
+    "list_saved_audience_summaries",
     "list_scoring_run_summaries",
     "list_model_summaries",
+    "submit_audience_preparation_request",
     "submit_scoring_request",
     "submit_training_request",
 )

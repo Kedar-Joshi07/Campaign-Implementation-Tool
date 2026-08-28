@@ -268,9 +268,21 @@ def test_openapi_exposes_phase5_model_job_and_scoring_endpoints(client: TestClie
             path.startswith("/api/models")
             or path.startswith("/api/jobs")
             or path.startswith("/api/scoring-runs")
+            or path.startswith("/api/audience")
         )
     }
     assert model_operations == {
+        ("/api/audience/estimate", "post"),
+        ("/api/audience/options", "get"),
+        ("/api/audience/profile", "post"),
+        ("/api/audience/search", "post"),
+        ("/api/audience/runs", "get"),
+        ("/api/audience/runs/{scoring_run_id}/prepare", "post"),
+        ("/api/audience/runs/{scoring_run_id}/preparation-status", "get"),
+        ("/api/audiences", "get"),
+        ("/api/audiences", "post"),
+        ("/api/audiences/{audience_id}", "get"),
+        ("/api/audiences/{audience_id}/currentness", "get"),
         ("/api/models/train", "post"),
         ("/api/models/{model_run_id}/score", "post"),
         ("/api/models/{model_run_id}/scoring-status", "get"),

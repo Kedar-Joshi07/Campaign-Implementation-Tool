@@ -25,7 +25,7 @@ def test_phase3_training_boundary_contains_no_later_phase_scoring_or_prospect_qu
     assert "campaign export" not in lowered
 
 
-def test_phase5_api_surface_includes_scoring_and_later_navigation_remains_disabled() -> None:
+def test_phase5_api_surface_includes_scoring_and_step7_navigation_state() -> None:
     router_source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in (REPOSITORY_ROOT / "app" / "routers").glob("*.py")
@@ -40,10 +40,11 @@ def test_phase5_api_surface_includes_scoring_and_later_navigation_remains_disabl
     assert "/models/{model_run_id}/score" in router_source
     assert "/models/{model_run_id}/scoring-status" in router_source
     assert "/scoring-runs" in router_source
-    assert html.count('class="navigation-item is-disabled"') == 2
+    assert html.count('class="navigation-item is-disabled"') == 1
     assert 'data-view-target="model-training"' in html
+    assert 'data-view-target="audience-explorer"' in html
     assert '<span class="nav-icon" aria-hidden="true">04</span><span>Model Training</span><small>Phase 4</small>' in html
-    assert '<span>Audience Explorer</span><small>Later phase</small>' in html
+    assert '<span class="nav-icon" aria-hidden="true">05</span><span>Audience Explorer</span><small>Phase 6</small>' in html
     assert '<span>Campaigns</span><small>Later phase</small>' in html
 
 
@@ -113,7 +114,7 @@ def test_prohibited_ml_infrastructure_dependencies_are_absent() -> None:
         assert prohibited not in requirements
 
 
-def test_phase5_scope_scan_confirms_later_phase_activation_surfaces_absent() -> None:
+def test_phase5_scope_scan_confirms_campaign_activation_surfaces_absent() -> None:
     app_source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in REPOSITORY_ROOT.joinpath("app").rglob("*.py")
@@ -127,19 +128,15 @@ def test_phase5_scope_scan_confirms_later_phase_activation_surfaces_absent() -> 
     ).casefold()
 
     for forbidden in (
-        "/api/audience",
         "/api/campaigns/export",
-        "audience persistence",
         "activation adapter",
-        "score band",
-        "percentile band",
         "csv export",
         "demographic scoring",
     ):
         assert forbidden not in app_source
         assert forbidden not in frontend_source
 
-    assert 'data-view="audience-explorer"' not in html
-    assert 'data-view-target="audience-explorer"' not in html
+    assert 'data-view="audience-explorer"' in html
+    assert 'data-view-target="audience-explorer"' in html
     assert 'data-view="campaigns"' not in html
     assert 'data-view-target="campaigns"' not in html

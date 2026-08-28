@@ -14,6 +14,7 @@ from app.database.connection import get_connection
 
 JOB_TYPE_MODEL_TRAINING = "MODEL_TRAINING"
 JOB_TYPE_PROSPECT_SCORING = "PROSPECT_SCORING"
+JOB_TYPE_AUDIENCE_PREPARATION = "AUDIENCE_PREPARATION"
 
 JOB_STATUS_QUEUED = "QUEUED"
 JOB_STATUS_RUNNING = "RUNNING"
@@ -36,6 +37,9 @@ JOB_STAGE_PREPARING_SCORING_RUN = "PREPARING_SCORING_RUN"
 JOB_STAGE_SCORING_PROSPECTS = "SCORING_PROSPECTS"
 JOB_STAGE_FINALIZING_SCORES = "FINALIZING_SCORES"
 JOB_STAGE_VERIFYING_COMPLETENESS = "VERIFYING_COMPLETENESS"
+JOB_STAGE_VALIDATING_SCORING_RUN = "VALIDATING_SCORING_RUN"
+JOB_STAGE_PREPARING_RANK_BOUNDARIES = "PREPARING_RANK_BOUNDARIES"
+JOB_STAGE_VERIFYING_RANK_BOUNDARIES = "VERIFYING_RANK_BOUNDARIES"
 JOB_STAGE_COMPLETED = "COMPLETED"
 JOB_STAGE_FAILED = "FAILED"
 
@@ -56,6 +60,9 @@ ALL_JOB_STAGES = (
     JOB_STAGE_SCORING_PROSPECTS,
     JOB_STAGE_FINALIZING_SCORES,
     JOB_STAGE_VERIFYING_COMPLETENESS,
+    JOB_STAGE_VALIDATING_SCORING_RUN,
+    JOB_STAGE_PREPARING_RANK_BOUNDARIES,
+    JOB_STAGE_VERIFYING_RANK_BOUNDARIES,
     JOB_STAGE_COMPLETED,
     JOB_STAGE_FAILED,
 )
@@ -82,6 +89,13 @@ SCORING_RUNNING_JOB_STAGES = (
     JOB_STAGE_VERIFYING_COMPLETENESS,
 )
 
+AUDIENCE_PREPARATION_RUNNING_JOB_STAGES = (
+    JOB_STAGE_STARTING,
+    JOB_STAGE_VALIDATING_SCORING_RUN,
+    JOB_STAGE_PREPARING_RANK_BOUNDARIES,
+    JOB_STAGE_VERIFYING_RANK_BOUNDARIES,
+)
+
 _ACTIVE_STATUSES = (JOB_STATUS_QUEUED, JOB_STATUS_RUNNING)
 _TERMINAL_STATUSES = (JOB_STATUS_COMPLETED, JOB_STATUS_FAILED)
 
@@ -93,6 +107,10 @@ _ALLOWED_REQUEST_FIELDS = (
     "run_elkan_challenger",
 )
 _ALLOWED_SCORING_REQUEST_FIELDS = ("model_run_id",)
+_ALLOWED_AUDIENCE_PREPARATION_REQUEST_FIELDS = (
+    "scoring_run_id",
+    "rank_contract_version",
+)
 _ALLOWED_RESULT_FIELDS = (
     "model_run_id",
     "selected_candidate",
@@ -121,6 +139,12 @@ _ALLOWED_SCORING_RESULT_FIELDS = (
     "feature_contract_version",
     "feature_contract_sha256",
     "artifact_sha256",
+)
+_ALLOWED_AUDIENCE_PREPARATION_RESULT_FIELDS = (
+    "scoring_run_id",
+    "total_population",
+    "rank_contract_version",
+    "boundary_count",
 )
 _FORBIDDEN_JSON_KEYS = {
     "customer_id",
@@ -342,6 +366,30 @@ def _normalize_scoring_request_payload(payload: Any) -> dict[str, Any]:
     return normalized
 
 
+def _normalize_audience_preparation_request_payload(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise JobValidationError("request payload must be an object.")
+
+    unexpected = sorted(set(payload) - set(_ALLOWED_AUDIENCE_PREPARATION_REQUEST_FIELDS))
+    if unexpected:
+        joined = ", ".join(unexpected)
+        raise JobValidationError(f"request payload contains unsupported fields: {joined}.")
+
+    scoring_run_id = _require_positive_int(payload.get("scoring_run_id"), field_name="scoring_run_id")
+    rank_contract_version = _bounded_required_text(
+        payload.get("rank_contract_version"),
+        field_name="rank_contract_version",
+        maximum=24,
+    )
+
+    normalized = {
+        "scoring_run_id": scoring_run_id,
+        "rank_contract_version": rank_contract_version,
+    }
+    _validated_json(normalized, maximum_bytes=MAXIMUM_REQUEST_JSON_BYTES)
+    return normalized
+
+
 def _normalize_training_result_payload(
     payload: Any,
     *,
@@ -473,11 +521,44 @@ def _normalize_scoring_result_payload(
     return normalized
 
 
+def _normalize_audience_preparation_result_payload(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise JobValidationError("result payload must be an object.")
+
+    unexpected = sorted(set(payload) - set(_ALLOWED_AUDIENCE_PREPARATION_RESULT_FIELDS))
+    if unexpected:
+        joined = ", ".join(unexpected)
+        raise JobValidationError(f"result payload contains unsupported fields: {joined}.")
+
+    boundary_count = _require_positive_int(payload.get("boundary_count"), field_name="boundary_count")
+    if boundary_count != 100:
+        raise JobValidationError("boundary_count must be exactly 100.")
+
+    normalized = {
+        "scoring_run_id": _require_positive_int(payload.get("scoring_run_id"), field_name="scoring_run_id"),
+        "total_population": _require_positive_int(
+            payload.get("total_population"),
+            field_name="total_population",
+        ),
+        "rank_contract_version": _bounded_required_text(
+            payload.get("rank_contract_version"),
+            field_name="rank_contract_version",
+            maximum=24,
+        ),
+        "boundary_count": boundary_count,
+    }
+
+    _validated_json(normalized, maximum_bytes=MAXIMUM_RESULT_JSON_BYTES)
+    return normalized
+
+
 def _running_stages_for_job_type(job_type: str) -> tuple[str, ...]:
     if job_type == JOB_TYPE_MODEL_TRAINING:
         return RUNNING_JOB_STAGES
     if job_type == JOB_TYPE_PROSPECT_SCORING:
         return SCORING_RUNNING_JOB_STAGES
+    if job_type == JOB_TYPE_AUDIENCE_PREPARATION:
+        return AUDIENCE_PREPARATION_RUNNING_JOB_STAGES
     raise JobValidationError("job_type is not supported.")
 
 
@@ -633,6 +714,59 @@ class JobRepository:
                 )
             except sqlite3.IntegrityError as exc:
                 raise JobValidationError("The selected model run does not exist.") from exc
+
+        return int(cursor.lastrowid)
+
+    def create_audience_preparation_job(
+        self,
+        *,
+        created_at: str,
+        request_payload: dict[str, Any],
+        message: str | None = None,
+    ) -> int:
+        created_timestamp = _bounded_required_text(
+            created_at,
+            field_name="created_at",
+            maximum=64,
+        )
+        normalized_request = _normalize_audience_preparation_request_payload(request_payload)
+        normalized_message = _bounded_optional_text(
+            message,
+            field_name="message",
+            maximum=MAXIMUM_MESSAGE_LENGTH,
+        )
+        request_json = _validated_json(
+            normalized_request,
+            maximum_bytes=MAXIMUM_REQUEST_JSON_BYTES,
+        )
+
+        with get_connection(self.database_path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            existing = self._fetch_active_compute_locked(connection)
+            if existing is not None:
+                raise ActiveComputeJobConflictError("A compute job is already active.")
+
+            cursor = connection.execute(
+                """
+                INSERT INTO jobs (
+                    job_type,
+                    status,
+                    progress_percent,
+                    stage,
+                    message,
+                    analysis_run_id,
+                    model_run_id,
+                    created_at,
+                    request_json
+                ) VALUES (?, 'QUEUED', 0, 'QUEUED', ?, NULL, NULL, ?, ?)
+                """,
+                (
+                    JOB_TYPE_AUDIENCE_PREPARATION,
+                    normalized_message,
+                    created_timestamp,
+                    request_json,
+                ),
+            )
 
         return int(cursor.lastrowid)
 
@@ -803,16 +937,12 @@ class JobRepository:
         *,
         job_id: int,
         finished_at: str,
-        model_run_id: int,
+        model_run_id: int | None,
         result_payload: dict[str, Any],
         message: str | None = None,
     ) -> None:
         normalized_job_id = _require_positive_int(job_id, field_name="job_id")
         _bounded_required_text(finished_at, field_name="finished_at", maximum=64)
-        normalized_model_run_id = _require_positive_int(
-            model_run_id,
-            field_name="model_run_id",
-        )
         normalized_message = _bounded_optional_text(
             message,
             field_name="message",
@@ -827,16 +957,32 @@ class JobRepository:
             if current["status"] != JOB_STATUS_RUNNING:
                 raise JobStateTransitionError("Only RUNNING jobs can complete.")
 
+            normalized_model_run_id: int | None
             if current["job_type"] == JOB_TYPE_MODEL_TRAINING:
+                normalized_model_run_id = _require_positive_int(
+                    model_run_id,
+                    field_name="model_run_id",
+                )
                 normalized_result = _normalize_training_result_payload(
                     result_payload,
                     model_run_id=normalized_model_run_id,
                 )
             elif current["job_type"] == JOB_TYPE_PROSPECT_SCORING:
+                normalized_model_run_id = _require_positive_int(
+                    model_run_id,
+                    field_name="model_run_id",
+                )
                 normalized_result = _normalize_scoring_result_payload(
                     result_payload,
                     model_run_id=normalized_model_run_id,
                 )
+            elif current["job_type"] == JOB_TYPE_AUDIENCE_PREPARATION:
+                if model_run_id is not None:
+                    raise JobValidationError(
+                        "model_run_id must be null for audience preparation completion."
+                    )
+                normalized_model_run_id = None
+                normalized_result = _normalize_audience_preparation_result_payload(result_payload)
             else:
                 raise JobValidationError("job_type is not supported.")
 
@@ -992,9 +1138,12 @@ __all__ = (
     "JOB_STAGE_COMPLETED",
     "JOB_STAGE_FAILED",
     "JOB_STAGE_FINALIZING_SCORES",
+    "JOB_STAGE_PREPARING_RANK_BOUNDARIES",
     "JOB_STAGE_PREPARING_SCORING_RUN",
     "JOB_STAGE_SCORING_PROSPECTS",
+    "JOB_STAGE_VALIDATING_SCORING_RUN",
     "JOB_STAGE_VALIDATING_MODEL",
+    "JOB_STAGE_VERIFYING_RANK_BOUNDARIES",
     "JOB_STAGE_VERIFYING_COMPLETENESS",
     "JOB_STAGE_QUEUED",
     "JOB_STAGE_STARTING",
@@ -1003,11 +1152,13 @@ __all__ = (
     "JOB_STATUS_QUEUED",
     "JOB_STATUS_RUNNING",
     "JOB_TYPE_MODEL_TRAINING",
+    "JOB_TYPE_AUDIENCE_PREPARATION",
     "JOB_TYPE_PROSPECT_SCORING",
     "JobRepository",
     "JobRepositoryError",
     "JobStateTransitionError",
     "JobValidationError",
     "RUNNING_JOB_STAGES",
+    "AUDIENCE_PREPARATION_RUNNING_JOB_STAGES",
     "SCORING_RUNNING_JOB_STAGES",
 )

@@ -8,16 +8,21 @@ import pytest
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.repositories.job_repository import (
+    ActiveComputeJobConflictError,
     ActiveTrainingJobConflictError,
     JOB_STAGE_COMPLETED,
     JOB_STAGE_FAILED,
+    JOB_STAGE_PREPARING_RANK_BOUNDARIES,
     JOB_STAGE_PREPROCESSING,
     JOB_STAGE_QUEUED,
     JOB_STAGE_STARTING,
+    JOB_STAGE_VALIDATING_SCORING_RUN,
+    JOB_STAGE_VERIFYING_RANK_BOUNDARIES,
     JOB_STATUS_COMPLETED,
     JOB_STATUS_FAILED,
     JOB_STATUS_QUEUED,
     JOB_STATUS_RUNNING,
+    JOB_TYPE_AUDIENCE_PREPARATION,
     JOB_TYPE_MODEL_TRAINING,
     JobRepository,
     JobStateTransitionError,
@@ -405,4 +410,127 @@ def test_payload_validation_rejects_invalid_and_forbidden_content(database_path:
                 "artifact_sha256": "a" * 64,
                 "validation_scores": [0.1, 0.2],
             },
+        )
+
+
+def test_create_and_complete_audience_preparation_job(database_path: Path) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_running_model_run(database_path, analysis_run_id)
+    repository = JobRepository(database_path)
+
+    job_id = repository.create_audience_preparation_job(
+        created_at="2026-08-21T02:00:00Z",
+        request_payload={"scoring_run_id": 5, "rank_contract_version": "1"},
+        message="  queued audience prep  ",
+    )
+    queued = repository.fetch_job(job_id)
+    assert queued is not None
+    assert queued["job_type"] == JOB_TYPE_AUDIENCE_PREPARATION
+    assert queued["status"] == JOB_STATUS_QUEUED
+    assert queued["analysis_run_id"] is None
+    assert queued["model_run_id"] is None
+    assert queued["message"] == "queued audience prep"
+
+    repository.mark_running(
+        job_id=job_id,
+        started_at="2026-08-21T02:00:01Z",
+        stage=JOB_STAGE_VALIDATING_SCORING_RUN,
+        progress_percent=10,
+    )
+    repository.update_progress(
+        job_id=job_id,
+        progress_percent=65,
+        stage=JOB_STAGE_PREPARING_RANK_BOUNDARIES,
+    )
+    repository.update_progress(
+        job_id=job_id,
+        progress_percent=90,
+        stage=JOB_STAGE_VERIFYING_RANK_BOUNDARIES,
+    )
+
+    with pytest.raises(JobValidationError, match="must be null"):
+        repository.mark_completed(
+            job_id=job_id,
+            finished_at="2026-08-21T02:00:05Z",
+            model_run_id=model_run_id,
+            result_payload={
+                "scoring_run_id": 5,
+                "total_population": 100,
+                "rank_contract_version": "1",
+                "boundary_count": 100,
+            },
+        )
+
+    repository.mark_completed(
+        job_id=job_id,
+        finished_at="2026-08-21T02:00:06Z",
+        model_run_id=None,
+        result_payload={
+            "scoring_run_id": 5,
+            "total_population": 100,
+            "rank_contract_version": "1",
+            "boundary_count": 100,
+        },
+    )
+    completed = repository.fetch_job(job_id)
+    assert completed is not None
+    assert completed["status"] == JOB_STATUS_COMPLETED
+    assert completed["stage"] == JOB_STAGE_COMPLETED
+    payload = json.loads(completed["result_json"])
+    assert payload["boundary_count"] == 100
+
+
+def test_audience_preparation_job_enforces_stage_and_payload_validation(database_path: Path) -> None:
+    repository = JobRepository(database_path)
+
+    with pytest.raises(JobValidationError, match="unsupported fields"):
+        repository.create_audience_preparation_job(
+            created_at="2026-08-21T02:10:00Z",
+            request_payload={"scoring_run_id": 5, "extra": True},
+        )
+
+    job_id = repository.create_audience_preparation_job(
+        created_at="2026-08-21T02:10:01Z",
+        request_payload={"scoring_run_id": 5, "rank_contract_version": "1"},
+    )
+    with pytest.raises(JobValidationError, match="stage is not valid"):
+        repository.mark_running(
+            job_id=job_id,
+            started_at="2026-08-21T02:10:02Z",
+            stage=JOB_STAGE_PREPROCESSING,
+            progress_percent=1,
+        )
+
+    repository.mark_running(
+        job_id=job_id,
+        started_at="2026-08-21T02:10:03Z",
+        stage=JOB_STAGE_STARTING,
+        progress_percent=1,
+    )
+    with pytest.raises(JobValidationError, match="boundary_count"):
+        repository.mark_completed(
+            job_id=job_id,
+            finished_at="2026-08-21T02:10:04Z",
+            model_run_id=None,
+            result_payload={
+                "scoring_run_id": 5,
+                "total_population": 100,
+                "rank_contract_version": "1",
+                "boundary_count": 99,
+            },
+        )
+
+
+def test_audience_preparation_create_respects_global_compute_exclusion(database_path: Path) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    repository = JobRepository(database_path)
+    repository.create_training_job(
+        created_at="2026-08-21T02:20:00Z",
+        request_payload={"analysis_run_id": analysis_run_id},
+    )
+
+    with pytest.raises(ActiveComputeJobConflictError):
+        repository.create_audience_preparation_job(
+            created_at="2026-08-21T02:20:01Z",
+            request_payload={"scoring_run_id": 5, "rank_contract_version": "1"},
         )

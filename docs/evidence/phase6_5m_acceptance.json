@@ -1,0 +1,853 @@
+{
+  "canonical": {
+    "deterministic_sample_rescore": {
+      "max_abs_diff": 0.0,
+      "sample_size": 256,
+      "verified": true
+    },
+    "model_run_id": 8,
+    "provenance": {
+      "demographic_source_verified": true,
+      "historical_source_verified": true,
+      "is_canonical": true,
+      "issue_count": 0
+    },
+    "scoring_run_id": 8
+  },
+  "database": {
+    "name": "campaign_poc.db",
+    "schema_version": 9
+  },
+  "generated_at": "2026-08-28T13:40:32Z",
+  "phase_boundary_scan": {
+    "no_activation_api": true,
+    "no_contact_pii_api_surface": true,
+    "no_export_endpoint": true,
+    "no_identity_linkage_surfaces": true,
+    "no_phase7_campaign_object_schema": true
+  },
+  "preparation": {
+    "boundary_verification": {
+      "boundary_count": 100,
+      "boundary_rank_checks": {
+        "percentile1": 50000,
+        "percentile10": 500000,
+        "percentile100": 5000000,
+        "percentile5": 250000
+      },
+      "total_population": 5000000
+    },
+    "chunk_count": 0,
+    "chunk_size": 100000,
+    "memory_and_throughput_evidence": {
+      "largest_chunk_rows": 25000,
+      "largest_transformed_matrix_bytes": 3396428,
+      "scoring_chunk_count": 200,
+      "scoring_chunk_size": 25000,
+      "scoring_rows_per_second": 5059.256445497945,
+      "scoring_total_seconds": 988.2875189000006
+    },
+    "rank_contract_version": "1",
+    "runtime_seconds": 0.0,
+    "scanned_rows": 0,
+    "status": "prepared",
+    "throughput_rows_per_second": 0.0
+  },
+  "profile": {
+    "cases": {
+      "demographic_filter": {
+        "historical_positives_count": 25473,
+        "matching_count": 147435,
+        "score_max": 0.8960098202059242,
+        "score_mean": 0.28085760757425315,
+        "score_min": 0.13064520770289434,
+        "selected_count": 147435,
+        "selected_vs_historical_positives_top_states": [
+          {
+            "category": "California",
+            "index": 6.120375,
+            "reference_share": 0.163389,
+            "selected_share": 1.0
+          },
+          {
+            "category": "Arizona",
+            "index": 0.0,
+            "reference_share": 0.02693,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Colorado",
+            "index": 0.0,
+            "reference_share": 0.021317,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Connecticut",
+            "index": 0.0,
+            "reference_share": 0.012876,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Florida",
+            "index": 0.0,
+            "reference_share": 0.082519,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Georgia",
+            "index": 0.0,
+            "reference_share": 0.035606,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Illinois",
+            "index": 0.0,
+            "reference_share": 0.051427,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Indiana",
+            "index": 0.0,
+            "reference_share": 0.018922,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Louisiana",
+            "index": 0.0,
+            "reference_share": 0.012562,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Maryland",
+            "index": 0.0,
+            "reference_share": 0.022377,
+            "selected_share": 0.0
+          }
+        ],
+        "selected_vs_universe_top_states": [
+          {
+            "category": "California",
+            "index": 6.280831,
+            "reference_share": 0.159215,
+            "selected_share": 1.0
+          },
+          {
+            "category": "Arizona",
+            "index": 0.0,
+            "reference_share": 0.02725,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Colorado",
+            "index": 0.0,
+            "reference_share": 0.021149,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Connecticut",
+            "index": 0.0,
+            "reference_share": 0.013361,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Florida",
+            "index": 0.0,
+            "reference_share": 0.08431,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Georgia",
+            "index": 0.0,
+            "reference_share": 0.033959,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Illinois",
+            "index": 0.0,
+            "reference_share": 0.047611,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Indiana",
+            "index": 0.0,
+            "reference_share": 0.020619,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Louisiana",
+            "index": 0.0,
+            "reference_share": 0.014222,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Maryland",
+            "index": 0.0,
+            "reference_share": 0.022636,
+            "selected_share": 0.0
+          }
+        ],
+        "universe_count": 5000000
+      },
+      "filtered_topn_50k": {
+        "historical_positives_count": 25473,
+        "matching_count": 92813,
+        "score_max": 0.9691976919854112,
+        "score_mean": 0.36055283294571433,
+        "score_min": 0.3233915647139627,
+        "selected_count": 50000,
+        "selected_vs_historical_positives_top_states": [
+          {
+            "category": "California",
+            "index": 6.120375,
+            "reference_share": 0.163389,
+            "selected_share": 1.0
+          },
+          {
+            "category": "Arizona",
+            "index": 0.0,
+            "reference_share": 0.02693,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Colorado",
+            "index": 0.0,
+            "reference_share": 0.021317,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Connecticut",
+            "index": 0.0,
+            "reference_share": 0.012876,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Florida",
+            "index": 0.0,
+            "reference_share": 0.082519,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Georgia",
+            "index": 0.0,
+            "reference_share": 0.035606,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Illinois",
+            "index": 0.0,
+            "reference_share": 0.051427,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Indiana",
+            "index": 0.0,
+            "reference_share": 0.018922,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Louisiana",
+            "index": 0.0,
+            "reference_share": 0.012562,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Maryland",
+            "index": 0.0,
+            "reference_share": 0.022377,
+            "selected_share": 0.0
+          }
+        ],
+        "selected_vs_universe_top_states": [
+          {
+            "category": "California",
+            "index": 6.280831,
+            "reference_share": 0.159215,
+            "selected_share": 1.0
+          },
+          {
+            "category": "Arizona",
+            "index": 0.0,
+            "reference_share": 0.02725,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Colorado",
+            "index": 0.0,
+            "reference_share": 0.021149,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Connecticut",
+            "index": 0.0,
+            "reference_share": 0.013361,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Florida",
+            "index": 0.0,
+            "reference_share": 0.08431,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Georgia",
+            "index": 0.0,
+            "reference_share": 0.033959,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Illinois",
+            "index": 0.0,
+            "reference_share": 0.047611,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Indiana",
+            "index": 0.0,
+            "reference_share": 0.020619,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Louisiana",
+            "index": 0.0,
+            "reference_share": 0.014222,
+            "selected_share": 0.0
+          },
+          {
+            "category": "Maryland",
+            "index": 0.0,
+            "reference_share": 0.022636,
+            "selected_share": 0.0
+          }
+        ],
+        "universe_count": 5000000
+      },
+      "top_1_percent": {
+        "historical_positives_count": 25473,
+        "matching_count": 50000,
+        "score_max": 0.9782832402557606,
+        "score_mean": 0.41279193054609414,
+        "score_min": 0.37890242842446953,
+        "selected_count": 50000,
+        "selected_vs_historical_positives_top_states": [
+          {
+            "category": "Utah",
+            "index": 3.866074,
+            "reference_share": 0.01374,
+            "selected_share": 0.05312
+          },
+          {
+            "category": "New Jersey",
+            "index": 2.575854,
+            "reference_share": 0.039925,
+            "selected_share": 0.10284
+          },
+          {
+            "category": "Connecticut",
+            "index": 1.896496,
+            "reference_share": 0.012876,
+            "selected_share": 0.02442
+          },
+          {
+            "category": "Massachusetts",
+            "index": 1.645173,
+            "reference_share": 0.029796,
+            "selected_share": 0.04902
+          },
+          {
+            "category": "Illinois",
+            "index": 1.512824,
+            "reference_share": 0.051427,
+            "selected_share": 0.0778
+          },
+          {
+            "category": "California",
+            "index": 1.325184,
+            "reference_share": 0.163389,
+            "selected_share": 0.21652
+          },
+          {
+            "category": "Colorado",
+            "index": 1.228146,
+            "reference_share": 0.021317,
+            "selected_share": 0.02618
+          },
+          {
+            "category": "Georgia",
+            "index": 1.148111,
+            "reference_share": 0.035606,
+            "selected_share": 0.04088
+          },
+          {
+            "category": "Washington",
+            "index": 1.018211,
+            "reference_share": 0.028226,
+            "selected_share": 0.02874
+          },
+          {
+            "category": "Maryland",
+            "index": 1.001938,
+            "reference_share": 0.022377,
+            "selected_share": 0.02242
+          }
+        ],
+        "selected_vs_universe_top_states": [
+          {
+            "category": "Utah",
+            "index": 4.224389,
+            "reference_share": 0.012575,
+            "selected_share": 0.05312
+          },
+          {
+            "category": "New Jersey",
+            "index": 2.757533,
+            "reference_share": 0.037294,
+            "selected_share": 0.10284
+          },
+          {
+            "category": "Connecticut",
+            "index": 1.827708,
+            "reference_share": 0.013361,
+            "selected_share": 0.02442
+          },
+          {
+            "category": "Massachusetts",
+            "index": 1.79202,
+            "reference_share": 0.027355,
+            "selected_share": 0.04902
+          },
+          {
+            "category": "Illinois",
+            "index": 1.634076,
+            "reference_share": 0.047611,
+            "selected_share": 0.0778
+          },
+          {
+            "category": "California",
+            "index": 1.359926,
+            "reference_share": 0.159215,
+            "selected_share": 0.21652
+          },
+          {
+            "category": "Colorado",
+            "index": 1.23786,
+            "reference_share": 0.021149,
+            "selected_share": 0.02618
+          },
+          {
+            "category": "Georgia",
+            "index": 1.203819,
+            "reference_share": 0.033959,
+            "selected_share": 0.04088
+          },
+          {
+            "category": "Washington",
+            "index": 1.0503,
+            "reference_share": 0.027364,
+            "selected_share": 0.02874
+          },
+          {
+            "category": "Maryland",
+            "index": 0.990475,
+            "reference_share": 0.022636,
+            "selected_share": 0.02242
+          }
+        ],
+        "universe_count": 5000000
+      },
+      "top_decile": {
+        "historical_positives_count": 25473,
+        "matching_count": 500000,
+        "score_max": 0.9782832402557606,
+        "score_mean": 0.33402709707407346,
+        "score_min": 0.29571562433223897,
+        "selected_count": 500000,
+        "selected_vs_historical_positives_top_states": [
+          {
+            "category": "Utah",
+            "index": 2.149485,
+            "reference_share": 0.01374,
+            "selected_share": 0.029534
+          },
+          {
+            "category": "New Jersey",
+            "index": 1.609433,
+            "reference_share": 0.039925,
+            "selected_share": 0.064256
+          },
+          {
+            "category": "Connecticut",
+            "index": 1.454601,
+            "reference_share": 0.012876,
+            "selected_share": 0.01873
+          },
+          {
+            "category": "Illinois",
+            "index": 1.304373,
+            "reference_share": 0.051427,
+            "selected_share": 0.06708
+          },
+          {
+            "category": "Massachusetts",
+            "index": 1.226329,
+            "reference_share": 0.029796,
+            "selected_share": 0.03654
+          },
+          {
+            "category": "Georgia",
+            "index": 1.176757,
+            "reference_share": 0.035606,
+            "selected_share": 0.0419
+          },
+          {
+            "category": "Colorado",
+            "index": 1.137325,
+            "reference_share": 0.021317,
+            "selected_share": 0.024244
+          },
+          {
+            "category": "California",
+            "index": 1.136101,
+            "reference_share": 0.163389,
+            "selected_share": 0.185626
+          },
+          {
+            "category": "Oregon",
+            "index": 1.017563,
+            "reference_share": 0.013269,
+            "selected_share": 0.013502
+          },
+          {
+            "category": "Washington",
+            "index": 0.965494,
+            "reference_share": 0.028226,
+            "selected_share": 0.027252
+          }
+        ],
+        "selected_vs_universe_top_states": [
+          {
+            "category": "Utah",
+            "index": 2.348703,
+            "reference_share": 0.012575,
+            "selected_share": 0.029534
+          },
+          {
+            "category": "New Jersey",
+            "index": 1.722949,
+            "reference_share": 0.037294,
+            "selected_share": 0.064256
+          },
+          {
+            "category": "Illinois",
+            "index": 1.408918,
+            "reference_share": 0.047611,
+            "selected_share": 0.06708
+          },
+          {
+            "category": "Connecticut",
+            "index": 1.401841,
+            "reference_share": 0.013361,
+            "selected_share": 0.01873
+          },
+          {
+            "category": "Massachusetts",
+            "index": 1.33579,
+            "reference_share": 0.027355,
+            "selected_share": 0.03654
+          },
+          {
+            "category": "Georgia",
+            "index": 1.233855,
+            "reference_share": 0.033959,
+            "selected_share": 0.0419
+          },
+          {
+            "category": "California",
+            "index": 1.165886,
+            "reference_share": 0.159215,
+            "selected_share": 0.185626
+          },
+          {
+            "category": "Colorado",
+            "index": 1.146321,
+            "reference_share": 0.021149,
+            "selected_share": 0.024244
+          },
+          {
+            "category": "Washington",
+            "index": 0.995922,
+            "reference_share": 0.027364,
+            "selected_share": 0.027252
+          },
+          {
+            "category": "Pennsylvania",
+            "index": 0.939618,
+            "reference_share": 0.04243,
+            "selected_share": 0.039868
+          }
+        ],
+        "universe_count": 5000000
+      },
+      "universe_all": {
+        "historical_positives_count": 25473,
+        "matching_count": 5000000,
+        "score_max": 0.9782832402557606,
+        "score_mean": 0.20595671379862576,
+        "score_min": 0.06774103945805435,
+        "selected_count": 5000000,
+        "selected_vs_historical_positives_top_states": [
+          {
+            "category": "Louisiana",
+            "index": 1.132116,
+            "reference_share": 0.012562,
+            "selected_share": 0.014222
+          },
+          {
+            "category": "Oregon",
+            "index": 1.092641,
+            "reference_share": 0.013269,
+            "selected_share": 0.014498
+          },
+          {
+            "category": "Indiana",
+            "index": 1.089695,
+            "reference_share": 0.018922,
+            "selected_share": 0.020619
+          },
+          {
+            "category": "Wisconsin",
+            "index": 1.084262,
+            "reference_share": 0.015546,
+            "selected_share": 0.016856
+          },
+          {
+            "category": "Michigan",
+            "index": 1.050277,
+            "reference_share": 0.03015,
+            "selected_share": 0.031665
+          },
+          {
+            "category": "Tennessee",
+            "index": 1.042521,
+            "reference_share": 0.018804,
+            "selected_share": 0.019604
+          },
+          {
+            "category": "Connecticut",
+            "index": 1.037636,
+            "reference_share": 0.012876,
+            "selected_share": 0.013361
+          },
+          {
+            "category": "Ohio",
+            "index": 1.028098,
+            "reference_share": 0.037373,
+            "selected_share": 0.038423
+          },
+          {
+            "category": "Texas",
+            "index": 1.0227,
+            "reference_share": 0.101794,
+            "selected_share": 0.104105
+          },
+          {
+            "category": "Florida",
+            "index": 1.021707,
+            "reference_share": 0.082519,
+            "selected_share": 0.08431
+          }
+        ],
+        "selected_vs_universe_top_states": [
+          {
+            "category": "Arizona",
+            "index": 1.0,
+            "reference_share": 0.02725,
+            "selected_share": 0.02725
+          },
+          {
+            "category": "California",
+            "index": 1.0,
+            "reference_share": 0.159215,
+            "selected_share": 0.159215
+          },
+          {
+            "category": "Colorado",
+            "index": 1.0,
+            "reference_share": 0.021149,
+            "selected_share": 0.021149
+          },
+          {
+            "category": "Connecticut",
+            "index": 1.0,
+            "reference_share": 0.013361,
+            "selected_share": 0.013361
+          },
+          {
+            "category": "Florida",
+            "index": 1.0,
+            "reference_share": 0.08431,
+            "selected_share": 0.08431
+          },
+          {
+            "category": "Georgia",
+            "index": 1.0,
+            "reference_share": 0.033959,
+            "selected_share": 0.033959
+          },
+          {
+            "category": "Illinois",
+            "index": 1.0,
+            "reference_share": 0.047611,
+            "selected_share": 0.047611
+          },
+          {
+            "category": "Indiana",
+            "index": 1.0,
+            "reference_share": 0.020619,
+            "selected_share": 0.020619
+          },
+          {
+            "category": "Louisiana",
+            "index": 1.0,
+            "reference_share": 0.014222,
+            "selected_share": 0.014222
+          },
+          {
+            "category": "Maryland",
+            "index": 1.0,
+            "reference_share": 0.022636,
+            "selected_share": 0.022636
+          }
+        ],
+        "universe_count": 5000000
+      }
+    },
+    "historical_positive_reconciliation": {
+      "analysis_positive_customer_count": 25473,
+      "historical_positive_count": 25473,
+      "reconciled": true
+    }
+  },
+  "ranking_counts": {
+    "bands": {
+      "ELITE": 50000,
+      "HIGH": 250000,
+      "LOW": 1250000,
+      "MEDIUM": 750000,
+      "VERY_HIGH": 200000,
+      "VERY_LOW": 2500000
+    },
+    "bands_sum": 5000000,
+    "top_1_percent": 50000,
+    "top_decile": 500000
+  },
+  "saved_audience": {
+    "audience_id": 3,
+    "currentness_issues": [],
+    "filter_sha256": "8a1151ba8a854fa1e843a6b8958608fc1b05fbb94c407ecde6a1bdcdccb4e940",
+    "is_current": true,
+    "reopened_definition_matches": true,
+    "resolved_count": 50000
+  },
+  "search": {
+    "representative_filters": {
+      "age": {
+        "first_score": 0.9772302389962777,
+        "last_score": 0.7783064797363013,
+        "row_count": 50
+      },
+      "decile_age_income": {
+        "first_score": 0.5228717354696684,
+        "last_score": 0.4820489118219582,
+        "row_count": 50
+      },
+      "gender_state": {
+        "first_score": 0.8960098202059242,
+        "last_score": 0.6088347704034858,
+        "row_count": 50
+      },
+      "income": {
+        "first_score": 0.5044033131966783,
+        "last_score": 0.4732966315728275,
+        "row_count": 50
+      },
+      "rank_band_state": {
+        "first_score": 0.32459823980713026,
+        "last_score": 0.32457019470684934,
+        "row_count": 50
+      },
+      "state": {
+        "first_score": 0.9691976919854112,
+        "last_score": 0.6838443953765958,
+        "row_count": 50
+      }
+    },
+    "unfiltered_keyset_pages": [
+      {
+        "first_score": 0.9782832402557606,
+        "last_score": 0.8091731138373313,
+        "page": 1,
+        "row_count": 50
+      },
+      {
+        "first_score": 0.8067121614483664,
+        "last_score": 0.7417832123064793,
+        "page": 2,
+        "row_count": 50
+      },
+      {
+        "first_score": 0.7411880326693974,
+        "last_score": 0.7021404644513024,
+        "page": 3,
+        "row_count": 50
+      }
+    ]
+  },
+  "security": {
+    "no_export_surface": true,
+    "no_identity_linkage_surface": true,
+    "no_pii_payload_fields": true
+  },
+  "step": "phase6_step9",
+  "tests": {
+    "gates": {
+      "compileall": {
+        "command": "python -m compileall -q app scripts tests",
+        "passed": true,
+        "summary": "No compile errors."
+      },
+      "git_diff_check": {
+        "command": "git diff --check",
+        "passed": true,
+        "summary": "No blocking whitespace or conflict marker issues; CRLF warnings only."
+      },
+      "pip_check": {
+        "command": "python -m pip check",
+        "passed": true,
+        "summary": "No broken requirements found."
+      },
+      "pytest_q": {
+        "command": "python -m pytest -q",
+        "passed": true,
+        "summary": "413 passed in 457.37s"
+      },
+      "validate_data_json": {
+        "command": "python scripts/validate_data.py --json",
+        "passed": true,
+        "summary": "overall_status=OK; customers=125000; campaign_sales=570000; demographics=5000000; structural_issues all zero-violation."
+      }
+    },
+    "generated_at": "2026-08-28T13:31:58Z",
+    "scope": "phase6_step9_pre_run_gates"
+  },
+  "ui_e2e": {
+    "audience_explorer_enabled": true,
+    "campaigns_disabled": true,
+    "estimate_surface": true,
+    "no_export_surface": true,
+    "prepare_progress_surface": true,
+    "profile_surface": true,
+    "ranked_page_surface": true,
+    "save_reopen_surface": true,
+    "score_disclaimer_present": true
+  }
+}
