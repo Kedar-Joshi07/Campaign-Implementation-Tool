@@ -338,3 +338,74 @@ Final Phase 6 acceptance decision: GO
 Phase 7 start condition:
 - GO for Phase 7 implementation planning and execution only through the
   explicit preconditions in `Prompts/phase6_prompt_pack/04_PHASE_7_HANDOFF_CONTRACT.md`.
+
+## Pre-Phase-7 Finalization Status
+
+Pre-Phase-7 finalization (`Prompts/pre_phase7_phase6_finalization_prompt_pack`) is complete.
+
+Starting baseline SHA required by finalization pack:
+- `b2cdfa95713aa2f8d9309be4881079f703df1831`
+
+Finalization evidence additions:
+- `docs/evidence/phase6_prephase7_finalization_baseline.json`
+- `docs/evidence/phase6_real_5m_performance.json`
+
+Contract/evidence closure outcomes:
+- Dynamic `TOP_N` universe-bound rule is enforced for canonical audience actions.
+- Preparation readiness semantics include `prepared`, `is_canonical`,
+  `source_verified`, and `ready_for_current_audience_actions`.
+- Audience preparation bounded scan/runtime metrics are persisted in
+  AUDIENCE_PREPARATION completion payloads when available.
+- Step 8 synthetic evidence remains explicitly labeled synthetic and distinct
+  from real 5M runtime evidence.
+- Generated SQLite validation artifact DB is not tracked in git.
+- Runtime PII blocked-field metadata aligns with Phase 6 frozen deny-list.
+
+## Real 5M Performance Evidence Snapshot
+
+Evidence artifact:
+- `docs/evidence/phase6_real_5m_performance.json`
+
+Canonical context captured in artifact:
+- `analysis_run_id=12`
+- `model_run_id=8`
+- `scoring_run_id=8`
+- `scored_person_count=5000000`
+- boundary count: `100`
+
+Real measured timing highlights (seconds):
+- rank preparation clean copied-DB run:
+  - scanned rows `5000000`
+  - chunk size `100000`
+  - chunk count `50`
+  - runtime `73.141643`
+  - rows/second `68360.509571`
+- search:
+  - unfiltered first page `0.311518`
+  - next keyset page `0.295529`
+  - top 1% search `0.000556`
+  - state filter `0.352889`
+  - age+income filter `6.846385`
+  - rank-band+state `1.144406`
+- estimate:
+  - top 1% `27.702337`
+  - top decile `15.543598`
+  - all population `5.346158`
+- profile:
+  - top 1% profile `2.217705`
+  - filtered TOP_N 50K profile `182.770487`
+- saved audience:
+  - list `0.012815`
+  - detail `0.006203`
+  - currentness `509.16243`
+
+## Final Gate Results (Pre-Phase-7 Finalization)
+
+- `python -m pip check` -> clean (`No broken requirements found.`)
+- `python -m pytest -q` -> `426 passed in 665.19s`
+- `python -m compileall -q app scripts tests` -> clean (no output)
+- `git diff --check` -> no blocking whitespace/conflict errors (CRLF warnings only)
+- `python scripts/validate_data.py --json` -> `overall_status=OK`
+  - customers: `125000`
+  - campaign_sales: `570000`
+  - demographics: `5000000`

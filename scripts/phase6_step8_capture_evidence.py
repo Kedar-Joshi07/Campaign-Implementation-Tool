@@ -37,6 +37,7 @@ def _case(name: str, plan: list[str], timing_ms: float) -> dict[str, object]:
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
     db_path = root / "artifacts" / "phase6_step8_perf_security.db"
+    sanitized_db_ref = "artifacts/phase6_step8_perf_security.db"
     db_path.parent.mkdir(parents=True, exist_ok=True)
     if db_path.exists():
         db_path.unlink()
@@ -269,7 +270,9 @@ def main() -> None:
 
     payload = {
         "step": "phase6_step8",
-        "database": str(db_path),
+        "evidence_type": "Synthetic bounded query-plan/index validation",
+        "is_real_5m_performance": False,
+        "database": sanitized_db_ref,
         "query_plan_timing_cases": cases,
         "index_inventory": sorted(index_names),
         "database_size_bytes": page_count * page_size,

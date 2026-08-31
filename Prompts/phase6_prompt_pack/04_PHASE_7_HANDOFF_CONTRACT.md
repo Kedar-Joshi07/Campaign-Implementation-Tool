@@ -8,7 +8,9 @@ Phase 6 is accepted and frozen at Step 10. Phase 7 starts from this baseline.
 - This contract must be interpreted together with:
 	- `docs/PHASE_6_IMPLEMENTATION_SUMMARY.md`
 	- `docs/evidence/phase6_5m_acceptance.json`
+	- `docs/evidence/phase6_real_5m_performance.json`
 	- `docs/evidence/phase6_step8_query_plan_and_timing.json`
+	- `docs/evidence/phase6_prephase7_finalization_baseline.json`
 
 ## Inherited Frozen Contracts
 
@@ -28,6 +30,8 @@ Phase 7 may consume a saved audience only if all checks pass:
 5. Selection definition is valid under supported contract versions.
 6. `resolved_count > 0`.
 7. Filter/rank/selection contract versions are supported.
+8. Referenced run is `ready_for_current_audience_actions=true` at consumption time.
+9. If selection mode is `TOP_N`, enforce `target_count <= scored_person_count` for the current canonical run.
 
 Any failed precondition is a hard stop for campaign execution paths.
 
@@ -38,6 +42,7 @@ Phase 7 must never silently consume stale saved audiences.
 Required behavior:
 
 - Run currentness/provenance validation before campaign member resolution.
+- Validate readiness through `ready_for_current_audience_actions` semantics.
 - If stale, return explicit blocking status and actionable reason(s).
 - Require user/operator acknowledgement and explicit re-resolution path.
 - Do not auto-fallback to prior/stale members.

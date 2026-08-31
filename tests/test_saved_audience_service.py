@@ -705,3 +705,39 @@ def test_list_saved_audiences_pagination(database_path: Path) -> None:
 def test_missing_saved_audience_not_found(database_path: Path) -> None:
     with pytest.raises(SavedAudienceServiceNotFoundError):
         get_saved_audience_detail(database_path, audience_id=999)
+
+
+def test_save_topn_preserves_requested_target_count_when_matching_is_smaller(database_path: Path) -> None:
+    scoring_run_id = _seed_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    saved = save_audience(
+        database_path,
+        {
+            "audience_name": "California Top N",
+            "scoring_run_id": scoring_run_id,
+            "filters": {"state": ["California"]},
+            "selection": {"mode": "TOP_N", "target_count": 6},
+            "include_profile_snapshot": False,
+        },
+    )
+
+    assert saved["definition"]["selection_mode"] == "TOP_N"
+    assert saved["definition"]["target_count"] == 6
+    assert saved["definition"]["resolved_count"] == 3
+
+
+def test_save_rejects_topn_above_current_universe(database_path: Path) -> None:
+    scoring_run_id = _seed_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    with pytest.raises(SavedAudienceServiceValidationError, match="less than or equal"):
+        save_audience(
+            database_path,
+            {
+                "audience_name": "Invalid Top N",
+                "scoring_run_id": scoring_run_id,
+                "filters": {},
+                "selection": {"mode": "TOP_N", "target_count": 7},
+            },
+        )

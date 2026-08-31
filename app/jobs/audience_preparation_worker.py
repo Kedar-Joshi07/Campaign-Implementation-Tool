@@ -56,12 +56,33 @@ def _require_positive_int(value: Any, *, field_name: str) -> int:
 
 
 def _result_payload_from_summary(summary: dict[str, Any]) -> dict[str, Any]:
-    return {
+    payload: dict[str, Any] = {
         "scoring_run_id": int(summary["scoring_run_id"]),
         "total_population": int(summary["total_population"]),
         "rank_contract_version": str(summary["rank_contract_version"]),
         "boundary_count": int(summary["boundary_count"]),
     }
+    metric_fields = (
+        "scanned_rows",
+        "chunk_size",
+        "chunk_count",
+        "largest_chunk_rows",
+        "runtime_seconds",
+        "rows_per_second",
+    )
+    if all(field in summary for field in metric_fields):
+        payload.update(
+            {
+                "scanned_rows": int(summary["scanned_rows"]),
+                "chunk_size": int(summary["chunk_size"]),
+                "chunk_count": int(summary["chunk_count"]),
+                "largest_chunk_rows": int(summary["largest_chunk_rows"]),
+                "runtime_seconds": float(summary["runtime_seconds"]),
+                "rows_per_second": float(summary["rows_per_second"]),
+                "metrics_available": True,
+            }
+        )
+    return payload
 
 
 def _mark_failed(

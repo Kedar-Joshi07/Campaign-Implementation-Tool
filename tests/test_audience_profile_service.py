@@ -10,6 +10,7 @@ from app.database.schema import initialize_database
 from app.services.audience_preparation_service import run_audience_rank_preparation
 from app.services.audience_query_service import (
     AudienceQueryConflictError,
+    AudienceQueryValidationError,
     RANK_BOUNDARIES_NOT_READY_MESSAGE,
     SCORING_RUN_NOT_CANONICAL_MESSAGE,
     profile_audience,
@@ -707,3 +708,29 @@ def test_profile_payload_has_no_identity_keys(database_path: Path) -> None:
         "postal_code",
     ):
         assert forbidden not in serialized
+
+
+def test_profile_topn_resolves_to_matching_and_enforces_universe_bound(database_path: Path) -> None:
+    scoring_run_id = _seed_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    resolved = profile_audience(
+        database_path,
+        {
+            "scoring_run_id": scoring_run_id,
+            "filters": {"state": ["California"]},
+            "selection": {"mode": "TOP_N", "target_count": 4},
+        },
+    )
+    assert resolved["summary"]["matching"]["count"] == 3
+    assert resolved["summary"]["selected"]["count"] == 3
+
+    with pytest.raises(AudienceQueryValidationError, match="less than or equal"):
+        profile_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {},
+                "selection": {"mode": "TOP_N", "target_count": 7},
+            },
+        )

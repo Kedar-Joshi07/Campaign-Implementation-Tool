@@ -963,54 +963,65 @@ async function resolveCanonicalRun(runs, force = false) {
     return { type: "no-run" };
   }
 
-  for (const run of runs) {
+  const readyRun = runs.find((run) => run?.ready_for_current_audience_actions === true);
+  if (readyRun) {
     try {
-      const options = await getCachedJSON(API_PATHS.options(run.scoring_run_id), {
+      const options = await getCachedJSON(API_PATHS.options(readyRun.scoring_run_id), {
         maxAgeMs: 15_000,
         force,
       });
-      return { type: "ready", run, options };
+      return { type: "ready", run: readyRun, options };
     } catch (error) {
-      const lowered = String(error.message || "").toLowerCase();
-
-      if (error.status === 409 && lowered.includes(NOT_PREPARED_MESSAGE.toLowerCase())) {
-        const status = await loadPreparationStatus(run.scoring_run_id);
-        if (status.prepared) {
-          const options = await getCachedJSON(API_PATHS.options(run.scoring_run_id), {
-            maxAgeMs: 15_000,
-            force: true,
-          });
-          return { type: "ready", run, options };
-        }
-
-        if (status.active_job && !TERMINAL_JOB_STATUSES.has(status.active_job.status)) {
-          return { type: "prep-running", run, status };
-        }
-
-        if (lastPrepFailureMessage) {
-          return {
-            type: "prep-failed",
-            run,
-            message: lastPrepFailureMessage,
-          };
-        }
-
-        return { type: "prep-needed", run, status };
-      }
-
-      if (error.status === 409 && lowered.includes(NOT_CANONICAL_MESSAGE.toLowerCase())) {
-        continue;
-      }
-
-      if (error.status === 404) {
-        continue;
-      }
-
       return { type: "error", error };
     }
   }
 
-  return { type: "no-run" };
+  const canonicalCandidates = runs.filter((run) => run?.is_canonical === true);
+  if (!canonicalCandidates.length) {
+    return { type: "no-run" };
+  }
+
+  const run = canonicalCandidates[0];
+  try {
+    const status = await loadPreparationStatus(run.scoring_run_id);
+    if (status.ready_for_current_audience_actions === true) {
+      const options = await getCachedJSON(API_PATHS.options(run.scoring_run_id), {
+        maxAgeMs: 15_000,
+        force: true,
+      });
+      return { type: "ready", run, options };
+    }
+
+    if (status.active_job && !TERMINAL_JOB_STATUSES.has(status.active_job.status)) {
+      return { type: "prep-running", run, status };
+    }
+
+    if (lastPrepFailureMessage) {
+      return {
+        type: "prep-failed",
+        run,
+        message: lastPrepFailureMessage,
+      };
+    }
+
+    if (status.prepared) {
+      return { type: "no-run" };
+    }
+
+    return { type: "prep-needed", run, status };
+  } catch (error) {
+    const lowered = String(error.message || "").toLowerCase();
+    if (error.status === 409 && lowered.includes(NOT_PREPARED_MESSAGE.toLowerCase())) {
+      return { type: "prep-needed", run, status: null };
+    }
+    if (error.status === 409 && lowered.includes(NOT_CANONICAL_MESSAGE.toLowerCase())) {
+      return { type: "no-run" };
+    }
+    if (error.status === 404) {
+      return { type: "no-run" };
+    }
+    return { type: "error", error };
+  }
 }
 
 function resetWorkspaceData() {

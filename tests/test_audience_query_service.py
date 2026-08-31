@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pytest
 
+import app.services.audience_query_service as audience_query_service_module
+
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.services.audience_preparation_service import run_audience_rank_preparation
@@ -696,3 +698,58 @@ def test_search_response_allowlist_fields_only(database_path: Path) -> None:
         "decile",
         "rank_band",
     }
+
+
+def test_dynamic_topn_universe_validation_helper_supports_large_valid_target() -> None:
+    selection = audience_query_service_module.normalize_selection(
+        {"mode": "TOP_N", "target_count": 1_000_001}
+    )
+
+    # Selection Contract v1 is universe-dependent, so this is valid when the universe allows it.
+    audience_query_service_module._validate_selection_against_scoring_universe(
+        selection=selection,
+        scored_person_count=5_000_000,
+    )
+
+    with pytest.raises(AudienceQueryValidationError, match="less than or equal"):
+        audience_query_service_module._validate_selection_against_scoring_universe(
+            selection=selection,
+            scored_person_count=1_000_000,
+        )
+
+
+def test_estimate_topn_dynamic_universe_bounds(database_path: Path) -> None:
+    scoring_run_id = _seed_query_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    top_one = estimate_audience(
+        database_path,
+        {
+            "scoring_run_id": scoring_run_id,
+            "filters": {},
+            "selection": {"mode": "TOP_N", "target_count": 1},
+        },
+    )
+    assert top_one["matching_count"] == 10
+    assert top_one["selected_count"] == 1
+
+    top_universe = estimate_audience(
+        database_path,
+        {
+            "scoring_run_id": scoring_run_id,
+            "filters": {},
+            "selection": {"mode": "TOP_N", "target_count": 10},
+        },
+    )
+    assert top_universe["matching_count"] == 10
+    assert top_universe["selected_count"] == 10
+
+    with pytest.raises(AudienceQueryValidationError, match="less than or equal"):
+        estimate_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {},
+                "selection": {"mode": "TOP_N", "target_count": 11},
+            },
+        )

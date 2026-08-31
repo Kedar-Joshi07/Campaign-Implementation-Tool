@@ -68,17 +68,28 @@ All critical checks must pass for final Phase 6 GO.
 
 - [x] Bounded rank preparation behavior validated
 - [x] Query plan/timing evidence captured
+- [x] Real 5M performance evidence captured in `docs/evidence/phase6_real_5m_performance.json`
+- [x] Synthetic Step 8 evidence remains explicitly labeled synthetic
 - [x] No unbounded hot-path materialization retained in validation flow
 - [x] `python -m pip check` passed
-- [x] `python -m pytest -q` passed (`413 passed in 457.37s`)
+- [x] `python -m pytest -q` passed (`426 passed in 665.19s`)
 - [x] `python -m compileall -q app scripts tests` passed
 - [x] `git diff --check` passed for blocking issues (CRLF warnings only)
 - [x] `python scripts/validate_data.py --json` passed (`overall_status=OK`)
+
+## Pre-Phase-7 Finalization Closure
+
+- [x] Dynamic `TOP_N` universe-bound contract fix verified (`1 <= target_count <= scored_person_count`)
+- [x] Preparation readiness semantics include `ready_for_current_audience_actions`
+- [x] Audience preparation metrics persistence includes bounded scan/runtime fields
+- [x] Generated SQLite performance artifact DB is not tracked in git
+- [x] Runtime PII blocked-field metadata aligned to frozen deny-list
 
 ## Deliverables Updated in Step 10
 
 - [x] `docs/PHASE_6_IMPLEMENTATION_SUMMARY.md`
 - [x] `docs/evidence/phase6_5m_acceptance.json`
+- [x] `docs/evidence/phase6_real_5m_performance.json`
 - [x] `Prompts/phase6_prompt_pack/02_PROGRESS_TRACKER.md`
 - [x] `Prompts/phase6_prompt_pack/03_ACCEPTANCE_CHECKLIST.md`
 - [x] `Prompts/phase6_prompt_pack/04_PHASE_7_HANDOFF_CONTRACT.md`

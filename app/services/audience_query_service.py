@@ -40,7 +40,6 @@ DEFAULT_SEARCH_PAGE_SIZE = 50
 MINIMUM_SEARCH_PAGE_SIZE = 1
 MAXIMUM_SEARCH_PAGE_SIZE = 100
 MAXIMUM_CATEGORICAL_FILTER_VALUES = 100
-MAXIMUM_SELECTION_TARGET_COUNT = 1_000_000
 CURSOR_VERSION = "1"
 
 SELECTION_MODE_ALL_MATCHING = "ALL_MATCHING"
@@ -115,14 +114,19 @@ _PII_POLICY = {
     "blocked_fields": [
         "first_name",
         "last_name",
-        "email",
-        "phone_number",
         "address_line_1",
         "address_line_2",
         "street",
         "postal_code",
+        "city",
+        "phone_number",
+        "email",
         "ethnicity",
         "religion",
+        "occupation_industry",
+        "family_yearly_income",
+        "number_of_children_in_family",
+        "number_of_adults_in_family",
     ],
 }
 
@@ -480,15 +484,6 @@ def normalize_selection(raw_selection: Any) -> NormalizedSelection:
         raise AudienceQueryValidationError(
             "selection.target_count is required when selection.mode is TOP_N."
         )
-    if (
-        mode == SELECTION_MODE_TOP_N
-        and normalized_target_count is not None
-        and normalized_target_count > MAXIMUM_SELECTION_TARGET_COUNT
-    ):
-        raise AudienceQueryValidationError(
-            "selection.target_count must not exceed "
-            f"{MAXIMUM_SELECTION_TARGET_COUNT}."
-        )
     if mode == SELECTION_MODE_ALL_MATCHING and normalized_target_count is not None:
         raise AudienceQueryValidationError(
             "selection.target_count must be null when selection.mode is ALL_MATCHING."
@@ -500,6 +495,20 @@ def normalize_selection(raw_selection: Any) -> NormalizedSelection:
             "target_count": normalized_target_count,
         }
     )
+
+
+def _validate_selection_against_scoring_universe(
+    *,
+    selection: NormalizedSelection,
+    scored_person_count: Any,
+) -> None:
+    universe_count = _require_positive_int(scored_person_count, field_name="scored_person_count")
+    mode = str(selection.payload["mode"])
+    target_count = selection.payload["target_count"]
+    if mode == SELECTION_MODE_TOP_N and target_count is not None and target_count > universe_count:
+        raise AudienceQueryValidationError(
+            "selection.target_count must be less than or equal to the current canonical scored population."
+        )
 
 
 def _validate_cursor_hash(value: Any, *, field_name: str) -> str:
@@ -653,13 +662,19 @@ def _safe_share(count: int, total: int) -> float:
     return round(count / total, 6)
 
 
-def _selected_members_cte(selection: NormalizedSelection) -> tuple[str, list[Any]]:
+def _selected_members_cte(
+    selection: NormalizedSelection,
+    *,
+    matching_count: int | None = None,
+) -> tuple[str, list[Any]]:
     if selection.payload["mode"] == SELECTION_MODE_TOP_N:
         target_count = selection.payload["target_count"]
         if target_count is None:
             raise AudienceQueryValidationError(
                 "selection.target_count is required when selection.mode is TOP_N."
             )
+        if matching_count is not None and target_count >= matching_count:
+            return SELECTED_ALL_MATCHING_CTE, []
         return SELECTED_TOPN_CTE, [int(target_count)]
     return SELECTED_ALL_MATCHING_CTE, []
 
@@ -732,7 +747,23 @@ def _fetch_prospect_profile_summaries_and_distributions(
     if predicates:
         predicate_sql = " AND " + " AND ".join(predicates)
 
-    selected_cte, selected_cte_params = _selected_members_cte(selection)
+    with get_connection(path) as connection:
+        matching_count_row = connection.execute(
+            f"""
+            SELECT COUNT(*) AS matching_count
+            FROM propensity_scores p
+            INNER JOIN demographics d ON d.person_id = p.person_id
+            WHERE p.scoring_run_id = ?
+            {predicate_sql}
+            """,
+            [scoring_run_id, *predicate_params],
+        ).fetchone()
+
+    matching_count = int(matching_count_row["matching_count"])
+    selected_cte, selected_cte_params = _selected_members_cte(
+        selection,
+        matching_count=matching_count,
+    )
 
     summary_query = f"""
         WITH
@@ -1528,6 +1559,10 @@ def estimate_audience(
         database_path,
         scoring_run_id=scoring_run_id,
     )
+    _validate_selection_against_scoring_universe(
+        selection=normalized_selection,
+        scored_person_count=scoring_row["scored_person_count"],
+    )
 
     predicates, predicate_params = _build_filter_predicates(
         normalized_filters=normalized_filters,
@@ -1706,6 +1741,10 @@ def profile_audience(
     path, scoring_row, boundaries = _require_prepared_canonical_context(
         database_path,
         scoring_run_id=scoring_run_id,
+    )
+    _validate_selection_against_scoring_universe(
+        selection=normalized_selection,
+        scored_person_count=scoring_row["scored_person_count"],
     )
 
     prospect_summary, prospect_distributions = _fetch_prospect_profile_summaries_and_distributions(

@@ -50,6 +50,12 @@ def test_worker_marks_completed_with_sanitized_result(
             "rank_contract_version": "1",
             "boundary_count": 100,
             "total_population": 200,
+            "scanned_rows": 200,
+            "chunk_size": 1000,
+            "chunk_count": 2,
+            "largest_chunk_rows": 100,
+            "runtime_seconds": 0.05,
+            "rows_per_second": 4000.0,
             "boundary_person_ids": ["PER_000001"],
         }
 
@@ -72,7 +78,16 @@ def test_worker_marks_completed_with_sanitized_result(
         "total_population",
         "rank_contract_version",
         "boundary_count",
+        "scanned_rows",
+        "chunk_size",
+        "chunk_count",
+        "largest_chunk_rows",
+        "runtime_seconds",
+        "rows_per_second",
+        "metrics_available",
     }
+    assert payload["metrics_available"] is True
+    assert "person_id" not in json.dumps(payload)
 
 
 def test_worker_marks_failed_on_preparation_error(

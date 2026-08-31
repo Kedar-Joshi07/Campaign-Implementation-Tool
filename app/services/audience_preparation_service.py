@@ -8,6 +8,7 @@ import traceback
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Callable
 
 from app.database.connection import get_connection
@@ -33,6 +34,8 @@ DEFAULT_RANK_CONTRACT_VERSION = "1"
 SUPPORTED_RANK_CONTRACT_VERSIONS = {DEFAULT_RANK_CONTRACT_VERSION}
 DEFAULT_PREPARATION_SCAN_CHUNK_SIZE = 100_000
 MAXIMUM_INTERNAL_ERROR_LENGTH = 4_096
+MAXIMUM_CURRENTNESS_ISSUES = 5
+MAXIMUM_CURRENTNESS_ISSUE_LENGTH = 160
 
 SCORING_RUN_NOT_FOUND_MESSAGE = "The requested scoring run was not found."
 SCORING_RUN_NOT_COMPLETED_MESSAGE = "The requested scoring run is not completed."
@@ -81,6 +84,26 @@ class RankBoundary:
         }
 
 
+@dataclass(frozen=True)
+class PreparationMetrics:
+    scanned_rows: int
+    chunk_size: int
+    chunk_count: int
+    largest_chunk_rows: int
+    runtime_seconds: float
+    rows_per_second: float
+
+    def to_payload(self) -> dict[str, Any]:
+        return {
+            "scanned_rows": int(self.scanned_rows),
+            "chunk_size": int(self.chunk_size),
+            "chunk_count": int(self.chunk_count),
+            "largest_chunk_rows": int(self.largest_chunk_rows),
+            "runtime_seconds": round(float(self.runtime_seconds), 6),
+            "rows_per_second": round(float(self.rows_per_second), 6),
+        }
+
+
 WorkerSubmitter = Callable[[str | Path, int], Any]
 
 
@@ -108,6 +131,83 @@ def _public_job_summary(row: dict[str, Any]) -> dict[str, Any]:
         "created_at": row["created_at"],
         "started_at": row.get("started_at"),
         "finished_at": row.get("finished_at"),
+    }
+
+
+def _compact_currentness_issue(issue: Any) -> str | None:
+    if not isinstance(issue, str):
+        return None
+    normalized = issue.strip()
+    if not normalized:
+        return None
+    if len(normalized) <= MAXIMUM_CURRENTNESS_ISSUE_LENGTH:
+        return normalized
+    return normalized[: MAXIMUM_CURRENTNESS_ISSUE_LENGTH - 3].rstrip() + "..."
+
+
+def _bounded_currentness_issues(issues: list[Any]) -> list[str]:
+    bounded: list[str] = []
+    seen: set[str] = set()
+    for issue in issues:
+        compact = _compact_currentness_issue(issue)
+        if compact is None or compact in seen:
+            continue
+        seen.add(compact)
+        bounded.append(compact)
+        if len(bounded) >= MAXIMUM_CURRENTNESS_ISSUES:
+            break
+    return bounded
+
+
+def _resolve_run_currentness(
+    database_path: str | Path,
+    *,
+    scoring_run_id: int,
+    model_run_id: int,
+) -> dict[str, Any]:
+    issues: list[Any] = []
+    source_verified = False
+    is_canonical = False
+
+    try:
+        provenance = validate_completed_scoring_run_provenance(
+            database_path,
+            scoring_run_id=scoring_run_id,
+            verify_current_source_match=True,
+        )
+    except Exception:
+        provenance = None
+        issues.append("Scoring provenance could not be validated.")
+
+    if provenance is not None:
+        is_canonical = bool(provenance.get("is_canonical"))
+        historical_verified = bool(provenance.get("historical_source_verified"))
+        demographic_verified = bool(provenance.get("demographic_source_verified"))
+        source_verified = historical_verified and demographic_verified
+        if not historical_verified:
+            issues.append("Historical source provenance is stale for this scoring run.")
+        if not demographic_verified:
+            issues.append("Demographic source provenance is stale for this scoring run.")
+        if not is_canonical:
+            issues.extend(list(provenance.get("issues") or []))
+
+    try:
+        canonical_row = find_current_canonical_run_for_model(
+            database_path,
+            model_run_id=model_run_id,
+        )
+    except Exception:
+        canonical_row = None
+        issues.append("Current canonical scoring run could not be resolved.")
+
+    if canonical_row is None or int(canonical_row["scoring_run_id"]) != scoring_run_id:
+        is_canonical = False
+        issues.append("Scoring run is not the current canonical run for this model.")
+
+    return {
+        "is_canonical": is_canonical,
+        "source_verified": source_verified,
+        "currentness_issues": _bounded_currentness_issues(issues),
     }
 
 
@@ -219,7 +319,7 @@ def _compute_boundaries_for_run(
     *,
     scoring_run_id: int,
     chunk_size: int,
-) -> list[RankBoundary]:
+) -> tuple[list[RankBoundary], PreparationMetrics]:
     repository = ScoringRepository(database_path)
     scoring_run = repository.fetch_scoring_run(scoring_run_id)
     if scoring_run is None:
@@ -236,6 +336,10 @@ def _compute_boundaries_for_run(
     current_rank = 0
     cursor_score: float | None = None
     cursor_person_id: str | None = None
+    scanned_rows = 0
+    chunk_count = 0
+    largest_chunk_rows = 0
+    started = perf_counter()
 
     while current_bucket_index < 100:
         rows = repository.fetch_rank_scan_chunk(
@@ -246,6 +350,10 @@ def _compute_boundaries_for_run(
         )
         if not rows:
             break
+        chunk_count += 1
+        scanned_rows += len(rows)
+        if len(rows) > largest_chunk_rows:
+            largest_chunk_rows = len(rows)
 
         for row in rows:
             current_rank += 1
@@ -274,7 +382,17 @@ def _compute_boundaries_for_run(
             "The 100th percentile boundary rank must equal scored population."
         )
 
-    return boundaries
+    runtime_seconds = max(0.0, perf_counter() - started)
+    rows_per_second = (scanned_rows / runtime_seconds) if runtime_seconds > 0 else 0.0
+    metrics = PreparationMetrics(
+        scanned_rows=scanned_rows,
+        chunk_size=chunk_size,
+        chunk_count=chunk_count,
+        largest_chunk_rows=largest_chunk_rows,
+        runtime_seconds=runtime_seconds,
+        rows_per_second=rows_per_second,
+    )
+    return boundaries, metrics
 
 
 def _validate_preparation_inputs(
@@ -412,6 +530,16 @@ def get_audience_preparation_status(
             for row in boundaries
         )
     )
+    currentness = _resolve_run_currentness(
+        path,
+        scoring_run_id=normalized_scoring_run_id,
+        model_run_id=int(scoring_row["model_run_id"]),
+    )
+    ready_for_current_actions = (
+        ready
+        and bool(currentness["is_canonical"])
+        and bool(currentness["source_verified"])
+    )
 
     active_job = JobRepository(path).find_active_compute_job()
     active_for_run: dict[str, Any] | None = None
@@ -434,6 +562,10 @@ def get_audience_preparation_status(
         "status": str(scoring_row["status"]),
         "rank_contract_version": normalized_rank_contract_version,
         "prepared": ready,
+        "is_canonical": bool(currentness["is_canonical"]),
+        "source_verified": bool(currentness["source_verified"]),
+        "ready_for_current_audience_actions": ready_for_current_actions,
+        "currentness_issues": currentness["currentness_issues"],
         "boundary_count": len(boundaries),
         "total_population": (
             int(boundaries[0]["total_population"]) if boundaries else int(scoring_row["scored_person_count"])
@@ -482,14 +614,28 @@ def list_audience_preparation_runs(
     summaries: list[dict[str, Any]] = []
     for row in rows:
         boundary_count = int(row["boundary_count"])
+        currentness = _resolve_run_currentness(
+            path,
+            scoring_run_id=int(row["scoring_run_id"]),
+            model_run_id=int(row["model_run_id"]),
+        )
+        prepared = boundary_count == 100 and str(row["rank_contract_version"] or "") == DEFAULT_RANK_CONTRACT_VERSION
         summaries.append(
             {
                 "scoring_run_id": int(row["scoring_run_id"]),
                 "model_run_id": int(row["model_run_id"]),
                 "completed_at": row["completed_at"],
                 "scored_person_count": int(row["scored_person_count"]),
-                "prepared": boundary_count == 100,
-                "rank_contract_version": row["rank_contract_version"] if boundary_count == 100 else None,
+                "prepared": prepared,
+                "is_canonical": bool(currentness["is_canonical"]),
+                "source_verified": bool(currentness["source_verified"]),
+                "ready_for_current_audience_actions": (
+                    prepared
+                    and bool(currentness["is_canonical"])
+                    and bool(currentness["source_verified"])
+                ),
+                "currentness_issues": currentness["currentness_issues"],
+                "rank_contract_version": row["rank_contract_version"] if prepared else None,
                 "boundary_count": boundary_count,
             }
         )
@@ -514,7 +660,7 @@ def run_audience_rank_preparation(
         rank_contract_version=normalized_rank_contract_version,
     )
 
-    boundaries = _compute_boundaries_for_run(
+    boundaries, metrics = _compute_boundaries_for_run(
         path,
         scoring_run_id=normalized_scoring_run_id,
         chunk_size=normalized_chunk_size,
@@ -547,6 +693,7 @@ def run_audience_rank_preparation(
         "rank_contract_version": normalized_rank_contract_version,
         "boundary_count": len(persisted),
         "total_population": int(boundary_rows[-1]["total_population"]),
+        **metrics.to_payload(),
     }
 
 

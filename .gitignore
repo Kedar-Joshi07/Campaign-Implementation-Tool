@@ -19,6 +19,9 @@ output/
 source/
 artifacts/models/*
 !artifacts/models/.gitkeep
+artifacts/*.db
+artifacts/*.db-wal
+artifacts/*.db-shm
 
 # Editors and operating systems
 .vscode/

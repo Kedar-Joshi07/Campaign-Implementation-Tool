@@ -1,6 +1,7 @@
 {
-  "database": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase6_step8_perf_security.db",
+  "database": "artifacts/phase6_step8_perf_security.db",
   "database_size_bytes": 212992,
+  "evidence_type": "Synthetic bounded query-plan/index validation",
   "index_inventory": [
     "idx_audience_rank_boundaries_scoring_bucket",
     "idx_campaign_sales_campaign_channel",
@@ -30,6 +31,7 @@
     "sqlite_autoindex_scoring_runs_1",
     "sqlite_autoindex_scoring_runs_2"
   ],
+  "is_real_5m_performance": false,
   "no_offset_hot_path": {
     "saved_audiences_offset_allowed": true,
     "score_scan_after_uses_offset": false,
@@ -44,7 +46,7 @@
         "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
         "SEARCH d USING COVERING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
       ],
-      "timing_ms": 801.401,
+      "timing_ms": 602.461,
       "uses_rank_index": true,
       "uses_saved_newest_index": false
     },
@@ -54,7 +56,7 @@
         "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
         "SEARCH d USING COVERING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
       ],
-      "timing_ms": 0.003,
+      "timing_ms": 0.001,
       "uses_rank_index": true,
       "uses_saved_newest_index": false
     },
@@ -64,7 +66,7 @@
         "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
         "SEARCH d USING COVERING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
       ],
-      "timing_ms": 915.534,
+      "timing_ms": 632.896,
       "uses_rank_index": true,
       "uses_saved_newest_index": false
     },
@@ -74,7 +76,7 @@
         "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
         "SEARCH d USING COVERING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
       ],
-      "timing_ms": 834.802,
+      "timing_ms": 613.591,
       "uses_rank_index": true,
       "uses_saved_newest_index": false
     },
@@ -84,7 +86,7 @@
         "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
         "SEARCH d USING COVERING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
       ],
-      "timing_ms": 1266.435,
+      "timing_ms": 666.969,
       "uses_rank_index": true,
       "uses_saved_newest_index": false
     },
@@ -94,7 +96,7 @@
         "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
         "SEARCH d USING COVERING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
       ],
-      "timing_ms": 891.449,
+      "timing_ms": 618.648,
       "uses_rank_index": true,
       "uses_saved_newest_index": false
     },
@@ -104,7 +106,7 @@
         "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
         "SEARCH d USING COVERING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
       ],
-      "timing_ms": 935.858,
+      "timing_ms": 646.388,
       "uses_rank_index": true,
       "uses_saved_newest_index": false
     },
@@ -114,7 +116,7 @@
         "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
         "SEARCH d USING COVERING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
       ],
-      "timing_ms": 864.924,
+      "timing_ms": 684.917,
       "uses_rank_index": true,
       "uses_saved_newest_index": false
     },
@@ -129,7 +131,7 @@
         "USE TEMP B-TREE FOR ORDER BY",
         "SCAN selected_members"
       ],
-      "timing_ms": 964.159,
+      "timing_ms": 700.37,
       "uses_rank_index": true,
       "uses_saved_newest_index": false
     },
@@ -139,7 +141,7 @@
         "SCAN saved_audiences USING INDEX idx_saved_audiences_newest",
         "SEARCH saved_audiences USING INTEGER PRIMARY KEY (rowid=?)"
       ],
-      "timing_ms": 1908.962,
+      "timing_ms": 1555.779,
       "uses_rank_index": false,
       "uses_saved_newest_index": true
     }

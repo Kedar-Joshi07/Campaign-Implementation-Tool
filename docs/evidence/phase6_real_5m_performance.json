@@ -1,0 +1,131 @@
+{
+  "canonical_context": {
+    "analysis_run_id": 12,
+    "boundary_count": 100,
+    "database": "data/campaign_poc.db",
+    "model_run_id": 8,
+    "provenance": {
+      "demographic_source_verified": true,
+      "historical_source_verified": true,
+      "is_canonical": true,
+      "issue_count": 0
+    },
+    "schema_version": 9,
+    "scored_person_count": 5000000,
+    "scoring_run_id": 8
+  },
+  "environment_notes": {
+    "measurement_context": "Local POC runtime measurements on canonical 5M scoring context.",
+    "sla_note": "These measurements are local evidence and are not production SLAs.",
+    "step8_synthetic_evidence": {
+      "label": "Synthetic bounded query-plan/index validation",
+      "path": "docs/evidence/phase6_step8_query_plan_and_timing.json"
+    }
+  },
+  "estimate": {
+    "all_population": {
+      "elapsed_seconds": 5.346158,
+      "matching_count": 5000000,
+      "selected_count": 5000000
+    },
+    "top_1_percent": {
+      "elapsed_seconds": 27.702337,
+      "matching_count": 50000,
+      "selected_count": 50000
+    },
+    "top_decile": {
+      "elapsed_seconds": 15.543598,
+      "matching_count": 500000,
+      "selected_count": 500000
+    }
+  },
+  "generated_at": "2026-08-31T10:23:19Z",
+  "index_signals": {
+    "required_indexes_present": {
+      "idx_audience_rank_boundaries_scoring_bucket": true,
+      "idx_propensity_scores_run_score_person": true,
+      "idx_saved_audiences_newest": true
+    }
+  },
+  "profile": {
+    "filtered_topn_50000_profile": {
+      "elapsed_seconds": 182.770487,
+      "matching_count": 92813,
+      "selected_count": 50000
+    },
+    "top_1_percent_profile": {
+      "elapsed_seconds": 2.217705,
+      "matching_count": 50000,
+      "selected_count": 50000
+    }
+  },
+  "rank_preparation": {
+    "boundary_count": 100,
+    "chunk_count": 50,
+    "chunk_size": 100000,
+    "execution": "clean_run_on_db_copy",
+    "largest_chunk_rows": 100000,
+    "rows_per_second": 68360.509571,
+    "runtime_seconds": 73.141643,
+    "scanned_rows": 5000000,
+    "total_population": 5000000,
+    "wall_elapsed_seconds": 73.256338
+  },
+  "sanitization": {
+    "contains_absolute_paths": false,
+    "contains_person_ids": false,
+    "contains_pii": false,
+    "contains_raw_sql": false,
+    "contains_tracebacks": false
+  },
+  "saved_audience": {
+    "created_for_measurement": false,
+    "currentness": {
+      "elapsed_seconds": 509.16243,
+      "is_current": true,
+      "issue_count": 0
+    },
+    "detail": {
+      "audience_id": 3,
+      "elapsed_seconds": 0.006203,
+      "resolved_count": 50000,
+      "selection_mode": "TOP_N"
+    },
+    "list": {
+      "elapsed_seconds": 0.012815,
+      "returned_count": 3
+    }
+  },
+  "search": {
+    "age_income_filter": {
+      "elapsed_seconds": 6.846385,
+      "has_more": true,
+      "row_count": 50
+    },
+    "next_keyset_page": {
+      "elapsed_seconds": 0.295529,
+      "has_more": true,
+      "row_count": 50
+    },
+    "rank_band_state_filter": {
+      "elapsed_seconds": 1.144406,
+      "has_more": true,
+      "row_count": 50
+    },
+    "state_filter": {
+      "elapsed_seconds": 0.352889,
+      "has_more": true,
+      "row_count": 50
+    },
+    "top_1_percent_search": {
+      "elapsed_seconds": 0.000556,
+      "has_more": true,
+      "row_count": 50
+    },
+    "unfiltered_first_page": {
+      "elapsed_seconds": 0.311518,
+      "has_more": true,
+      "row_count": 50
+    }
+  }
+}

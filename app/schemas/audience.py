@@ -31,6 +31,10 @@ class AudiencePreparationStatusResponse(AudienceApiResponseModel):
     status: str
     rank_contract_version: str
     prepared: bool
+    is_canonical: bool
+    source_verified: bool
+    ready_for_current_audience_actions: bool
+    currentness_issues: list[str] = Field(default_factory=list, max_length=5)
     boundary_count: int = Field(ge=0, le=100)
     total_population: int = Field(ge=0)
     active_job: JobSummaryResponse | None = None
@@ -42,6 +46,10 @@ class AudiencePreparationRunSummaryResponse(AudienceApiResponseModel):
     completed_at: datetime | None = None
     scored_person_count: int = Field(ge=0)
     prepared: bool
+    is_canonical: bool
+    source_verified: bool
+    ready_for_current_audience_actions: bool
+    currentness_issues: list[str] = Field(default_factory=list, max_length=5)
     rank_contract_version: str | None = None
     boundary_count: int = Field(ge=0, le=100)
 

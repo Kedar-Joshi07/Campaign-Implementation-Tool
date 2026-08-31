@@ -470,6 +470,12 @@ def test_create_and_complete_audience_preparation_job(database_path: Path) -> No
             "total_population": 100,
             "rank_contract_version": "1",
             "boundary_count": 100,
+            "scanned_rows": 100,
+            "chunk_size": 1000,
+            "chunk_count": 1,
+            "largest_chunk_rows": 100,
+            "runtime_seconds": 0.2,
+            "rows_per_second": 500.0,
         },
     )
     completed = repository.fetch_job(job_id)
@@ -478,6 +484,9 @@ def test_create_and_complete_audience_preparation_job(database_path: Path) -> No
     assert completed["stage"] == JOB_STAGE_COMPLETED
     payload = json.loads(completed["result_json"])
     assert payload["boundary_count"] == 100
+    assert payload["metrics_available"] is True
+    assert payload["scanned_rows"] == 100
+    assert payload["chunk_count"] == 1
 
 
 def test_audience_preparation_job_enforces_stage_and_payload_validation(database_path: Path) -> None:
@@ -517,6 +526,25 @@ def test_audience_preparation_job_enforces_stage_and_payload_validation(database
                 "total_population": 100,
                 "rank_contract_version": "1",
                 "boundary_count": 99,
+            },
+        )
+
+    with pytest.raises(JobValidationError, match="largest_chunk_rows"):
+        repository.mark_completed(
+            job_id=job_id,
+            finished_at="2026-08-21T02:10:05Z",
+            model_run_id=None,
+            result_payload={
+                "scoring_run_id": 5,
+                "total_population": 100,
+                "rank_contract_version": "1",
+                "boundary_count": 100,
+                "scanned_rows": 100,
+                "chunk_size": 1000,
+                "chunk_count": 1,
+                "largest_chunk_rows": 1001,
+                "runtime_seconds": 0.2,
+                "rows_per_second": 500.0,
             },
         )
 

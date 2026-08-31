@@ -145,6 +145,13 @@ _ALLOWED_AUDIENCE_PREPARATION_RESULT_FIELDS = (
     "total_population",
     "rank_contract_version",
     "boundary_count",
+    "scanned_rows",
+    "chunk_size",
+    "chunk_count",
+    "largest_chunk_rows",
+    "runtime_seconds",
+    "rows_per_second",
+    "metrics_available",
 )
 _FORBIDDEN_JSON_KEYS = {
     "customer_id",
@@ -547,6 +554,62 @@ def _normalize_audience_preparation_result_payload(payload: Any) -> dict[str, An
         ),
         "boundary_count": boundary_count,
     }
+
+    metric_fields = (
+        "scanned_rows",
+        "chunk_size",
+        "chunk_count",
+        "largest_chunk_rows",
+        "runtime_seconds",
+        "rows_per_second",
+    )
+    metric_presence = [field in payload for field in metric_fields]
+    if any(metric_presence) and not all(metric_presence):
+        raise JobValidationError("audience preparation metrics must be provided together.")
+
+    if all(metric_presence):
+        scanned_rows = _require_non_negative_int(payload.get("scanned_rows"), field_name="scanned_rows")
+        chunk_size = _require_positive_int(payload.get("chunk_size"), field_name="chunk_size")
+        if chunk_size < 1000 or chunk_size > 100000:
+            raise JobValidationError("chunk_size must be between 1000 and 100000.")
+
+        chunk_count = _require_non_negative_int(payload.get("chunk_count"), field_name="chunk_count")
+        largest_chunk_rows = _require_non_negative_int(
+            payload.get("largest_chunk_rows"),
+            field_name="largest_chunk_rows",
+        )
+        runtime_seconds = _require_non_negative_float(
+            payload.get("runtime_seconds"),
+            field_name="runtime_seconds",
+        )
+        rows_per_second = _require_non_negative_float(
+            payload.get("rows_per_second"),
+            field_name="rows_per_second",
+        )
+
+        if scanned_rows > 0 and chunk_count == 0:
+            raise JobValidationError("chunk_count must be positive when scanned_rows is positive.")
+        if scanned_rows == 0 and chunk_count != 0:
+            raise JobValidationError("chunk_count must be zero when scanned_rows is zero.")
+        if largest_chunk_rows > chunk_size:
+            raise JobValidationError("largest_chunk_rows cannot exceed chunk_size.")
+
+        normalized.update(
+            {
+                "scanned_rows": scanned_rows,
+                "chunk_size": chunk_size,
+                "chunk_count": chunk_count,
+                "largest_chunk_rows": largest_chunk_rows,
+                "runtime_seconds": runtime_seconds,
+                "rows_per_second": rows_per_second,
+                "metrics_available": True,
+            }
+        )
+    elif "metrics_available" in payload:
+        metrics_available = payload.get("metrics_available")
+        if not isinstance(metrics_available, bool):
+            raise JobValidationError("metrics_available must be a boolean when provided.")
+        normalized["metrics_available"] = metrics_available
 
     _validated_json(normalized, maximum_bytes=MAXIMUM_RESULT_JSON_BYTES)
     return normalized

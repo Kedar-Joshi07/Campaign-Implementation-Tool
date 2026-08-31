@@ -1,0 +1,144 @@
+{
+  "step": "pre_phase7_step1_baseline_and_finalization_audit",
+  "required_starting_sha": "b2cdfa95713aa2f8d9309be4881079f703df1831",
+  "actual_head_sha": "b2cdfa95713aa2f8d9309be4881079f703df1831",
+  "head_matches_required": true,
+  "worktree": {
+    "status_short": [
+      "?? Prompts/pre_phase7_phase6_finalization_prompt_pack/"
+    ],
+    "unexpected_changes": false
+  },
+  "baseline_gates": {
+    "pip_check": {
+      "status": "PASS"
+    },
+    "pytest": {
+      "status": "PASS",
+      "passed_tests": 413
+    },
+    "compileall": {
+      "status": "PASS"
+    },
+    "diff_check": {
+      "status": "PASS"
+    },
+    "validate_data": {
+      "status": "PASS",
+      "overall_status": "OK",
+      "dataset_counts": {
+        "customers": 125000,
+        "campaign_sales": 570000,
+        "demographics": 5000000
+      }
+    }
+  },
+  "baseline_snapshot": {
+    "schema_version": 9,
+    "canonical_ids": {
+      "analysis_run_id": 12,
+      "model_run_id": 8,
+      "scoring_run_id": 8
+    },
+    "audience_boundary_count": 100,
+    "saved_audience_count": 3,
+    "test_count": 413
+  },
+  "known_issue_confirmations": [
+    {
+      "id": 1,
+      "description": "Runtime contains an arbitrary TOP_N cap near 1,000,000 despite Selection Contract v1 requiring dynamic TOP_N <= current prospect universe.",
+      "confirmed": true,
+      "evidence": {
+        "service": "app/services/audience_query_service.py",
+        "maximum_selection_target_count": 1000000
+      }
+    },
+    {
+      "id": 2,
+      "description": "Audience preparation status/list endpoints report prepared state but do not expose canonical/current readiness semantics.",
+      "confirmed": true,
+      "evidence": {
+        "status_fields": [
+          "prepared",
+          "boundary_count",
+          "rank_contract_version"
+        ],
+        "missing_fields": [
+          "is_canonical",
+          "source_verified",
+          "ready_for_current_audience_actions",
+          "currentness_issues"
+        ],
+        "files": [
+          "app/services/audience_preparation_service.py",
+          "app/schemas/audience.py"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "description": "AUDIENCE_PREPARATION result payload does not persist real scan/runtime metrics.",
+      "confirmed": true,
+      "evidence": {
+        "persisted_result_fields": [
+          "scoring_run_id",
+          "total_population",
+          "rank_contract_version",
+          "boundary_count"
+        ],
+        "missing_fields": [
+          "scanned_rows",
+          "chunk_size",
+          "chunk_count",
+          "largest_chunk_rows",
+          "runtime_seconds",
+          "rows_per_second"
+        ],
+        "file": "app/jobs/audience_preparation_worker.py"
+      }
+    },
+    {
+      "id": 4,
+      "description": "Step 8 query timing evidence is synthetic and not real 5M performance evidence.",
+      "confirmed": true,
+      "evidence": {
+        "evidence_file": "docs/evidence/phase6_step8_query_plan_and_timing.json",
+        "generation_pattern": "creates isolated artifact db and seeds fixture data via tests helper",
+        "generator_file": "scripts/phase6_step8_capture_evidence.py"
+      }
+    },
+    {
+      "id": 5,
+      "description": "Synthetic Step 8 performance database artifact is tracked in git.",
+      "confirmed": true,
+      "evidence": {
+        "tracked_path": "artifacts/phase6_step8_perf_security.db"
+      }
+    },
+    {
+      "id": 6,
+      "description": "Runtime PII policy metadata omits part of the frozen blocked-field deny list.",
+      "confirmed": true,
+      "evidence": {
+        "policy_file": "app/services/audience_query_service.py",
+        "currently_blocked_count": 10,
+        "missing_expected_fields": [
+          "city",
+          "occupation_industry",
+          "family_yearly_income",
+          "number_of_children_in_family",
+          "number_of_adults_in_family"
+        ]
+      }
+    }
+  ],
+  "sanitization": {
+    "contains_absolute_paths": false,
+    "contains_pii": false,
+    "contains_person_ids": false,
+    "contains_raw_sql": false,
+    "contains_tracebacks": false
+  },
+  "generated_at": "2026-08-28T15:12:00Z"
+}

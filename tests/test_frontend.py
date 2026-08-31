@@ -317,6 +317,9 @@ def test_audience_explorer_script_uses_required_endpoints_and_state_contracts(
     assert "setScreenState(\"workspace\")" in script
     assert "POLL_INTERVAL_MS = 1500" in script
     assert "window.setTimeout" in script
+    assert "ready_for_current_audience_actions" in script
+    assert "runs.find((run) => run?.ready_for_current_audience_actions === true)" in script
+    assert "run?.is_canonical === true" in script
     assert 'querySelector("#audience-load-more").addEventListener("click"' in script
     assert 'querySelector("#audience-save-form").addEventListener("submit", submitSaveAudience)' in script
 

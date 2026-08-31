@@ -16,6 +16,8 @@ from app.services.audience_preparation_service import (
     classify_decile,
     classify_percentile_bucket,
     classify_rank_band,
+    get_audience_preparation_status,
+    list_audience_preparation_runs,
     run_audience_rank_preparation,
     submit_audience_preparation_job_request,
 )
@@ -642,3 +644,166 @@ def test_classification_helpers_handle_ties_and_bands(database_path: Path) -> No
     assert classify_rank_band(20) == "MEDIUM"
     assert classify_rank_band(40) == "LOW"
     assert classify_rank_band(80) == "VERY_LOW"
+
+
+def test_preparation_status_current_prepared_ready(database_path: Path) -> None:
+    scoring_run_id, _ = _seed_canonical_scoring_run(database_path, size=120)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    status = get_audience_preparation_status(database_path, scoring_run_id=scoring_run_id)
+    assert status["prepared"] is True
+    assert status["is_canonical"] is True
+    assert status["source_verified"] is True
+    assert status["ready_for_current_audience_actions"] is True
+    assert status["boundary_count"] == 100
+    assert status["currentness_issues"] == []
+
+
+def test_preparation_status_prepared_demographic_stale_not_ready(database_path: Path) -> None:
+    scoring_run_id, _ = _seed_canonical_scoring_run(database_path, size=120)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name,
+                source_path,
+                started_at,
+                completed_at,
+                status,
+                rows_read,
+                rows_inserted,
+                rows_rejected,
+                source_checksum
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "demographics",
+                "data/demographics_fixture_v2.csv",
+                "2026-09-02T04:00:00Z",
+                "2026-09-02T04:00:10Z",
+                "COMPLETED",
+                120,
+                120,
+                0,
+                "f" * 64,
+            ),
+        )
+
+    status = get_audience_preparation_status(database_path, scoring_run_id=scoring_run_id)
+    assert status["prepared"] is True
+    assert status["is_canonical"] is False
+    assert status["source_verified"] is False
+    assert status["ready_for_current_audience_actions"] is False
+    assert status["currentness_issues"]
+    assert len(status["currentness_issues"]) <= 5
+    for issue in status["currentness_issues"]:
+        assert len(issue) <= 160
+
+
+def test_preparation_status_prepared_historical_stale_not_ready(database_path: Path) -> None:
+    scoring_run_id, _ = _seed_canonical_scoring_run(database_path, size=120)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name,
+                source_path,
+                started_at,
+                completed_at,
+                status,
+                rows_read,
+                rows_inserted,
+                rows_rejected,
+                source_checksum
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "customers",
+                "data/customers_fixture_v2.csv",
+                "2026-09-02T05:00:00Z",
+                "2026-09-02T05:00:10Z",
+                "COMPLETED",
+                120,
+                120,
+                0,
+                "f" * 64,
+            ),
+        )
+
+    status = get_audience_preparation_status(database_path, scoring_run_id=scoring_run_id)
+    assert status["prepared"] is True
+    assert status["source_verified"] is False
+    assert status["ready_for_current_audience_actions"] is False
+    assert status["currentness_issues"]
+
+
+def test_preparation_status_unprepared_current_not_ready(database_path: Path) -> None:
+    scoring_run_id, _ = _seed_canonical_scoring_run(database_path, size=120)
+
+    status = get_audience_preparation_status(database_path, scoring_run_id=scoring_run_id)
+    assert status["prepared"] is False
+    assert status["is_canonical"] is True
+    assert status["source_verified"] is True
+    assert status["ready_for_current_audience_actions"] is False
+
+
+def test_list_preparation_runs_keeps_stale_runs_visible(database_path: Path) -> None:
+    scoring_run_id, _ = _seed_canonical_scoring_run(database_path, size=120)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            INSERT INTO data_import_runs (
+                dataset_name,
+                source_path,
+                started_at,
+                completed_at,
+                status,
+                rows_read,
+                rows_inserted,
+                rows_rejected,
+                source_checksum
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "demographics",
+                "data/demographics_fixture_v3.csv",
+                "2026-09-02T06:00:00Z",
+                "2026-09-02T06:00:10Z",
+                "COMPLETED",
+                120,
+                120,
+                0,
+                "f" * 64,
+            ),
+        )
+
+    rows = list_audience_preparation_runs(database_path, limit=20, offset=0)
+    target = next(row for row in rows if int(row["scoring_run_id"]) == scoring_run_id)
+    assert target["prepared"] is True
+    assert target["ready_for_current_audience_actions"] is False
+    assert target["currentness_issues"]
+
+
+def test_run_preparation_reports_real_scan_metrics(database_path: Path) -> None:
+    scoring_run_id, _ = _seed_canonical_scoring_run(database_path, size=2500)
+
+    summary = run_audience_rank_preparation(
+        database_path,
+        scoring_run_id=scoring_run_id,
+        chunk_size=1000,
+    )
+
+    assert summary["boundary_count"] == 100
+    assert summary["total_population"] == 2500
+    assert summary["scanned_rows"] == 2500
+    assert summary["chunk_size"] == 1000
+    assert summary["chunk_count"] == 3
+    assert summary["largest_chunk_rows"] == 1000
+    assert summary["runtime_seconds"] >= 0.0
+    assert summary["rows_per_second"] >= 0.0

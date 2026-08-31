@@ -14,6 +14,8 @@ from app.services.audience_preparation_service import (
     ACTIVE_COMPUTE_JOB_CONFLICT_MESSAGE,
     AudiencePreparationConflictError,
     AudiencePreparationValidationError,
+    get_audience_preparation_status,
+    list_audience_preparation_runs,
     run_audience_rank_preparation,
     submit_audience_preparation_job_request,
 )
@@ -781,6 +783,8 @@ def test_phase6_pii_forbidden_fields_not_exposed_in_public_payloads(database_pat
     run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
 
     payloads = [
+        get_audience_preparation_status(database_path, scoring_run_id=scoring_run_id),
+        list_audience_preparation_runs(database_path, limit=20, offset=0),
         get_audience_filter_options(database_path, scoring_run_id=scoring_run_id),
         estimate_audience(
             database_path,
@@ -1325,7 +1329,7 @@ def test_input_hardening_rejects_oversized_arrays_and_text_and_invalid_values(da
             },
         )
 
-    with pytest.raises(AudienceQueryValidationError, match="selection.target_count must not exceed"):
+    with pytest.raises(AudienceQueryValidationError, match="less than or equal"):
         estimate_audience(
             database_path,
             {
