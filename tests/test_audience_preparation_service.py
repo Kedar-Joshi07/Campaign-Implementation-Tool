@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
+import app.services.audience_preparation_service as audience_preparation_service_module
 
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
@@ -807,3 +809,54 @@ def test_run_preparation_reports_real_scan_metrics(database_path: Path) -> None:
     assert summary["largest_chunk_rows"] == 1000
     assert summary["runtime_seconds"] >= 0.0
     assert summary["rows_per_second"] >= 0.0
+
+
+def test_preparation_status_and_list_do_not_scan_score_aggregates(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scoring_run_id, _ = _seed_canonical_scoring_run(database_path, size=120)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    def _forbid_aggregate_scan(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        raise AssertionError("interactive preparation currentness must not call fetch_score_aggregates")
+
+    monkeypatch.setattr(
+        "app.repositories.scoring_repository.ScoringRepository.fetch_score_aggregates",
+        _forbid_aggregate_scan,
+    )
+
+    status = get_audience_preparation_status(database_path, scoring_run_id=scoring_run_id)
+    rows = list_audience_preparation_runs(database_path, limit=20, offset=0)
+
+    assert status["scoring_run_id"] == scoring_run_id
+    assert rows
+
+
+def test_preparation_submit_still_invokes_deep_integrity_validation(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scoring_run_id, _ = _seed_canonical_scoring_run(database_path, size=120)
+
+    call_count = 0
+    original = audience_preparation_service_module.validate_completed_scoring_run_integrity_deep
+
+    def _tracked_deep_validation(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal call_count
+        call_count += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        audience_preparation_service_module,
+        "validate_completed_scoring_run_integrity_deep",
+        _tracked_deep_validation,
+    )
+
+    submit_audience_preparation_job_request(
+        database_path,
+        {"scoring_run_id": scoring_run_id, "rank_contract_version": "1"},
+        submitter=lambda *_args, **_kwargs: None,
+    )
+
+    assert call_count >= 1

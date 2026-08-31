@@ -409,3 +409,97 @@ Real measured timing highlights (seconds):
   - customers: `125000`
   - campaign_sales: `570000`
   - demographics: `5000000`
+
+## Focused Performance Finalization Pass Status
+
+Focused pass (`Prompts/phase6_performance_finalization_focused_pass`) is complete.
+
+Starting baseline SHA for this focused pass:
+- `77398d91f126d47d021e7835581848d655701b3a`
+
+Focused-pass baseline and after artifacts:
+- `docs/evidence/phase6_performance_finalization_baseline.json`
+- `docs/evidence/phase6_real_5m_service_performance.json`
+
+## Focused Performance Refactor Outcome
+
+The Phase 6 validation flow is now explicitly split into two tiers:
+
+- Interactive currentness = lightweight metadata/provenance validation.
+- Deep 5M score integrity = explicit audit/preparation/completion validation.
+
+Implemented helper separation:
+
+- lightweight helper: `resolve_current_scoring_context_lightweight`
+- lightweight canonical resolver: `find_current_canonical_run_for_model_lightweight`
+- deep integrity helper: `validate_completed_scoring_run_integrity_deep`
+
+Interactive callers now use lightweight currentness checks, including:
+
+- audience preparation status/list read paths
+- audience options/estimate/search/profile readiness path
+- saved audience list/detail/currentness read paths
+
+Deep integrity gates remain enforced where required:
+
+- scoring completion provenance/integrity validation path
+- audience rank preparation submission/run precondition
+- explicit deep audit helper availability
+
+## Real 5M Service Evidence (Focused Pass)
+
+Evidence artifact:
+- `docs/evidence/phase6_real_5m_service_performance.json`
+
+Canonical context in artifact:
+
+- `analysis_run_id=12`
+- `model_run_id=8`
+- `scoring_run_id=8`
+- `scored_person_count=5000000`
+- `boundary_count=100`
+
+Currentness/readiness timing highlights (seconds):
+
+- saved audience currentness (before): `509.16243`
+- saved audience currentness (after): `0.94332`
+- saved audience list: `0.916491`
+- saved audience detail: `0.880576`
+- audience preparation status: `0.626616`
+- audience run list: `1.386971`
+
+Audience Explorer service timings (seconds, same artifact):
+
+- options: `82.519511`
+- search first page: `0.652033`
+- search next page: `0.589908`
+- estimate all: `48.457393`
+- estimate top 1%: `1.650439`
+- estimate top decile: `6.050456`
+- profile top 1%: `460.224973`
+- profile filtered TOP_N 50K: `971.865712`
+
+Rank preparation metrics on copied DB:
+
+- scanned rows: `5000000`
+- boundary count: `100`
+- runtime seconds: `59.9149082`
+- rows/second: `83451.68423374085`
+
+## Focused Pass Final Gates
+
+Final gates rerun after focused-pass code changes:
+
+- `python -m pip check` -> clean (`No broken requirements found.`)
+- `python -m pytest -q` -> `435 passed in 602.43s`
+- `python -m compileall -q app scripts tests` -> clean (no output)
+- `git diff --check` -> no blocking whitespace/conflict errors
+- `python scripts/validate_data.py --json` -> `overall_status=OK`
+  - customers: `125000`
+  - campaign_sales: `570000`
+  - demographics: `5000000`
+
+Focused-pass Phase 7 readiness decision:
+
+- GO (currentness latency blocker removed without weakening deep integrity governance)
+- no Phase 7 runtime implementation added in this pass

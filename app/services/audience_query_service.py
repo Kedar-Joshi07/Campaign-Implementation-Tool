@@ -22,13 +22,8 @@ from app.repositories.audience_rank_repository import AudienceRankRepository
 from app.repositories.scoring_repository import ScoringRepository
 from app.schemas.historical import HistoricalAnalysisFilters
 from app.services.audience_preparation_service import classify_decile, classify_percentile_bucket
-from app.services.historical_source_provenance_service import (
-    HistoricalSourceProvenanceError,
-    is_saved_analysis_provenance_current,
-)
 from app.services.prospect_scoring_service import (
-    find_current_canonical_run_for_model,
-    validate_completed_scoring_run_provenance,
+    resolve_current_scoring_context_lightweight,
 )
 
 
@@ -1018,6 +1013,16 @@ def _resolve_saved_historical_analysis_context(
     path: Path,
     scoring_row: dict[str, Any],
 ) -> tuple[dict[str, Any], str]:
+    score_summary_raw = scoring_row.get("score_summary_json")
+    if not isinstance(score_summary_raw, str) or not score_summary_raw.strip():
+        raise AudienceQueryConflictError(SAVED_ANALYSIS_INVALID_MESSAGE)
+    try:
+        score_summary = json.loads(score_summary_raw)
+    except (TypeError, ValueError) as exc:
+        raise AudienceQueryConflictError(SAVED_ANALYSIS_INVALID_MESSAGE) from exc
+    if not isinstance(score_summary, dict):
+        raise AudienceQueryConflictError(SAVED_ANALYSIS_INVALID_MESSAGE)
+
     model_row = ModelRunRepository(path).fetch_run(int(scoring_row["model_run_id"]))
     if model_row is None:
         raise AudienceQueryConflictError(SAVED_ANALYSIS_NOT_FOUND_MESSAGE)
@@ -1032,11 +1037,21 @@ def _resolve_saved_historical_analysis_context(
     if analysis_row.get("status") != "COMPLETED":
         raise AudienceQueryConflictError(SAVED_ANALYSIS_INVALID_MESSAGE)
 
-    try:
-        provenance_current, _ = is_saved_analysis_provenance_current(path, analysis_row)
-    except HistoricalSourceProvenanceError as exc:
-        raise AudienceQueryConflictError(SCORING_RUN_NOT_CANONICAL_MESSAGE) from exc
-    if not provenance_current:
+    expected_pairs = (
+        ("analysis_run_id", analysis_run_id),
+        ("customer_import_id", analysis_row.get("customer_import_id")),
+        ("customer_source_checksum", analysis_row.get("customer_source_checksum")),
+        ("campaign_sales_import_id", analysis_row.get("campaign_sales_import_id")),
+        (
+            "campaign_sales_source_checksum",
+            analysis_row.get("campaign_sales_source_checksum"),
+        ),
+    )
+    for key, expected in expected_pairs:
+        if score_summary.get(key) != expected:
+            raise AudienceQueryConflictError(SCORING_RUN_NOT_CANONICAL_MESSAGE)
+
+    if model_row.get("analysis_run_id") != score_summary.get("analysis_run_id"):
         raise AudienceQueryConflictError(SCORING_RUN_NOT_CANONICAL_MESSAGE)
 
     raw_filters = analysis_row.get("filters_json")
@@ -1410,19 +1425,12 @@ def _require_prepared_canonical_context(
     if scoring_row["status"] != "COMPLETED":
         raise AudienceQueryConflictError(SCORING_RUN_NOT_COMPLETED_MESSAGE)
 
-    provenance = validate_completed_scoring_run_provenance(
+    provenance = resolve_current_scoring_context_lightweight(
         path,
         scoring_run_id=normalized_scoring_run_id,
         verify_current_source_match=True,
     )
     if not provenance["is_canonical"]:
-        raise AudienceQueryConflictError(SCORING_RUN_NOT_CANONICAL_MESSAGE)
-
-    canonical_row = find_current_canonical_run_for_model(
-        path,
-        model_run_id=int(scoring_row["model_run_id"]),
-    )
-    if canonical_row is None or int(canonical_row["scoring_run_id"]) != normalized_scoring_run_id:
         raise AudienceQueryConflictError(SCORING_RUN_NOT_CANONICAL_MESSAGE)
 
     boundaries = AudienceRankRepository(path).fetch_boundaries(normalized_scoring_run_id)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -753,3 +754,40 @@ def test_estimate_topn_dynamic_universe_bounds(database_path: Path) -> None:
                 "selection": {"mode": "TOP_N", "target_count": 11},
             },
         )
+
+
+def test_interactive_query_paths_do_not_scan_score_aggregates(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scoring_run_id = _seed_query_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    def _forbid_aggregate_scan(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        raise AssertionError("interactive query currentness must not call fetch_score_aggregates")
+
+    monkeypatch.setattr(
+        "app.repositories.scoring_repository.ScoringRepository.fetch_score_aggregates",
+        _forbid_aggregate_scan,
+    )
+
+    options = get_audience_filter_options(database_path, scoring_run_id=scoring_run_id)
+    estimate = estimate_audience(
+        database_path,
+        {
+            "scoring_run_id": scoring_run_id,
+            "filters": {"state": ["California"]},
+            "selection": {"mode": "ALL_MATCHING"},
+        },
+    )
+    search = search_audience(
+        database_path,
+        {
+            "scoring_run_id": scoring_run_id,
+            "filters": {"state": ["California"]},
+            "page_size": 10,
+        },
+    )
+    assert options["population_count"] > 0
+    assert estimate["selected_count"] >= 0
+    assert len(search["rows"]) <= 10

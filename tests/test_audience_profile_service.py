@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -734,3 +735,30 @@ def test_profile_topn_resolves_to_matching_and_enforces_universe_bound(database_
                 "selection": {"mode": "TOP_N", "target_count": 7},
             },
         )
+
+
+def test_profile_currentness_does_not_scan_score_aggregates(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scoring_run_id = _seed_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    def _forbid_aggregate_scan(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        raise AssertionError("interactive profile currentness must not call fetch_score_aggregates")
+
+    monkeypatch.setattr(
+        "app.repositories.scoring_repository.ScoringRepository.fetch_score_aggregates",
+        _forbid_aggregate_scan,
+    )
+
+    response = profile_audience(
+        database_path,
+        {
+            "scoring_run_id": scoring_run_id,
+            "filters": {"state": ["California"]},
+            "selection": {"mode": "TOP_N", "target_count": 2},
+        },
+    )
+
+    assert response["summary"]["selected"]["count"] == 2

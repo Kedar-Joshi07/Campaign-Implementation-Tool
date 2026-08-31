@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
+import app.services.saved_audience_service as saved_audience_service_module
 
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
@@ -741,3 +743,81 @@ def test_save_rejects_topn_above_current_universe(database_path: Path) -> None:
                 "selection": {"mode": "TOP_N", "target_count": 7},
             },
         )
+
+
+def test_saved_audience_currentness_and_detail_do_not_scan_score_aggregates(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scoring_run_id = _seed_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    saved = save_audience(
+        database_path,
+        {
+            "audience_name": "No Deep Scan",
+            "scoring_run_id": scoring_run_id,
+            "filters": {},
+            "selection": {"mode": "ALL_MATCHING"},
+        },
+    )
+
+    def _forbid_aggregate_scan(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        raise AssertionError("saved audience currentness must not call fetch_score_aggregates")
+
+    monkeypatch.setattr(
+        "app.repositories.scoring_repository.ScoringRepository.fetch_score_aggregates",
+        _forbid_aggregate_scan,
+    )
+
+    currentness = validate_saved_audience_currentness(database_path, audience_id=saved["audience_id"])
+    detail = get_saved_audience_detail(database_path, audience_id=saved["audience_id"])
+
+    assert currentness["is_current"] is True
+    assert detail["currentness"]["is_current"] is True
+
+
+def test_list_saved_audiences_reuses_scoring_currentness_for_shared_run(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scoring_run_id = _seed_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    save_audience(
+        database_path,
+        {
+            "audience_name": "Reuse Cache A",
+            "scoring_run_id": scoring_run_id,
+            "filters": {"state": ["California"]},
+            "selection": {"mode": "TOP_N", "target_count": 1},
+        },
+    )
+    save_audience(
+        database_path,
+        {
+            "audience_name": "Reuse Cache B",
+            "scoring_run_id": scoring_run_id,
+            "filters": {"state": ["Texas"]},
+            "selection": {"mode": "ALL_MATCHING"},
+        },
+    )
+
+    call_count = 0
+    original = saved_audience_service_module.resolve_current_scoring_context_lightweight
+
+    def _tracked_lightweight(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal call_count
+        call_count += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        saved_audience_service_module,
+        "resolve_current_scoring_context_lightweight",
+        _tracked_lightweight,
+    )
+
+    rows = list_saved_audiences(database_path, limit=20, offset=0, scoring_run_id=scoring_run_id)
+
+    assert len(rows) >= 2
+    assert call_count == 1

@@ -1,0 +1,17 @@
+{
+  "pack": "Focused Phase 6 Performance Finalization Pass",
+  "repository": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git",
+  "starting_sha": "77398d91f126d47d021e7835581848d655701b3a",
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 413,
+      "sha256": "5e0c822bd30041d9afd48c4cc6cb32c9b9041f92ba11bde80aa488186ac352af"
+    },
+    {
+      "file": "01_FOCUSED_PHASE6_PERFORMANCE_FINALIZATION_PROMPT.md",
+      "bytes": 17137,
+      "sha256": "207b45302fe09c0f0a54c9d85698c914bd0b2922bffd618f21df34e001e6a241"
+    }
+  ]
+}

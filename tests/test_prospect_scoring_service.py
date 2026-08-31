@@ -17,6 +17,9 @@ from app.services.model_scoring_compatibility import ModelScoreabilityValidation
 from app.services.prospect_scoring_service import (
     ProspectScoringExecutionError,
     ProspectScoringVerificationError,
+    find_current_canonical_run_for_model_lightweight,
+    resolve_current_scoring_context_lightweight,
+    validate_completed_scoring_run_integrity_deep,
     validate_completed_scoring_run_provenance,
 )
 
@@ -947,3 +950,155 @@ def test_validate_completed_scoring_run_provenance_treats_legacy_summary_as_non_
     )
     assert validation["is_canonical"] is False
     assert validation["issues"]
+
+
+def test_lightweight_currentness_and_canonical_resolver_do_not_scan_score_aggregates(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+    job_id = _insert_scoring_job(database_path, model_run_id=model_run_id)
+    _seed_demographics(database_path, 6)
+
+    monkeypatch.setattr(
+        scoring_service,
+        "validate_scoreable_model",
+        lambda *_args, **_kwargs: _scoreable_context(
+            model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
+            preprocessor=_TrackingPreprocessor(),
+            estimator=_TrackingEstimator(),
+        ),
+    )
+    result = scoring_service.run_chunked_prospect_scoring(
+        database_path,
+        model_run_id=model_run_id,
+        job_id=job_id,
+        chunk_size=1_000,
+    )
+    scoring_run_id = int(result["scoring_run_id"])
+
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            UPDATE model_runs
+            SET status = 'COMPLETED',
+                completed_at = '2026-08-26T02:00:00Z',
+                selected_candidate = 'BAGGING_PU',
+                artifact_sha256 = ?
+            WHERE model_run_id = ?
+            """,
+            ("a" * 64, model_run_id),
+        )
+
+    def _forbid_aggregate_scan(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        raise AssertionError("lightweight currentness must not call fetch_score_aggregates")
+
+    monkeypatch.setattr(
+        scoring_service.ScoringRepository,
+        "fetch_score_aggregates",
+        _forbid_aggregate_scan,
+    )
+
+    currentness = resolve_current_scoring_context_lightweight(
+        database_path,
+        scoring_run_id=scoring_run_id,
+    )
+    canonical = find_current_canonical_run_for_model_lightweight(
+        database_path,
+        model_run_id=model_run_id,
+    )
+
+    assert currentness["is_canonical"] is True
+    assert canonical is not None
+    assert int(canonical["scoring_run_id"]) == scoring_run_id
+
+
+def test_deep_integrity_validator_detects_score_count_mismatch(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+    job_id = _insert_scoring_job(database_path, model_run_id=model_run_id)
+    _seed_demographics(database_path, 6)
+
+    monkeypatch.setattr(
+        scoring_service,
+        "validate_scoreable_model",
+        lambda *_args, **_kwargs: _scoreable_context(
+            model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
+            preprocessor=_TrackingPreprocessor(),
+            estimator=_TrackingEstimator(),
+        ),
+    )
+    result = scoring_service.run_chunked_prospect_scoring(
+        database_path,
+        model_run_id=model_run_id,
+        job_id=job_id,
+        chunk_size=1_000,
+    )
+    scoring_run_id = int(result["scoring_run_id"])
+
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            "DELETE FROM propensity_scores WHERE scoring_run_id = ? AND person_id = ?",
+            (scoring_run_id, "PER_000006"),
+        )
+
+    validation = validate_completed_scoring_run_integrity_deep(
+        database_path,
+        scoring_run_id=scoring_run_id,
+    )
+    assert validation["is_canonical"] is False
+    assert "persisted score row count does not match scored_person_count" in validation["issues"]
+
+
+def test_deep_integrity_validator_detects_duplicate_identity_aggregate_signal(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    analysis_run_id = _insert_completed_analysis(database_path)
+    model_run_id = _insert_model_run(database_path, analysis_run_id)
+    job_id = _insert_scoring_job(database_path, model_run_id=model_run_id)
+    _seed_demographics(database_path, 6)
+
+    monkeypatch.setattr(
+        scoring_service,
+        "validate_scoreable_model",
+        lambda *_args, **_kwargs: _scoreable_context(
+            model_run_id=model_run_id,
+            analysis_run_id=analysis_run_id,
+            preprocessor=_TrackingPreprocessor(),
+            estimator=_TrackingEstimator(),
+        ),
+    )
+    result = scoring_service.run_chunked_prospect_scoring(
+        database_path,
+        model_run_id=model_run_id,
+        job_id=job_id,
+        chunk_size=1_000,
+    )
+    scoring_run_id = int(result["scoring_run_id"])
+
+    original_fetch = scoring_service.ScoringRepository.fetch_score_aggregates
+
+    def _fake_aggregates(self: Any, scoring_run_id: int) -> dict[str, Any]:
+        aggregates = original_fetch(self, scoring_run_id)
+        aggregates["distinct_person_count"] = int(aggregates["score_count"]) - 1
+        return aggregates
+
+    monkeypatch.setattr(
+        scoring_service.ScoringRepository,
+        "fetch_score_aggregates",
+        _fake_aggregates,
+    )
+
+    validation = validate_completed_scoring_run_integrity_deep(
+        database_path,
+        scoring_run_id=scoring_run_id,
+    )
+    assert validation["is_canonical"] is False
+    assert "persisted score rows contain duplicate person_id values" in validation["issues"]

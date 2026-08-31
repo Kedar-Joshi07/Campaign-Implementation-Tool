@@ -15,7 +15,11 @@ import numpy as np
 
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
-from app.ml.feature_contract import validate_and_normalize_feature_frame
+from app.ml.feature_contract import (
+    FEATURE_CONTRACT_VERSION,
+    validate_and_normalize_feature_frame,
+)
+from app.ml.model_roles import PRIMARY_MODEL_NAME
 from app.ml.pu_estimators import positive_class_scores
 from app.repositories.prospect_scoring_repository import (
     DemographicImportProvenance,
@@ -613,6 +617,519 @@ def verify_scoring_run_sample(
     }
 
 
+def _normalized_checksum(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().lower()
+    return normalized or None
+
+
+def _resolve_latest_completed_import_row(
+    initialized_path: Path,
+    *,
+    dataset_name: str,
+) -> dict[str, Any] | None:
+    with get_connection(initialized_path) as connection:
+        row = connection.execute(
+            """
+            SELECT import_id, source_checksum, rows_inserted
+            FROM data_import_runs
+            WHERE dataset_name = ? AND status = 'COMPLETED'
+            ORDER BY import_id DESC
+            LIMIT 1
+            """,
+            (dataset_name,),
+        ).fetchone()
+    return dict(row) if row is not None else None
+
+
+def _resolve_current_historical_provenance_lightweight(initialized_path: Path) -> dict[str, Any]:
+    customer_import = _resolve_latest_completed_import_row(
+        initialized_path,
+        dataset_name="customers",
+    )
+    campaign_import = _resolve_latest_completed_import_row(
+        initialized_path,
+        dataset_name="campaign_sales",
+    )
+    if customer_import is None or campaign_import is None:
+        raise HistoricalSourceProvenanceError(
+            "Completed customer and campaign_sales import provenance is required."
+        )
+
+    customer_checksum = _normalized_checksum(customer_import.get("source_checksum"))
+    campaign_checksum = _normalized_checksum(campaign_import.get("source_checksum"))
+    if customer_checksum is None or not _is_valid_sha256(customer_checksum):
+        raise HistoricalSourceProvenanceError("Completed customers import checksum is missing or invalid.")
+    if campaign_checksum is None or not _is_valid_sha256(campaign_checksum):
+        raise HistoricalSourceProvenanceError(
+            "Completed campaign_sales import checksum is missing or invalid."
+        )
+
+    return {
+        "customer_import_id": int(customer_import["import_id"]),
+        "customer_source_checksum": customer_checksum,
+        "campaign_sales_import_id": int(campaign_import["import_id"]),
+        "campaign_sales_source_checksum": campaign_checksum,
+    }
+
+
+def _resolve_current_demographic_provenance_lightweight(initialized_path: Path) -> dict[str, Any]:
+    demographic_import = _resolve_latest_completed_import_row(
+        initialized_path,
+        dataset_name="demographics",
+    )
+    if demographic_import is None:
+        raise ProspectScoringValidationError(
+            "A completed demographics import provenance record is required before scoring."
+        )
+
+    checksum = _normalized_checksum(demographic_import.get("source_checksum"))
+    if checksum is None or not _is_valid_sha256(checksum):
+        raise ProspectScoringValidationError("Demographics import provenance checksum is invalid.")
+
+    rows_inserted = demographic_import.get("rows_inserted")
+    if isinstance(rows_inserted, bool) or not isinstance(rows_inserted, int) or rows_inserted <= 0:
+        raise ProspectScoringValidationError("Demographics import provenance rows_inserted is invalid.")
+
+    with get_connection(initialized_path) as connection:
+        min_row = connection.execute(
+            "SELECT person_id FROM demographics ORDER BY person_id ASC LIMIT 1"
+        ).fetchone()
+        max_row = connection.execute(
+            "SELECT person_id FROM demographics ORDER BY person_id DESC LIMIT 1"
+        ).fetchone()
+    if min_row is None or max_row is None:
+        raise ProspectScoringValidationError("Demographics table is empty.")
+
+    return {
+        "demographic_import_id": int(demographic_import["import_id"]),
+        "demographic_source_checksum": checksum,
+        "demographic_snapshot_count": int(rows_inserted),
+        "demographic_min_person_id": str(min_row["person_id"]),
+        "demographic_max_person_id": str(max_row["person_id"]),
+    }
+
+
+def _decode_score_summary_payload(row: dict[str, Any], *, issues: list[str]) -> dict[str, Any]:
+    summary_raw = row.get("score_summary_json")
+    if not isinstance(summary_raw, str) or not summary_raw.strip():
+        issues.append("score_summary_json is missing")
+        return {}
+
+    try:
+        decoded = json.loads(summary_raw)
+    except (TypeError, ValueError):
+        issues.append("score_summary_json is invalid JSON")
+        return {}
+
+    if not isinstance(decoded, dict):
+        issues.append("score_summary_json must decode to an object")
+        return {}
+    return decoded
+
+
+def _validate_completed_scoring_metadata_lightweight(
+    row: dict[str, Any],
+    summary_payload: dict[str, Any],
+    *,
+    issues: list[str],
+) -> None:
+    if row["status"] != "COMPLETED":
+        issues.append("status is not COMPLETED")
+
+    model_run_id = row.get("model_run_id")
+    if isinstance(model_run_id, bool) or not isinstance(model_run_id, int) or model_run_id <= 0:
+        issues.append("model_run_id is invalid")
+
+    scored_person_count = int(row.get("scored_person_count") or 0)
+    snapshot_count = int(row.get("demographic_snapshot_count") or 0)
+    if scored_person_count <= 0:
+        issues.append("scored_person_count must be positive")
+    if scored_person_count != snapshot_count:
+        issues.append("scored_person_count does not match demographic_snapshot_count")
+
+    if row.get("selected_candidate") != PRIMARY_MODEL_NAME:
+        issues.append("selected_candidate is not the governed BAGGING_PU primary")
+
+    if str(row.get("feature_contract_version")) != FEATURE_CONTRACT_VERSION:
+        issues.append("feature_contract_version is not supported")
+
+    row_feature_sha = _normalized_checksum(row.get("feature_contract_sha256"))
+    if row_feature_sha is None or not _is_valid_sha256(row_feature_sha):
+        issues.append("feature_contract_sha256 is invalid")
+
+    row_artifact_sha = _normalized_checksum(row.get("artifact_sha256"))
+    if row_artifact_sha is None or not _is_valid_sha256(row_artifact_sha):
+        issues.append("artifact_sha256 is invalid")
+
+    missing_keys = [
+        key for key in CANONICAL_SCORE_SUMMARY_REQUIRED_KEYS if key not in summary_payload
+    ]
+    if missing_keys:
+        issues.append(f"score_summary_json missing required keys: {', '.join(sorted(missing_keys))}")
+
+    summary_score_count = summary_payload.get("score_count")
+    if isinstance(summary_score_count, bool) or not isinstance(summary_score_count, int) or summary_score_count <= 0:
+        issues.append("score_count is invalid")
+    elif summary_score_count != scored_person_count:
+        issues.append("score_count does not match scored_person_count")
+
+    summary_snapshot_count = summary_payload.get("demographic_snapshot_count")
+    if (
+        isinstance(summary_snapshot_count, bool)
+        or not isinstance(summary_snapshot_count, int)
+        or summary_snapshot_count <= 0
+    ):
+        issues.append("demographic_snapshot_count is invalid")
+    elif summary_snapshot_count != snapshot_count:
+        issues.append("demographic_snapshot_count does not match scoring_runs snapshot")
+
+    if summary_payload.get("demographic_min_person_id") != row.get("demographic_min_person_id"):
+        issues.append("demographic_min_person_id does not match scoring_runs record")
+    if summary_payload.get("demographic_max_person_id") != row.get("demographic_max_person_id"):
+        issues.append("demographic_max_person_id does not match scoring_runs record")
+    if summary_payload.get("model_run_id") != model_run_id:
+        issues.append("model_run_id does not match scoring_runs record")
+    if summary_payload.get("selected_candidate") != row.get("selected_candidate"):
+        issues.append("selected_candidate does not match scoring_runs record")
+    if summary_payload.get("feature_contract_version") != row.get("feature_contract_version"):
+        issues.append("feature_contract_version does not match scoring_runs record")
+    if _normalized_checksum(summary_payload.get("feature_contract_sha256")) != row_feature_sha:
+        issues.append("feature_contract_sha256 does not match scoring_runs record")
+    if _normalized_checksum(summary_payload.get("artifact_sha256")) != row_artifact_sha:
+        issues.append("artifact_sha256 does not match scoring_runs record")
+
+    if summary_payload.get("selected_candidate") != PRIMARY_MODEL_NAME:
+        issues.append("summary selected_candidate is not the governed BAGGING_PU primary")
+    if summary_payload.get("feature_contract_version") != FEATURE_CONTRACT_VERSION:
+        issues.append("summary feature_contract_version is not supported")
+
+    for key in (
+        "feature_contract_sha256",
+        "artifact_sha256",
+        "demographic_source_checksum",
+        "customer_source_checksum",
+        "campaign_sales_source_checksum",
+    ):
+        if key in summary_payload and not _is_valid_sha256(summary_payload.get(key)):
+            issues.append(f"{key} is invalid")
+
+    for key in (
+        "analysis_run_id",
+        "customer_import_id",
+        "campaign_sales_import_id",
+        "demographic_import_id",
+    ):
+        value = summary_payload.get(key)
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            issues.append(f"{key} is invalid")
+
+    for key in ("score_min", "score_mean", "score_max"):
+        value = summary_payload.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            issues.append(f"{key} is invalid")
+            continue
+        if not math.isfinite(float(value)) or not 0.0 <= float(value) <= 1.0:
+            issues.append(f"{key} is outside [0, 1]")
+    if all(key in summary_payload for key in ("score_min", "score_mean", "score_max")):
+        score_min = float(summary_payload["score_min"])
+        score_mean = float(summary_payload["score_mean"])
+        score_max = float(summary_payload["score_max"])
+        if not score_min <= score_mean <= score_max:
+            issues.append("score_min/score_mean/score_max ordering is invalid")
+
+
+def _evaluate_completed_scoring_run_lightweight(
+    initialized_path: Path,
+    row: dict[str, Any],
+    *,
+    verify_current_source_match: bool,
+    cache: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    cache_payload = {} if cache is None else cache
+    issues: list[str] = []
+    summary_payload = _decode_score_summary_payload(row, issues=issues)
+
+    _validate_completed_scoring_metadata_lightweight(row, summary_payload, issues=issues)
+
+    demographic_source_verified = True
+    historical_source_verified = True
+
+    demographic_import_id = summary_payload.get("demographic_import_id")
+    if isinstance(demographic_import_id, bool) or not isinstance(demographic_import_id, int) or demographic_import_id <= 0:
+        demographic_source_verified = False
+        issues.append("demographic_import_id is invalid")
+    else:
+        with get_connection(initialized_path) as connection:
+            found = connection.execute(
+                """
+                SELECT
+                    import_id,
+                    dataset_name,
+                    status,
+                    rows_inserted,
+                    source_checksum
+                FROM data_import_runs
+                WHERE import_id = ?
+                """,
+                (demographic_import_id,),
+            ).fetchone()
+        if found is None:
+            demographic_source_verified = False
+            issues.append("demographic_import_id does not exist")
+        else:
+            import_row = dict(found)
+            if import_row.get("dataset_name") != "demographics":
+                demographic_source_verified = False
+                issues.append("demographic_import_id is not a demographics import")
+            if import_row.get("status") != "COMPLETED":
+                demographic_source_verified = False
+                issues.append("demographic_import_id is not COMPLETED")
+            if int(import_row.get("rows_inserted") or -1) != int(row["demographic_snapshot_count"]):
+                demographic_source_verified = False
+                issues.append("demographic import rows_inserted does not match snapshot count")
+
+            import_checksum = _normalized_checksum(import_row.get("source_checksum"))
+            summary_checksum = _normalized_checksum(summary_payload.get("demographic_source_checksum"))
+            if import_checksum is None or not _is_valid_sha256(import_checksum):
+                demographic_source_verified = False
+                issues.append("demographic import source_checksum is invalid")
+            elif import_checksum != summary_checksum:
+                demographic_source_verified = False
+                issues.append("demographic_source_checksum does not match import provenance")
+
+    if verify_current_source_match:
+        if "current_demographic_loaded" not in cache_payload:
+            try:
+                current_source = _resolve_current_demographic_provenance_lightweight(
+                    initialized_path,
+                )
+            except ProspectScoringValidationError:
+                cache_payload["current_demographic"] = None
+            else:
+                cache_payload["current_demographic"] = current_source
+            cache_payload["current_demographic_loaded"] = True
+
+        current_source = cache_payload.get("current_demographic")
+        if current_source is None:
+            demographic_source_verified = False
+            issues.append("current demographics provenance is unavailable")
+        else:
+            if summary_payload.get("demographic_import_id") != current_source["demographic_import_id"]:
+                demographic_source_verified = False
+                issues.append("current demographics import_id does not match completed scoring provenance")
+            if summary_payload.get("demographic_source_checksum") != current_source["demographic_source_checksum"]:
+                demographic_source_verified = False
+                issues.append("current demographics checksum does not match completed scoring provenance")
+            if summary_payload.get("demographic_snapshot_count") != current_source["demographic_snapshot_count"]:
+                demographic_source_verified = False
+                issues.append("current demographics count does not match completed scoring provenance")
+            if summary_payload.get("demographic_min_person_id") != current_source["demographic_min_person_id"]:
+                demographic_source_verified = False
+                issues.append("current demographics min person_id does not match completed scoring provenance")
+            if summary_payload.get("demographic_max_person_id") != current_source["demographic_max_person_id"]:
+                demographic_source_verified = False
+                issues.append("current demographics max person_id does not match completed scoring provenance")
+
+    model_run_id = int(row["model_run_id"])
+    model_rows = cache_payload.setdefault("model_rows", {})
+    if model_run_id not in model_rows:
+        model_rows[model_run_id] = ModelRunRepository(initialized_path).fetch_run(model_run_id)
+    model_row = model_rows.get(model_run_id)
+
+    analysis_row: dict[str, Any] | None = None
+    if model_row is None:
+        issues.append("scoring run model_run_id does not exist")
+    else:
+        if model_row.get("status") != "COMPLETED":
+            issues.append("model run is not COMPLETED")
+        if model_row.get("selected_candidate") != PRIMARY_MODEL_NAME:
+            issues.append("model selected_candidate is not the governed BAGGING_PU primary")
+        model_artifact_sha = _normalized_checksum(model_row.get("artifact_sha256"))
+        if model_artifact_sha is None or not _is_valid_sha256(model_artifact_sha):
+            issues.append("model artifact_sha256 is invalid")
+        elif model_artifact_sha != _normalized_checksum(row.get("artifact_sha256")):
+            issues.append("artifact_sha256 does not match model metadata")
+
+        model_analysis_run_id = model_row.get("analysis_run_id")
+        if summary_payload.get("analysis_run_id") != model_analysis_run_id:
+            issues.append("analysis_run_id does not match model provenance")
+        if isinstance(model_analysis_run_id, bool) or not isinstance(model_analysis_run_id, int) or model_analysis_run_id <= 0:
+            issues.append("model analysis_run_id is invalid")
+        else:
+            analysis_rows = cache_payload.setdefault("analysis_rows", {})
+            if model_analysis_run_id not in analysis_rows:
+                analysis_rows[model_analysis_run_id] = HistoricalRepository(initialized_path).fetch_analysis_run(
+                    model_analysis_run_id
+                )
+            analysis_row = analysis_rows.get(model_analysis_run_id)
+            if analysis_row is None:
+                issues.append("model analysis_run_id does not exist")
+            elif analysis_row.get("status") != "COMPLETED":
+                issues.append("model analysis_run_id is not COMPLETED")
+
+    if analysis_row is not None:
+        try:
+            saved_historical_provenance = saved_analysis_source_provenance(analysis_row)
+        except HistoricalSourceProvenanceError:
+            saved_historical_provenance = None
+            historical_source_verified = False
+            issues.append("saved historical analysis provenance is invalid")
+
+        if saved_historical_provenance is None:
+            historical_source_verified = False
+            issues.append("saved historical analysis provenance is missing")
+        else:
+            if summary_payload.get("customer_import_id") != saved_historical_provenance.customer_import_id:
+                historical_source_verified = False
+                issues.append("customer_import_id does not match model historical provenance")
+            if summary_payload.get("customer_source_checksum") != saved_historical_provenance.customer_source_checksum:
+                historical_source_verified = False
+                issues.append("customer_source_checksum does not match model historical provenance")
+            if summary_payload.get("campaign_sales_import_id") != saved_historical_provenance.campaign_sales_import_id:
+                historical_source_verified = False
+                issues.append("campaign_sales_import_id does not match model historical provenance")
+            if summary_payload.get("campaign_sales_source_checksum") != saved_historical_provenance.campaign_sales_source_checksum:
+                historical_source_verified = False
+                issues.append("campaign_sales_source_checksum does not match model historical provenance")
+
+            if verify_current_source_match:
+                if "current_historical_loaded" not in cache_payload:
+                    try:
+                        current_historical = _resolve_current_historical_provenance_lightweight(
+                            initialized_path,
+                        )
+                    except HistoricalSourceProvenanceError:
+                        cache_payload["current_historical"] = None
+                    else:
+                        cache_payload["current_historical"] = current_historical
+                    cache_payload["current_historical_loaded"] = True
+
+                current_historical = cache_payload.get("current_historical")
+                if current_historical is None:
+                    historical_source_verified = False
+                    issues.append("current historical provenance is unavailable")
+                else:
+                    if summary_payload.get("customer_import_id") != current_historical["customer_import_id"]:
+                        historical_source_verified = False
+                        issues.append("current customer import_id does not match completed scoring provenance")
+                    if summary_payload.get("customer_source_checksum") != current_historical["customer_source_checksum"]:
+                        historical_source_verified = False
+                        issues.append("current customer checksum does not match completed scoring provenance")
+                    if summary_payload.get("campaign_sales_import_id") != current_historical["campaign_sales_import_id"]:
+                        historical_source_verified = False
+                        issues.append("current campaign_sales import_id does not match completed scoring provenance")
+                    if summary_payload.get("campaign_sales_source_checksum") != current_historical[
+                        "campaign_sales_source_checksum"
+                    ]:
+                        historical_source_verified = False
+                        issues.append("current campaign_sales checksum does not match completed scoring provenance")
+
+    return {
+        "scoring_run_id": int(row["scoring_run_id"]),
+        "model_run_id": model_run_id,
+        "analysis_run_id": summary_payload.get("analysis_run_id"),
+        "status": str(row["status"]),
+        "demographic_source_verified": demographic_source_verified,
+        "historical_source_verified": historical_source_verified,
+        "issues": issues,
+    }
+
+
+def find_current_canonical_run_for_model_lightweight(
+    database_path: str | Path,
+    *,
+    model_run_id: int,
+    limit: int = 100,
+    cache: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """Resolve canonical completed scoring run using metadata/provenance checks only."""
+    if isinstance(model_run_id, bool) or not isinstance(model_run_id, int) or model_run_id <= 0:
+        raise ProspectScoringVerificationError("model_run_id must be a positive integer.")
+    if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 1000:
+        raise ProspectScoringVerificationError("limit must be an integer between 1 and 1000.")
+
+    initialized_path = initialize_database(database_path)
+    scoring_repository = ScoringRepository(initialized_path)
+    completed_runs = scoring_repository.find_completed_runs_for_model(model_run_id, limit=limit)
+    shared_cache = {} if cache is None else cache
+
+    for row in completed_runs:
+        evaluation = _evaluate_completed_scoring_run_lightweight(
+            initialized_path,
+            row,
+            verify_current_source_match=True,
+            cache=shared_cache,
+        )
+        if not evaluation["issues"]:
+            return row
+    return None
+
+
+def resolve_current_scoring_context_lightweight(
+    database_path: str | Path,
+    *,
+    scoring_run_id: int,
+    verify_current_source_match: bool = True,
+    cache: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Validate completed scoring run currentness without scanning full propensity_scores."""
+    if isinstance(scoring_run_id, bool) or not isinstance(scoring_run_id, int) or scoring_run_id <= 0:
+        raise ProspectScoringVerificationError("scoring_run_id must be a positive integer.")
+
+    initialized_path = initialize_database(database_path)
+    scoring_repository = ScoringRepository(initialized_path)
+    row = scoring_repository.fetch_scoring_run(scoring_run_id)
+    if row is None:
+        raise ProspectScoringVerificationError("Scoring run was not found.")
+
+    shared_cache = {} if cache is None else cache
+    evaluation = _evaluate_completed_scoring_run_lightweight(
+        initialized_path,
+        row,
+        verify_current_source_match=verify_current_source_match,
+        cache=shared_cache,
+    )
+    issues = list(evaluation["issues"])
+
+    model_run_id = int(row["model_run_id"])
+    canonical_by_model = shared_cache.setdefault("canonical_by_model", {})
+    if model_run_id not in canonical_by_model:
+        canonical_by_model[model_run_id] = find_current_canonical_run_for_model_lightweight(
+            initialized_path,
+            model_run_id=model_run_id,
+            cache=shared_cache,
+        )
+    canonical_row = canonical_by_model.get(model_run_id)
+    if canonical_row is None or int(canonical_row["scoring_run_id"]) != int(row["scoring_run_id"]):
+        issues.append("scoring run is not the current canonical run for this model")
+
+    deduped_issues = list(dict.fromkeys(str(issue) for issue in issues if str(issue).strip()))
+    return {
+        "scoring_run_id": int(scoring_run_id),
+        "status": str(row["status"]),
+        "is_canonical": len(deduped_issues) == 0,
+        "demographic_source_verified": bool(evaluation["demographic_source_verified"]),
+        "historical_source_verified": bool(evaluation["historical_source_verified"]),
+        "issues": deduped_issues,
+    }
+
+
+def validate_completed_scoring_run_integrity_deep(
+    database_path: str | Path,
+    *,
+    scoring_run_id: int,
+    verify_current_source_match: bool = True,
+) -> dict[str, Any]:
+    """Deep integrity audit that scans persisted score aggregates for a completed scoring run."""
+    return validate_completed_scoring_run_provenance(
+        database_path,
+        scoring_run_id=scoring_run_id,
+        verify_current_source_match=verify_current_source_match,
+    )
+
+
 def validate_completed_scoring_run_provenance(
     database_path: str | Path,
     *,
@@ -839,7 +1356,7 @@ def find_current_canonical_run_for_model(
     model_run_id: int,
     limit: int = 100,
 ) -> dict[str, Any] | None:
-    """Return the completed scoring run matching the current demographics source."""
+    """Backward-compatible canonical resolver that preserves deep provenance semantics."""
     if isinstance(model_run_id, bool) or not isinstance(model_run_id, int) or model_run_id <= 0:
         raise ProspectScoringVerificationError("model_run_id must be a positive integer.")
     if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 1000:
@@ -848,14 +1365,13 @@ def find_current_canonical_run_for_model(
     initialized_path = initialize_database(database_path)
     scoring_repository = ScoringRepository(initialized_path)
     completed_runs = scoring_repository.find_completed_runs_for_model(model_run_id, limit=limit)
-
     for row in completed_runs:
         provenance = validate_completed_scoring_run_provenance(
             initialized_path,
             scoring_run_id=int(row["scoring_run_id"]),
             verify_current_source_match=True,
         )
-        if provenance["is_canonical"]:
+        if not provenance["issues"]:
             return row
     return None
 
@@ -863,10 +1379,13 @@ def find_current_canonical_run_for_model(
 __all__ = (
     "DEFAULT_SCORING_CHUNK_SIZE",
     "find_current_canonical_run_for_model",
+    "find_current_canonical_run_for_model_lightweight",
     "ProspectScoringExecutionError",
     "ProspectScoringServiceError",
     "ProspectScoringVerificationError",
+    "resolve_current_scoring_context_lightweight",
     "run_chunked_prospect_scoring",
+    "validate_completed_scoring_run_integrity_deep",
     "validate_completed_scoring_run_provenance",
     "verify_scoring_run_sample",
 )

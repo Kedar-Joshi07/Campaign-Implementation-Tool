@@ -35,13 +35,8 @@ from app.services.audience_query_service import (
     normalize_selection,
     profile_audience,
 )
-from app.services.historical_source_provenance_service import (
-    HistoricalSourceProvenanceError,
-    is_saved_analysis_provenance_current,
-)
 from app.services.prospect_scoring_service import (
-    find_current_canonical_run_for_model,
-    validate_completed_scoring_run_provenance,
+    resolve_current_scoring_context_lightweight,
 )
 
 
@@ -165,10 +160,32 @@ def _deduplicate_issues(issues: list[str]) -> list[str]:
     return deduped
 
 
-def _evaluate_saved_audience_currentness(path: Path, row: dict[str, Any]) -> dict[str, Any]:
+def _evaluate_saved_audience_currentness(
+    path: Path,
+    row: dict[str, Any],
+    *,
+    cache: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     saved_scoring_run_id = int(row["scoring_run_id"])
     saved_model_run_id = int(row["model_run_id"])
     saved_analysis_run_id = int(row["analysis_run_id"])
+
+    shared_cache = {} if cache is None else cache
+    scoring_rows_cache: dict[int, dict[str, Any] | None] = shared_cache.setdefault(
+        "saved_scoring_rows", {}
+    )
+    scoring_summary_cache: dict[int, dict[str, Any] | None] = shared_cache.setdefault(
+        "saved_scoring_summaries", {}
+    )
+    scoring_currentness_cache: dict[int, dict[str, Any] | None] = shared_cache.setdefault(
+        "saved_scoring_currentness", {}
+    )
+    analysis_rows_cache: dict[int, dict[str, Any] | None] = shared_cache.setdefault(
+        "saved_analysis_rows", {}
+    )
+    boundaries_cache: dict[int, list[dict[str, Any]]] = shared_cache.setdefault(
+        "saved_boundary_rows", {}
+    )
 
     issues: list[str] = []
 
@@ -179,7 +196,11 @@ def _evaluate_saved_audience_currentness(path: Path, row: dict[str, Any]) -> dic
     if str(row["selection_contract_version"]) != AUDIENCE_SELECTION_CONTRACT_VERSION:
         issues.append("Saved selection contract version is no longer supported.")
 
-    scoring_row = ScoringRepository(path).fetch_scoring_run(saved_scoring_run_id)
+    if saved_scoring_run_id not in scoring_rows_cache:
+        scoring_rows_cache[saved_scoring_run_id] = ScoringRepository(path).fetch_scoring_run(
+            saved_scoring_run_id
+        )
+    scoring_row = scoring_rows_cache[saved_scoring_run_id]
     if scoring_row is None:
         issues.append("Saved scoring run no longer exists.")
     else:
@@ -197,12 +218,17 @@ def _evaluate_saved_audience_currentness(path: Path, row: dict[str, Any]) -> dic
         if str(scoring_row["artifact_sha256"]).strip().lower() != str(row["artifact_sha256"]).strip().lower():
             issues.append("Saved artifact hash no longer matches scoring run provenance.")
 
-        try:
-            summary_payload = _decode_json_object(
-                scoring_row.get("score_summary_json"),
-                field_name="scoring_run.score_summary_json",
-            )
-        except SavedAudienceServiceValidationError:
+        if saved_scoring_run_id not in scoring_summary_cache:
+            try:
+                scoring_summary_cache[saved_scoring_run_id] = _decode_json_object(
+                    scoring_row.get("score_summary_json"),
+                    field_name="scoring_run.score_summary_json",
+                )
+            except SavedAudienceServiceValidationError:
+                scoring_summary_cache[saved_scoring_run_id] = None
+
+        summary_payload = scoring_summary_cache[saved_scoring_run_id]
+        if summary_payload is None:
             issues.append("Saved scoring run summary payload is invalid.")
         else:
             summary_pairs = (
@@ -224,30 +250,27 @@ def _evaluate_saved_audience_currentness(path: Path, row: dict[str, Any]) -> dic
                 if summary_payload.get(key) != expected:
                     issues.append(f"Saved {key} no longer matches scoring provenance.")
 
-        try:
-            provenance = validate_completed_scoring_run_provenance(
-                path,
-                scoring_run_id=saved_scoring_run_id,
-                verify_current_source_match=True,
-            )
-        except Exception:
+        if saved_scoring_run_id not in scoring_currentness_cache:
+            try:
+                scoring_currentness_cache[saved_scoring_run_id] = resolve_current_scoring_context_lightweight(
+                    path,
+                    scoring_run_id=saved_scoring_run_id,
+                    verify_current_source_match=True,
+                    cache=shared_cache,
+                )
+            except Exception:
+                scoring_currentness_cache[saved_scoring_run_id] = None
+
+        provenance = scoring_currentness_cache[saved_scoring_run_id]
+        if provenance is None:
             issues.append("Saved scoring run provenance could not be validated.")
         else:
             if not provenance["is_canonical"]:
                 issues.append("Saved scoring run provenance is stale or invalid.")
                 for item in provenance.get("issues", [])[:3]:
                     issues.append(f"provenance: {item}")
-
-        try:
-            current_canonical = find_current_canonical_run_for_model(
-                path,
-                model_run_id=saved_model_run_id,
-            )
-        except Exception:
-            current_canonical = None
-            issues.append("Current canonical scoring run could not be resolved.")
-        if current_canonical is None or int(current_canonical["scoring_run_id"]) != saved_scoring_run_id:
-            issues.append("Saved scoring run is not the current canonical scoring run for its model.")
+            if int(provenance.get("scoring_run_id") or 0) != saved_scoring_run_id:
+                issues.append("Saved scoring run provenance is inconsistent.")
 
     model_row = ModelRunRepository(path).fetch_run(saved_model_run_id)
     if model_row is None:
@@ -263,7 +286,11 @@ def _evaluate_saved_audience_currentness(path: Path, row: dict[str, Any]) -> dic
         ):
             issues.append("Saved artifact hash no longer matches model run metadata.")
 
-    analysis_row = HistoricalRepository(path).fetch_analysis_run(saved_analysis_run_id)
+    if saved_analysis_run_id not in analysis_rows_cache:
+        analysis_rows_cache[saved_analysis_run_id] = HistoricalRepository(path).fetch_analysis_run(
+            saved_analysis_run_id
+        )
+    analysis_row = analysis_rows_cache[saved_analysis_run_id]
     if analysis_row is None:
         issues.append("Saved analysis run no longer exists.")
     else:
@@ -281,15 +308,13 @@ def _evaluate_saved_audience_currentness(path: Path, row: dict[str, Any]) -> dic
         for key, expected in analysis_pairs:
             if analysis_row.get(key) != expected:
                 issues.append(f"Saved {key} no longer matches analysis provenance.")
-        try:
-            historical_current, historical_issue = is_saved_analysis_provenance_current(path, analysis_row)
-        except HistoricalSourceProvenanceError:
-            issues.append("Historical source provenance is unavailable.")
-        else:
-            if not historical_current:
-                issues.append(historical_issue or "Historical source provenance is stale.")
+        # Current historical provenance is validated via canonical scoring currentness.
 
-    boundaries = AudienceRankRepository(path).fetch_boundaries(saved_scoring_run_id)
+    if saved_scoring_run_id not in boundaries_cache:
+        boundaries_cache[saved_scoring_run_id] = AudienceRankRepository(path).fetch_boundaries(
+            saved_scoring_run_id
+        )
+    boundaries = boundaries_cache[saved_scoring_run_id]
     if len(boundaries) != 100:
         issues.append(RANK_BOUNDARIES_NOT_READY_MESSAGE)
     else:
@@ -342,7 +367,7 @@ def validate_saved_audience_currentness(
         raise SavedAudienceServiceNotFoundError(SAVED_AUDIENCE_NOT_FOUND_MESSAGE) from exc
     except SavedAudienceValidationError as exc:
         raise SavedAudienceServiceValidationError(str(exc)) from exc
-    return _evaluate_saved_audience_currentness(path, row)
+    return _evaluate_saved_audience_currentness(path, row, cache={})
 
 
 def save_audience(
@@ -489,8 +514,9 @@ def list_saved_audiences(
         raise SavedAudienceServiceValidationError(str(exc)) from exc
 
     payload: list[dict[str, Any]] = []
+    request_cache: dict[str, Any] = {}
     for row in rows:
-        currentness = _evaluate_saved_audience_currentness(path, row)
+        currentness = _evaluate_saved_audience_currentness(path, row, cache=request_cache)
         payload.append(
             {
                 "audience_id": int(row["audience_id"]),
@@ -525,7 +551,7 @@ def get_saved_audience_detail(
         raise SavedAudienceServiceValidationError(str(exc)) from exc
 
     filters_payload, selection_payload, profile_snapshot = _normalized_saved_row_json(row)
-    currentness = _evaluate_saved_audience_currentness(path, row)
+    currentness = _evaluate_saved_audience_currentness(path, row, cache={})
     replay_payload = replay_saved_audience_definition(path, audience_id=normalized_audience_id)
 
     return {

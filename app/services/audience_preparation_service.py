@@ -25,8 +25,9 @@ from app.repositories.scoring_repository import (
     ScoringRepository,
 )
 from app.services.prospect_scoring_service import (
-    find_current_canonical_run_for_model,
-    validate_completed_scoring_run_provenance,
+    find_current_canonical_run_for_model_lightweight,
+    resolve_current_scoring_context_lightweight,
+    validate_completed_scoring_run_integrity_deep,
 )
 
 
@@ -170,7 +171,7 @@ def _resolve_run_currentness(
     is_canonical = False
 
     try:
-        provenance = validate_completed_scoring_run_provenance(
+        provenance = resolve_current_scoring_context_lightweight(
             database_path,
             scoring_run_id=scoring_run_id,
             verify_current_source_match=True,
@@ -191,18 +192,11 @@ def _resolve_run_currentness(
         if not is_canonical:
             issues.extend(list(provenance.get("issues") or []))
 
-    try:
-        canonical_row = find_current_canonical_run_for_model(
-            database_path,
-            model_run_id=model_run_id,
-        )
-    except Exception:
-        canonical_row = None
-        issues.append("Current canonical scoring run could not be resolved.")
-
-    if canonical_row is None or int(canonical_row["scoring_run_id"]) != scoring_run_id:
-        is_canonical = False
-        issues.append("Scoring run is not the current canonical run for this model.")
+    # Keep model linkage checks explicit in status/list surfaces.
+    if provenance is not None and int(provenance.get("scoring_run_id") or 0) == scoring_run_id:
+        if int(model_run_id) <= 0:
+            is_canonical = False
+            issues.append("Scoring run model linkage is invalid.")
 
     return {
         "is_canonical": is_canonical,
@@ -413,7 +407,7 @@ def _validate_preparation_inputs(
     if score_count != int(scoring_run["scored_person_count"]):
         raise AudiencePreparationConflictError(SCORING_COUNT_MISMATCH_MESSAGE)
 
-    provenance = validate_completed_scoring_run_provenance(
+    provenance = validate_completed_scoring_run_integrity_deep(
         database_path,
         scoring_run_id=scoring_run_id,
         verify_current_source_match=True,
@@ -421,7 +415,7 @@ def _validate_preparation_inputs(
     if not provenance["is_canonical"]:
         raise AudiencePreparationConflictError(SCORING_RUN_NOT_CANONICAL_MESSAGE)
 
-    canonical = find_current_canonical_run_for_model(
+    canonical = find_current_canonical_run_for_model_lightweight(
         database_path,
         model_run_id=int(scoring_run["model_run_id"]),
     )

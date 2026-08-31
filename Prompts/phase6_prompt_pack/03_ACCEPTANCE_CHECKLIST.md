@@ -72,10 +72,30 @@ All critical checks must pass for final Phase 6 GO.
 - [x] Synthetic Step 8 evidence remains explicitly labeled synthetic
 - [x] No unbounded hot-path materialization retained in validation flow
 - [x] `python -m pip check` passed
-- [x] `python -m pytest -q` passed (`426 passed in 665.19s`)
+- [x] `python -m pytest -q` passed (`435 passed in 602.43s`)
 - [x] `python -m compileall -q app scripts tests` passed
 - [x] `git diff --check` passed for blocking issues (CRLF warnings only)
 - [x] `python scripts/validate_data.py --json` passed (`overall_status=OK`)
+
+## Focused Performance Finalization
+
+- [x] **Critical** focused-pass starting HEAD matched `77398d91f126d47d021e7835581848d655701b3a`
+- [x] Interactive currentness explicitly split from deep 5M integrity validation
+- [x] Lightweight helper introduced: `resolve_current_scoring_context_lightweight`
+- [x] Lightweight canonical resolver introduced: `find_current_canonical_run_for_model_lightweight`
+- [x] Deep integrity helper retained: `validate_completed_scoring_run_integrity_deep`
+- [x] Interactive callers migrated to lightweight currentness validation
+- [x] Duplicate deep-validation path removed from interactive flow
+- [x] Deep validation retained for scoring completion/preparation/audit boundaries
+- [x] Real service timings captured in `docs/evidence/phase6_real_5m_service_performance.json`
+- [x] Baseline blocker captured in `docs/evidence/phase6_performance_finalization_baseline.json`
+- [x] Saved audience currentness timing improved from `509.16243s` to `0.94332s`
+- [x] Saved audience currentness target met (`< 5s` and preferred `< 1s`)
+- [x] Saved audience list target met (`0.916491s`)
+- [x] Saved audience detail target met (`0.880576s`)
+- [x] Preparation status/list no longer rely on deep 5M score scans in interactive path
+- [x] No schema migration required for focused pass
+- [x] No Phase 7 runtime implementation added
 
 ## Pre-Phase-7 Finalization Closure
 
@@ -90,6 +110,15 @@ All critical checks must pass for final Phase 6 GO.
 - [x] `docs/PHASE_6_IMPLEMENTATION_SUMMARY.md`
 - [x] `docs/evidence/phase6_5m_acceptance.json`
 - [x] `docs/evidence/phase6_real_5m_performance.json`
+- [x] `Prompts/phase6_prompt_pack/02_PROGRESS_TRACKER.md`
+- [x] `Prompts/phase6_prompt_pack/03_ACCEPTANCE_CHECKLIST.md`
+- [x] `Prompts/phase6_prompt_pack/04_PHASE_7_HANDOFF_CONTRACT.md`
+
+## Deliverables Updated in Focused Pass
+
+- [x] `docs/evidence/phase6_performance_finalization_baseline.json`
+- [x] `docs/evidence/phase6_real_5m_service_performance.json`
+- [x] `docs/PHASE_6_IMPLEMENTATION_SUMMARY.md`
 - [x] `Prompts/phase6_prompt_pack/02_PROGRESS_TRACKER.md`
 - [x] `Prompts/phase6_prompt_pack/03_ACCEPTANCE_CHECKLIST.md`
 - [x] `Prompts/phase6_prompt_pack/04_PHASE_7_HANDOFF_CONTRACT.md`

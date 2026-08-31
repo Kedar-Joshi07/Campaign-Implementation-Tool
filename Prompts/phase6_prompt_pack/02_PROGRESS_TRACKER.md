@@ -4,6 +4,8 @@
 
 Phase 6 is complete through Step 10 and pre-Phase-7 finalization.
 
+Focused Phase 6 performance finalization pass is complete.
+
 Implementation and acceptance status: COMPLETE
 Phase 7 runtime implementation status: NOT STARTED (by design)
 
@@ -38,6 +40,8 @@ Phase 7 runtime implementation status: NOT STARTED (by design)
 - `docs/evidence/phase6_5m_acceptance.json`
 - `docs/evidence/phase6_real_5m_performance.json`
 - `docs/evidence/phase6_prephase7_finalization_baseline.json`
+- `docs/evidence/phase6_performance_finalization_baseline.json`
+- `docs/evidence/phase6_real_5m_service_performance.json`
 - `docs/PHASE_6_IMPLEMENTATION_SUMMARY.md`
 
 ## Final Gate Snapshot (Pre-Phase-7 Finalization)
@@ -73,4 +77,33 @@ Executed on the final pre-freeze workspace:
 ## Final Decision
 
 Phase 6 final acceptance decision: GO
+
+## Focused Performance Finalization Snapshot
+
+- Focused-pass starting SHA: `77398d91f126d47d021e7835581848d655701b3a`
+- Validation split finalized:
+  - interactive currentness: lightweight metadata/provenance checks
+  - deep 5M score integrity: explicit completion/preparation/audit checks
+- Lightweight helper: `resolve_current_scoring_context_lightweight`
+- Deep helper: `validate_completed_scoring_run_integrity_deep`
+- Duplicate deep-validation path removed from interactive read flow.
+
+Real 5M service timings (seconds):
+
+- saved audience currentness before: `509.16243`
+- saved audience currentness after: `0.94332`
+- saved audience list: `0.916491`
+- saved audience detail: `0.880576`
+- preparation status: `0.626616`
+- audience run list: `1.386971`
+
+Final focused-pass gate snapshot:
+
+- `python -m pip check` -> clean
+- `python -m pytest -q` -> `435 passed in 602.43s`
+- `python -m compileall -q app scripts tests` -> clean
+- `git diff --check` -> clean for blocking issues
+- `python scripts/validate_data.py --json` -> `overall_status=OK`
+
+Focused-pass decision: GO
 

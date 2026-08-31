@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-08-31T12:00:00Z",
+  "starting_sha": "77398d91f126d47d021e7835581848d655701b3a",
+  "schema_version": 9,
+  "canonical_context": {
+    "analysis_run_id": 12,
+    "model_run_id": 8,
+    "scoring_run_id": 8,
+    "scored_person_count": 5000000,
+    "boundary_count": 100,
+    "saved_audience_count": 3
+  },
+  "test_gate_snapshot": {
+    "pytest_summary": "426 passed",
+    "pip_check": "pass",
+    "compileall": "pass",
+    "diff_check": "pass",
+    "validate_data": "OK"
+  },
+  "interactive_baseline_timings_seconds": {
+    "saved_audience_currentness": 509.16243,
+    "audience_explorer_readiness": null,
+    "audience_explorer_readiness_note": "Not separately measured in this baseline."
+  },
+  "timing_sources": {
+    "saved_audience_currentness": "docs/evidence/phase6_real_5m_performance.json"
+  },
+  "sanitization": {
+    "contains_absolute_paths": false,
+    "contains_pii": false,
+    "contains_person_ids": false,
+    "contains_raw_sql": false,
+    "contains_tracebacks": false
+  }
+}

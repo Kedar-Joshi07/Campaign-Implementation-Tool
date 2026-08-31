@@ -9,6 +9,8 @@ Phase 6 is accepted and frozen at Step 10. Phase 7 starts from this baseline.
 	- `docs/PHASE_6_IMPLEMENTATION_SUMMARY.md`
 	- `docs/evidence/phase6_5m_acceptance.json`
 	- `docs/evidence/phase6_real_5m_performance.json`
+	- `docs/evidence/phase6_performance_finalization_baseline.json`
+	- `docs/evidence/phase6_real_5m_service_performance.json`
 	- `docs/evidence/phase6_step8_query_plan_and_timing.json`
 	- `docs/evidence/phase6_prephase7_finalization_baseline.json`
 
@@ -18,6 +20,28 @@ Phase 6 is accepted and frozen at Step 10. Phase 7 starts from this baseline.
 - `AUDIENCE_RANK_CONTRACT_VERSION = "1"`
 - `AUDIENCE_SELECTION_CONTRACT_VERSION = "1"`
 - Scoring provenance currentness gates remain mandatory.
+
+## Focused Pass Governance Clarification
+
+Focused performance finalization preserves governance by explicit two-tier validation:
+
+- Interactive currentness/readiness paths use lightweight metadata/provenance validation only.
+- Deep 5M score-table integrity validation remains mandatory for explicit integrity boundaries.
+
+Authoritative helper split:
+
+- `resolve_current_scoring_context_lightweight`
+- `find_current_canonical_run_for_model_lightweight`
+- `validate_completed_scoring_run_integrity_deep`
+
+Deep integrity validation remains required for:
+
+- scoring completion integrity verification
+- audience rank preparation submission/run gate
+- explicit audit/integrity verification workflows
+
+Interactive read paths (options/estimate/search/profile/saved audience status/list/detail)
+must not automatically trigger repeated full 5M aggregate scans.
 
 ## Mandatory Preconditions for Phase 7 Consumption
 
@@ -32,6 +56,7 @@ Phase 7 may consume a saved audience only if all checks pass:
 7. Filter/rank/selection contract versions are supported.
 8. Referenced run is `ready_for_current_audience_actions=true` at consumption time.
 9. If selection mode is `TOP_N`, enforce `target_count <= scored_person_count` for the current canonical run.
+10. Currentness checks must use the lightweight currentness layer; deep integrity checks are invoked only at explicit integrity boundaries.
 
 Any failed precondition is a hard stop for campaign execution paths.
 
