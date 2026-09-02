@@ -1,0 +1,74 @@
+{
+  "generated_at": "2026-09-01T10:15:00Z",
+  "starting_sha": "80c3324f884f448b1eb84e61fafcd1c70415b8b1",
+  "schema_version": 10,
+  "canonical_context": {
+    "database": "data/campaign_poc.db",
+    "analysis_run_id": 12,
+    "model_run_id": 8,
+    "scoring_run_id": 8,
+    "scored_person_count": 5000000,
+    "boundary_count": 100
+  },
+  "gate_snapshot": {
+    "focused_pytest": {
+      "status": "PASS",
+      "summary": "33 passed"
+    },
+    "step10_capture_script": {
+      "status": "PASS",
+      "output": "docs/evidence/phase6_real_5m_service_performance.json"
+    }
+  },
+  "baseline_from_service_probe": {
+    "estimate_all_seconds": 1.852204,
+    "estimate_top_1_percent_seconds": 1.764717,
+    "estimate_top_decile_seconds": 1.42747,
+    "estimate_state_seconds": 22.373547,
+    "estimate_age_income_seconds": 72.56602,
+    "estimate_rank_state_seconds": 20.779951,
+    "profile_no_filter_all_seconds": 1.425289,
+    "profile_top_1_percent_seconds": 14.252967,
+    "profile_filtered_all_seconds": 182.339574,
+    "profile_filtered_topn_50000_seconds": 124.694833
+  },
+  "acceptance_snapshot_from_step10_script": {
+    "options_seconds": 0.49516,
+    "estimate_all_seconds": 0.537918,
+    "estimate_top_1_percent_seconds": 0.529171,
+    "estimate_top_decile_seconds": 0.550949,
+    "profile_top_1_percent_seconds": 2.667355,
+    "profile_filtered_top_n_50000_seconds": 161.79978,
+    "saved_currentness_seconds": 0.735464,
+    "scoring_status_seconds": null,
+    "scoring_detail_seconds": null
+  },
+  "step5_gate": {
+    "required_estimate_all_lt_seconds": 1.0,
+    "required_rank_only_lt_seconds": 2.0,
+    "status": "PARTIAL",
+    "notes": [
+      "estimate_all passes in step10 script context but fails in direct service probe warm/cold mix.",
+      "rank-only fast paths pass target in script run."
+    ]
+  },
+  "step6_gate": {
+    "required_profile_no_filter_all_lt_seconds": 2.0,
+    "required_profile_top1_lt_seconds": 15.0,
+    "required_profile_filtered_topn_50000_lt_seconds": 30.0,
+    "status": "FAIL",
+    "notes": [
+      "filtered TOP_N 50K remains multi-minute and breaches required threshold.",
+      "no-filter and top1 profile paths are within required thresholds in script run."
+    ]
+  },
+  "overall_decision": "NO-GO",
+  "reason": "Filtered profile dynamic path remains far above Step 6 threshold on real 5M service benchmark.",
+  "sanitization": {
+    "contains_absolute_paths": false,
+    "contains_pii": false,
+    "contains_person_ids": false,
+    "contains_raw_sql": false,
+    "contains_tracebacks": false
+  }
+}

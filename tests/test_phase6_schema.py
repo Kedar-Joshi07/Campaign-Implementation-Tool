@@ -8,6 +8,7 @@ import pytest
 from app.database.connection import get_connection
 from app.database.schema import (
     AUDIENCE_RANK_BOUNDARY_COLUMNS,
+    CURRENT_SCHEMA_VERSION,
     CREATE_TABLE_STATEMENTS,
     MIGRATIONS,
     PHASE_SIX_REQUIRED_INDEX_STATEMENTS,
@@ -245,7 +246,7 @@ def test_migration_from_v8_creates_phase6_tables_and_preserves_rows(database_pat
             ).fetchall()
         }
 
-    assert schema_version == "9"
+    assert schema_version == str(CURRENT_SCHEMA_VERSION)
     assert job_count == 1
     assert scoring_count == 1
     assert boundary_columns == AUDIENCE_RANK_BOUNDARY_COLUMNS

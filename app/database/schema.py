@@ -16,7 +16,7 @@ from app.database.connection import get_connection
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 9
+CURRENT_SCHEMA_VERSION = 10
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -32,6 +32,7 @@ EXPECTED_TABLES = (
     "propensity_scores",
     "audience_rank_boundaries",
     "saved_audiences",
+    "audience_analytics_snapshots",
 )
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
@@ -170,6 +171,31 @@ SAVED_AUDIENCE_COLUMNS = (
     "feature_contract_version",
     "feature_contract_sha256",
     "artifact_sha256",
+)
+
+AUDIENCE_ANALYTICS_SNAPSHOT_COLUMNS = (
+    "scoring_run_id",
+    "analytics_contract_version",
+    "model_run_id",
+    "analysis_run_id",
+    "customer_import_id",
+    "customer_source_checksum",
+    "campaign_sales_import_id",
+    "campaign_sales_source_checksum",
+    "demographic_import_id",
+    "demographic_source_checksum",
+    "feature_contract_version",
+    "feature_contract_sha256",
+    "artifact_sha256",
+    "filter_contract_version",
+    "rank_contract_version",
+    "selection_contract_version",
+    "population_count",
+    "options_json",
+    "universe_profile_json",
+    "historical_positive_profile_json",
+    "score_bucket_stats_json",
+    "created_at",
 )
 
 CUSTOMER_COLUMNS = (
@@ -1674,6 +1700,74 @@ def _migrate_to_version_9(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_10(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE audience_analytics_snapshots (
+            scoring_run_id INTEGER NOT NULL,
+            analytics_contract_version TEXT NOT NULL
+                CHECK (length(trim(analytics_contract_version)) BETWEEN 1 AND 24),
+            model_run_id INTEGER NOT NULL,
+            analysis_run_id INTEGER NOT NULL,
+            customer_import_id INTEGER NOT NULL,
+            customer_source_checksum TEXT NOT NULL
+                CHECK (length(trim(customer_source_checksum)) = 64),
+            campaign_sales_import_id INTEGER NOT NULL,
+            campaign_sales_source_checksum TEXT NOT NULL
+                CHECK (length(trim(campaign_sales_source_checksum)) = 64),
+            demographic_import_id INTEGER NOT NULL,
+            demographic_source_checksum TEXT NOT NULL
+                CHECK (length(trim(demographic_source_checksum)) = 64),
+            feature_contract_version TEXT NOT NULL
+                CHECK (length(trim(feature_contract_version)) BETWEEN 1 AND 24),
+            feature_contract_sha256 TEXT NOT NULL
+                CHECK (length(trim(feature_contract_sha256)) = 64),
+            artifact_sha256 TEXT NOT NULL
+                CHECK (length(trim(artifact_sha256)) = 64),
+            filter_contract_version TEXT NOT NULL
+                CHECK (length(trim(filter_contract_version)) BETWEEN 1 AND 24),
+            rank_contract_version TEXT NOT NULL
+                CHECK (length(trim(rank_contract_version)) BETWEEN 1 AND 24),
+            selection_contract_version TEXT NOT NULL
+                CHECK (length(trim(selection_contract_version)) BETWEEN 1 AND 24),
+            population_count INTEGER NOT NULL
+                CHECK (population_count > 0),
+            options_json TEXT NOT NULL
+                CHECK (length(trim(options_json)) BETWEEN 2 AND 1048576),
+            universe_profile_json TEXT NOT NULL
+                CHECK (length(trim(universe_profile_json)) BETWEEN 2 AND 1048576),
+            historical_positive_profile_json TEXT NOT NULL
+                CHECK (length(trim(historical_positive_profile_json)) BETWEEN 2 AND 1048576),
+            score_bucket_stats_json TEXT NOT NULL
+                CHECK (length(trim(score_bucket_stats_json)) BETWEEN 2 AND 1048576),
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (scoring_run_id, analytics_contract_version),
+            FOREIGN KEY (scoring_run_id, model_run_id)
+                REFERENCES scoring_runs (scoring_run_id, model_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (analysis_run_id)
+                REFERENCES historical_analysis_runs (analysis_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (customer_import_id)
+                REFERENCES data_import_runs (import_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (campaign_sales_import_id)
+                REFERENCES data_import_runs (import_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (demographic_import_id)
+                REFERENCES data_import_runs (import_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            CHECK (scoring_run_id > 0),
+            CHECK (model_run_id > 0),
+            CHECK (analysis_run_id > 0),
+            CHECK (customer_import_id > 0),
+            CHECK (campaign_sales_import_id > 0),
+            CHECK (demographic_import_id > 0)
+        )
+        """
+    )
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -1683,6 +1777,7 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     7: _migrate_to_version_7,
     8: _migrate_to_version_8,
     9: _migrate_to_version_9,
+    10: _migrate_to_version_10,
 }
 
 

@@ -62,6 +62,10 @@ def _result_payload_from_summary(summary: dict[str, Any]) -> dict[str, Any]:
         "rank_contract_version": str(summary["rank_contract_version"]),
         "boundary_count": int(summary["boundary_count"]),
     }
+    if "analytics_contract_version" in summary:
+        payload["analytics_contract_version"] = str(summary["analytics_contract_version"])
+    if "analytics_prepared" in summary:
+        payload["analytics_prepared"] = bool(summary["analytics_prepared"])
     metric_fields = (
         "scanned_rows",
         "chunk_size",

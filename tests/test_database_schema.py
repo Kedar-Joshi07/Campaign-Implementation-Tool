@@ -7,6 +7,7 @@ import pytest
 
 from app.database.connection import get_connection
 from app.database.schema import (
+    AUDIENCE_ANALYTICS_SNAPSHOT_COLUMNS,
     AUDIENCE_RANK_BOUNDARY_COLUMNS,
     CAMPAIGN_SALES_COLUMNS,
     CREATE_TABLE_STATEMENTS,
@@ -47,6 +48,16 @@ def _table_names(database_path: Path) -> set[str]:
 def _column_names(database_path: Path, table_name: str) -> tuple[str, ...]:
     with get_connection(database_path) as connection:
         return tuple(row["name"] for row in connection.execute(f"PRAGMA table_info({table_name})"))
+
+
+def _table_sql(database_path: Path, table_name: str) -> str:
+    with get_connection(database_path) as connection:
+        row = connection.execute(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+            (table_name,),
+        ).fetchone()
+    assert row is not None and row["sql"]
+    return str(row["sql"])
 
 
 def _create_version_one_database(database_path: Path) -> None:
@@ -279,7 +290,7 @@ def test_populated_version_one_database_migrates_without_phase_one_data_loss(
 
     assert counts_after == counts_before
     assert customer_after == customer_before
-    assert stored_version == "9"
+    assert stored_version == "10"
 
 
 def test_historical_analysis_table_columns_constraints_and_indexes(database_path: Path) -> None:
@@ -339,6 +350,9 @@ def test_phase_six_tables_columns_and_indexes_exist(database_path: Path) -> None
         AUDIENCE_RANK_BOUNDARY_COLUMNS
     )
     assert _column_names(database_path, "saved_audiences") == SAVED_AUDIENCE_COLUMNS
+    assert _column_names(database_path, "audience_analytics_snapshots") == (
+        AUDIENCE_ANALYTICS_SNAPSHOT_COLUMNS
+    )
 
     with get_connection(database_path) as connection:
         existing_indexes = {
@@ -386,7 +400,7 @@ def test_future_schema_version_is_rejected(database_path: Path) -> None:
             "UPDATE app_metadata SET value = '999' WHERE key = 'schema_version'"
         )
 
-    with pytest.raises(UnsupportedSchemaVersionError, match="newer than supported version 9"):
+    with pytest.raises(UnsupportedSchemaVersionError, match="newer than supported version 10"):
         initialize_database(database_path)
 
 
@@ -413,3 +427,108 @@ def test_write_context_rolls_back_on_failure(database_path: Path) -> None:
         row_count = connection.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
 
     assert row_count == 0
+
+
+def test_v9_to_v10_migration_is_additive_and_preserves_existing_data(database_path: Path) -> None:
+    initialize_database(database_path)
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            INSERT INTO customers (
+                customer_id,
+                date_of_birth,
+                state,
+                individual_yearly_income,
+                family_member_count
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            ("CUS_V9", "1994-03-02", "Ohio", 82000, 2),
+        )
+        connection.execute(
+            """
+            INSERT INTO campaign_sales (
+                campaign_sales_id,
+                customer_id,
+                campaign_id,
+                product_id,
+                campaign_start_date,
+                campaign_end_date,
+                contact_date,
+                contacted_flag,
+                engagement_flag,
+                response_flag,
+                purchase_flag,
+                campaign_attributed_sale_flag,
+                pu_label
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "CS_V9",
+                "CUS_V9",
+                "CMP_V9",
+                "PRD_V9",
+                "2025-02-01",
+                "2025-02-28",
+                "2025-02-10",
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO demographics (
+                person_id,
+                age,
+                state,
+                individual_yearly_income,
+                family_member_count,
+                number_of_children_in_family,
+                number_of_adults_in_family,
+                family_yearly_income
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            ("PER_V9", 39, "Ohio", 79000, 2, 0, 2, 120000),
+        )
+
+    tables_without_rebuild = (
+        "jobs",
+        "scoring_runs",
+        "propensity_scores",
+        "demographics",
+        "customers",
+        "campaign_sales",
+    )
+    schemas_before = {
+        table_name: _table_sql(database_path, table_name) for table_name in tables_without_rebuild
+    }
+
+    with get_connection(database_path, write=True) as connection:
+        connection.execute("DROP TABLE audience_analytics_snapshots")
+        connection.execute(
+            "UPDATE app_metadata SET value = '9' WHERE key = 'schema_version'"
+        )
+
+    initialize_database(database_path)
+
+    schemas_after = {
+        table_name: _table_sql(database_path, table_name) for table_name in tables_without_rebuild
+    }
+    assert schemas_after == schemas_before
+
+    assert _table_names(database_path) == set(EXPECTED_TABLES)
+    with get_connection(database_path) as connection:
+        stored_version = connection.execute(
+            "SELECT value FROM app_metadata WHERE key = 'schema_version'"
+        ).fetchone()[0]
+        customer_count = connection.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+        campaign_sales_count = connection.execute("SELECT COUNT(*) FROM campaign_sales").fetchone()[0]
+        demographics_count = connection.execute("SELECT COUNT(*) FROM demographics").fetchone()[0]
+
+    assert stored_version == "10"
+    assert customer_count == 1
+    assert campaign_sales_count == 1
+    assert demographics_count == 1

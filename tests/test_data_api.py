@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from app import config
 from app.database.connection import get_connection
-from app.database.schema import initialize_database
+from app.database.schema import CURRENT_SCHEMA_VERSION, initialize_database
 from app.dependencies import get_database_path
 from app.main import app
 
@@ -142,7 +142,7 @@ def test_data_summary_empty_database(client: TestClient) -> None:
     assert payload["campaign_contact_date_max"] is None
     assert payload["database_path"] == "api_fixture.db"
     assert "private" not in payload["database_path"]
-    assert payload["schema_version"] == "9"
+    assert payload["schema_version"] == str(CURRENT_SCHEMA_VERSION)
 
 
 def test_data_summary_populated_fixture(client: TestClient, database_path: Path) -> None:
@@ -162,7 +162,7 @@ def test_data_summary_populated_fixture(client: TestClient, database_path: Path)
         "known_positive_count": 1,
         "attributed_purchase_count": 1,
         "database_path": "api_fixture.db",
-        "schema_version": "9",
+        "schema_version": str(CURRENT_SCHEMA_VERSION),
     }
 
 

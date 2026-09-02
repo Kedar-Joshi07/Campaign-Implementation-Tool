@@ -627,7 +627,7 @@ def test_save_rejects_empty_selected_count(database_path: Path) -> None:
             {
                 "audience_name": "Empty Audience",
                 "scoring_run_id": scoring_run_id,
-                "filters": {"state": ["NoMatchState"]},
+                "filters": {"state": ["Texas"], "gender": ["Female"]},
                 "selection": {"mode": "ALL_MATCHING"},
             },
         )

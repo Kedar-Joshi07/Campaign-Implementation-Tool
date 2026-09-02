@@ -7,6 +7,7 @@ import pytest
 
 from app.database.connection import get_connection
 from app.database.schema import (
+    CURRENT_SCHEMA_VERSION,
     CREATE_TABLE_STATEMENTS,
     JOB_COLUMNS,
     MIGRATIONS,
@@ -230,7 +231,7 @@ def test_migration_from_v4_preserves_jobs_and_is_idempotent(database_path: Path)
             ).fetchall()
         }
 
-    assert schema_version == "9"
+    assert schema_version == str(CURRENT_SCHEMA_VERSION)
     assert jobs_count == 1
     assert job_columns == JOB_COLUMNS
     assert scoring_columns == SCORING_RUN_COLUMNS
@@ -471,7 +472,7 @@ def test_legacy_v5_completed_run_uniqueness_migrates_to_v6_non_unique_preserving
             (model_run_id,),
         ).fetchone()[0]
 
-    assert schema_version == "9"
+    assert schema_version == str(CURRENT_SCHEMA_VERSION)
     assert completed_count == 2
 
 

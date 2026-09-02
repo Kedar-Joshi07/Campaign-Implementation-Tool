@@ -400,33 +400,19 @@ def save_audience(
     normalized_selection = normalize_selection(request_payload.get("selection", {}))
 
     try:
-        path, scoring_row, _ = _require_prepared_canonical_context(
+        context = _require_prepared_canonical_context(
             database_path,
             scoring_run_id=scoring_run_id,
         )
+        path = context.path
+        scoring_row = context.scoring_row
     except AudienceQueryConflictError as exc:
         raise SavedAudienceServiceConflictError(str(exc)) from exc
     except AudienceQueryValidationError as exc:
         raise SavedAudienceServiceValidationError(str(exc)) from exc
-
-    try:
-        estimate = estimate_audience(
-            path,
-            {
-                "scoring_run_id": scoring_run_id,
-                "filters": normalized_filters.payload,
-                "selection": normalized_selection.payload,
-            },
-        )
-    except AudienceQueryConflictError as exc:
-        raise SavedAudienceServiceConflictError(str(exc)) from exc
-    except AudienceQueryValidationError as exc:
-        raise SavedAudienceServiceValidationError(str(exc)) from exc
-    resolved_count = int(estimate["selected_count"])
-    if resolved_count < 1:
-        raise SavedAudienceServiceValidationError(SAVED_AUDIENCE_EMPTY_MESSAGE)
 
     profile_snapshot: dict[str, Any] | None = None
+    resolved_count: int | None = None
     if include_profile_snapshot:
         try:
             profile = profile_audience(
@@ -441,11 +427,30 @@ def save_audience(
             raise SavedAudienceServiceConflictError(str(exc)) from exc
         except AudienceQueryValidationError as exc:
             raise SavedAudienceServiceValidationError(str(exc)) from exc
+        resolved_count = int(profile["summary"]["selected"]["count"])
         profile_snapshot = {
             "historical_reference_date": profile["historical_reference_date"],
             "summary": profile["summary"],
             "top_overindexed_traits": profile["top_overindexed_traits"],
         }
+    else:
+        try:
+            estimate = estimate_audience(
+                path,
+                {
+                    "scoring_run_id": scoring_run_id,
+                    "filters": normalized_filters.payload,
+                    "selection": normalized_selection.payload,
+                },
+            )
+        except AudienceQueryConflictError as exc:
+            raise SavedAudienceServiceConflictError(str(exc)) from exc
+        except AudienceQueryValidationError as exc:
+            raise SavedAudienceServiceValidationError(str(exc)) from exc
+        resolved_count = int(estimate["selected_count"])
+
+    if resolved_count is None or resolved_count < 1:
+        raise SavedAudienceServiceValidationError(SAVED_AUDIENCE_EMPTY_MESSAGE)
 
     score_summary = _decode_json_object(
         scoring_row.get("score_summary_json"),

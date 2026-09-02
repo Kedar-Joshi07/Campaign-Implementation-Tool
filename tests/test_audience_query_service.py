@@ -13,6 +13,7 @@ from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.services.audience_preparation_service import run_audience_rank_preparation
 from app.services.audience_query_service import (
+    ANALYTICS_SNAPSHOT_NOT_READY_MESSAGE,
     CURSOR_MISMATCH_MESSAGE,
     RANK_BOUNDARIES_NOT_READY_MESSAGE,
     AudienceQueryConflictError,
@@ -791,3 +792,155 @@ def test_interactive_query_paths_do_not_scan_score_aggregates(
     assert options["population_count"] > 0
     assert estimate["selected_count"] >= 0
     assert len(search["rows"]) <= 10
+
+
+def test_prepared_boundaries_without_snapshot_are_rejected(database_path: Path) -> None:
+    scoring_run_id = _seed_query_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            DELETE FROM audience_analytics_snapshots
+            WHERE scoring_run_id = ? AND analytics_contract_version = '1'
+            """,
+            (scoring_run_id,),
+        )
+
+    with pytest.raises(AudienceQueryConflictError, match=ANALYTICS_SNAPSHOT_NOT_READY_MESSAGE):
+        get_audience_filter_options(database_path, scoring_run_id=scoring_run_id)
+
+
+def test_categorical_vocab_validation_rejects_unknown_values(database_path: Path) -> None:
+    scoring_run_id = _seed_query_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    for field_name in (
+        "gender",
+        "state",
+        "marital_status",
+        "education",
+        "employment_status",
+        "resident_status",
+        "resident_type",
+        "type_of_employment",
+    ):
+        with pytest.raises(AudienceQueryValidationError, match=f"{field_name} contains unsupported values"):
+            estimate_audience(
+                database_path,
+                {
+                    "scoring_run_id": scoring_run_id,
+                    "filters": {field_name: ["Atlantis"]},
+                    "selection": {"mode": "ALL_MATCHING"},
+                },
+            )
+
+
+def test_unknown_other_filter_matches_null_blank_whitespace_and_literal(database_path: Path) -> None:
+    scoring_run_id = _seed_query_fixture(database_path)
+
+    with get_connection(database_path, write=True) as connection:
+        connection.execute("UPDATE demographics SET state = '' WHERE person_id = 'PER_000001'")
+        connection.execute("UPDATE demographics SET state = '   ' WHERE person_id = 'PER_000003'")
+        connection.execute(
+            "UPDATE demographics SET state = 'Unknown/Other' WHERE person_id = 'PER_000004'"
+        )
+
+        connection.execute("UPDATE demographics SET gender = NULL WHERE person_id = 'PER_000005'")
+        connection.execute("UPDATE demographics SET gender = '' WHERE person_id = 'PER_000006'")
+        connection.execute("UPDATE demographics SET gender = '   ' WHERE person_id = 'PER_000007'")
+        connection.execute(
+            "UPDATE demographics SET gender = 'Unknown/Other' WHERE person_id = 'PER_000008'"
+        )
+
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    options = get_audience_filter_options(database_path, scoring_run_id=scoring_run_id)
+    state_options = {
+        row["value"]: int(row["count"]) for row in options["categorical_options"]["state"]
+    }
+    assert state_options["Unknown/Other"] == 3
+    assert state_options["California"] == 1
+
+    gender_options = {
+        row["value"]: int(row["count"]) for row in options["categorical_options"]["gender"]
+    }
+    assert gender_options["Unknown/Other"] == 4
+
+    estimate = estimate_audience(
+        database_path,
+        {
+            "scoring_run_id": scoring_run_id,
+            "filters": {"state": [" unknown/other "]},
+            "selection": {"mode": "ALL_MATCHING"},
+        },
+    )
+    assert estimate["matching_count"] == 3
+
+    search = search_audience(
+        database_path,
+        {
+            "scoring_run_id": scoring_run_id,
+            "filters": {"state": ["Unknown/Other"]},
+            "page_size": 10,
+        },
+    )
+    assert len(search["rows"]) == 3
+
+    gender_estimate = estimate_audience(
+        database_path,
+        {
+            "scoring_run_id": scoring_run_id,
+            "filters": {"gender": ["Unknown/Other"]},
+            "selection": {"mode": "ALL_MATCHING"},
+        },
+    )
+    assert gender_estimate["matching_count"] == 4
+
+
+def test_context_numeric_contract_enforced_but_empty_ranges_allowed(database_path: Path) -> None:
+    scoring_run_id = _seed_query_fixture(database_path)
+    run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
+
+    with pytest.raises(AudienceQueryValidationError, match="age_min must be between 18 and 100"):
+        estimate_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {"age_min": 17},
+                "selection": {"mode": "ALL_MATCHING"},
+            },
+        )
+
+    with pytest.raises(AudienceQueryValidationError, match="age_max must be between 18 and 100"):
+        search_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {"age_max": 101},
+                "page_size": 10,
+            },
+        )
+
+    with pytest.raises(
+        AudienceQueryValidationError,
+        match="family_member_count_min must be greater than or equal to 1",
+    ):
+        estimate_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {"family_member_count_min": 0},
+                "selection": {"mode": "ALL_MATCHING"},
+            },
+        )
+
+    empty_but_valid = estimate_audience(
+        database_path,
+        {
+            "scoring_run_id": scoring_run_id,
+            "filters": {"age_min": 99, "age_max": 100},
+            "selection": {"mode": "ALL_MATCHING"},
+        },
+    )
+    assert empty_but_valid["matching_count"] == 0

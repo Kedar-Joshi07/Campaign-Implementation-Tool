@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from app import config
 from app.config import APP_NAME, APP_VERSION
 from app.database.connection import get_connection
-from app.database.schema import initialize_database
+from app.database.schema import CURRENT_SCHEMA_VERSION, initialize_database
 from app.dependencies import get_database_path
 from app.main import app, unexpected_exception_handler
 
@@ -125,7 +125,7 @@ def test_first_normal_database_access_initializes_current_schema(
             "SELECT value FROM app_metadata WHERE key = 'schema_version'"
         ).fetchone()[0]
 
-    assert schema_version == "9"
+    assert schema_version == str(CURRENT_SCHEMA_VERSION)
 
 
 def test_unexpected_api_exception_is_logged_and_sanitized(

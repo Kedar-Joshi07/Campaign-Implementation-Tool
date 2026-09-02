@@ -1405,16 +1405,19 @@ def test_input_hardening_rejects_sql_metacharacter_abuse_without_leakage(databas
     scoring_run_id = _phase6_seed_fixture(database_path)
     run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
 
-    # SQL-looking content remains plain parameterized string input.
-    result = estimate_audience(
-        database_path,
-        {
-            "scoring_run_id": scoring_run_id,
-            "filters": {"state": ["California'; DROP TABLE demographics; --"]},
-            "selection": {"mode": "ALL_MATCHING"},
-        },
-    )
-    assert result["matching_count"] == 0
+    # SQL-looking content is treated as unsupported vocabulary, not executable SQL.
+    with pytest.raises(
+        AudienceQueryValidationError,
+        match="state contains unsupported values for the current scoring run",
+    ):
+        estimate_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {"state": ["California'; DROP TABLE demographics; --"]},
+                "selection": {"mode": "ALL_MATCHING"},
+            },
+        )
 
     # Core table still exists.
     with get_connection(database_path) as connection:

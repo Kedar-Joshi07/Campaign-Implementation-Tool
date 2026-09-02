@@ -12,6 +12,8 @@ import {
 const POLL_INTERVAL_MS = 1500;
 const DEFAULT_PAGE_SIZE = 50;
 const RANK_CONTRACT_VERSION = "1";
+const SCORING_RUN_BOUND_OPTIONS_CACHE_MS = 300_000;
+const RUN_SUMMARY_CACHE_MS = 300_000;
 const TERMINAL_JOB_STATUSES = new Set(["COMPLETED", "FAILED"]);
 const NOT_CANONICAL_MESSAGE = "not current for its model and source provenance";
 const NOT_PREPARED_MESSAGE = "Audience rank boundaries are not prepared";
@@ -967,7 +969,7 @@ async function resolveCanonicalRun(runs, force = false) {
   if (readyRun) {
     try {
       const options = await getCachedJSON(API_PATHS.options(readyRun.scoring_run_id), {
-        maxAgeMs: 15_000,
+        maxAgeMs: SCORING_RUN_BOUND_OPTIONS_CACHE_MS,
         force,
       });
       return { type: "ready", run: readyRun, options };
@@ -986,7 +988,7 @@ async function resolveCanonicalRun(runs, force = false) {
     const status = await loadPreparationStatus(run.scoring_run_id);
     if (status.ready_for_current_audience_actions === true) {
       const options = await getCachedJSON(API_PATHS.options(run.scoring_run_id), {
-        maxAgeMs: 15_000,
+        maxAgeMs: SCORING_RUN_BOUND_OPTIONS_CACHE_MS,
         force: true,
       });
       return { type: "ready", run, options };
@@ -1188,7 +1190,7 @@ async function reopenSavedAudience() {
   setReadOnlyMode(false);
 
   if (detail.definition.scoring_run_id !== activeScoringRunId) {
-    const runs = await getCachedJSON(API_PATHS.runs, { maxAgeMs: 15_000, force: true });
+    const runs = await getCachedJSON(API_PATHS.runs, { maxAgeMs: RUN_SUMMARY_CACHE_MS, force: true });
     const matchingRun = runs.find((run) => run.scoring_run_id === detail.definition.scoring_run_id);
     if (!matchingRun) {
       showFormError("Saved audience scoring run is no longer available.");
@@ -1196,7 +1198,7 @@ async function reopenSavedAudience() {
     }
 
     const options = await getCachedJSON(API_PATHS.options(matchingRun.scoring_run_id), {
-      maxAgeMs: 15_000,
+      maxAgeMs: SCORING_RUN_BOUND_OPTIONS_CACHE_MS,
       force: true,
     });
     setContextHeader(matchingRun, options);
@@ -1317,7 +1319,7 @@ async function loadAudienceWorkspace(force = false) {
 
   try {
     const [runsResult] = await Promise.allSettled([
-      getCachedJSON(API_PATHS.runs, { maxAgeMs: 15_000, force }),
+      getCachedJSON(API_PATHS.runs, { maxAgeMs: RUN_SUMMARY_CACHE_MS, force }),
       loadSavedAudiences(force),
     ]);
 

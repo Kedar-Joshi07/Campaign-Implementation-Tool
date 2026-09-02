@@ -7,6 +7,7 @@ import math
 from pathlib import Path
 from typing import Any
 
+from app.database.connection import get_connection
 from app.ml.evaluation import EVALUATION_CONTRACT_VERSION
 from app.ml.feature_contract import (
     FEATURE_CONTRACT,
@@ -23,7 +24,6 @@ from app.ml.model_roles import (
 )
 from app.repositories.job_repository import JobRepository
 from app.repositories.model_run_repository import ModelRunRepository
-from app.repositories.prospect_scoring_repository import ProspectScoringRepository
 from app.repositories.scoring_repository import ScoringRepository
 from app.services.historical_analysis_service import list_historical_analysis_runs
 from app.services.model_job_service import (
@@ -74,8 +74,8 @@ from app.services.saved_audience_service import (
 )
 from app.services.model_training_service import load_verified_model_artifact
 from app.services.prospect_scoring_service import (
-    find_current_canonical_run_for_model,
-    validate_completed_scoring_run_provenance,
+    ProspectScoringVerificationError,
+    validate_completed_scoring_run_provenance_lightweight,
 )
 
 
@@ -499,32 +499,80 @@ def _public_completed_scoring_reference(
     return payload
 
 
+def _latest_demographic_count_from_import_metadata(database_path: str | Path) -> int:
+    with get_connection(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT rows_inserted
+            FROM data_import_runs
+            WHERE dataset_name = 'demographics' AND status = 'COMPLETED'
+            ORDER BY import_id DESC
+            LIMIT 1
+            """
+        ).fetchone()
+    if row is None:
+        return 0
+
+    rows_inserted = row["rows_inserted"]
+    if isinstance(rows_inserted, bool) or not isinstance(rows_inserted, int) or rows_inserted < 0:
+        return 0
+    return int(rows_inserted)
+
+
+def _select_completed_scoring_reference_for_status(
+    database_path: str | Path,
+    *,
+    model_run_id: int,
+    limit: int = 100,
+) -> tuple[dict[str, Any] | None, bool | None, bool]:
+    scoring_repository = ScoringRepository(database_path)
+    completed_runs = scoring_repository.find_completed_runs_for_model(model_run_id, limit=limit)
+    if not completed_runs:
+        return None, None, False
+
+    latest_row = completed_runs[0]
+    latest_source_verified: bool | None = None
+    shared_cache: dict[str, Any] = {}
+
+    for index, row in enumerate(completed_runs):
+        try:
+            provenance = validate_completed_scoring_run_provenance_lightweight(
+                database_path,
+                scoring_run_id=int(row["scoring_run_id"]),
+                verify_current_source_match=True,
+                cache=shared_cache,
+            )
+        except ProspectScoringVerificationError:
+            source_verified = False
+            historical_verified = False
+        else:
+            source_verified = bool(provenance["demographic_source_verified"])
+            historical_verified = bool(provenance["historical_source_verified"])
+
+        if index == 0:
+            latest_source_verified = source_verified
+
+        if source_verified and historical_verified:
+            return row, source_verified, True
+
+    return latest_row, latest_source_verified, False
+
+
 def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str, Any]:
     model_row = ModelRunRepository(database_path).fetch_run(model_run_id)
     if model_row is None:
         raise ModelApiNotFoundError(MODEL_RUN_NOT_FOUND_MESSAGE)
 
-    demographic_count = ProspectScoringRepository(database_path).fetch_prospect_snapshot().demographic_snapshot_count
-    scoring_repository = ScoringRepository(database_path)
-    latest_completed_scoring_run = scoring_repository.find_completed_run_for_model(model_run_id)
-    current_canonical_scoring_run = find_current_canonical_run_for_model(
-        database_path,
-        model_run_id=model_run_id,
-    )
-    completed_scoring_run_canonical = current_canonical_scoring_run is not None
-    completed_scoring_run = (
-        current_canonical_scoring_run
-        if current_canonical_scoring_run is not None
-        else latest_completed_scoring_run
-    )
-    completed_scoring_run_source_verified: bool | None = None
-    if completed_scoring_run is not None:
-        provenance_check = validate_completed_scoring_run_provenance(
+    completed_scoring_run, completed_scoring_run_source_verified, completed_scoring_run_canonical = (
+        _select_completed_scoring_reference_for_status(
             database_path,
-            scoring_run_id=int(completed_scoring_run["scoring_run_id"]),
-            verify_current_source_match=True,
+            model_run_id=model_run_id,
         )
-        completed_scoring_run_source_verified = bool(provenance_check["demographic_source_verified"])
+    )
+
+    demographic_count = _latest_demographic_count_from_import_metadata(database_path)
+    if demographic_count < 1 and completed_scoring_run is not None:
+        demographic_count = int(completed_scoring_run["demographic_snapshot_count"])
     active_job = JobRepository(database_path).find_active_compute_job()
 
     eligible = True
@@ -612,11 +660,16 @@ def get_scoring_run_detail(database_path: str | Path, scoring_run_id: int) -> di
     if row is None:
         raise ModelApiNotFoundError(SCORING_RUN_NOT_FOUND_MESSAGE)
 
-    provenance_check = validate_completed_scoring_run_provenance(
-        database_path,
-        scoring_run_id=int(row["scoring_run_id"]),
-        verify_current_source_match=True,
-    )
+    try:
+        provenance_check = validate_completed_scoring_run_provenance_lightweight(
+            database_path,
+            scoring_run_id=int(row["scoring_run_id"]),
+            verify_current_source_match=True,
+            cache={},
+        )
+        demographic_source_verified = bool(provenance_check["demographic_source_verified"])
+    except ProspectScoringVerificationError:
+        demographic_source_verified = False
 
     score_summary_payload: dict[str, Any] | None = None
     if row.get("score_summary_json"):
@@ -655,7 +708,7 @@ def get_scoring_run_detail(database_path: str | Path, scoring_run_id: int) -> di
             "score_max": float(row["score_max"]) if row.get("score_max") is not None else None,
             "score_mean": float(row["score_mean"]) if row.get("score_mean") is not None else None,
             "summary_payload": score_summary_payload,
-            "demographic_source_verified": bool(provenance_check["demographic_source_verified"]),
+            "demographic_source_verified": demographic_source_verified,
         },
         "job": _public_job_summary(job_row) if job_row is not None else None,
     }
@@ -687,13 +740,16 @@ def get_audience_run_preparation_status(
         "model_run_id": int(payload["model_run_id"]),
         "status": str(payload["status"]),
         "rank_contract_version": str(payload["rank_contract_version"]),
+        "analytics_contract_version": str(payload["analytics_contract_version"]),
         "prepared": bool(payload["prepared"]),
+        "analytics_prepared": bool(payload.get("analytics_prepared", False)),
         "is_canonical": bool(payload["is_canonical"]),
         "source_verified": bool(payload["source_verified"]),
         "ready_for_current_audience_actions": bool(payload["ready_for_current_audience_actions"]),
         "currentness_issues": [str(item) for item in payload.get("currentness_issues", [])],
         "boundary_count": int(payload["boundary_count"]),
         "total_population": int(payload["total_population"]),
+        "analytics_snapshot_created_at": payload.get("analytics_snapshot_created_at"),
         "active_job": _public_job_summary(active_job) if active_job is not None else None,
     }
 
@@ -720,12 +776,15 @@ def list_audience_run_preparation_summaries(
             "completed_at": row.get("completed_at"),
             "scored_person_count": int(row["scored_person_count"]),
             "prepared": bool(row["prepared"]),
+            "analytics_prepared": bool(row.get("analytics_prepared", False)),
+            "analytics_contract_version": row.get("analytics_contract_version"),
             "is_canonical": bool(row["is_canonical"]),
             "source_verified": bool(row["source_verified"]),
             "ready_for_current_audience_actions": bool(row["ready_for_current_audience_actions"]),
             "currentness_issues": [str(item) for item in row.get("currentness_issues", [])],
             "rank_contract_version": row.get("rank_contract_version"),
             "boundary_count": int(row["boundary_count"]),
+            "analytics_snapshot_created_at": row.get("analytics_snapshot_created_at"),
         }
         for row in rows
     ]

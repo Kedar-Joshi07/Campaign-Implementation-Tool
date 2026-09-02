@@ -1116,6 +1116,42 @@ def resolve_current_scoring_context_lightweight(
     }
 
 
+def validate_completed_scoring_run_provenance_lightweight(
+    database_path: str | Path,
+    *,
+    scoring_run_id: int,
+    verify_current_source_match: bool = True,
+    cache: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Validate completed scoring provenance using metadata checks only."""
+    if isinstance(scoring_run_id, bool) or not isinstance(scoring_run_id, int) or scoring_run_id <= 0:
+        raise ProspectScoringVerificationError("scoring_run_id must be a positive integer.")
+
+    initialized_path = initialize_database(database_path)
+    row = ScoringRepository(initialized_path).fetch_scoring_run(scoring_run_id)
+    if row is None:
+        raise ProspectScoringVerificationError("Scoring run was not found.")
+
+    shared_cache = {} if cache is None else cache
+    evaluation = _evaluate_completed_scoring_run_lightweight(
+        initialized_path,
+        row,
+        verify_current_source_match=verify_current_source_match,
+        cache=shared_cache,
+    )
+    deduped_issues = list(
+        dict.fromkeys(str(issue) for issue in evaluation["issues"] if str(issue).strip())
+    )
+    return {
+        "scoring_run_id": int(scoring_run_id),
+        "status": str(row["status"]),
+        "is_canonical": len(deduped_issues) == 0,
+        "demographic_source_verified": bool(evaluation["demographic_source_verified"]),
+        "historical_source_verified": bool(evaluation["historical_source_verified"]),
+        "issues": deduped_issues,
+    }
+
+
 def validate_completed_scoring_run_integrity_deep(
     database_path: str | Path,
     *,
@@ -1386,6 +1422,7 @@ __all__ = (
     "resolve_current_scoring_context_lightweight",
     "run_chunked_prospect_scoring",
     "validate_completed_scoring_run_integrity_deep",
+    "validate_completed_scoring_run_provenance_lightweight",
     "validate_completed_scoring_run_provenance",
     "verify_scoring_run_sample",
 )

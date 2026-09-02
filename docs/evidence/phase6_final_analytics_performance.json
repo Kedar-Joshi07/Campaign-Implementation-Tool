@@ -11,18 +11,18 @@
   "evidence_references": {
     "baseline_pre_fix": "docs/evidence/phase6_real_5m_performance.json"
   },
-  "generated_at": "2026-09-01T12:08:19Z",
+  "generated_at": "2026-09-02T05:22:11Z",
   "rank_preparation_metrics": {
     "boundary_count": 100,
     "chunk_count": 50,
     "chunk_size": 100000,
     "execution": "clean_run_on_db_copy",
     "largest_chunk_rows": 100000,
-    "rows_per_second": 46233.40965529333,
-    "runtime_seconds": 108.1469014999966,
+    "rows_per_second": 124564.10876586259,
+    "runtime_seconds": 40.13997329999984,
     "scanned_rows": 5000000,
     "total_population": 5000000,
-    "wall_elapsed_seconds": 108.241522
+    "wall_elapsed_seconds": 40.198925
   },
   "sanitization": {
     "contains_absolute_paths": false,
@@ -34,79 +34,123 @@
   "service_timings": {
     "audience_preparation_status": {
       "boundary_count": 100,
-      "elapsed_seconds": 0.602628,
+      "elapsed_seconds": 0.306554,
       "is_canonical": true,
       "ready_for_current_audience_actions": true,
       "source_verified": true
     },
     "audience_run_list": {
-      "elapsed_seconds": 1.341844,
+      "elapsed_seconds": 0.715557,
       "row_count": 3
     },
+    "estimate_age_income_filter": {
+      "elapsed_seconds": 16.754611,
+      "matching_count": 580947,
+      "selected_count": 580947
+    },
     "estimate_all": {
-      "elapsed_seconds": 0.822231,
+      "elapsed_seconds": 0.375592,
       "matching_count": 5000000,
       "selected_count": 5000000
     },
+    "estimate_rank_and_state_filter": {
+      "elapsed_seconds": 3.128925,
+      "matching_count": 92813,
+      "selected_count": 92813
+    },
+    "estimate_state_filter": {
+      "elapsed_seconds": 3.48961,
+      "matching_count": 796073,
+      "selected_count": 796073
+    },
     "estimate_top_1_percent": {
-      "elapsed_seconds": 0.856252,
+      "elapsed_seconds": 0.448201,
       "matching_count": 50000,
       "selected_count": 50000
     },
     "estimate_top_decile": {
-      "elapsed_seconds": 0.877905,
+      "elapsed_seconds": 0.481113,
       "matching_count": 500000,
       "selected_count": 500000
     },
     "get_audience_filter_options": {
-      "elapsed_seconds": 1.056767,
+      "elapsed_seconds": 0.365615,
       "population_count": 5000000
     },
     "get_saved_audience_detail": {
-      "audience_id": 5,
-      "elapsed_seconds": 1.329959,
+      "audience_id": 19,
+      "elapsed_seconds": 0.301996,
       "is_current": true
     },
+    "get_scoring_run_detail": {
+      "demographic_source_verified": true,
+      "elapsed_seconds": 0.155164,
+      "scoring_run_id": 8
+    },
+    "get_scoring_status": {
+      "elapsed_seconds": 0.514165,
+      "eligible": false,
+      "model_run_id": 8,
+      "scoring_run_id": null
+    },
     "list_saved_audiences": {
-      "elapsed_seconds": 1.18204,
-      "row_count": 5
+      "elapsed_seconds": 0.440534,
+      "row_count": 20
+    },
+    "profile_filtered_all_matching": {
+      "elapsed_seconds": 32.10217,
+      "selected_count": 796073
     },
     "profile_filtered_top_n_50000": {
-      "elapsed_seconds": 510.462123,
+      "elapsed_seconds": 23.474104,
       "selected_count": 50000
+    },
+    "profile_no_filter_all_matching": {
+      "elapsed_seconds": 0.544854,
+      "selected_count": 5000000
     },
     "profile_top_1_percent": {
-      "elapsed_seconds": 24.722647,
+      "elapsed_seconds": 4.224111,
       "selected_count": 50000
     },
+    "save_audience_with_profile": {
+      "audience_id": 21,
+      "elapsed_seconds": 30.302711,
+      "resolved_count": 50000
+    },
+    "save_audience_without_profile": {
+      "audience_id": 20,
+      "elapsed_seconds": 1.554892,
+      "resolved_count": 1000
+    },
     "search_age_income_filter": {
-      "elapsed_seconds": 2.344729,
+      "elapsed_seconds": 0.672771,
       "has_more": true,
       "row_count": 50
     },
     "search_first_page_unfiltered": {
-      "elapsed_seconds": 0.953525,
+      "elapsed_seconds": 0.56021,
       "has_more": true,
       "row_count": 50
     },
     "search_next_keyset_page": {
-      "elapsed_seconds": 1.011732,
+      "elapsed_seconds": 0.538504,
       "has_more": true,
       "row_count": 50
     },
     "search_state_filter": {
-      "elapsed_seconds": 1.435317,
+      "elapsed_seconds": 0.561688,
       "has_more": true,
       "row_count": 50
     },
     "search_top_1_percent": {
-      "elapsed_seconds": 0.898133,
+      "elapsed_seconds": 0.571365,
       "has_more": true,
       "row_count": 50
     },
     "validate_saved_audience_currentness": {
-      "audience_id": 5,
-      "elapsed_seconds": 0.985759,
+      "audience_id": 19,
+      "elapsed_seconds": 0.237746,
       "is_current": true,
       "issue_count": 0
     }
@@ -114,15 +158,15 @@
   "sql_query_timings": {
     "run_demographics_join_count": {
       "count": 5000000,
-      "elapsed_seconds": 6.239406
+      "elapsed_seconds": 4.061073
     },
     "run_score_count": {
       "count": 5000000,
-      "elapsed_seconds": 10.424265
+      "elapsed_seconds": 0.544297
     },
     "run_top_1_percent_count": {
       "count": 50000,
-      "elapsed_seconds": 1.416562
+      "elapsed_seconds": 0.835154
     }
   }
 }

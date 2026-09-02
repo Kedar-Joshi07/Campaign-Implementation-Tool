@@ -334,6 +334,8 @@ def test_audience_explorer_script_enforces_safe_fields_and_dom_patterns(
     assert "textContent" in script
     assert "document.createElement" in script
     assert "replaceChildren" in script
+    assert "SCORING_RUN_BOUND_OPTIONS_CACHE_MS = 300_000" in script
+    assert "RUN_SUMMARY_CACHE_MS = 300_000" in script
     assert "innerHTML" not in script
     assert "first_name" not in combined
     assert "last_name" not in combined

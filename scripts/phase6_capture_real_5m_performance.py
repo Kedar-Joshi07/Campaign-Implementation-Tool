@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 import sqlite3
+import sys
 import tempfile
 import threading
 import time
@@ -10,6 +11,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Callable
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.database.schema import initialize_database
 from app.repositories.audience_rank_repository import AudienceRankRepository
@@ -37,9 +43,13 @@ from app.services.saved_audience_service import (
     save_audience,
     validate_saved_audience_currentness,
 )
+from app.services.model_api_service import (
+    get_scoring_status,
+    get_scoring_run_detail,
+)
 
 
-OUTPUT_PATH = Path("docs/evidence/phase6_real_5m_service_performance.json")
+OUTPUT_PATH = Path("docs/evidence/phase6_final_analytics_performance.json")
 CANONICAL_DB_REFERENCE = "data/campaign_poc.db"
 BASELINE_EVIDENCE_REFERENCE = "docs/evidence/phase6_real_5m_performance.json"
 
@@ -238,6 +248,78 @@ def _capture_service_timings(database_path: Path, scoring_run_id: int) -> dict[s
         "selected_count": int(payload["selected_count"]),
     }
 
+    elapsed, payload = capture(
+        "estimate_state_filter",
+        lambda: estimate_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {"state": ["California"]},
+                "selection": {"mode": "ALL_MATCHING"},
+            },
+        )
+    )
+    timings["estimate_state_filter"] = {
+        "elapsed_seconds": elapsed,
+        "matching_count": int(payload["matching_count"]),
+        "selected_count": int(payload["selected_count"]),
+    }
+
+    elapsed, payload = capture(
+        "estimate_age_income_filter",
+        lambda: estimate_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {
+                    "age_min": 30,
+                    "age_max": 55,
+                    "individual_yearly_income_min": 60000,
+                    "individual_yearly_income_max": 140000,
+                },
+                "selection": {"mode": "ALL_MATCHING"},
+            },
+        )
+    )
+    timings["estimate_age_income_filter"] = {
+        "elapsed_seconds": elapsed,
+        "matching_count": int(payload["matching_count"]),
+        "selected_count": int(payload["selected_count"]),
+    }
+
+    elapsed, payload = capture(
+        "estimate_rank_and_state_filter",
+        lambda: estimate_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {"top_percentile_max": 10, "state": ["California"]},
+                "selection": {"mode": "ALL_MATCHING"},
+            },
+        )
+    )
+    timings["estimate_rank_and_state_filter"] = {
+        "elapsed_seconds": elapsed,
+        "matching_count": int(payload["matching_count"]),
+        "selected_count": int(payload["selected_count"]),
+    }
+    elapsed, payload = capture(
+        "profile_no_filter_all_matching",
+        lambda: profile_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {},
+                "selection": {"mode": "ALL_MATCHING"},
+            },
+        )
+    )
+    timings["profile_no_filter_all_matching"] = {
+        "elapsed_seconds": elapsed,
+        "selected_count": int(payload["summary"]["selected"]["count"]),
+    }
+
+
     elapsed, first_page = capture(
         "search_first_page_unfiltered",
         lambda: search_audience(
@@ -363,6 +445,62 @@ def _capture_service_timings(database_path: Path, scoring_run_id: int) -> dict[s
     }
 
     elapsed, payload = capture(
+        "profile_filtered_all_matching",
+        lambda: profile_audience(
+            database_path,
+            {
+                "scoring_run_id": scoring_run_id,
+                "filters": {"state": ["California"]},
+                "selection": {"mode": "ALL_MATCHING"},
+            },
+        )
+    )
+    timings["profile_filtered_all_matching"] = {
+        "elapsed_seconds": elapsed,
+        "selected_count": int(payload["summary"]["selected"]["count"]),
+    }
+
+    elapsed, payload = capture(
+        "save_audience_without_profile",
+        lambda: save_audience(
+            database_path,
+            {
+                "audience_name": "phase6-benchmark-save-no-profile",
+                "description": "step10 timing no profile",
+                "scoring_run_id": scoring_run_id,
+                "filters": {"top_percentile_max": 1},
+                "selection": {"mode": "TOP_N", "target_count": 1000},
+                "include_profile_snapshot": False,
+            },
+        )
+    )
+    timings["save_audience_without_profile"] = {
+        "elapsed_seconds": elapsed,
+        "audience_id": int(payload["audience_id"]),
+        "resolved_count": int(payload["definition"]["resolved_count"]),
+    }
+
+    elapsed, payload = capture(
+        "save_audience_with_profile",
+        lambda: save_audience(
+            database_path,
+            {
+                "audience_name": "phase6-benchmark-save-with-profile",
+                "description": "step10 timing with profile",
+                "scoring_run_id": scoring_run_id,
+                "filters": {"state": ["California"]},
+                "selection": {"mode": "TOP_N", "target_count": 50000},
+                "include_profile_snapshot": True,
+            },
+        )
+    )
+    timings["save_audience_with_profile"] = {
+        "elapsed_seconds": elapsed,
+        "audience_id": int(payload["audience_id"]),
+        "resolved_count": int(payload["definition"]["resolved_count"]),
+    }
+
+    elapsed, payload = capture(
         "list_saved_audiences",
         lambda: list_saved_audiences(database_path, limit=20, offset=0)
     )
@@ -390,6 +528,33 @@ def _capture_service_timings(database_path: Path, scoring_run_id: int) -> dict[s
         "audience_id": int(payload["audience_id"]),
         "is_current": bool(payload["is_current"]),
         "issue_count": len(payload["issues"]),
+    }
+
+    model_row = ModelRunRepository(database_path).list_runs(limit=1, offset=0, status="COMPLETED")[0]
+    model_run_id = int(model_row["model_run_id"])
+
+    elapsed, payload = capture(
+        "get_scoring_status",
+        lambda: get_scoring_status(database_path, model_run_id),
+    )
+    timings["get_scoring_status"] = {
+        "elapsed_seconds": elapsed,
+        "model_run_id": model_run_id,
+        "scoring_run_id": payload.get("scoring_run_id"),
+        "eligible": bool(payload.get("eligible")),
+    }
+
+    elapsed, payload = capture(
+        "get_scoring_run_detail",
+        lambda: get_scoring_run_detail(database_path, scoring_run_id),
+    )
+    score_summary = payload.get("score_summary") if isinstance(payload, dict) else {}
+    timings["get_scoring_run_detail"] = {
+        "elapsed_seconds": elapsed,
+        "scoring_run_id": int(payload.get("scoring_run_id", scoring_run_id)),
+        "demographic_source_verified": bool(
+            isinstance(score_summary, dict) and score_summary.get("demographic_source_verified")
+        ),
     }
 
     return timings
@@ -478,7 +643,7 @@ def _capture_rank_preparation_metrics(database_path: Path, scoring_run_id: int) 
             )
         )
 
-    boundaries, metrics = measured
+    boundaries, metrics, _bucket_payload = measured
     return {
         "execution": "clean_run_on_db_copy",
         "wall_elapsed_seconds": elapsed,

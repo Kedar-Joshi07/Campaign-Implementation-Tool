@@ -1,0 +1,46 @@
+{
+  "pack_name": "phase6_final_analytics_optimization_prompt_pack",
+  "version": "1.0",
+  "starting_sha": "80c3324f884f448b1eb84e61fafcd1c70415b8b1",
+  "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+  "execution_order": [
+    "01_STEP_01_",
+    "02_STEP_02_",
+    "03_STEP_03_",
+    "04_STEP_04_",
+    "05_STEP_05_",
+    "06_STEP_06_",
+    "07_STEP_07_",
+    "08_STEP_08_",
+    "09_STEP_09_",
+    "10_STEP_10_",
+    "11_STEP_11_"
+  ],
+  "actual_step_files": [
+    "01_STEP_01_FREEZE_AND_BASELINE_AUDIT.md",
+    "02_STEP_02_SCHEMA_V10_ANALYTICS_SNAPSHOT.md",
+    "03_STEP_03_ANALYTICS_PREPARATION_AND_BACKFILL.md",
+    "04_STEP_04_OPTIONS_AND_FILTER_SEMANTICS.md",
+    "05_STEP_05_ESTIMATE_OPTIMIZATION.md",
+    "06_STEP_06_PROFILE_OPTIMIZATION.md",
+    "07_STEP_07_SAVE_AUDIENCE_AND_FRONTEND_ASYNC.md",
+    "08_STEP_08_INTERACTIVE_CURRENTNESS_AND_SCORING_READS.md",
+    "09_STEP_09_TESTS_SECURITY_AND_FINE_COMB.md",
+    "10_STEP_10_REAL_5M_BENCHMARK_AND_ACCEPTANCE.md",
+    "11_STEP_11_FINAL_PHASE6_FREEZE_AND_PHASE7_HANDOFF.md"
+  ],
+  "supplemental": [
+    "00_README.md",
+    "12_SINGLE_MASTER_PROMPT.md",
+    "13_ACCEPTANCE_CHECKLIST.md",
+    "14_PROGRESS_TRACKER.md",
+    "15_PACK_MANIFEST.json"
+  ],
+  "hard_non_goals": [
+    "no source data regeneration",
+    "no model retraining",
+    "no 5M rescoring",
+    "no Phase 7 implementation",
+    "no comprehensive root README rewrite"
+  ]
+}
