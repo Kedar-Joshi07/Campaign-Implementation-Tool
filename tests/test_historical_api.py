@@ -114,6 +114,9 @@ def test_create_list_and_reopen_preserve_bounded_contract(
     item = list_response.json()[0]
     assert item["analysis_run_id"] == created["analysis_run_id"]
     assert item["filters"]["campaign_ids"] == ["CMP_A", "CMP_B"]
+    assert item["is_current"] is True
+    assert item["trainability_status"] == "CURRENT"
+    assert item.get("trainability_reason") is None
     assert "profiles" not in item
     assert "monthly_trend" not in item
     assert reopen_response.status_code == 200

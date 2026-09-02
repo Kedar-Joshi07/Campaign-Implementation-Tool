@@ -15,10 +15,7 @@ function targetPolicyLabel(dataset) {
   if (dataset.exact_match_required) {
     return "Exact target";
   }
-  const tolerance = Number(dataset.count_tolerance_percent);
-  const displayTolerance = Number.isInteger(tolerance)
-    ? tolerance.toFixed(0)
-    : tolerance.toString();
+  const displayTolerance = formatNumber(dataset.count_tolerance_percent);
   return `Approximate target (±${displayTolerance}%)`;
 }
 
@@ -35,6 +32,12 @@ function renderDatasetStatus(datasets) {
       ? `${dataset.last_import_status.toLowerCase()} · ${formatDate(dataset.last_import_completed_at || dataset.last_import_started_at, true)}`
       : "No import recorded";
     card.querySelector('[data-field="last-import"]').textContent = importStatus;
+    const publishedAt = dataset.last_completed_import_at
+      ? formatDate(dataset.last_completed_import_at, true)
+      : "No completed import";
+    card.querySelector('[data-field="published-source"]').textContent = dataset.published_source_path
+      ? `${dataset.published_source_path} · ${publishedAt}`
+      : publishedAt;
     card.querySelector('[data-field="source"]').textContent = dataset.source_path || "—";
     card.querySelector('[data-field="source"]').title = dataset.source_path || "";
     card.querySelector('[data-field="rejected"]').textContent = dataset.rows_rejected === null ? "—" : formatNumber(dataset.rows_rejected);

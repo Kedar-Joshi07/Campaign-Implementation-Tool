@@ -643,6 +643,15 @@ def test_training_options_return_completed_analyses_defaults_governance_and_acti
     payload = options.json()
     assert len(payload["completed_analyses"]) == 1
     assert payload["completed_analyses"][0]["analysis_run_id"] == completed_id
+    analysis = payload["completed_analyses"][0]
+    assert isinstance(analysis["is_current"], bool)
+    assert analysis["trainability_status"] in {"CURRENT", "STALE"}
+    if analysis["is_current"]:
+        assert analysis["trainability_status"] == "CURRENT"
+        assert analysis.get("trainability_reason") is None
+    else:
+        assert analysis["trainability_status"] == "STALE"
+        assert isinstance(analysis.get("trainability_reason"), str)
     assert payload["defaults"] == {
         "random_seed": 42,
         "validation_fraction": 0.2,

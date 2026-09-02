@@ -82,6 +82,7 @@ let lastPrepFailureMessage = "";
 let staleReadOnly = false;
 let selectedSavedAudienceDetail = null;
 let inFlightSearch = false;
+let inFlightProfile = false;
 
 function dispatchBackendStatus(state, text) {
   window.dispatchEvent(new CustomEvent("backend-status", { detail: { state, text } }));
@@ -157,13 +158,11 @@ function createOption(value, label) {
 }
 
 function formatScore(value) {
-  if (!Number.isFinite(Number(value))) return "-";
-  return Number(value).toFixed(6);
+  return formatNumber(value);
 }
 
 function formatNumericMean(value) {
-  if (!Number.isFinite(Number(value))) return "-";
-  return Number(value).toFixed(1);
+  return formatNumber(value);
 }
 
 function estimateScoreRangeText(estimate) {
@@ -580,7 +579,7 @@ function renderTraitsRows(traits) {
     appendSearchCell(row, trait.category || "Unknown/Other");
     appendSearchCell(row, formatPercent(trait.selected_share), "numeric");
     appendSearchCell(row, formatPercent(trait.reference_share), "numeric");
-    appendSearchCell(row, Number.isFinite(Number(trait.index)) ? Number(trait.index).toFixed(2) : "-");
+    appendSearchCell(row, formatNumber(trait.index), "numeric");
     body.append(row);
   }
 }
@@ -634,7 +633,7 @@ function renderProfileComparisonBars(profilePayload) {
     referenceTrack.append(referenceFill);
 
     const note = document.createElement("small");
-    const indexText = Number.isFinite(Number(item.index)) ? Number(item.index).toFixed(2) : "n/a";
+    const indexText = formatNumber(item.index);
     note.textContent = `Share-point delta: ${formatPercent(item.share_point_difference)} · Index: ${indexText}`;
 
     entry.append(top, selectedTrack, referenceTrack, note);
@@ -761,9 +760,12 @@ async function runAudienceSearch({ append = false } = {}) {
 }
 
 async function loadAudienceProfile() {
-  if (staleReadOnly || !activeScoringRunId) {
+  if (staleReadOnly || !activeScoringRunId || inFlightProfile) {
     return;
   }
+
+  inFlightProfile = true;
+  document.querySelector("#audience-profile-summary").textContent = "Loading exact profile aggregates...";
 
   try {
     const response = await getJSON(API_PATHS.profile, {
@@ -787,6 +789,8 @@ async function loadAudienceProfile() {
       error.status && error.status < 500 ? "is-online" : "is-offline",
       error.status && error.status < 500 ? "Backend online" : "Backend unavailable",
     );
+  } finally {
+    inFlightProfile = false;
   }
 }
 
@@ -831,10 +835,8 @@ async function applyAudienceFilters(event) {
     activeHasMore = false;
     resetSearchResults();
 
-    await Promise.all([
-      runAudienceSearch({ append: false }),
-      loadAudienceProfile(),
-    ]);
+    await runAudienceSearch({ append: false });
+    loadAudienceProfile();
 
     setAudienceAnnouncement("Audience filters applied.");
     dispatchBackendStatus("is-online", "Backend online");
@@ -863,11 +865,12 @@ function clearFilterChips() {
 function setPreparationRunningCopy(job) {
   const status = String(job?.status || "QUEUED").toLowerCase();
   const progress = Number(job?.progress_percent);
-  const progressText = Number.isFinite(progress) ? `${Math.max(0, Math.min(100, progress))}%` : "0%";
+  const normalizedProgress = Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : 0;
+  const progressText = `${formatNumber(normalizedProgress)}%`;
   const stage = job?.stage || "QUEUED";
 
   document.querySelector("#audience-prep-running-title").textContent = "Preparing audience rank boundaries";
-  document.querySelector("#audience-prep-running-message").textContent = `Job #${job.job_id} is ${status} at stage ${stage} (${progressText}).`;
+  document.querySelector("#audience-prep-running-message").textContent = `Job #${formatNumber(job.job_id)} is ${status} at stage ${stage} (${progressText}).`;
 }
 
 function showPreparationFailed(message) {
@@ -934,7 +937,7 @@ async function submitPreparation() {
     prepJobId = job.job_id;
     setScreenState("prepRunning");
     setPreparationRunningCopy(job);
-    setAudienceAnnouncement(`Preparation job #${job.job_id} accepted.`);
+    setAudienceAnnouncement(`Preparation job #${formatNumber(job.job_id)} accepted.`);
     await pollPreparationJob(job.job_id);
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {
@@ -1086,7 +1089,9 @@ async function loadSavedAudiences(force = false) {
       const badge = document.createElement("span");
       badge.className = "status-badge";
       setStatusBadge(badge, item.is_current ? "COMPLETED" : "WARNING");
-      badge.textContent = item.is_current ? "Current" : "Stale";
+      badge.textContent = item.is_current
+        ? "CURRENT - usable in Campaign Builder"
+        : "STALE - historical/read-only";
       heading.append(name, badge);
 
       const meta = document.createElement("p");
@@ -1126,7 +1131,9 @@ function renderSavedAudienceDetail(detail) {
 
   const currentness = document.querySelector("#saved-audience-currentness");
   setStatusBadge(currentness, detail.currentness?.is_current ? "COMPLETED" : "WARNING");
-  currentness.textContent = detail.currentness?.is_current ? "Current" : "Stale";
+  currentness.textContent = detail.currentness?.is_current
+    ? "CURRENT - usable in Campaign Builder"
+    : "STALE - historical/read-only";
 
   const staleMessage = document.querySelector("#saved-audience-stale-message");
   if (detail.currentness?.is_current) {
@@ -1259,7 +1266,7 @@ async function submitSaveAudience(event) {
       }),
     });
 
-    document.querySelector("#audience-save-status").textContent = `Saved audience #${saved.audience_id}.`;
+    document.querySelector("#audience-save-status").textContent = `Saved audience #${formatNumber(saved.audience_id)}.`;
     clearCachedJSON(API_PATHS.audiences);
     await loadSavedAudiences(true);
     renderSavedAudienceDetail(saved);

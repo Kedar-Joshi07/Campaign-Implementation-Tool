@@ -17,6 +17,7 @@ from app.schemas.historical import HistoricalAnalysisFilters
 from app.services.historical_source_provenance_service import (
     HistoricalSourceProvenance,
     HistoricalSourceProvenanceError,
+    is_saved_analysis_provenance_current,
     resolve_current_historical_source_provenance,
 )
 from app.services.historical_service import _normalize_aggregate
@@ -632,6 +633,21 @@ def list_historical_analysis_runs(
                 else None
             ),
         }
+
+        if row["status"] == "COMPLETED":
+            try:
+                is_current, reason = is_saved_analysis_provenance_current(database_path, row)
+            except HistoricalSourceProvenanceError:
+                is_current = False
+                reason = "Current historical source provenance is unavailable."
+            item["is_current"] = bool(is_current)
+            item["trainability_status"] = "CURRENT" if is_current else "STALE"
+            item["trainability_reason"] = None if is_current else reason
+        else:
+            item["is_current"] = False
+            item["trainability_status"] = "STALE"
+            item["trainability_reason"] = "Only completed analyses can be used for training."
+
         if row["status"] == "FAILED":
             item["failure_message"] = "The historical analysis could not be completed."
         responses.append(item)

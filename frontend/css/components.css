@@ -1886,6 +1886,84 @@ tbody tr:hover td {
   font-size: 0.63rem;
 }
 
+.campaigns-shell {
+  border-color: #d9e6f6;
+  background: linear-gradient(120deg, #ffffff, #eef8ff);
+}
+
+.campaigns-header-panel,
+.campaign-shell-grid,
+.campaign-builder-stepper {
+  margin-top: 17px;
+}
+
+.campaign-builder-stepper {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.campaign-step {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 0.72rem;
+  font-weight: 760;
+  text-align: left;
+}
+
+.campaign-step span {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+  font-size: 0.63rem;
+  font-weight: 800;
+}
+
+.campaign-step.is-active {
+  border-color: #b3c5f5;
+  color: var(--accent-dark);
+  background: #f2f6ff;
+}
+
+.campaign-step:focus-visible {
+  outline: 3px solid rgb(77 103 229 / 18%);
+}
+
+.campaign-shell-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 17px;
+  align-items: start;
+}
+
+.campaign-shell-grid > section {
+  min-width: 0;
+}
+
+.campaign-shell-grid > aside {
+  min-width: 0;
+}
+
+.scoring-currentness-panel {
+  margin-top: 14px;
+}
+
+.scoring-currentness-grid {
+  margin-top: 10px;
+}
+
 @media (max-width: 1100px) {
   .status-card-grid {
     grid-template-columns: 1fr;
@@ -1916,12 +1994,17 @@ tbody tr:hover td {
 
   .analysis-workspace-grid,
   .analysis-visual-grid,
-  .audience-explorer-grid {
+  .audience-explorer-grid,
+  .campaign-shell-grid {
     grid-template-columns: 1fr;
   }
 
   .analysis-metric-grid,
   .normalized-filter-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .campaign-builder-stepper {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1976,7 +2059,8 @@ tbody tr:hover td {
   .analysis-form-grid,
   .conversion-options,
   .profile-bars,
-  .audience-selection-mode {
+  .audience-selection-mode,
+  .campaign-builder-stepper {
     grid-template-columns: 1fr;
   }
 

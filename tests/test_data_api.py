@@ -184,13 +184,38 @@ def test_data_status_reports_reconciliation_and_latest_import(
     assert payload[0]["source_path"] == "customers.csv.gz"
     assert "private" not in payload[0]["source_path"]
     assert payload[0]["last_import_status"] == "COMPLETED"
+    assert payload[0]["last_import_completed_at"] == "2026-08-20T10:01:00Z"
+    assert payload[0]["last_completed_import_at"] == "2026-08-20T10:01:00Z"
     assert payload[0]["rows_inserted"] == 1
     assert payload[0]["rows_rejected"] == 0
+    assert payload[0]["published_source_path"] == "customers.csv.gz"
     assert payload[0]["exact_match_required"] is True
     assert payload[0]["count_tolerance_percent"] is None
     assert payload[0]["acceptable_min_rows"] == 1
     assert payload[0]["acceptable_max_rows"] == 1
     assert payload[0]["acceptable_count"] is True
+
+
+def test_data_status_separates_failed_attempt_from_last_published_source(
+    client: TestClient,
+    database_path: Path,
+    tmp_path: Path,
+) -> None:
+    _seed_populated_fixture(database_path)
+    failed_source = tmp_path / "private" / "customers_retry_failed.csv.gz"
+    _record_failed_import(
+        database_path,
+        source_path=str(failed_source),
+        error_message=f"Source file does not exist: {failed_source}",
+    )
+
+    customer = client.get("/api/data/status").json()[0]
+
+    assert customer["dataset_name"] == "customers"
+    assert customer["last_import_status"] == "FAILED"
+    assert customer["source_path"] == "customers_retry_failed.csv.gz"
+    assert customer["published_source_path"] == "customers.csv.gz"
+    assert customer["last_completed_import_at"] == "2026-08-20T10:01:00Z"
 
 
 def test_data_status_reports_approximate_customer_policy(

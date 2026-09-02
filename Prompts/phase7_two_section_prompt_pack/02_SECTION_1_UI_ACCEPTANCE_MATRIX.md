@@ -1,0 +1,22 @@
+# Section 1 UI Acceptance Matrix
+- [x] product navigation accurate
+- [x] Audience Explorer not future
+- [x] Model Training & Prospect Scoring wording accurate
+- [x] Overview positive metric grain correct
+- [x] Last import attempt vs published data clear
+- [x] no raw filesystem paths
+- [x] Historical analyses Current/Stale
+- [x] stale analysis not presented trainable
+- [x] Recall/Lift Top X% labels
+- [x] full scoring currentness wording
+- [x] Audience Explorer privacy notice
+- [x] Phase 2/6 band explanation
+- [x] Campaigns workspace exists
+- [x] four-step builder exists
+- [x] no PII preview
+- [x] Email/Direct Mail profiles visible
+- [x] PII acknowledgement
+- [x] no Activate/Send action
+- [x] accessible loading/error/stale states
+- [x] browser/responsive acceptance
+- [x] Section 1 tests pass

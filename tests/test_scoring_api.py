@@ -525,6 +525,7 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
     assert eligible_payload["model_run_id"] == model_run_id
     assert eligible_payload["artifact_feature_compatible"] is True
     assert eligible_payload["demographic_source_verified"] is False
+    assert eligible_payload["historical_source_verified"] is True
     assert "completed_scoring_run" not in eligible_payload
 
     queued_job_id = _insert_scoring_job(
@@ -545,6 +546,7 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
     assert active_payload["eligible"] is False
     assert active_payload["reason"] == ACTIVE_COMPUTE_JOB_CONFLICT_MESSAGE
     assert active_payload["demographic_source_verified"] is False
+    assert active_payload["historical_source_verified"] is True
     assert active_payload["active_job"]["job_id"] == queued_job_id
 
     with get_connection(database_path, write=True) as connection:
@@ -663,6 +665,7 @@ def test_scoring_status_reports_eligibility_and_conflict_signals(
     assert completed_payload["eligible"] is False
     assert completed_payload["reason"] == EXISTING_SCORING_RUN_CONFLICT_MESSAGE
     assert completed_payload["demographic_source_verified"] is True
+    assert completed_payload["historical_source_verified"] is True
     assert completed_payload["completed_scoring_run"]["scoring_run_id"] == completed_run_id
     assert completed_payload["completed_scoring_run"]["demographic_source_verified"] is True
 
@@ -766,6 +769,7 @@ def test_scoring_status_stale_completed_history_keeps_rescoring_eligible(
     payload = response.json()
     assert payload["eligible"] is True
     assert payload["demographic_source_verified"] is False
+    assert payload["historical_source_verified"] is True
     assert payload["completed_scoring_run"]["scoring_run_id"] == stale_run_id
     assert payload["completed_scoring_run"]["demographic_source_verified"] is False
 

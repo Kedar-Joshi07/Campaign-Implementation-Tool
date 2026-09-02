@@ -46,6 +46,7 @@ def test_frontend_contains_functional_phase_one_views(client: TestClient) -> Non
         "/static/js/historical-analysis.js",
         "/static/js/model-training.js",
         "/static/js/audience-explorer.js",
+        "/static/js/campaigns.js",
         "/static/js/data-status.js",
         "/static/js/app.js",
     ),
@@ -57,16 +58,22 @@ def test_frontend_assets_are_served(client: TestClient, asset_path: str) -> None
     assert response.text
 
 
-def test_later_phase_navigation_is_visibly_disabled(client: TestClient) -> None:
+def test_navigation_groups_and_phase7_shell_labels_are_visible(client: TestClient) -> None:
     html = client.get("/").text
 
-    assert html.count('class="navigation-item is-disabled"') == 1
-    assert html.count("Later phase</small>") == 1
+    assert "Data Foundation" in html
+    assert "Audience Intelligence" in html
+    assert "Campaign Execution" in html
+    assert html.count('class="navigation-item is-disabled"') == 0
+    assert "Later phase</small>" not in html
     assert 'data-view-target="model-training"' in html
     assert 'data-view-target="audience-explorer"' in html
-    assert "Phase 4</small>" in html
-    assert "Phase 6</small>" in html
-    assert "Model Training" in html
+    assert 'data-view-target="campaigns"' in html
+    assert "Phase 2</small>" not in html
+    assert "Phases 4-5</small>" not in html
+    assert "Phase 6</small>" not in html
+    assert "Phase 7 shell</small>" in html
+    assert "Model Training &amp; Prospect Scoring" in html
     assert "Audience Explorer" in html
     assert "Campaigns" in html
 
@@ -145,6 +152,21 @@ def test_data_status_script_renders_exact_and_approximate_policy_labels(
     assert "dataset.count_tolerance_percent" in script
     assert "125,000" not in script
     assert "5,000,000" not in script
+
+
+def test_ui_numeric_formatter_uses_compact_two_decimal_suffix_contract(
+    client: TestClient,
+) -> None:
+    script = client.get("/static/js/ui.js").text
+
+    assert "minimumFractionDigits: 2" in script
+    assert "maximumFractionDigits: 2" in script
+    assert "absoluteValue >= 1_000_000_000" in script
+    assert "absoluteValue >= 1_000_000" in script
+    assert "absoluteValue >= 1_000" in script
+    assert "}B`" in script
+    assert "}M`" in script
+    assert "}K`" in script
 
 
 def test_model_training_workspace_contains_required_sections_and_controls(
@@ -290,8 +312,8 @@ def test_audience_explorer_workspace_contains_required_sections_and_controls(
     assert "Selected vs Historical Positives" in html
     assert "Aggregate demographic comparison only. No prospect is matched to a historical customer." in html
     assert "Percentile 1 = top 1%. Decile 1 = top 10%. Propensity score is a relative model affinity score, not a purchase probability." in html
-    assert "Use in Campaign - Phase 7" in html
-    assert "No names/email/phone/address/city/postal/ethnicity/religion" not in html
+    assert "Use in Campaign (enabled in Section 2)" in html
+    assert "Contact PII is excluded here and is only available through the explicit Phase 7 finalized-campaign export contract." in html
 
 
 def test_audience_explorer_script_uses_required_endpoints_and_state_contracts(
@@ -328,8 +350,11 @@ def test_audience_explorer_script_enforces_safe_fields_and_dom_patterns(
     client: TestClient,
 ) -> None:
     script = client.get("/static/js/audience-explorer.js").text
-    html = client.get("/").text
-    combined = f"{script}\n{html}".casefold()
+    html = client.get("/").text.casefold()
+    start = html.find('<section id="audience-explorer-view"')
+    end = html.find('<section id="data-status-view"')
+    audience_html = html[start:end] if start != -1 and end != -1 else html
+    combined = f"{script.casefold()}\n{audience_html}"
 
     assert "textContent" in script
     assert "document.createElement" in script
@@ -349,3 +374,59 @@ def test_audience_explorer_script_enforces_safe_fields_and_dom_patterns(
     assert "86% chance to buy" not in combined
     assert "csv export" not in combined
     assert "audiences/export" not in combined
+
+
+def test_campaign_builder_shell_contains_required_regions_and_controls(
+    client: TestClient,
+) -> None:
+    html = client.get("/").text
+
+    assert 'data-view="campaigns"' in html
+    assert 'data-view-target="campaigns"' in html
+    for control_id in (
+        "campaigns-refresh",
+        "campaigns-retry",
+        "campaign-step-1",
+        "campaign-step-2",
+        "campaign-step-3",
+        "campaign-step-4",
+        "campaign-step-panel-1",
+        "campaign-step-panel-2",
+        "campaign-step-panel-3",
+        "campaign-step-panel-4",
+        "campaign-step-error-summary",
+        "campaign-audience-select",
+        "campaign-details-form",
+        "campaign-name",
+        "campaign-channel",
+        "campaign-review-summary",
+        "campaign-pii-ack",
+        "campaign-create-draft",
+        "campaign-review-draft",
+        "campaign-finalize",
+        "campaign-export",
+        "campaign-export-profile-fields",
+        "campaign-export-history-body",
+    ):
+        assert f'id="{control_id}"' in html
+
+    assert "Campaign Builder backend is not enabled yet." in html
+    assert "This POC stops at target-list export and does not activate or send campaigns." in html
+    assert "Only CURRENT — usable in Campaign Builder saved audiences are selectable." in html
+    assert "Finalize and export actions are intentionally disabled in Section 1 until Section 2 backend implementation and eligibility checks are complete." in html
+    assert "I understand this target-list export contains contact PII and is intended only for approved POC campaign use." in html
+
+
+def test_campaign_builder_script_enforces_section1_gating_and_export_profiles(
+    client: TestClient,
+) -> None:
+    script = client.get("/static/js/campaigns.js").text
+
+    assert 'audiences: "/api/audiences?limit=20&offset=0"' in script
+    assert 'audienceDetail: (audienceId) => `/api/audiences/${audienceId}`' in script
+    assert "EMAIL_CONTACT_V1" in script
+    assert "DIRECT_MAIL_CONTACT_V1" in script
+    assert "No arbitrary field picker. Restricted contract only." in script
+    assert "This action is feature-gated in Section 1. Backend create/finalize/export is enabled in Section 2." in script
+    assert "CURRENT - usable in Campaign Builder" in script
+    assert "STALE - historical/read-only" in script

@@ -1,0 +1,116 @@
+{
+  "generated_at": "2026-09-02T14:13:49.8373499+05:30",
+  "scope": "phase7_section1_browser_acceptance",
+  "environment": {
+    "os": "Windows",
+    "base_url": "http://127.0.0.1:8000",
+    "method": "real browser acceptance with Playwright automation against live local server",
+    "cache_control": "nocache timestamp query parameter used for each navigation"
+  },
+  "coverage": {
+    "existing_screens": [
+      "Overview",
+      "Data Status",
+      "Historical Analysis",
+      "Model Training and Prospect Scoring",
+      "Audience Explorer"
+    ],
+    "new_screen": "Campaign Builder (Phase 7 Section 1 shell)",
+    "states_validated": [
+      "Campaign shell ready state",
+      "Campaign validation error state",
+      "Campaign disabled finalize/export state",
+      "Audience Explorer loading state"
+    ]
+  },
+  "automated_results": {
+    "view_headings_and_responsive_overflow": {
+      "overview_1366": {
+        "heading": "Overview",
+        "horizontal_overflow": false
+      },
+      "data_status_1366": {
+        "heading": "Data Status",
+        "horizontal_overflow": false
+      },
+      "historical_1366": {
+        "heading": "Historical Analysis",
+        "horizontal_overflow": false
+      },
+      "model_training_1366": {
+        "heading": "Model Training & Prospect Scoring",
+        "horizontal_overflow": false
+      },
+      "audience_1366": {
+        "heading": "Audience Explorer",
+        "horizontal_overflow": false
+      },
+      "campaigns_1366": {
+        "heading": "Campaigns",
+        "horizontal_overflow": false
+      },
+      "overview_390": {
+        "heading": "Overview",
+        "horizontal_overflow": false
+      },
+      "campaigns_390": {
+        "heading": "Campaigns",
+        "horizontal_overflow": false
+      }
+    },
+    "campaign_keyboard_error_focus": {
+      "trigger": "Continue from Step 1 then Step 2 without required campaign name",
+      "error_visible": true,
+      "error_text": "Campaign name is required.",
+      "focused_element_id": "campaign-step-error-summary"
+    },
+    "campaign_gating_and_a11y_contract": {
+      "stepper_button_count": 4,
+      "status_aria_live": "polite",
+      "finalize_disabled": true,
+      "export_disabled": true,
+      "finalize_aria_describedby": "campaign-action-disabled-help",
+      "export_aria_describedby": "campaign-action-disabled-help",
+      "disabled_help_mentions_section2": true,
+      "pii_acknowledgement_mentions_contact_pii": true,
+      "forbidden_activate_send_launch_buttons_present": false
+    },
+    "audience_surface_snapshot": {
+      "loading_state_visible": true,
+      "workspace_visible": false,
+      "no_run_visible": false,
+      "prep_needed_visible": false,
+      "unavailable_visible": false,
+      "note": "Run-state depends on backend availability/canonical context; loading and fallback state surfaces were validated."
+    }
+  },
+  "accessibility_checklist": {
+    "keyboard_navigation_builder": "PASS",
+    "validation_error_focus_to_summary": "PASS",
+    "aria_live_status_announcements": "PASS",
+    "disabled_action_explanations": "PASS",
+    "stepper_semantics_present": "PASS",
+    "color_only_status_avoidance": "PASS",
+    "reduced_motion_css": "PASS"
+  },
+  "responsive_checklist": {
+    "1920x1080": "PASS",
+    "1366x768": "PASS",
+    "1024x768": "PASS",
+    "390x844": "PASS",
+    "table_scroll_allowed": true,
+    "control_clipping_detected": false
+  },
+  "section1_boundary_confirmation": {
+    "backend_campaign_create_finalize_export": "GATED",
+    "no_activation_send_workflow": true,
+    "no_ui_pii_preview": true,
+    "email_direct_mail_profile_contracts_visible": true
+  },
+  "sanitization": {
+    "contains_pii": false,
+    "contains_raw_sql": false,
+    "contains_tracebacks": false,
+    "contains_local_filesystem_paths": false
+  }
+}

@@ -88,7 +88,7 @@ function populateAnalysisOptions(analyses) {
   for (const item of analyses) {
     const option = document.createElement("option");
     option.value = String(item.analysis_run_id);
-    option.textContent = `#${item.analysis_run_id} · ${item.analysis_name}`;
+    option.textContent = `#${formatNumber(item.analysis_run_id)} · ${item.analysis_name}`;
     select.append(option);
   }
 }
@@ -96,7 +96,7 @@ function populateAnalysisOptions(analyses) {
 function updateSourceSummary(item) {
   selectedAnalysis = item || null;
   document.querySelector("#source-analysis-name").textContent = item?.analysis_name || "-";
-  document.querySelector("#source-analysis-id").textContent = item ? `#${item.analysis_run_id}` : "-";
+  document.querySelector("#source-analysis-id").textContent = item ? `#${formatNumber(item.analysis_run_id)}` : "-";
   document.querySelector("#source-conversion-definition").textContent = item
     ? String(item.conversion_definition || "").replaceAll("_", " ")
     : "-";
@@ -167,8 +167,7 @@ function shortHash(value) {
 }
 
 function formatScore(value) {
-  if (!Number.isFinite(Number(value))) return "-";
-  return Number(value).toFixed(6);
+  return formatNumber(value);
 }
 
 function formatRowsPerSecond(value) {
@@ -179,12 +178,7 @@ function formatRowsPerSecond(value) {
 function formatSeconds(value) {
   if (!Number.isFinite(Number(value))) return "-";
   const totalSeconds = Math.max(0, Number(value));
-  if (totalSeconds < 60) {
-    return `${totalSeconds.toFixed(1)}s`;
-  }
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = Math.round(totalSeconds % 60);
-  return `${minutes}m ${seconds}s`;
+  return `${formatNumber(totalSeconds)}s`;
 }
 
 function setScoringText(id, value) {
@@ -249,11 +243,11 @@ function applySubmitDisabledState() {
 
   if (hasActiveJob) {
     setModelAnnouncement(
-      `Training is unavailable while job #${activeJob.job_id} is ${activeJob.status.toLowerCase()}.`,
+      `Training is unavailable while job #${formatNumber(activeJob.job_id)} is ${activeJob.status.toLowerCase()}.`,
     );
     if (scoringPanelVisible) {
       setScoringAnnouncement(
-        `Scoring is unavailable while job #${activeJob.job_id} is ${activeJob.status.toLowerCase()}.`,
+        `Scoring is unavailable while job #${formatNumber(activeJob.job_id)} is ${activeJob.status.toLowerCase()}.`,
       );
     }
   } else if (!loadingJob) {
@@ -282,7 +276,7 @@ function setJobProgress(progressPercent) {
   fill.style.width = `${progress}%`;
   const track = document.querySelector(".model-job-progress-track");
   track.setAttribute("aria-valuenow", String(progress));
-  document.querySelector("#model-job-progress-percent").textContent = `${progress}%`;
+  document.querySelector("#model-job-progress-percent").textContent = `${formatNumber(progress)}%`;
 }
 
 function formatElapsed(createdAt, finishedAt) {
@@ -290,27 +284,25 @@ function formatElapsed(createdAt, finishedAt) {
   const start = new Date(createdAt).getTime();
   const end = finishedAt ? new Date(finishedAt).getTime() : Date.now();
   if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "-";
-  const seconds = Math.floor((end - start) / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const rem = seconds % 60;
-  return `${minutes}m ${rem}s`;
+  const seconds = (end - start) / 1000;
+  return `${formatNumber(seconds)}s`;
 }
 
 function showJobPanel(job) {
   const isScoringJob = job.job_type === "PROSPECT_SCORING";
   document.querySelector("#model-job-empty").hidden = true;
   document.querySelector("#model-job-content").hidden = false;
-  document.querySelector("#model-job-id").textContent = `#${job.job_id}`;
+  document.querySelector("#model-job-id").textContent = `#${formatNumber(job.job_id)}`;
   document.querySelector("#model-job-stage").textContent = job.stage || "-";
   document.querySelector("#model-job-message").textContent = job.message || (
     isScoringJob ? "Prospect scoring in progress." : "Model training in progress."
   );
-  document.querySelector("#model-job-analysis").textContent = job.analysis_run_id ? `#${job.analysis_run_id}` : "-";
+  document.querySelector("#model-job-analysis").textContent = job.analysis_run_id ? `#${formatNumber(job.analysis_run_id)}` : "-";
   document.querySelector("#model-job-created").textContent = formatDate(job.created_at, true);
   document.querySelector("#model-job-started").textContent = formatDate(job.started_at, true);
   document.querySelector("#model-job-finished").textContent = formatDate(job.finished_at, true);
   document.querySelector("#model-job-elapsed").textContent = formatElapsed(job.created_at, job.finished_at);
-  document.querySelector("#model-job-model-run").textContent = job.model_run_id ? `#${job.model_run_id}` : "-";
+  document.querySelector("#model-job-model-run").textContent = job.model_run_id ? `#${formatNumber(job.model_run_id)}` : "-";
   setStatusBadge(document.querySelector("#model-job-status"), job.status);
   setJobProgress(job.progress_percent);
 
@@ -396,10 +388,14 @@ function renderScoringStatus(status) {
   scoringStatusSnapshot = status;
   document.querySelector("#prospect-scoring-panel").hidden = false;
 
-  setScoringText("#scoring-model-run-id", `#${status.model_run_id}`);
+  setScoringText("#scoring-model-run-id", `#${formatNumber(status.model_run_id)}`);
   setScoringText("#scoring-selected-primary", status.selected_candidate || "-");
   setScoringText("#scoring-demographic-count", formatNumber(status.demographic_count));
   setScoringText("#scoring-availability", status.eligible ? "Eligible" : "Not eligible");
+  setScoringText("#scoring-historical-source", status.historical_source_verified ? "Current" : "Stale");
+  setScoringText("#scoring-model-artifact", status.artifact_feature_compatible ? "Verified" : "Verification required");
+  setScoringText("#scoring-run-currentness", status.demographic_source_verified ? "Current" : "Historical");
+  setScoringText("#scoring-availability-status", status.demographic_source_verified ? "Canonical" : "Historical");
 
   if (status.artifact_feature_compatible) {
     const compatibility = `${status.feature_contract_version || "-"} · ${shortHash(status.artifact_sha256)}`;
@@ -414,12 +410,12 @@ function renderScoringStatus(status) {
     if (status.demographic_source_verified) {
       setScoringText(
         "#scoring-completed-run",
-        `#${completed.scoring_run_id} · ${completionStamp}`,
+        `#${formatNumber(completed.scoring_run_id)} · ${completionStamp}`,
       );
     } else {
       setScoringText(
         "#scoring-completed-run",
-        `#${completed.scoring_run_id} · Historical (${completionStamp})`,
+        `#${formatNumber(completed.scoring_run_id)} · Historical (${completionStamp})`,
       );
     }
   } else {
@@ -490,7 +486,7 @@ async function loadScoringStatus(modelRunId, { force = false } = {}) {
     }
 
     document.querySelector("#prospect-scoring-panel").hidden = false;
-    setScoringText("#scoring-model-run-id", `#${modelRunId}`);
+    setScoringText("#scoring-model-run-id", `#${formatNumber(modelRunId)}`);
     setScoringText("#scoring-selected-primary", "-");
     setScoringText("#scoring-artifact-compatibility", "Unavailable");
     setScoringText("#scoring-demographic-count", "-");
@@ -550,12 +546,12 @@ function renderCandidateComparison(detail) {
   const diagnostic = candidates.NAIVE_PU_LABEL_BASELINE;
 
   appendComparisonRow(body, "Status", primary?.status || "-", challenger?.status || "-", diagnostic?.status || "-");
-  appendComparisonRow(body, "Recall @5", metricFromCandidate(primary, "recall5"), metricFromCandidate(challenger, "recall5"), metricFromCandidate(diagnostic, "recall5"));
-  appendComparisonRow(body, "Recall @10", metricFromCandidate(primary, "recall10"), metricFromCandidate(challenger, "recall10"), metricFromCandidate(diagnostic, "recall10"));
-  appendComparisonRow(body, "Recall @20", metricFromCandidate(primary, "recall20"), metricFromCandidate(challenger, "recall20"), metricFromCandidate(diagnostic, "recall20"));
-  appendComparisonRow(body, "Lift @5", metricFromCandidate(primary, "lift5"), metricFromCandidate(challenger, "lift5"), metricFromCandidate(diagnostic, "lift5"));
-  appendComparisonRow(body, "Lift @10", metricFromCandidate(primary, "lift10"), metricFromCandidate(challenger, "lift10"), metricFromCandidate(diagnostic, "lift10"));
-  appendComparisonRow(body, "Lift @20", metricFromCandidate(primary, "lift20"), metricFromCandidate(challenger, "lift20"), metricFromCandidate(diagnostic, "lift20"));
+  appendComparisonRow(body, "Recall @ Top 5%", metricFromCandidate(primary, "recall5"), metricFromCandidate(challenger, "recall5"), metricFromCandidate(diagnostic, "recall5"));
+  appendComparisonRow(body, "Recall @ Top 10%", metricFromCandidate(primary, "recall10"), metricFromCandidate(challenger, "recall10"), metricFromCandidate(diagnostic, "recall10"));
+  appendComparisonRow(body, "Recall @ Top 20%", metricFromCandidate(primary, "recall20"), metricFromCandidate(challenger, "recall20"), metricFromCandidate(diagnostic, "recall20"));
+  appendComparisonRow(body, "Lift @ Top 5%", metricFromCandidate(primary, "lift5"), metricFromCandidate(challenger, "lift5"), metricFromCandidate(diagnostic, "lift5"));
+  appendComparisonRow(body, "Lift @ Top 10%", metricFromCandidate(primary, "lift10"), metricFromCandidate(challenger, "lift10"), metricFromCandidate(diagnostic, "lift10"));
+  appendComparisonRow(body, "Lift @ Top 20%", metricFromCandidate(primary, "lift20"), metricFromCandidate(challenger, "lift20"), metricFromCandidate(diagnostic, "lift20"));
   appendComparisonRow(body, "Observed-label ROC-AUC", metricFromCandidate(primary, "rocAuc"), metricFromCandidate(challenger, "rocAuc"), metricFromCandidate(diagnostic, "rocAuc"));
   appendComparisonRow(body, "Observed-label AP", metricFromCandidate(primary, "avgPrecision"), metricFromCandidate(challenger, "avgPrecision"), metricFromCandidate(diagnostic, "avgPrecision"));
   appendComparisonRow(body, "KS", metricFromCandidate(primary, "ks"), metricFromCandidate(challenger, "ks"), metricFromCandidate(diagnostic, "ks"));
@@ -578,8 +574,8 @@ function renderSummary(detail) {
   const selectedCandidate = selected ? candidates[selected] : null;
   const top10 = selectedCandidate?.top_slice_metrics?.top_10_percent || {};
 
-  document.querySelector("#summary-model-run-id").textContent = identity.model_run_id ? `#${identity.model_run_id}` : "-";
-  document.querySelector("#summary-analysis-run-id").textContent = identity.analysis_run_id ? `#${identity.analysis_run_id}` : "-";
+  document.querySelector("#summary-model-run-id").textContent = identity.model_run_id ? `#${formatNumber(identity.model_run_id)}` : "-";
+  document.querySelector("#summary-analysis-run-id").textContent = identity.analysis_run_id ? `#${formatNumber(identity.analysis_run_id)}` : "-";
   document.querySelector("#summary-selected-primary").textContent = governance.primary_candidate || "BAGGING_PU";
   document.querySelector("#summary-policy-version").textContent = governance.model_role_policy_version || "legacy";
   document.querySelector("#summary-selected-count").textContent = formatNumber(cohort.selected_customer_count);
@@ -604,9 +600,9 @@ function renderSummary(detail) {
 function createRunCell(run) {
   const container = document.createElement("td");
   const title = document.createElement("strong");
-  title.textContent = `#${run.model_run_id} · ${run.model_name}`;
+  title.textContent = `#${formatNumber(run.model_run_id)} · ${run.model_name}`;
   const meta = document.createElement("small");
-  meta.textContent = `Analysis #${run.analysis_run_id} · ${formatDate(run.completed_at || run.created_at, true)}`;
+  meta.textContent = `Analysis #${formatNumber(run.analysis_run_id)} · ${formatDate(run.completed_at || run.created_at, true)}`;
   container.append(title, meta);
   return container;
 }
@@ -649,7 +645,7 @@ function renderRecentRuns(runs) {
     row.append(liftCell);
 
     const qualityCell = document.createElement("td");
-    qualityCell.textContent = modelQualityCache.get(run.model_run_id) || "Loading...";
+      qualityCell.textContent = modelQualityCache.get(run.model_run_id) || "See details";
     row.append(qualityCell);
 
     const actionCell = document.createElement("td");
@@ -665,27 +661,10 @@ function renderRecentRuns(runs) {
   }
 }
 
-async function hydrateRunQuality(runs) {
-  const pending = runs.filter((run) => !modelQualityCache.has(run.model_run_id));
-  await Promise.all(
-    pending.map(async (run) => {
-      try {
-        const detail = await getJSON(API_PATHS.modelDetail(run.model_run_id));
-        const flags = detail.quality_flags || [];
-        modelQualityCache.set(run.model_run_id, flags.length ? flags.join(", ") : "None");
-      } catch {
-        modelQualityCache.set(run.model_run_id, "Unavailable");
-      }
-    }),
-  );
-}
-
 async function loadRecentRuns(force = false) {
   document.querySelector("#recent-model-runs-loading").hidden = false;
   try {
     const runs = await getCachedJSON(API_PATHS.models, { maxAgeMs: 20_000, force });
-    renderRecentRuns(runs);
-    await hydrateRunQuality(runs);
     renderRecentRuns(runs);
   } finally {
     document.querySelector("#recent-model-runs-loading").hidden = true;
@@ -726,7 +705,7 @@ async function loadJobDetail(jobId, { silent = false } = {}) {
       if (job.status === "COMPLETED") {
         if (job.job_type === "MODEL_TRAINING" && job.model_run_id) {
           await Promise.all([loadModelDetail(job.model_run_id), loadRecentRuns(true)]);
-          setModelAnnouncement(`Model training completed as run #${job.model_run_id}.`);
+          setModelAnnouncement(`Model training completed as run #${formatNumber(job.model_run_id)}.`);
         }
         if (job.job_type === "PROSPECT_SCORING") {
           if (job.model_run_id) {
@@ -738,7 +717,7 @@ async function loadJobDetail(jobId, { silent = false } = {}) {
           const scoringRunId = job.result?.scoring_run_id;
           if (Number.isFinite(Number(scoringRunId))) {
             await loadScoringRunDetail(Number(scoringRunId), { silent: true });
-            setScoringAnnouncement(`Prospect scoring completed as run #${scoringRunId}.`);
+            setScoringAnnouncement(`Prospect scoring completed as run #${formatNumber(scoringRunId)}.`);
           } else {
             setScoringAnnouncement("Prospect scoring completed.");
           }
@@ -760,9 +739,9 @@ async function loadJobDetail(jobId, { silent = false } = {}) {
 
     if (!silent) {
       if (job.job_type === "PROSPECT_SCORING") {
-        setScoringAnnouncement(`Scoring job #${job.job_id} is ${job.status.toLowerCase()}.`);
+        setScoringAnnouncement(`Scoring job #${formatNumber(job.job_id)} is ${job.status.toLowerCase()}.`);
       } else {
-        setModelAnnouncement(`Job #${job.job_id} is ${job.status.toLowerCase()}.`);
+        setModelAnnouncement(`Job #${formatNumber(job.job_id)} is ${job.status.toLowerCase()}.`);
       }
     }
     schedulePoll();
@@ -830,7 +809,7 @@ async function submitTraining(event) {
       active_job: job,
     };
     applySubmitDisabledState();
-    setModelAnnouncement(`Job #${job.job_id} accepted and queued.`);
+    setModelAnnouncement(`Job #${formatNumber(job.job_id)} accepted and queued.`);
     schedulePoll();
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {
@@ -880,7 +859,7 @@ async function submitScoring() {
     document.querySelector("#scoring-completed-summary").hidden = true;
     resetScoringSummary();
     applySubmitDisabledState();
-    setScoringAnnouncement(`Scoring job #${job.job_id} accepted and queued.`);
+    setScoringAnnouncement(`Scoring job #${formatNumber(job.job_id)} accepted and queued.`);
     schedulePoll();
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {

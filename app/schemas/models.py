@@ -78,6 +78,7 @@ class ScoringStatusResponse(ModelApiResponseModel):
     eligible: bool
     reason: str | None = None
     demographic_source_verified: bool = False
+    historical_source_verified: bool = False
     demographic_count: int = Field(ge=0)
     selected_candidate: str | None = None
     artifact_feature_compatible: bool
@@ -177,6 +178,9 @@ class TrainingOptionAnalysisResponse(ModelApiResponseModel):
     selected_customer_count: int = Field(ge=0)
     positive_customer_count: int = Field(ge=0)
     unlabeled_customer_count: int = Field(ge=0)
+    is_current: bool = False
+    trainability_status: Literal["CURRENT", "STALE"] = "STALE"
+    trainability_reason: str | None = None
 
 
 class ModelTrainingOptionsResponse(ModelApiResponseModel):

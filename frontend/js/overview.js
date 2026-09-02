@@ -81,7 +81,7 @@ function renderHealthError() {
 
 function setReadinessLoading() {
   document.querySelector("#readiness-spinner").hidden = false;
-  document.querySelector("#readiness-note").textContent = "Running complete integrity checks. Large datasets may take a moment.";
+  document.querySelector("#readiness-note").textContent = "Overview remains interactive while complete integrity reconciliation runs. Exact checks may take 60-180 seconds on full volumes.";
   for (const id of ["customers-readiness", "campaign-sales-readiness", "demographics-readiness"]) {
     setStatusBadge(document.querySelector(`#${id}`), "Checking");
   }
@@ -100,7 +100,7 @@ function renderReadiness(datasets) {
     }
   }
   document.querySelector("#readiness-spinner").hidden = true;
-  document.querySelector("#readiness-note").textContent = "Counts and structural integrity reflect the latest complete database check.";
+  document.querySelector("#readiness-note").textContent = "Counts and structural integrity reflect the latest complete database check. Heavy exact validation runs independently from summary cards.";
 }
 
 export function initializeOverview() {
@@ -137,7 +137,7 @@ export async function loadOverview(force = false) {
     }),
     getCachedJSON("/api/data/status", { maxAgeMs: 300_000, force }).then(renderReadiness).catch((error) => {
       document.querySelector("#readiness-spinner").hidden = true;
-      document.querySelector("#readiness-note").textContent = "Reconciliation could not be completed.";
+      document.querySelector("#readiness-note").textContent = "Reconciliation could not be completed. Summary counts remain available.";
       for (const id of ["customers-readiness", "campaign-sales-readiness", "demographics-readiness"]) {
         setStatusBadge(document.querySelector(`#${id}`), "ERROR");
       }

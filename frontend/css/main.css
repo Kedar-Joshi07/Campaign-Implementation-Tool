@@ -76,6 +76,10 @@ dd {
   min-height: 100vh;
 }
 
+.app-shell > * {
+  min-width: 0;
+}
+
 .sidebar {
   position: sticky;
   top: 0;
@@ -429,7 +433,7 @@ dd {
   }
 
   .navigation {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     margin-top: 18px;
   }
 

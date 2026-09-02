@@ -24,7 +24,9 @@ class DatasetStatusResponse(BaseModel):
     last_import_status: str | None
     last_import_started_at: str | None
     last_import_completed_at: str | None
+    last_completed_import_at: str | None
     source_path: str | None
+    published_source_path: str | None
     rows_inserted: int | None
     rows_rejected: int | None
 

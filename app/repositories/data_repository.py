@@ -69,6 +69,35 @@ class DataRepository:
             ).fetchall()
         return {row["dataset_name"]: dict(row) for row in rows}
 
+    def fetch_latest_completed_imports(self) -> dict[str, dict[str, Any]]:
+        with get_connection(self.database_path) as connection:
+            rows = connection.execute(
+                """
+                SELECT
+                    import_id,
+                    dataset_name,
+                    source_path,
+                    started_at,
+                    completed_at,
+                    status,
+                    rows_read,
+                    rows_inserted,
+                    rows_rejected,
+                    error_message,
+                    source_checksum
+                FROM data_import_runs AS run
+                WHERE status = 'COMPLETED'
+                  AND import_id = (
+                    SELECT MAX(latest.import_id)
+                    FROM data_import_runs AS latest
+                    WHERE latest.dataset_name = run.dataset_name
+                      AND latest.status = 'COMPLETED'
+                )
+                ORDER BY dataset_name
+                """
+            ).fetchall()
+        return {row["dataset_name"]: dict(row) for row in rows}
+
     def fetch_import_runs(self, *, limit: int, offset: int) -> list[dict[str, Any]]:
         with get_connection(self.database_path) as connection:
             rows = connection.execute(

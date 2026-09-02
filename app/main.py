@@ -56,10 +56,12 @@ app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
     description=(
-        "Campaign Implementation Tool POC with implemented Phase 1-5 "
-        "capabilities, including Phase 2 aggregate historical campaign analysis, "
-        "governed PU modeling, asynchronous training/scoring orchestration, "
-        "and provenance-aware prospect scoring."
+        "Campaign Implementation Tool POC with Phase 1-6 capabilities implemented, "
+        "including Phase 2 aggregate historical campaign analysis, across data "
+        "foundation, historical analysis, model training/prospect scoring, "
+        "and audience exploration. Phase 7 Campaign Builder UI shell is available, "
+        "while backend create/finalize/export flows remain feature-gated until "
+        "Section 2 acceptance."
     ),
     lifespan=lifespan,
 )

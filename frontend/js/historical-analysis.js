@@ -400,7 +400,7 @@ function renderAnalysisResult(result, { focus = true } = {}) {
   setAnalysisRunning(false);
   document.querySelector("#historical-analysis-results").hidden = false;
   document.querySelector("#analysis-results-content").hidden = false;
-  document.querySelector("#analysis-run-announcement").textContent = `Analysis run ${result.analysis_run_id} completed.`;
+  document.querySelector("#analysis-run-announcement").textContent = `Analysis run ${formatNumber(result.analysis_run_id)} completed.`;
   if (focus) document.querySelector("#analysis-results-title").focus();
 }
 
@@ -432,7 +432,7 @@ function renderRecentAnalyses(items) {
     const name = document.createElement("strong");
     name.textContent = item.analysis_name;
     const metadata = document.createElement("small");
-    metadata.textContent = `Run #${item.analysis_run_id} · ${formatDate(item.completed_at || item.created_at, true)} · ${conversionLabel(item.conversion_definition)}`;
+    metadata.textContent = `Run #${formatNumber(item.analysis_run_id)} · ${formatDate(item.completed_at || item.created_at, true)} · ${conversionLabel(item.conversion_definition)}`;
     identity.append(name, metadata);
 
     const customers = document.createElement("td");
@@ -448,12 +448,12 @@ function renderRecentAnalyses(items) {
     setStatusBadge(badge, item.status);
     const rate = document.createElement("small");
     rate.textContent = item.status === "COMPLETED"
-      ? `${formatPercent(item.positive_customer_rate)} positive`
+      ? `${formatPercent(item.positive_customer_rate)} positive · ${item.trainability_status || "STALE"}`
       : (item.failure_message || "Analysis failed safely");
     outcome.append(badge, rate);
 
     const action = document.createElement("td");
-    if (item.status === "COMPLETED") {
+    if (item.status === "COMPLETED" && item.is_current === true) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "button button-secondary recent-reopen";
@@ -463,7 +463,9 @@ function renderRecentAnalyses(items) {
     } else {
       const label = document.createElement("span");
       label.className = "table-caption";
-      label.textContent = "Unavailable";
+      label.textContent = item.status === "COMPLETED"
+        ? (item.trainability_reason || "STALE - historical only")
+        : "Unavailable";
       action.append(label);
     }
     row.append(identity, customers, outcome, action);
@@ -490,7 +492,7 @@ async function reopenAnalysis(analysisRunId, button) {
   if (analysisRunning) return;
   hideFormError();
   setButtonLoading(button, true, "Opening…");
-  document.querySelector("#analysis-run-announcement").textContent = `Opening analysis run ${analysisRunId}.`;
+  document.querySelector("#analysis-run-announcement").textContent = `Opening analysis run ${formatNumber(analysisRunId)}.`;
   try {
     const result = await getJSON(`/api/historical/analyses/${analysisRunId}`);
     renderAnalysisResult(result);

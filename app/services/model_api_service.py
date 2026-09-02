@@ -578,6 +578,7 @@ def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str
     eligible = True
     reason: str | None = None
     artifact_feature_compatible = True
+    historical_source_verified = False
     feature_contract_version: str | None = None
     feature_contract_sha256: str | None = None
     artifact_sha256: str | None = None
@@ -589,6 +590,7 @@ def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str
         feature_contract_version = compatibility.feature_contract_version
         feature_contract_sha256 = compatibility.feature_contract_sha256
         artifact_sha256 = compatibility.artifact_sha256
+        historical_source_verified = True
     except ModelScoreabilityValidationError as exc:
         artifact_feature_compatible = False
         eligible = False
@@ -606,6 +608,7 @@ def get_scoring_status(database_path: str | Path, model_run_id: int) -> dict[str
         "eligible": eligible,
         "reason": reason,
         "demographic_source_verified": bool(completed_scoring_run_source_verified),
+        "historical_source_verified": bool(historical_source_verified),
         "demographic_count": int(demographic_count),
         "selected_candidate": selected_candidate,
         "artifact_feature_compatible": artifact_feature_compatible,
@@ -929,6 +932,11 @@ def get_model_training_options(database_path: str | Path) -> dict[str, Any]:
                 "selected_customer_count": int(item["selected_customer_count"]),
                 "positive_customer_count": int(item["positive_customer_count"]),
                 "unlabeled_customer_count": int(item["unlabeled_customer_count"]),
+                "is_current": bool(item.get("is_current", False)),
+                "trainability_status": (
+                    "CURRENT" if bool(item.get("is_current", False)) else "STALE"
+                ),
+                "trainability_reason": item.get("trainability_reason"),
             }
             for item in completed
         ],

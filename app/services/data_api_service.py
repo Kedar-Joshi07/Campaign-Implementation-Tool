@@ -92,11 +92,13 @@ def get_data_status(database_path: str | Path) -> list[dict[str, Any]]:
     repository = DataRepository(database_path)
     reconciliation = run_reconciliation(database_path)
     latest_imports = repository.fetch_latest_imports()
+    latest_completed_imports = repository.fetch_latest_completed_imports()
     response = []
 
     for dataset_name, table_name in DATASET_TABLES.items():
         dataset = reconciliation["datasets"][dataset_name]
         latest = latest_imports.get(dataset_name)
+        latest_completed = latest_completed_imports.get(dataset_name)
         response.append(
             {
                 "dataset_name": dataset_name,
@@ -112,7 +114,15 @@ def get_data_status(database_path: str | Path) -> list[dict[str, Any]]:
                 "last_import_status": latest["status"] if latest else None,
                 "last_import_started_at": latest["started_at"] if latest else None,
                 "last_import_completed_at": latest["completed_at"] if latest else None,
+                "last_completed_import_at": (
+                    latest_completed["completed_at"] if latest_completed else None
+                ),
                 "source_path": _display_source_path(latest["source_path"]) if latest else None,
+                "published_source_path": (
+                    _display_source_path(latest_completed["source_path"])
+                    if latest_completed
+                    else None
+                ),
                 "rows_inserted": latest["rows_inserted"] if latest else None,
                 "rows_rejected": latest["rows_rejected"] if latest else None,
             }

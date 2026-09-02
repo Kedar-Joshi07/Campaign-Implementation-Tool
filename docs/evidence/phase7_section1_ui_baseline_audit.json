@@ -1,0 +1,369 @@
+{
+  "generated_at": "2026-09-02T14:13:49.8373499+05:30",
+  "scope": "phase7_section1_ui_baseline_audit",
+  "required_starting_sha": "0b22fe60b52d4a9b15c2748ae2ef16e9a56241b0",
+  "actual_head_sha": "0b22fe60b52d4a9b15c2748ae2ef16e9a56241b0",
+  "head_matches_required": true,
+  "baseline_gates": {
+    "git_status_short": "dirty (Section 1 implementation in progress)",
+    "pip_check": {
+      "status": "PASS",
+      "summary": "No broken requirements found."
+    },
+    "pytest": {
+      "status": "PASS",
+      "summary": "444 passed",
+      "duration_seconds": 833.61
+    },
+    "compileall": {
+      "status": "PASS",
+      "summary": "python -m compileall -q app scripts tests completed with no errors."
+    },
+    "diff_check": {
+      "status": "PASS_WITH_WARNINGS",
+      "summary": "No whitespace/conflict failures; line-ending warnings only."
+    },
+    "validate_data_json": {
+      "status": "PASS",
+      "overall_status": "OK",
+      "dataset_counts": {
+        "customers": 125000,
+        "campaign_sales": 570000,
+        "demographics": 5000000
+      },
+      "structural_violation_counts": {
+        "customers": 0,
+        "campaign_sales": 0,
+        "demographics": 0
+      }
+    }
+  },
+  "screens": [
+    {
+      "screen": "Overview",
+      "apis": [
+        "/api/data/summary",
+        "/api/data/status",
+        "/api/health",
+        "/api/historical/overview"
+      ],
+      "field_contract": [
+        {
+          "label": "PU-positive observations",
+          "explanation": "Shows observed campaign events with attributed purchase, not person-level positives.",
+          "backend_source": "historical summary aggregates",
+          "data_grain": "observation",
+          "classification": "historical",
+          "loading_empty_error": "loading placeholder, unavailable banner, and empty-history state",
+          "stale_current_behavior": "not a currentness gate; historical summary surface",
+          "privacy_pii": "aggregate count only",
+          "accessibility_responsive": "semantic sections/cards, mobile stacking"
+        },
+        {
+          "label": "Reconciliation status",
+          "explanation": "Communicates that summary remains visible while deep reconciliation continues.",
+          "backend_source": "data status reconciliation service",
+          "data_grain": "dataset status",
+          "classification": "derived",
+          "loading_empty_error": "checking badges and spinner with fallback note",
+          "stale_current_behavior": "n/a",
+          "privacy_pii": "no row-level fields",
+          "accessibility_responsive": "status badges and readable copy on narrow viewports"
+        }
+      ],
+      "actions": [
+        "Refresh data",
+        "Analyze historical campaigns"
+      ]
+    },
+    {
+      "screen": "Data Status",
+      "apis": [
+        "/api/data/status",
+        "/api/data/imports"
+      ],
+      "field_contract": [
+        {
+          "label": "Last import attempt",
+          "explanation": "Reports most recent attempt status and timestamp regardless of success.",
+          "backend_source": "latest import event",
+          "data_grain": "dataset import event",
+          "classification": "derived",
+          "loading_empty_error": "checking badge, unavailable fallback, import-history loading row",
+          "stale_current_behavior": "paired with published-source to avoid conflating failed attempt with published data",
+          "privacy_pii": "source metadata only",
+          "accessibility_responsive": "status cards and table-scroll wrappers"
+        },
+        {
+          "label": "Published source",
+          "explanation": "Shows latest completed source currently in use.",
+          "backend_source": "latest completed import metadata",
+          "data_grain": "dataset snapshot",
+          "classification": "current",
+          "loading_empty_error": "No completed import message when absent",
+          "stale_current_behavior": "retains published source when latest attempt failed",
+          "privacy_pii": "no identity fields",
+          "accessibility_responsive": "plain text with title fallback"
+        }
+      ],
+      "actions": [
+        "Run checks again",
+        "Try again"
+      ]
+    },
+    {
+      "screen": "Historical Analysis",
+      "apis": [
+        "/api/historical/options",
+        "/api/historical/analyses",
+        "/api/historical/analyses/{analysis_run_id}"
+      ],
+      "field_contract": [
+        {
+          "label": "Recent Analyses outcome label",
+          "explanation": "Displays positive rate and trainability status with current/stale semantics.",
+          "backend_source": "historical analysis list service",
+          "data_grain": "analysis run",
+          "classification": "derived",
+          "loading_empty_error": "loading row, empty state, unavailable banner",
+          "stale_current_behavior": "current runs are trainable; stale runs are historical-only with reason",
+          "privacy_pii": "aggregate only",
+          "accessibility_responsive": "tabbed breakdown and table-scroll"
+        }
+      ],
+      "actions": [
+        "Analyze Population",
+        "Refresh options and runs",
+        "Refresh Recent Analyses",
+        "Open run detail"
+      ]
+    },
+    {
+      "screen": "Model Training and Prospect Scoring",
+      "apis": [
+        "/api/models/training-options",
+        "/api/models/train",
+        "/api/models/{model_run_id}/scoring-status",
+        "/api/models/{model_run_id}/score"
+      ],
+      "field_contract": [
+        {
+          "label": "Recall/Lift Top X% guidance",
+          "explanation": "Clarifies Top 5%, Top 10%, Top 20% are validation-segment percentages.",
+          "backend_source": "model evaluation summary and static contract copy",
+          "data_grain": "model-run metrics",
+          "classification": "derived",
+          "loading_empty_error": "empty-state when analyses unavailable and loading status blocks",
+          "stale_current_behavior": "n/a",
+          "privacy_pii": "aggregate evaluation metrics",
+          "accessibility_responsive": "clear labels and table-scroll for comparison grid"
+        },
+        {
+          "label": "Scoring currentness checks",
+          "explanation": "Surfaces historical-source and demographic-source verification plus canonical status.",
+          "backend_source": "scoring-status endpoint",
+          "data_grain": "run provenance",
+          "classification": "current",
+          "loading_empty_error": "status placeholders and advisory messages",
+          "stale_current_behavior": "stale demographic source blocks scoring actions",
+          "privacy_pii": "no identity fields",
+          "accessibility_responsive": "status cards preserved at narrow widths"
+        }
+      ],
+      "actions": [
+        "Train Look-alike Model",
+        "Score Prospect Universe",
+        "Refresh training workspace"
+      ]
+    },
+    {
+      "screen": "Audience Explorer",
+      "apis": [
+        "/api/audience/runs",
+        "/api/audience/options",
+        "/api/audience/prepare",
+        "/api/audience/search",
+        "/api/audience/profile",
+        "/api/audiences"
+      ],
+      "field_contract": [
+        {
+          "label": "Currentness labels",
+          "explanation": "Saved audience status distinguishes CURRENT usable in Campaign Builder vs STALE historical/read-only.",
+          "backend_source": "saved audience currentness and analysis provenance",
+          "data_grain": "saved audience",
+          "classification": "current",
+          "loading_empty_error": "loading/no-run/prep-needed/prep-running/prep-failed/workspace states",
+          "stale_current_behavior": "stale definitions are blocked for campaign handoff",
+          "privacy_pii": "privacy boundary notices emphasize no contact PII in UI",
+          "accessibility_responsive": "aria-live announcements, keyboard reachable forms, table-scroll"
+        },
+        {
+          "label": "Profile loading status",
+          "explanation": "Exact profile aggregates load independently after search results.",
+          "backend_source": "audience profile endpoint",
+          "data_grain": "aggregate profile",
+          "classification": "derived",
+          "loading_empty_error": "explicit loading and empty-result states",
+          "stale_current_behavior": "n/a",
+          "privacy_pii": "aggregate only; no row-level contact fields in profile panels",
+          "accessibility_responsive": "status text updates and comparison tabs"
+        }
+      ],
+      "actions": [
+        "Prepare Audience Explorer",
+        "Apply filters",
+        "Load more",
+        "Save audience",
+        "Reopen definition"
+      ]
+    },
+    {
+      "screen": "Saved Audiences",
+      "apis": [
+        "/api/audiences",
+        "/api/audiences/{audience_id}"
+      ],
+      "field_contract": [
+        {
+          "label": "Use in Campaign control",
+          "explanation": "Control is visible but disabled and explicitly gated to Section 2.",
+          "backend_source": "frontend gating contract",
+          "data_grain": "ui-only",
+          "classification": "derived",
+          "loading_empty_error": "list loading, empty state, and detail fallback",
+          "stale_current_behavior": "stale audience detail communicates read-only semantics",
+          "privacy_pii": "no preview of contact attributes",
+          "accessibility_responsive": "aria-describedby explains disabled action"
+        }
+      ],
+      "actions": [
+        "Refresh saved definitions",
+        "Reopen definition"
+      ]
+    },
+    {
+      "screen": "Campaign Builder (Section 1 shell)",
+      "apis": [
+        "/api/audiences",
+        "/api/audiences/{audience_id}"
+      ],
+      "field_contract": [
+        {
+          "label": "Four-step flow",
+          "explanation": "Choose Audience, Campaign Details, Review, Finalize/Export stepper with validation and focus-managed error summary.",
+          "backend_source": "campaign shell module state machine",
+          "data_grain": "ui-only",
+          "classification": "derived",
+          "loading_empty_error": "loading/backend-unavailable/no-eligible/ready states",
+          "stale_current_behavior": "only current audiences selectable",
+          "privacy_pii": "No PII preview; export contracts described but execution gated",
+          "accessibility_responsive": "keyboard stepper navigation, role=alert error summary, aria-live status"
+        },
+        {
+          "label": "Finalize and Export actions",
+          "explanation": "Buttons remain disabled with explicit helper text describing Section 2 dependency.",
+          "backend_source": "feature gate contract",
+          "data_grain": "ui-only",
+          "classification": "derived",
+          "loading_empty_error": "disabled action helper always visible in step 4",
+          "stale_current_behavior": "stale audience prevents progression",
+          "privacy_pii": "PII acknowledgement required before any future export path",
+          "accessibility_responsive": "disabled buttons include aria-describedby explanation"
+        }
+      ],
+      "actions": [
+        "Refresh campaign workspace",
+        "Continue through steps",
+        "Create Draft (gated)",
+        "Review (gated)",
+        "Finalize Campaign (disabled)",
+        "Export Target List (disabled)"
+      ]
+    }
+  ],
+  "known_findings_reconfirmation": [
+    {
+      "finding": "Audience Explorer still under Later phases",
+      "status": "RESOLVED",
+      "resolution": "Navigation now groups Audience Explorer under Audience Intelligence with Phase 6 label."
+    },
+    {
+      "finding": "Sidebar footer still Foundation/Phase 1",
+      "status": "RESOLVED",
+      "resolution": "Footer now states Phases 1-6 complete and Section 2 gating context."
+    },
+    {
+      "finding": "Model Training label does not clearly include Phase 5 scoring",
+      "status": "RESOLVED",
+      "resolution": "Screen and nav copy explicitly uses Model Training and Prospect Scoring (Phases 4-5)."
+    },
+    {
+      "finding": "FastAPI app description stale at Phase 1-5",
+      "status": "RESOLVED",
+      "resolution": "OpenAPI description now reflects Phase 1-6 plus Phase 7 Section 1 shell and Section 2 gate."
+    },
+    {
+      "finding": "Overview Known positives is observation-grain but can be interpreted as customer-grain",
+      "status": "RESOLVED",
+      "resolution": "Overview metric and explanatory copy now label PU-positive observations explicitly."
+    },
+    {
+      "finding": "Data Status Last import can imply failed attempt overwrote published state",
+      "status": "RESOLVED",
+      "resolution": "Separate Last import attempt, Published source, and Attempt source fields; published source derives from latest completed import."
+    },
+    {
+      "finding": "Historical analyses lack obvious Current/Stale trainability",
+      "status": "RESOLVED",
+      "resolution": "List item contract includes currentness and trainability reason surfaced in UI labels."
+    },
+    {
+      "finding": "Recall/Lift labels do not clearly indicate percent segments",
+      "status": "RESOLVED",
+      "resolution": "Model panel copy now states Top 5%, Top 10%, Top 20% validation segments."
+    },
+    {
+      "finding": "Scoring wording narrower than full provenance",
+      "status": "RESOLVED",
+      "resolution": "Scoring currentness panel now includes historical source and demographic source verification statuses."
+    },
+    {
+      "finding": "Audience Explorer privacy boundary not prominent",
+      "status": "RESOLVED",
+      "resolution": "Dedicated privacy notices state aggregate-only behavior and no UI contact PII."
+    },
+    {
+      "finding": "Phase 2 and Phase 6 band definitions can confuse stakeholders",
+      "status": "RESOLVED",
+      "resolution": "Audience Explorer now includes explicit rank-band explanation and Phase 2 versus Phase 6 contract note."
+    },
+    {
+      "finding": "Overview waits on deep reconciliation",
+      "status": "RESOLVED",
+      "resolution": "Summary is available while reconciliation runs independently with status messaging."
+    },
+    {
+      "finding": "Recent model list may cause N+1 detail calls",
+      "status": "PARTIAL",
+      "resolution": "Quality cell caching reduces repeated detail fetches, but per-run detail calls can still occur depending on cache misses."
+    },
+    {
+      "finding": "Frontend tests mostly static/source checks rather than browser E2E",
+      "status": "PARTIAL",
+      "resolution": "Section 1 includes real browser acceptance evidence, while pytest frontend tests remain mostly static contract checks."
+    }
+  ],
+  "section1_boundary_confirmation": {
+    "campaign_write_finalize_export_backend": "NOT_IMPLEMENTED_AND_GATED",
+    "no_activation_or_send_actions": true,
+    "no_persistent_server_side_pii_csv": true,
+    "no_customer_to_person_identity_linking": true
+  },
+  "sanitization": {
+    "contains_pii": false,
+    "contains_raw_sql": false,
+    "contains_stack_traces": false,
+    "contains_local_filesystem_paths": false
+  }
+}

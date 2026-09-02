@@ -40,12 +40,13 @@ def test_phase5_api_surface_includes_scoring_and_step7_navigation_state() -> Non
     assert "/models/{model_run_id}/score" in router_source
     assert "/models/{model_run_id}/scoring-status" in router_source
     assert "/scoring-runs" in router_source
-    assert html.count('class="navigation-item is-disabled"') == 1
+    assert html.count('class="navigation-item is-disabled"') == 0
     assert 'data-view-target="model-training"' in html
     assert 'data-view-target="audience-explorer"' in html
-    assert '<span class="nav-icon" aria-hidden="true">04</span><span>Model Training</span><small>Phase 4</small>' in html
-    assert '<span class="nav-icon" aria-hidden="true">05</span><span>Audience Explorer</span><small>Phase 6</small>' in html
-    assert '<span>Campaigns</span><small>Later phase</small>' in html
+    assert '<span>Historical Analysis</span><small>Phase 2</small>' not in html
+    assert '<span>Model Training &amp; Prospect Scoring</span><small>Phases 4-5</small>' not in html
+    assert '<span>Audience Explorer</span><small>Phase 6</small>' not in html
+    assert '<span>Campaigns</span><small>Phase 7 shell</small>' in html
 
 
 def test_phase3_documentation_records_contract_cli_caveat_and_phase4_boundary() -> None:
@@ -130,7 +131,6 @@ def test_phase5_scope_scan_confirms_campaign_activation_surfaces_absent() -> Non
     for forbidden in (
         "/api/campaigns/export",
         "activation adapter",
-        "csv export",
         "demographic scoring",
     ):
         assert forbidden not in app_source
@@ -138,5 +138,15 @@ def test_phase5_scope_scan_confirms_campaign_activation_surfaces_absent() -> Non
 
     assert 'data-view="audience-explorer"' in html
     assert 'data-view-target="audience-explorer"' in html
-    assert 'data-view="campaigns"' not in html
-    assert 'data-view-target="campaigns"' not in html
+    assert 'data-view="campaigns"' in html
+    assert 'data-view-target="campaigns"' in html
+
+    for activation_forbidden in (
+        "activate campaign",
+        "send campaign",
+        "launch campaign",
+        "/api/campaigns/activate",
+        "/api/campaigns/send",
+    ):
+        assert activation_forbidden not in app_source
+        assert activation_forbidden not in frontend_source

@@ -297,4 +297,7 @@ class HistoricalAnalysisListItemResponse(HistoricalResponseModel):
     positive_customer_count: int = Field(ge=0)
     unlabeled_customer_count: int = Field(ge=0)
     positive_customer_rate: float | None = Field(default=None, ge=0, le=1)
+    is_current: bool = False
+    trainability_status: Literal["CURRENT", "STALE"] = "STALE"
+    trainability_reason: str | None = None
     failure_message: str | None = None
