@@ -104,6 +104,7 @@ STOP/GO: GO
 Status: COMPLETED
 Final E2E: PASS
 Final commit/SHA: completed in final closure step
+FINAL SHA: 808df26ec2d3cc11f9382db1d265840cf2b1b3d9
 Clean tree: completed after final commit
 No regeneration/retraining/rescoring: confirmed in this pass
 No Phase7: confirmed in this pass
