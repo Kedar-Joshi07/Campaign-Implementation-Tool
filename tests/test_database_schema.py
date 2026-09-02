@@ -9,6 +9,8 @@ from app.database.connection import get_connection
 from app.database.schema import (
     AUDIENCE_ANALYTICS_SNAPSHOT_COLUMNS,
     AUDIENCE_RANK_BOUNDARY_COLUMNS,
+    CAMPAIGN_COLUMNS,
+    CAMPAIGN_EXPORT_EVENT_COLUMNS,
     CAMPAIGN_SALES_COLUMNS,
     CREATE_TABLE_STATEMENTS,
     CUSTOMER_COLUMNS,
@@ -16,6 +18,7 @@ from app.database.schema import (
     EXPECTED_TABLES,
     HISTORICAL_ANALYSIS_RUN_COLUMNS,
     MIGRATIONS,
+    PHASE_SEVEN_REQUIRED_INDEX_STATEMENTS,
     PHASE_TWO_REQUIRED_INDEX_STATEMENTS,
     PHASE_SIX_REQUIRED_INDEX_STATEMENTS,
     SAVED_AUDIENCE_COLUMNS,
@@ -290,7 +293,7 @@ def test_populated_version_one_database_migrates_without_phase_one_data_loss(
 
     assert counts_after == counts_before
     assert customer_after == customer_before
-    assert stored_version == "10"
+    assert stored_version == SCHEMA_VERSION
 
 
 def test_historical_analysis_table_columns_constraints_and_indexes(database_path: Path) -> None:
@@ -365,6 +368,30 @@ def test_phase_six_tables_columns_and_indexes_exist(database_path: Path) -> None
     assert set(PHASE_SIX_REQUIRED_INDEX_STATEMENTS) <= existing_indexes
 
 
+def test_phase_seven_tables_columns_and_indexes_exist(database_path: Path) -> None:
+    initialize_database(database_path)
+
+    assert _column_names(database_path, "campaigns") == CAMPAIGN_COLUMNS
+    assert _column_names(database_path, "campaign_export_events") == CAMPAIGN_EXPORT_EVENT_COLUMNS
+
+    with get_connection(database_path) as connection:
+        existing_indexes = {
+            row["name"]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'index'"
+            ).fetchall()
+        }
+        tables = {
+            row["name"]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            ).fetchall()
+        }
+
+    assert set(PHASE_SEVEN_REQUIRED_INDEX_STATEMENTS) <= existing_indexes
+    assert "campaign_members" not in tables
+
+
 def test_failed_migration_rolls_back_schema_and_version(
     database_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -400,7 +427,10 @@ def test_future_schema_version_is_rejected(database_path: Path) -> None:
             "UPDATE app_metadata SET value = '999' WHERE key = 'schema_version'"
         )
 
-    with pytest.raises(UnsupportedSchemaVersionError, match="newer than supported version 10"):
+    with pytest.raises(
+        UnsupportedSchemaVersionError,
+        match=rf"newer than supported version {SCHEMA_VERSION}",
+    ):
         initialize_database(database_path)
 
 
@@ -528,7 +558,7 @@ def test_v9_to_v10_migration_is_additive_and_preserves_existing_data(database_pa
         campaign_sales_count = connection.execute("SELECT COUNT(*) FROM campaign_sales").fetchone()[0]
         demographics_count = connection.execute("SELECT COUNT(*) FROM demographics").fetchone()[0]
 
-    assert stored_version == "10"
+    assert stored_version == SCHEMA_VERSION
     assert customer_count == 1
     assert campaign_sales_count == 1
     assert demographics_count == 1

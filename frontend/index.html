@@ -51,7 +51,7 @@
             <span class="eyebrow eyebrow-on-dark">Status</span>
             <span class="phase-chip">Core capabilities complete</span>
           </div>
-          <p>Phase 7 Campaign Builder shell is available in UI. Backend finalize/export flows remain gated until Section 2.</p>
+          <p>Phase 7 Campaign Builder is enabled with governed draft, finalize, and export-history workflows.</p>
         </div>
       </aside>
 
@@ -985,9 +985,9 @@
                   <p id="saved-audience-stale-message" class="inline-form-error" hidden></p>
                   <div class="analysis-form-actions">
                     <button id="saved-audience-reopen" class="button button-secondary" type="button">Reopen definition</button>
-                    <button id="saved-audience-use-campaign" class="button button-secondary" type="button" disabled aria-describedby="saved-audience-campaign-disabled-help">Use in Campaign (enabled in Section 2)</button>
+                      <button id="saved-audience-use-campaign" class="button button-secondary" type="button" disabled aria-describedby="saved-audience-campaign-disabled-help">Use in Campaign Builder</button>
                   </div>
-                  <p id="saved-audience-campaign-disabled-help" class="panel-note">Campaign handoff remains disabled until Section 2 backend integration.</p>
+                    <p id="saved-audience-campaign-disabled-help" class="panel-note">Campaign handoff is available only for CURRENT saved audiences.</p>
                 </div>
               </aside>
             </div>
@@ -1176,7 +1176,7 @@
 
           <section class="page-intro campaigns-shell">
             <div>
-              <p class="eyebrow">Campaign Execution · Phase 7 shell</p>
+              <p class="eyebrow">Campaign Execution · Phase 7</p>
               <h2 id="campaigns-title">Campaign Builder</h2>
               <p>Build deterministic campaign drafts from current saved audiences, review immutable context, and prepare target-list export workflow.</p>
             </div>
@@ -1185,7 +1185,7 @@
 
           <div class="notice" role="note">
             <span class="notice-icon" aria-hidden="true">i</span>
-            <p>Campaign Builder backend is not enabled yet. Write, finalize, and export actions remain gated until Section 2 integration.</p>
+            <p>Campaign Builder runs on current saved-audience and scoring provenance checks. Stale campaigns are read-only and export-blocked.</p>
           </div>
 
           <div class="notice" role="note">
@@ -1204,7 +1204,7 @@
             <span class="historical-empty-mark is-error" aria-hidden="true">!</span>
             <div>
               <h3>Campaign backend unavailable</h3>
-              <p>Campaign backend endpoints are not enabled in Section 1.</p>
+              <p>Campaign endpoints could not be reached. Retry after backend recovery.</p>
             </div>
           </div>
 
@@ -1301,6 +1301,12 @@
                   <span class="notice-icon" aria-hidden="true">i</span>
                   <p>No PII preview is shown in UI. Contact PII appears only in export stream under strict profile contracts.</p>
                 </div>
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Eligibility gate</p><h4>Currentness and export readiness</h4></div>
+                  <span id="campaign-currentness-badge" class="status-badge is-not-loaded">Not evaluated</span>
+                </div>
+                <p id="campaign-currentness-note" class="panel-note">Open or create a campaign to evaluate currentness and export eligibility.</p>
+                <dl id="campaign-currentness-summary" class="normalized-filter-list"></dl>
                 <div class="form-field checkbox-control" id="campaign-pii-checkbox-wrap">
                   <input id="campaign-pii-ack" type="checkbox" aria-describedby="campaign-pii-ack-copy">
                   <span><strong id="campaign-pii-ack-copy">I understand this target-list export contains contact PII and is intended only for approved POC campaign use.</strong></span>
@@ -1312,7 +1318,7 @@
                   <button id="campaign-finalize" class="button button-primary" type="button" disabled aria-describedby="campaign-action-disabled-help">Finalize Campaign</button>
                   <button id="campaign-export" class="button button-primary" type="button" disabled aria-describedby="campaign-action-disabled-help">Export Target List</button>
                 </div>
-                <p id="campaign-action-disabled-help" class="panel-note">Finalize and export actions are intentionally disabled in Section 1 until Section 2 backend implementation and eligibility checks are complete.</p>
+                <p id="campaign-action-disabled-help" class="panel-note">Finalize and export are governed by campaign status, currentness, and PII acknowledgement.</p>
               </section>
 
               <aside class="panel" aria-labelledby="campaign-sidebar-title">
@@ -1327,15 +1333,37 @@
             </div>
 
             <section class="panel" aria-labelledby="campaign-regions-title">
-              <div class="panel-heading"><div><p class="eyebrow">7-11. Additional regions</p><h3 id="campaign-regions-title">Campaign records and export history shell</h3></div></div>
+              <div class="panel-heading"><div><p class="eyebrow">7-11. Additional regions</p><h3 id="campaign-regions-title">Campaign records and export history</h3></div></div>
               <div class="analysis-visual-grid">
                 <div>
                   <h4>Recent campaigns</h4>
-                  <p class="panel-note">Draft/finalized list will be populated in Section 2.</p>
+                  <p class="panel-note">Open a campaign to review immutable details, currentness, and export readiness.</p>
+                  <div class="table-scroll">
+                    <table aria-label="Recent campaigns">
+                      <thead>
+                        <tr>
+                          <th scope="col">Campaign</th>
+                          <th scope="col">Name</th>
+                          <th scope="col">Status</th>
+                          <th scope="col">Channel</th>
+                          <th scope="col" class="numeric">Selected</th>
+                          <th scope="col">Updated</th>
+                          <th scope="col">Currentness</th>
+                          <th scope="col" aria-label="Action"></th>
+                        </tr>
+                      </thead>
+                      <tbody id="campaign-recent-body">
+                        <tr class="empty-row"><td colspan="8">Recent campaign summaries appear after loading.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
                 <div>
                   <h4>Campaign detail</h4>
-                  <p class="panel-note">Immutable detail snapshot appears after backend integration.</p>
+                  <p class="panel-note">Detail is immutable after finalization. No contact PII is shown in this view.</p>
+                  <dl id="campaign-detail-summary" class="normalized-filter-list">
+                    <div><dt>Campaign</dt><dd>No campaign selected</dd></div>
+                  </dl>
                 </div>
               </div>
               <div class="table-scroll">

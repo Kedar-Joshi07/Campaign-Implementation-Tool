@@ -16,7 +16,7 @@ from app.database.connection import get_connection
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 10
+CURRENT_SCHEMA_VERSION = 11
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -33,6 +33,8 @@ EXPECTED_TABLES = (
     "audience_rank_boundaries",
     "saved_audiences",
     "audience_analytics_snapshots",
+    "campaigns",
+    "campaign_export_events",
 )
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
@@ -196,6 +198,48 @@ AUDIENCE_ANALYTICS_SNAPSHOT_COLUMNS = (
     "historical_positive_profile_json",
     "score_bucket_stats_json",
     "created_at",
+)
+
+CAMPAIGN_COLUMNS = (
+    "campaign_id",
+    "campaign_contract_version",
+    "campaign_name",
+    "description",
+    "channel",
+    "planned_launch_date",
+    "saved_audience_id",
+    "scoring_run_id",
+    "model_run_id",
+    "analysis_run_id",
+    "saved_audience_filter_hash",
+    "saved_audience_selection_json",
+    "saved_audience_resolved_count",
+    "filter_contract_version",
+    "rank_contract_version",
+    "selection_contract_version",
+    "analytics_contract_version",
+    "member_resolution_contract_version",
+    "export_contract_version",
+    "status",
+    "created_at",
+    "updated_at",
+    "finalized_at",
+)
+
+CAMPAIGN_EXPORT_EVENT_COLUMNS = (
+    "export_event_id",
+    "campaign_id",
+    "export_contract_version",
+    "export_profile",
+    "status",
+    "selected_count",
+    "deliverable_count",
+    "undeliverable_count",
+    "row_count",
+    "csv_sha256",
+    "started_at",
+    "completed_at",
+    "safe_error_message",
 )
 
 CUSTOMER_COLUMNS = (
@@ -570,6 +614,29 @@ PHASE_SIX_REQUIRED_INDEX_STATEMENTS = {
     ),
 }
 
+PHASE_SEVEN_REQUIRED_INDEX_STATEMENTS = {
+    "idx_campaigns_newest": (
+        "CREATE INDEX IF NOT EXISTS idx_campaigns_newest "
+        "ON campaigns (created_at DESC, campaign_id DESC)"
+    ),
+    "idx_campaigns_status_newest": (
+        "CREATE INDEX IF NOT EXISTS idx_campaigns_status_newest "
+        "ON campaigns (status, created_at DESC, campaign_id DESC)"
+    ),
+    "idx_campaigns_saved_audience": (
+        "CREATE INDEX IF NOT EXISTS idx_campaigns_saved_audience "
+        "ON campaigns (saved_audience_id, created_at DESC, campaign_id DESC)"
+    ),
+    "idx_campaign_export_events_campaign_started": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_export_events_campaign_started "
+        "ON campaign_export_events (campaign_id, started_at DESC, export_event_id DESC)"
+    ),
+    "idx_campaign_export_events_status_started": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_export_events_status_started "
+        "ON campaign_export_events (status, started_at DESC, export_event_id DESC)"
+    ),
+}
+
 REQUIRED_INDEX_STATEMENTS = {
     **PHASE_ONE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_TWO_REQUIRED_INDEX_STATEMENTS,
@@ -577,6 +644,7 @@ REQUIRED_INDEX_STATEMENTS = {
     **PHASE_FOUR_REQUIRED_INDEX_STATEMENTS,
     **PHASE_FIVE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_SIX_REQUIRED_INDEX_STATEMENTS,
+    **PHASE_SEVEN_REQUIRED_INDEX_STATEMENTS,
 }
 
 
@@ -1768,6 +1836,109 @@ def _migrate_to_version_10(connection: sqlite3.Connection) -> None:
     )
 
 
+def _migrate_to_version_11(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS campaigns (
+            campaign_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            campaign_contract_version TEXT NOT NULL
+                CHECK (length(trim(campaign_contract_version)) BETWEEN 1 AND 24),
+            campaign_name TEXT NOT NULL
+                CHECK (length(trim(campaign_name)) BETWEEN 1 AND 120),
+            description TEXT
+                CHECK (description IS NULL OR length(trim(description)) <= 500),
+            channel TEXT NOT NULL
+                CHECK (channel IN ('EMAIL', 'DIRECT_MAIL')),
+            planned_launch_date TEXT,
+            saved_audience_id INTEGER NOT NULL,
+            scoring_run_id INTEGER NOT NULL,
+            model_run_id INTEGER NOT NULL,
+            analysis_run_id INTEGER NOT NULL,
+            saved_audience_filter_hash TEXT NOT NULL
+                CHECK (length(trim(saved_audience_filter_hash)) = 64),
+            saved_audience_selection_json TEXT NOT NULL
+                CHECK (length(trim(saved_audience_selection_json)) BETWEEN 2 AND 65536),
+            saved_audience_resolved_count INTEGER NOT NULL
+                CHECK (saved_audience_resolved_count >= 1),
+            filter_contract_version TEXT NOT NULL
+                CHECK (length(trim(filter_contract_version)) BETWEEN 1 AND 24),
+            rank_contract_version TEXT NOT NULL
+                CHECK (length(trim(rank_contract_version)) BETWEEN 1 AND 24),
+            selection_contract_version TEXT NOT NULL
+                CHECK (length(trim(selection_contract_version)) BETWEEN 1 AND 24),
+            analytics_contract_version TEXT NOT NULL
+                CHECK (length(trim(analytics_contract_version)) BETWEEN 1 AND 24),
+            member_resolution_contract_version TEXT NOT NULL
+                CHECK (length(trim(member_resolution_contract_version)) BETWEEN 1 AND 24),
+            export_contract_version TEXT NOT NULL
+                CHECK (length(trim(export_contract_version)) BETWEEN 1 AND 24),
+            status TEXT NOT NULL
+                CHECK (status IN ('DRAFT', 'FINALIZED')),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            finalized_at TEXT,
+            FOREIGN KEY (saved_audience_id)
+                REFERENCES saved_audiences (audience_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (scoring_run_id, model_run_id)
+                REFERENCES scoring_runs (scoring_run_id, model_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (analysis_run_id)
+                REFERENCES historical_analysis_runs (analysis_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            CHECK (scoring_run_id > 0),
+            CHECK (model_run_id > 0),
+            CHECK (analysis_run_id > 0),
+            CHECK (
+                (status = 'DRAFT' AND finalized_at IS NULL)
+                OR (status = 'FINALIZED' AND finalized_at IS NOT NULL)
+            )
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS campaign_export_events (
+            export_event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            campaign_id INTEGER NOT NULL,
+            export_contract_version TEXT NOT NULL
+                CHECK (length(trim(export_contract_version)) BETWEEN 1 AND 24),
+            export_profile TEXT NOT NULL
+                CHECK (export_profile IN ('EMAIL_CONTACT_V1', 'DIRECT_MAIL_CONTACT_V1')),
+            status TEXT NOT NULL
+                CHECK (status IN ('STARTED', 'COMPLETED', 'FAILED', 'ABORTED')),
+            selected_count INTEGER NOT NULL
+                CHECK (selected_count >= 0),
+            deliverable_count INTEGER NOT NULL
+                CHECK (deliverable_count >= 0),
+            undeliverable_count INTEGER NOT NULL
+                CHECK (undeliverable_count >= 0),
+            row_count INTEGER NOT NULL
+                CHECK (row_count >= 0),
+            csv_sha256 TEXT
+                CHECK (csv_sha256 IS NULL OR length(trim(csv_sha256)) = 64),
+            started_at TEXT NOT NULL,
+            completed_at TEXT,
+            safe_error_message TEXT
+                CHECK (safe_error_message IS NULL OR length(trim(safe_error_message)) <= 512),
+            FOREIGN KEY (campaign_id)
+                REFERENCES campaigns (campaign_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            CHECK (deliverable_count + undeliverable_count = selected_count),
+            CHECK (row_count = deliverable_count),
+            CHECK (
+                (status = 'STARTED' AND completed_at IS NULL)
+                OR (status != 'STARTED' AND completed_at IS NOT NULL)
+            )
+        )
+        """
+    )
+
+    for statement in PHASE_SEVEN_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -1778,6 +1949,7 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     8: _migrate_to_version_8,
     9: _migrate_to_version_9,
     10: _migrate_to_version_10,
+    11: _migrate_to_version_11,
 }
 
 

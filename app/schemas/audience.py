@@ -52,6 +52,9 @@ class AudiencePreparationRunSummaryResponse(AudienceApiResponseModel):
     currentness_issues: list[str] = Field(default_factory=list, max_length=5)
     rank_contract_version: str | None = None
     boundary_count: int = Field(ge=0, le=100)
+    analytics_prepared: bool | None = None
+    analytics_contract_version: str | None = None
+    analytics_snapshot_created_at: datetime | None = None
 
 
 class AudienceFilterOptionsCategoryValueResponse(AudienceApiResponseModel):

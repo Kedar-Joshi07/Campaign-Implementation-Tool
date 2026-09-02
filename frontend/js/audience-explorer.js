@@ -18,6 +18,7 @@ const TERMINAL_JOB_STATUSES = new Set(["COMPLETED", "FAILED"]);
 const NOT_CANONICAL_MESSAGE = "not current for its model and source provenance";
 const NOT_PREPARED_MESSAGE = "Audience rank boundaries are not prepared";
 const ACTIVE_COMPUTE_CONFLICT_MESSAGE = "A compute job is already active";
+const CAMPAIGN_PREFILL_AUDIENCE_STORAGE_KEY = "campaign_prefill_audience_id";
 
 const API_PATHS = {
   runs: "/api/audience/runs?limit=20&offset=0",
@@ -115,6 +116,10 @@ function setAudienceAnnouncement(text) {
 
 function setLoadMoreStatus(text) {
   document.querySelector("#audience-load-more-status").textContent = text;
+}
+
+function setUseCampaignButtonEnabled(enabled) {
+  document.querySelector("#saved-audience-use-campaign").disabled = !enabled;
 }
 
 function showFormError(message) {
@@ -286,7 +291,9 @@ function setReadOnlyMode(enabled, message = "") {
   document.querySelector("#audience-filter-reset").disabled = false;
   document.querySelector("#saved-audiences-refresh").disabled = false;
   document.querySelector("#saved-audience-reopen").disabled = false;
-  document.querySelector("#saved-audience-use-campaign").disabled = true;
+  setUseCampaignButtonEnabled(
+    !enabled && selectedSavedAudienceDetail?.currentness?.is_current === true,
+  );
 
   const staleMessage = document.querySelector("#saved-audience-stale-message");
   if (enabled) {
@@ -1043,6 +1050,7 @@ function resetWorkspaceData() {
   document.querySelector("#audience-profile-summary").textContent = "";
   document.querySelector("#saved-audience-detail").hidden = true;
   selectedSavedAudienceDetail = null;
+  setUseCampaignButtonEnabled(false);
   document.querySelector("#audience-save-status").textContent = "Not saved.";
 }
 
@@ -1138,10 +1146,35 @@ function renderSavedAudienceDetail(detail) {
   const staleMessage = document.querySelector("#saved-audience-stale-message");
   if (detail.currentness?.is_current) {
     staleMessage.hidden = true;
+    setUseCampaignButtonEnabled(true);
   } else {
     staleMessage.textContent = detail.currentness.issues?.[0] || "Saved audience is stale.";
     staleMessage.hidden = false;
+    setUseCampaignButtonEnabled(false);
   }
+}
+
+function useSavedAudienceInCampaignBuilder() {
+  hideFormError();
+  hideSaveError();
+
+  if (!selectedSavedAudienceDetail) {
+    showSaveError("Select a saved audience before opening Campaign Builder.");
+    return;
+  }
+  if (selectedSavedAudienceDetail.currentness?.is_current !== true) {
+    showSaveError("Only CURRENT saved audiences can be used in Campaign Builder.");
+    return;
+  }
+
+  const audienceId = selectedSavedAudienceDetail.audience_id;
+  window.sessionStorage.setItem(CAMPAIGN_PREFILL_AUDIENCE_STORAGE_KEY, String(audienceId));
+  window.dispatchEvent(
+    new CustomEvent("campaign-prefill-audience", {
+      detail: { audienceId },
+    }),
+  );
+  window.location.hash = "campaigns";
 }
 
 async function viewSavedAudience(audienceId, button) {
@@ -1474,6 +1507,7 @@ export function initializeAudienceExplorer() {
     await loadSavedAudiences(true);
   });
   document.querySelector("#saved-audience-reopen").addEventListener("click", reopenSavedAudience);
+  document.querySelector("#saved-audience-use-campaign").addEventListener("click", useSavedAudienceInCampaignBuilder);
   document.querySelector("#audience-profile-dimension").addEventListener("change", () => {
     activeProfileDimension = document.querySelector("#audience-profile-dimension").value;
     if (activeProfile) {

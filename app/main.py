@@ -15,6 +15,7 @@ from app.config import APP_ENV, APP_NAME, APP_VERSION, DATABASE_PATH
 from app.jobs.executor import shutdown_model_training_executor
 from app.logging_config import configure_logging
 from app.routers.data import router as data_router
+from app.routers.campaigns import router as campaign_router
 from app.routers.health import router as health_router
 from app.routers.historical import router as historical_router
 from app.routers.models import router as model_router
@@ -70,6 +71,7 @@ app.include_router(data_router)
 app.include_router(reference_router)
 app.include_router(historical_router)
 app.include_router(model_router)
+app.include_router(campaign_router)
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 

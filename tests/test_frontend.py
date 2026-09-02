@@ -312,7 +312,7 @@ def test_audience_explorer_workspace_contains_required_sections_and_controls(
     assert "Selected vs Historical Positives" in html
     assert "Aggregate demographic comparison only. No prospect is matched to a historical customer." in html
     assert "Percentile 1 = top 1%. Decile 1 = top 10%. Propensity score is a relative model affinity score, not a purchase probability." in html
-    assert "Use in Campaign (enabled in Section 2)" in html
+    assert "Use in Campaign Builder" in html
     assert "Contact PII is excluded here and is only available through the explicit Phase 7 finalized-campaign export contract." in html
 
 
@@ -405,28 +405,41 @@ def test_campaign_builder_shell_contains_required_regions_and_controls(
         "campaign-review-draft",
         "campaign-finalize",
         "campaign-export",
+        "campaign-currentness-badge",
+        "campaign-currentness-summary",
+        "campaign-recent-body",
+        "campaign-detail-summary",
         "campaign-export-profile-fields",
         "campaign-export-history-body",
     ):
         assert f'id="{control_id}"' in html
 
-    assert "Campaign Builder backend is not enabled yet." in html
+    assert "Campaign Builder runs on current saved-audience and scoring provenance checks." in html
     assert "This POC stops at target-list export and does not activate or send campaigns." in html
     assert "Only CURRENT — usable in Campaign Builder saved audiences are selectable." in html
-    assert "Finalize and export actions are intentionally disabled in Section 1 until Section 2 backend implementation and eligibility checks are complete." in html
+    assert "Finalize and export are governed by campaign status, currentness, and PII acknowledgement." in html
     assert "I understand this target-list export contains contact PII and is intended only for approved POC campaign use." in html
 
 
-def test_campaign_builder_script_enforces_section1_gating_and_export_profiles(
+def test_campaign_builder_script_uses_campaign_api_workflow_and_export_profiles(
     client: TestClient,
 ) -> None:
     script = client.get("/static/js/campaigns.js").text
 
-    assert 'audiences: "/api/audiences?limit=20&offset=0"' in script
+    assert 'options: "/api/campaigns/options"' in script
+    assert 'campaigns: "/api/campaigns?limit=20&offset=0"' in script
+    assert 'createCampaign: "/api/campaigns"' in script
+    assert 'campaignDetail: (campaignId) => `/api/campaigns/${campaignId}`' in script
+    assert 'campaignFinalize: (campaignId) => `/api/campaigns/${campaignId}/finalize`' in script
+    assert 'campaignExports: (campaignId) => `/api/campaigns/${campaignId}/exports?limit=50`' in script
+    assert 'campaignExportCsv: (campaignId) => `/api/campaigns/${campaignId}/export.csv?acknowledge_pii=true`' in script
     assert 'audienceDetail: (audienceId) => `/api/audiences/${audienceId}`' in script
     assert "EMAIL_CONTACT_V1" in script
     assert "DIRECT_MAIL_CONTACT_V1" in script
     assert "No arbitrary field picker. Restricted contract only." in script
-    assert "This action is feature-gated in Section 1. Backend create/finalize/export is enabled in Section 2." in script
-    assert "CURRENT - usable in Campaign Builder" in script
-    assert "STALE - historical/read-only" in script
+    assert "Campaign Builder state: ${state}." in script
+    assert "campaign-prefill-audience" in script
+    assert "triggerDownload(API_PATHS.campaignExportCsv(campaignId), filename)" in script
+    assert "startExportHistoryPolling(campaignId)" in script
+    assert '"Currentness", detail.currentness?.is_current ? "CURRENT" : "STALE"' in script
+    assert "Campaign is current for immutable audience and source/model provenance." in script

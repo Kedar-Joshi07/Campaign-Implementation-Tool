@@ -1,0 +1,261 @@
+{
+  "generated_at_utc": "2026-09-02T13:45:00Z",
+  "phase": "7",
+  "section": "2",
+  "step": 11,
+  "scope": "phase7_final_acceptance_and_freeze",
+  "required_starting_shas": {
+    "phase6_closure_sha": "0b22fe60b52d4a9b15c2748ae2ef16e9a56241b0",
+    "phase6_substantive_parent_sha": "808df26ec2d3cc11f9382db1d265840cf2b1b3d9",
+    "phase7_step1_baseline_sha": "dda2ac69540ad96896d379f83da2d338a1292854",
+    "current_head_sha": "dda2ac69540ad96896d379f83da2d338a1292854"
+  },
+  "step11_gates": {
+    "pip_check": {
+      "status": "PASS",
+      "summary": "No broken requirements found."
+    },
+    "pytest": {
+      "status": "PASS",
+      "summary": "451 passed",
+      "duration_seconds": 792.62
+    },
+    "compileall": {
+      "status": "PASS",
+      "summary": "python -m compileall -q app scripts tests completed with no syntax errors"
+    },
+    "git_diff_check": {
+      "status": "PASS",
+      "summary": "No whitespace/blocking diff errors; line-ending warnings only"
+    },
+    "validate_data_json": {
+      "status": "PASS",
+      "overall_status": "OK",
+      "customers_count": 125000,
+      "campaign_sales_count": 570000,
+      "demographics_count": 5000000,
+      "total_query_seconds": 19.376127
+    }
+  },
+  "schema_and_tables": {
+    "schema_version": "11",
+    "campaign_tables_present": {
+      "campaigns": true,
+      "campaign_export_events": true
+    },
+    "campaign_member_like_tables": [],
+    "campaigns_columns": [
+      "campaign_id",
+      "campaign_contract_version",
+      "campaign_name",
+      "description",
+      "channel",
+      "planned_launch_date",
+      "saved_audience_id",
+      "scoring_run_id",
+      "model_run_id",
+      "analysis_run_id",
+      "saved_audience_filter_hash",
+      "saved_audience_selection_json",
+      "saved_audience_resolved_count",
+      "filter_contract_version",
+      "rank_contract_version",
+      "selection_contract_version",
+      "analytics_contract_version",
+      "member_resolution_contract_version",
+      "export_contract_version",
+      "status",
+      "created_at",
+      "updated_at",
+      "finalized_at"
+    ],
+    "campaign_export_events_columns": [
+      "export_event_id",
+      "campaign_id",
+      "export_contract_version",
+      "export_profile",
+      "status",
+      "selected_count",
+      "deliverable_count",
+      "undeliverable_count",
+      "row_count",
+      "csv_sha256",
+      "started_at",
+      "completed_at",
+      "safe_error_message"
+    ]
+  },
+  "frozen_contracts": {
+    "campaign_contract_version": "1",
+    "campaign_export_contract_version": "1",
+    "campaign_member_resolution_contract_version": "1",
+    "feature_contract_version": "1",
+    "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+    "primary_model_role": "BAGGING_PU",
+    "supported_channels": [
+      "EMAIL",
+      "DIRECT_MAIL"
+    ],
+    "profiles": {
+      "EMAIL": "EMAIL_CONTACT_V1",
+      "DIRECT_MAIL": "DIRECT_MAIL_CONTACT_V1"
+    },
+    "allowed_export_fields": {
+      "EMAIL_CONTACT_V1": [
+        "person_id",
+        "propensity_score",
+        "percentile_bucket",
+        "decile",
+        "rank_band",
+        "first_name",
+        "last_name",
+        "email"
+      ],
+      "DIRECT_MAIL_CONTACT_V1": [
+        "person_id",
+        "propensity_score",
+        "percentile_bucket",
+        "decile",
+        "rank_band",
+        "first_name",
+        "last_name",
+        "address_line_1",
+        "address_line_2",
+        "city",
+        "state",
+        "postal_code"
+      ]
+    },
+    "prohibited_export_fields": [
+      "ethnicity",
+      "religion",
+      "occupation_industry",
+      "family_yearly_income",
+      "number_of_children_in_family",
+      "number_of_adults_in_family",
+      "customer_id",
+      "phone_number"
+    ]
+  },
+  "step10_real_5m_validation": {
+    "evidence_file": "docs/evidence/phase7_real_5m_acceptance.json",
+    "no_data_regeneration": true,
+    "no_model_retraining_or_rescoring": true,
+    "canonical_scoring_run_id": 8,
+    "canonical_model_run_id": 8,
+    "audience_preparation": {
+      "prepared": true,
+      "boundary_count": 100,
+      "rank_contract_version": "1"
+    },
+    "saved_audiences": {
+      "small_topn_1k": {
+        "audience_id": 22,
+        "resolved_count": 1000
+      },
+      "medium_topn_50k": {
+        "audience_id": 23,
+        "resolved_count": 50000
+      },
+      "large_top_decile": {
+        "audience_id": 24,
+        "resolved_count": 500000
+      },
+      "demographic_all_matching": {
+        "audience_id": 25,
+        "resolved_count": 416275
+      }
+    },
+    "email_e2e": {
+      "campaign_id": 1,
+      "runs": 2,
+      "deliverable_count": 1000,
+      "row_count": 1000,
+      "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8",
+      "reproducible_checksum": true
+    },
+    "direct_mail_e2e": {
+      "campaign_id": 2,
+      "runs": 2,
+      "deliverable_count": 50000,
+      "row_count": 50000,
+      "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d",
+      "reproducible_checksum": true
+    },
+    "stale_source_drift_negative": {
+      "campaign_currentness_is_current": false,
+      "export_blocked_status": 409,
+      "blocked_reason": "saved audience: Saved scoring run provenance is stale or invalid."
+    },
+    "quality_checks": {
+      "forbidden_fields_absent": true,
+      "no_duplicate_person_id": true,
+      "deliverability_reconciliation_verified": true
+    }
+  },
+  "browser_e2e": {
+    "status": "PASS",
+    "flow": [
+      "Audience Explorer loaded canonical run #8 with CURRENT source verification",
+      "CURRENT saved audience #25 detail exposed Use in Campaign Builder",
+      "Use in Campaign Builder handoff opened Campaigns screen with audience preselected",
+      "Builder step flow completed: Choose Audience -> Campaign Details -> Review -> Finalize / Export",
+      "Draft campaign #3 created in DRAFT status",
+      "Campaign #3 finalized and became immutable",
+      "PII acknowledgement gate required before export button enabled",
+      "Export started from UI and completed as event #5",
+      "Export history displayed completed DIRECT_MAIL_CONTACT_V1 event with checksum"
+    ],
+    "campaign_3": {
+      "campaign_id": 3,
+      "campaign_name": "Phase7 Browser E2E Campaign",
+      "status": "FINALIZED",
+      "saved_audience_id": 25,
+      "saved_audience_resolved_count": 416275,
+      "currentness": {
+        "is_current": true,
+        "ready_for_finalize": false,
+        "ready_for_export": true,
+        "issues": []
+      },
+      "export_event": {
+        "export_event_id": 5,
+        "status": "COMPLETED",
+        "export_profile": "DIRECT_MAIL_CONTACT_V1",
+        "selected_count": 416275,
+        "deliverable_count": 416275,
+        "undeliverable_count": 0,
+        "row_count": 416275,
+        "csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab",
+        "started_at": "2026-09-02T13:06:09Z",
+        "completed_at": "2026-09-02T13:20:15Z"
+      }
+    }
+  },
+  "security_quality_and_scope_checks": {
+    "csv_injection_hardening": "PASS (_csv_safe_value prefixes formula-leading text with apostrophe)",
+    "no_pii_in_campaign_detail_contract": true,
+    "no_persistent_server_csv_files": true,
+    "export_audit_is_metadata_only": true,
+    "app_route_scan_for_activation_or_send": "No activation/send platform endpoints found in app route code scan",
+    "frontend_scope_statement": "Campaign UI explicitly states target-list export only; no activation/send workflow",
+    "line_ending_warnings_present": true
+  },
+  "phase1_to_phase6_regression": {
+    "full_suite_pytest_passed": true,
+    "full_suite_pytest_count": 451,
+    "frozen_feature_sha_preserved": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+    "canonical_scoring_and_analytics_preconditions_still_true": true
+  },
+  "constraints_confirmation": {
+    "no_data_regeneration": true,
+    "no_retraining": true,
+    "no_rescoring": true,
+    "no_real_activation_send": true,
+    "quality_over_arbitrary_timing": true
+  },
+  "final_decision": {
+    "status": "GO",
+    "reason": "All Step 11 gates passed; schema/contracts validated; deterministic exports reproducible; stale export correctly blocked; browser end-to-end workflow completed within frozen Phase 7 scope."
+  }
+}

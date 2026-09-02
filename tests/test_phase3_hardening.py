@@ -128,6 +128,9 @@ def test_phase5_scope_scan_confirms_campaign_activation_surfaces_absent() -> Non
         encoding="utf-8"
     ).casefold()
 
+    assert "/campaigns/{campaign_id}/export.csv" in app_source
+    assert "campaignexportcsv" in frontend_source
+
     for forbidden in (
         "/api/campaigns/export",
         "activation adapter",

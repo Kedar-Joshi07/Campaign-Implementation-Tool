@@ -1,0 +1,244 @@
+{
+  "generated_at": "2026-09-02T13:54:38Z",
+  "scope": "phase7_step10_real_5m_end_to_end_validation",
+  "database": {
+    "path": "data\\campaign_poc.db",
+    "schema_version": "11",
+    "no_data_regeneration": true,
+    "no_model_retraining_or_rescoring": true
+  },
+  "canonical_context": {
+    "scoring_run_id": 8,
+    "model_run_id": 8,
+    "audience_preparation": {
+      "prepared": true,
+      "boundary_count": 100,
+      "rank_contract_version": "1",
+      "ready_for_current_audience_actions": true
+    }
+  },
+  "saved_audience_cases": {
+    "small_topn_1k": {
+      "audience_id": 26,
+      "resolved_count": 1000,
+      "selection_mode": "TOP_N",
+      "target_count": 1000,
+      "is_current": true,
+      "create_seconds": 5.246529
+    },
+    "medium_topn_50k": {
+      "audience_id": 27,
+      "resolved_count": 50000,
+      "selection_mode": "TOP_N",
+      "target_count": 50000,
+      "is_current": true,
+      "create_seconds": 17.122027
+    },
+    "large_top_decile": {
+      "audience_id": 28,
+      "resolved_count": 500000,
+      "selection_mode": "ALL_MATCHING",
+      "target_count": null,
+      "is_current": true,
+      "create_seconds": 64.138495
+    },
+    "demographic_all_matching": {
+      "audience_id": 29,
+      "resolved_count": 416275,
+      "selection_mode": "ALL_MATCHING",
+      "target_count": null,
+      "is_current": true,
+      "create_seconds": 31.030396
+    }
+  },
+  "email_e2e": {
+    "campaign_id": 4,
+    "create_seconds": 8.335663,
+    "finalize_seconds": 7.171025,
+    "runs": [
+      {
+        "run": 1,
+        "export_seconds": 7.695332,
+        "throughput_rows_per_second": 129.949,
+        "event": {
+          "export_event_id": 6,
+          "status": "COMPLETED",
+          "selected_count": 1000,
+          "deliverable_count": 1000,
+          "undeliverable_count": 0,
+          "row_count": 1000,
+          "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8",
+          "started_at": "2026-09-02T13:52:25Z",
+          "completed_at": "2026-09-02T13:52:30Z"
+        },
+        "csv_analysis": {
+          "columns": [
+            "person_id",
+            "propensity_score",
+            "percentile_bucket",
+            "decile",
+            "rank_band",
+            "first_name",
+            "last_name",
+            "email"
+          ],
+          "row_count": 1000,
+          "duplicate_person_id_count": 0,
+          "person_id_order_sha256": "597d0b77ac79278bc74e29a65b90eab941c0ca07709442def15e307c6c0e602a",
+          "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8"
+        }
+      },
+      {
+        "run": 2,
+        "export_seconds": 8.444111,
+        "throughput_rows_per_second": 118.426,
+        "event": {
+          "export_event_id": 7,
+          "status": "COMPLETED",
+          "selected_count": 1000,
+          "deliverable_count": 1000,
+          "undeliverable_count": 0,
+          "row_count": 1000,
+          "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8",
+          "started_at": "2026-09-02T13:52:34Z",
+          "completed_at": "2026-09-02T13:52:39Z"
+        },
+        "csv_analysis": {
+          "columns": [
+            "person_id",
+            "propensity_score",
+            "percentile_bucket",
+            "decile",
+            "rank_band",
+            "first_name",
+            "last_name",
+            "email"
+          ],
+          "row_count": 1000,
+          "duplicate_person_id_count": 0,
+          "person_id_order_sha256": "597d0b77ac79278bc74e29a65b90eab941c0ca07709442def15e307c6c0e602a",
+          "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8"
+        }
+      }
+    ],
+    "reproducibility": {
+      "runs_compared": 2,
+      "selected_order_identical": true,
+      "deliverable_count_identical": true,
+      "csv_checksum_identical": true
+    }
+  },
+  "direct_mail_e2e": {
+    "campaign_id": 5,
+    "create_seconds": 8.447566,
+    "finalize_seconds": 7.879218,
+    "runs": [
+      {
+        "run": 1,
+        "export_seconds": 30.409271,
+        "throughput_rows_per_second": 1644.235,
+        "event": {
+          "export_event_id": 8,
+          "status": "COMPLETED",
+          "selected_count": 50000,
+          "deliverable_count": 50000,
+          "undeliverable_count": 0,
+          "row_count": 50000,
+          "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d",
+          "started_at": "2026-09-02T13:52:59Z",
+          "completed_at": "2026-09-02T13:53:26Z"
+        },
+        "csv_analysis": {
+          "columns": [
+            "person_id",
+            "propensity_score",
+            "percentile_bucket",
+            "decile",
+            "rank_band",
+            "first_name",
+            "last_name",
+            "address_line_1",
+            "address_line_2",
+            "city",
+            "state",
+            "postal_code"
+          ],
+          "row_count": 50000,
+          "duplicate_person_id_count": 0,
+          "person_id_order_sha256": "21e5b34707df1ba742c73919bb73cf78941ec70ebcd21e402685e7a0bd8188f5",
+          "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d"
+        }
+      },
+      {
+        "run": 2,
+        "export_seconds": 29.621019,
+        "throughput_rows_per_second": 1687.991,
+        "event": {
+          "export_event_id": 9,
+          "status": "COMPLETED",
+          "selected_count": 50000,
+          "deliverable_count": 50000,
+          "undeliverable_count": 0,
+          "row_count": 50000,
+          "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d",
+          "started_at": "2026-09-02T13:53:31Z",
+          "completed_at": "2026-09-02T13:53:56Z"
+        },
+        "csv_analysis": {
+          "columns": [
+            "person_id",
+            "propensity_score",
+            "percentile_bucket",
+            "decile",
+            "rank_band",
+            "first_name",
+            "last_name",
+            "address_line_1",
+            "address_line_2",
+            "city",
+            "state",
+            "postal_code"
+          ],
+          "row_count": 50000,
+          "duplicate_person_id_count": 0,
+          "person_id_order_sha256": "21e5b34707df1ba742c73919bb73cf78941ec70ebcd21e402685e7a0bd8188f5",
+          "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d"
+        }
+      }
+    ],
+    "reproducibility": {
+      "runs_compared": 2,
+      "selected_order_identical": true,
+      "deliverable_count_identical": true,
+      "csv_checksum_identical": true
+    }
+  },
+  "stale_source_drift_on_db_copy": {
+    "copy_database_path": "C:\\Users\\KEDAR~1.JOS\\AppData\\Local\\Temp\\phase7_step10_eutxqlnn\\campaign_poc_drift_copy.db",
+    "campaign_currentness_is_current": false,
+    "campaign_currentness_issues": [
+      "saved audience: Saved scoring run provenance is stale or invalid.",
+      "saved audience: provenance: current demographics import_id does not match completed scoring provenance",
+      "saved audience: provenance: current demographics checksum does not match completed scoring provenance",
+      "saved audience: provenance: scoring run is not the current canonical run for this model",
+      "scoring: current demographics import_id does not match completed scoring provenance",
+      "scoring: current demographics checksum does not match completed scoring provenance",
+      "scoring: scoring run is not the current canonical run for this model",
+      "analytics: Demographic source provenance is stale for this scoring run.",
+      "analytics: current demographics import_id does not match completed scoring provenance",
+      "analytics: current demographics checksum does not match completed scoring provenance",
+      "analytics: scoring run is not the current canonical run for this model"
+    ],
+    "export_blocked_status": 409,
+    "export_blocked_detail": "saved audience: Saved scoring run provenance is stale or invalid."
+  },
+  "quality_checks": {
+    "forbidden_fields_absent_in_export_headers": true,
+    "no_duplicate_person_id_in_export_rows": true,
+    "deliverability_reconciliation_verified": true
+  },
+  "browser_e2e": {
+    "status": "captured_separately",
+    "note": "Interactive browser flow evidence captured in phase7_final_acceptance_and_freeze.json"
+  }
+}

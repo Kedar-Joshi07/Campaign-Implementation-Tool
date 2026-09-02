@@ -1434,6 +1434,9 @@ def test_phase_boundary_scan_forbidden_surfaces_absent() -> None:
         path.read_text(encoding="utf-8") for path in root.joinpath("frontend", "js").glob("*.js")
     ).casefold()
 
+    assert "/campaigns/{campaign_id}/export.csv" in app_source
+    assert "campaignexportcsv" in frontend_source
+
     for forbidden in (
         "/api/campaigns/export",
         "activation adapter",

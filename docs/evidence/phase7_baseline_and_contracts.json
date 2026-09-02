@@ -1,0 +1,73 @@
+{
+  "phase": "7",
+  "section": "2",
+  "step": 1,
+  "captured_at_utc": "2026-09-02T11:19:08Z",
+  "baseline_sha": "dda2ac69540ad96896d379f83da2d338a1292854",
+  "gates": {
+    "pip_check": "passed",
+    "pytest": {
+      "status": "passed",
+      "summary": "445 passed",
+      "duration_seconds": 762.15
+    },
+    "compileall": "passed",
+    "git_diff_check": "passed",
+    "validate_data_json": {
+      "overall_status": "OK",
+      "customers_count": 125000,
+      "campaign_sales_count": 570000,
+      "demographics_count": 5000000
+    }
+  },
+  "frozen_contracts": {
+    "campaign_contract_version": "1",
+    "campaign_export_contract_version": "1",
+    "campaign_member_resolution_contract_version": "1",
+    "feature_contract_version": "1",
+    "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+    "campaign_states": [
+      "DRAFT",
+      "FINALIZED"
+    ],
+    "channels": [
+      "EMAIL",
+      "DIRECT_MAIL"
+    ],
+    "profiles": [
+      "EMAIL_CONTACT_V1",
+      "DIRECT_MAIL_CONTACT_V1"
+    ],
+    "excluded": [
+      "ACTIVE",
+      "SENT",
+      "LAUNCHED",
+      "activation",
+      "external platform integration",
+      "campaign members table",
+      "customer_id/person_id linkage",
+      "sampling",
+      "approximate counts",
+      "arbitrary PII picker"
+    ]
+  },
+  "phase6_chain_revalidation": {
+    "latest_completed_model_run_id": 8,
+    "canonical_scoring_run_id": 8,
+    "scoring_currentness": {
+      "is_canonical": true,
+      "demographic_source_verified": true,
+      "historical_source_verified": true,
+      "issues": []
+    },
+    "rank_boundary_count": 100,
+    "analytics_currentness": {
+      "analytics_contract_version": "1",
+      "analytics_prepared": true,
+      "is_canonical": true,
+      "source_verified": true,
+      "issues": [],
+      "snapshot_created_at": "2026-09-01T04:38:06Z"
+    }
+  }
+}
