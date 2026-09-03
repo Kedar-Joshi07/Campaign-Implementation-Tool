@@ -13,6 +13,7 @@ from app.schemas.audience import SavedAudienceListItemResponse
 CampaignStatus = Literal["DRAFT", "FINALIZED"]
 CampaignChannel = Literal["EMAIL", "DIRECT_MAIL"]
 CampaignExportStatus = Literal["STARTED", "COMPLETED", "FAILED", "ABORTED"]
+CampaignExportCompletionCurrentnessState = Literal["CURRENT", "STALE", "UNKNOWN"]
 
 
 class CampaignApiResponseModel(BaseModel):
@@ -173,6 +174,7 @@ class CampaignExportEventResponse(CampaignApiResponseModel):
     export_event_id: int = Field(gt=0)
     campaign_id: int = Field(gt=0)
     export_contract_version: str
+    export_snapshot_contract_version: str
     export_profile: str
     status: CampaignExportStatus
     selected_count: int = Field(ge=0)
@@ -180,6 +182,9 @@ class CampaignExportEventResponse(CampaignApiResponseModel):
     undeliverable_count: int = Field(ge=0)
     row_count: int = Field(ge=0)
     csv_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    start_provenance_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    source_changed_during_export: bool = False
+    completion_currentness_state: CampaignExportCompletionCurrentnessState | None = None
     started_at: datetime
     completed_at: datetime | None = None
     safe_error_message: str | None = None
@@ -192,6 +197,7 @@ __all__ = (
     "CampaignCurrentnessResponse",
     "CampaignDetailResponse",
     "CampaignExportEventResponse",
+    "CampaignExportCompletionCurrentnessState",
     "CampaignFinalizeResponse",
     "CampaignOptionsResponse",
     "CampaignStatus",

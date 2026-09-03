@@ -20,6 +20,7 @@ from app.routers.health import router as health_router
 from app.routers.historical import router as historical_router
 from app.routers.models import router as model_router
 from app.routers.reference import router as reference_router
+from app.services.campaign_service import reconcile_stale_campaign_export_events
 from app.services.model_job_service import reconcile_stale_model_training_jobs
 
 
@@ -46,6 +47,14 @@ async def lifespan(_: FastAPI):
         )
     except Exception:
         logger.exception("Compute startup reconciliation failed")
+    try:
+        stale_campaign_exports = reconcile_stale_campaign_export_events(DATABASE_PATH)
+        logger.info(
+            "Campaign export startup reconciliation completed | reconciled_stale_exports=%s",
+            stale_campaign_exports,
+        )
+    except Exception:
+        logger.exception("Campaign export startup reconciliation failed")
     try:
         yield
     finally:

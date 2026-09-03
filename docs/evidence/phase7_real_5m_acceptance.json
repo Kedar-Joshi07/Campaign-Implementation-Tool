@@ -1,6 +1,8 @@
 {
   "generated_at": "2026-09-02T13:54:38Z",
   "scope": "phase7_step10_real_5m_end_to_end_validation",
+  "status": "historical_superseded",
+  "superseded_by": "docs/evidence/phase7_final_export_hardening_5m.json",
   "database": {
     "path": "data\\campaign_poc.db",
     "schema_version": "11",
@@ -214,7 +216,7 @@
     }
   },
   "stale_source_drift_on_db_copy": {
-    "copy_database_path": "C:\\Users\\KEDAR~1.JOS\\AppData\\Local\\Temp\\phase7_step10_eutxqlnn\\campaign_poc_drift_copy.db",
+    "copy_database_path": "TEMP_PATH_REDACTED/campaign_poc_drift_copy.db",
     "campaign_currentness_is_current": false,
     "campaign_currentness_issues": [
       "saved audience: Saved scoring run provenance is stale or invalid.",

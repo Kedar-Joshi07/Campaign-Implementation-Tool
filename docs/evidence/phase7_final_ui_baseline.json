@@ -2,35 +2,35 @@
   "phase": "phase7",
   "section": "section1_ui_finalization",
   "step": "ui_1_baseline_and_exactness_audit",
-  "starting_head": "4748d9e7aa837ad2e66876c20714d576d3ed1f31",
-  "captured_at": "2026-09-03T06:55:45Z",
+  "required_starting_head": "4748d9e7aa837ad2e66876c20714d576d3ed1f31",
+  "execution_head": "f1525c6f65f237529b2ddcdab0b51e9abeb00578",
+  "captured_at": "2026-09-03T10:30:37Z",
   "baseline_gates": {
-    "git_rev_parse_head": "4748d9e7aa837ad2e66876c20714d576d3ed1f31",
     "git_status_short": "pass",
     "pip_check": "pass",
     "pytest": {
       "status": "pass",
-      "summary": "451 passed in 704.42s"
+      "summary": "457 passed in 1232.61s"
     },
     "compileall": "pass",
-    "git_diff_check": "pass",
+    "git_diff_check": "pass_with_line_ending_warnings_only",
     "validate_data_json": {
       "status": "pass",
       "overall_status": "OK",
       "customers": 125000,
       "campaign_sales": 570000,
-      "demographics": 5000000
+      "demographics": 5000000,
+      "total_query_seconds": 55.232031
     }
   },
   "formatter_audit": {
-    "legacy_shared_formatter": {
+    "helpers_present": {
       "file": "frontend/js/ui.js",
-      "symbol": "formatNumber",
-      "behavior": "compact 2-decimal formatter with K/M/B suffixes",
-      "risk_examples": [
-        "ID-like values can render as #8.00",
-        "Exact counts can render as 416.28K instead of 416,275",
-        "Population counts can render as 5.00M instead of 5,000,000"
+      "symbols": [
+        "formatId",
+        "formatExactInteger",
+        "formatCompactNumber",
+        "formatDecimal"
       ]
     },
     "classification": {
@@ -50,26 +50,15 @@
     }
   },
   "browser_contract_audit": {
-    "age_min_max": {
-      "before": "min=0 with no upper bound",
-      "required": "min=18 max=100"
-    },
-    "family_member_count_min_max": {
-      "before": "min=0",
-      "required": "min=1"
-    },
-    "score_bounds": "already constrained to 0..1",
-    "top_percentile_bounds": "already constrained to 1..100",
-    "top_n_minimum": "already constrained to min=1"
+    "age_min_max": "min=18 max=100",
+    "family_member_count_min_max": "min=1",
+    "score_bounds": "0..1",
+    "top_percentile_bounds": "1..100",
+    "top_n_minimum": "min=1"
   },
   "stale_wording_audit": {
-    "found": [
-      "Phase 7 shell label in Campaigns navigation",
-      "Loading Campaign Builder shell copy",
-      "States covered in shell copy",
-      "Export history metadata appears after Section 2 backend integration"
-    ],
-    "required_direction": "Replace shell/gated wording with implemented backend wording while preserving no-activation scope"
+    "stale_shell_or_feature_gate_wording_present": false,
+    "poc_scope_statement_present": true
   },
   "status": "baseline_complete"
 }

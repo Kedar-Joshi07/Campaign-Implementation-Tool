@@ -16,7 +16,7 @@ from app.database.connection import get_connection
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 11
+CURRENT_SCHEMA_VERSION = 12
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -240,6 +240,10 @@ CAMPAIGN_EXPORT_EVENT_COLUMNS = (
     "started_at",
     "completed_at",
     "safe_error_message",
+    "export_snapshot_contract_version",
+    "start_provenance_sha256",
+    "source_changed_during_export",
+    "completion_currentness_state",
 )
 
 CUSTOMER_COLUMNS = (
@@ -1939,6 +1943,79 @@ def _migrate_to_version_11(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_12(connection: sqlite3.Connection) -> None:
+    if not _table_exists(connection, "campaign_export_events"):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 12 because campaign_export_events does not exist."
+        )
+
+    existing_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(campaign_export_events)").fetchall()
+    }
+
+    if "export_snapshot_contract_version" not in existing_columns:
+        connection.execute(
+            """
+            ALTER TABLE campaign_export_events
+            ADD COLUMN export_snapshot_contract_version TEXT NOT NULL DEFAULT '1'
+                CHECK (length(trim(export_snapshot_contract_version)) BETWEEN 1 AND 24)
+            """
+        )
+    if "start_provenance_sha256" not in existing_columns:
+        connection.execute(
+            """
+            ALTER TABLE campaign_export_events
+            ADD COLUMN start_provenance_sha256 TEXT
+                CHECK (
+                    start_provenance_sha256 IS NULL
+                    OR length(trim(start_provenance_sha256)) = 64
+                )
+            """
+        )
+    if "source_changed_during_export" not in existing_columns:
+        connection.execute(
+            """
+            ALTER TABLE campaign_export_events
+            ADD COLUMN source_changed_during_export INTEGER NOT NULL DEFAULT 0
+                CHECK (source_changed_during_export IN (0, 1))
+            """
+        )
+    if "completion_currentness_state" not in existing_columns:
+        connection.execute(
+            """
+            ALTER TABLE campaign_export_events
+            ADD COLUMN completion_currentness_state TEXT
+                CHECK (
+                    completion_currentness_state IS NULL
+                    OR completion_currentness_state IN ('CURRENT', 'STALE', 'UNKNOWN')
+                )
+            """
+        )
+
+    connection.execute(
+        """
+        UPDATE campaign_export_events
+        SET
+            export_snapshot_contract_version = COALESCE(NULLIF(trim(export_snapshot_contract_version), ''), '1'),
+            start_provenance_sha256 = CASE
+                WHEN start_provenance_sha256 IS NULL OR trim(start_provenance_sha256) = '' THEN NULL
+                ELSE lower(trim(start_provenance_sha256))
+            END,
+            source_changed_during_export = CASE
+                WHEN source_changed_during_export IN (0, 1) THEN source_changed_during_export
+                ELSE 0
+            END,
+            completion_currentness_state = CASE
+                WHEN completion_currentness_state IN ('CURRENT', 'STALE', 'UNKNOWN')
+                    THEN completion_currentness_state
+                WHEN status = 'COMPLETED' THEN 'CURRENT'
+                ELSE 'UNKNOWN'
+            END
+        """
+    )
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -1950,6 +2027,7 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     9: _migrate_to_version_9,
     10: _migrate_to_version_10,
     11: _migrate_to_version_11,
+    12: _migrate_to_version_12,
 }
 
 

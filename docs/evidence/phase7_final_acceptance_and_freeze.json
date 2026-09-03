@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-09-02T13:45:00Z",
+  "generated_at_utc": "2026-09-03T09:45:00Z",
   "phase": "7",
   "section": "2",
   "step": 11,
@@ -8,7 +8,7 @@
     "phase6_closure_sha": "0b22fe60b52d4a9b15c2748ae2ef16e9a56241b0",
     "phase6_substantive_parent_sha": "808df26ec2d3cc11f9382db1d265840cf2b1b3d9",
     "phase7_step1_baseline_sha": "dda2ac69540ad96896d379f83da2d338a1292854",
-    "current_head_sha": "dda2ac69540ad96896d379f83da2d338a1292854"
+    "current_head_sha": "f1525c6f65f237529b2ddcdab0b51e9abeb00578"
   },
   "step11_gates": {
     "pip_check": {
@@ -17,28 +17,26 @@
     },
     "pytest": {
       "status": "PASS",
-      "summary": "451 passed",
-      "duration_seconds": 792.62
+      "summary": "457 passed"
     },
     "compileall": {
       "status": "PASS",
-      "summary": "python -m compileall -q app scripts tests completed with no syntax errors"
+      "summary": "python -m compileall -q app scripts tests completed with no syntax errors (COMPILEALL_OK)."
     },
     "git_diff_check": {
       "status": "PASS",
-      "summary": "No whitespace/blocking diff errors; line-ending warnings only"
+      "summary": "No blocking whitespace errors; line-ending warnings only."
     },
     "validate_data_json": {
       "status": "PASS",
       "overall_status": "OK",
       "customers_count": 125000,
       "campaign_sales_count": 570000,
-      "demographics_count": 5000000,
-      "total_query_seconds": 19.376127
+      "demographics_count": 5000000
     }
   },
   "schema_and_tables": {
-    "schema_version": "11",
+    "schema_version": "12",
     "campaign_tables_present": {
       "campaigns": true,
       "campaign_export_events": true
@@ -73,6 +71,7 @@
       "export_event_id",
       "campaign_id",
       "export_contract_version",
+      "export_snapshot_contract_version",
       "export_profile",
       "status",
       "selected_count",
@@ -80,6 +79,9 @@
       "undeliverable_count",
       "row_count",
       "csv_sha256",
+      "start_provenance_sha256",
+      "source_changed_during_export",
+      "completion_currentness_state",
       "started_at",
       "completed_at",
       "safe_error_message"
@@ -88,6 +90,7 @@
   "frozen_contracts": {
     "campaign_contract_version": "1",
     "campaign_export_contract_version": "1",
+    "campaign_export_snapshot_contract_version": "1",
     "campaign_member_resolution_contract_version": "1",
     "feature_contract_version": "1",
     "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
@@ -138,7 +141,8 @@
     ]
   },
   "step10_real_5m_validation": {
-    "evidence_file": "docs/evidence/phase7_real_5m_acceptance.json",
+    "historical_evidence_file": "docs/evidence/phase7_real_5m_acceptance.json",
+    "final_evidence_file": "docs/evidence/phase7_final_export_hardening_5m.json",
     "no_data_regeneration": true,
     "no_model_retraining_or_rescoring": true,
     "canonical_scoring_run_id": 8,
@@ -150,24 +154,24 @@
     },
     "saved_audiences": {
       "small_topn_1k": {
-        "audience_id": 22,
+        "audience_id": 33,
         "resolved_count": 1000
       },
       "medium_topn_50k": {
-        "audience_id": 23,
+        "audience_id": 34,
         "resolved_count": 50000
       },
       "large_top_decile": {
-        "audience_id": 24,
+        "audience_id": 36,
         "resolved_count": 500000
       },
       "demographic_all_matching": {
-        "audience_id": 25,
+        "audience_id": 35,
         "resolved_count": 416275
       }
     },
     "email_e2e": {
-      "campaign_id": 1,
+      "campaign_id": 9,
       "runs": 2,
       "deliverable_count": 1000,
       "row_count": 1000,
@@ -175,7 +179,7 @@
       "reproducible_checksum": true
     },
     "direct_mail_e2e": {
-      "campaign_id": 2,
+      "campaign_id": 10,
       "runs": 2,
       "deliverable_count": 50000,
       "row_count": 50000,
@@ -196,39 +200,41 @@
   "browser_e2e": {
     "status": "PASS",
     "flow": [
-      "Audience Explorer loaded canonical run #8 with CURRENT source verification",
-      "CURRENT saved audience #25 detail exposed Use in Campaign Builder",
-      "Use in Campaign Builder handoff opened Campaigns screen with audience preselected",
-      "Builder step flow completed: Choose Audience -> Campaign Details -> Review -> Finalize / Export",
-      "Draft campaign #3 created in DRAFT status",
-      "Campaign #3 finalized and became immutable",
-      "PII acknowledgement gate required before export button enabled",
-      "Export started from UI and completed as event #5",
-      "Export history displayed completed DIRECT_MAIL_CONTACT_V1 event with checksum"
+      "Campaigns route opened after backend ready state reached.",
+      "Recent campaigns list opened latest finalized campaign #13.",
+      "Currentness badge showed CURRENT and status FINALIZED.",
+      "PII acknowledgement was initially unchecked and export button disabled.",
+      "Checking PII acknowledgement enabled Export Target List.",
+      "Export was launched and reached terminal COMPLETED state.",
+      "Export history refresh showed EMAIL_CONTACT_V1 with deterministic checksum and counts."
     ],
-    "campaign_3": {
-      "campaign_id": 3,
-      "campaign_name": "Phase7 Browser E2E Campaign",
+    "campaign_13": {
+      "campaign_id": 13,
+      "campaign_name": "H8 Browser E2E Campaign",
       "status": "FINALIZED",
-      "saved_audience_id": 25,
-      "saved_audience_resolved_count": 416275,
+      "saved_audience_id": 33,
+      "saved_audience_resolved_count": 1000,
       "currentness": {
         "is_current": true,
         "ready_for_finalize": false,
         "ready_for_export": true,
         "issues": []
       },
+      "pii_ack_required_before_export": true,
       "export_event": {
-        "export_event_id": 5,
+        "export_event_id": 20,
         "status": "COMPLETED",
-        "export_profile": "DIRECT_MAIL_CONTACT_V1",
-        "selected_count": 416275,
-        "deliverable_count": 416275,
+        "export_profile": "EMAIL_CONTACT_V1",
+        "selected_count": 1000,
+        "deliverable_count": 1000,
         "undeliverable_count": 0,
-        "row_count": 416275,
-        "csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab",
-        "started_at": "2026-09-02T13:06:09Z",
-        "completed_at": "2026-09-02T13:20:15Z"
+        "row_count": 1000,
+        "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8",
+        "start_provenance_sha256": "21980f9a2cc65f87d6759284f8acb9d3788d18e435d25392dbf8160bf8c12894",
+        "source_changed_during_export": false,
+        "completion_currentness_state": "CURRENT",
+        "started_at": "2026-09-03T09:39:27Z",
+        "completed_at": "2026-09-03T09:39:30Z"
       }
     }
   },
@@ -237,13 +243,13 @@
     "no_pii_in_campaign_detail_contract": true,
     "no_persistent_server_csv_files": true,
     "export_audit_is_metadata_only": true,
-    "app_route_scan_for_activation_or_send": "No activation/send platform endpoints found in app route code scan",
-    "frontend_scope_statement": "Campaign UI explicitly states target-list export only; no activation/send workflow",
+    "app_route_scan_for_activation_or_send": "No activation/send platform endpoints found in app route code scan.",
+    "frontend_scope_statement": "Campaign UI explicitly states target-list export only; no activation/send workflow.",
     "line_ending_warnings_present": true
   },
   "phase1_to_phase6_regression": {
     "full_suite_pytest_passed": true,
-    "full_suite_pytest_count": 451,
+    "full_suite_pytest_count": 457,
     "frozen_feature_sha_preserved": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
     "canonical_scoring_and_analytics_preconditions_still_true": true
   },
@@ -256,6 +262,6 @@
   },
   "final_decision": {
     "status": "GO",
-    "reason": "All Step 11 gates passed; schema/contracts validated; deterministic exports reproducible; stale export correctly blocked; browser end-to-end workflow completed within frozen Phase 7 scope."
+    "reason": "All Step 11 gates passed, schema moved to v12 with additive export-event provenance fields, deterministic export equivalence held, stale export blocking remained intact, and browser E2E export flow completed within Phase 7 scope."
   }
 }

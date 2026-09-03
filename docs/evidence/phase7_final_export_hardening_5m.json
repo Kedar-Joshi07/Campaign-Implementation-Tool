@@ -1,0 +1,553 @@
+{
+  "generated_at": "2026-09-03T09:16:37Z",
+  "scope": "phase7_final_export_hardening_5m",
+  "database": {
+    "database_name": "campaign_poc.db",
+    "schema_version": "12",
+    "no_data_regeneration": true,
+    "no_model_retraining": true,
+    "no_model_rescoring": true
+  },
+  "baseline_reference": {
+    "file": "docs\\evidence\\phase7_export_profiling_baseline.json",
+    "generated_at": "2026-09-03T08:40:57Z"
+  },
+  "canonical_context": {
+    "scoring_run_id": 8,
+    "model_run_id": 8
+  },
+  "audience_preparation": {
+    "prepared": true,
+    "analytics_prepared": true,
+    "boundary_count": 100
+  },
+  "saved_audience_cases": {
+    "email_top_1k": {
+      "audience_id": 33,
+      "resolved_count": 1000,
+      "selection_mode": "TOP_N",
+      "target_count": 1000,
+      "create_seconds": 3.697848
+    },
+    "direct_mail_top_50k": {
+      "audience_id": 34,
+      "resolved_count": 50000,
+      "selection_mode": "TOP_N",
+      "target_count": 50000,
+      "create_seconds": 21.155686
+    },
+    "direct_mail_filtered_all_matching": {
+      "audience_id": 35,
+      "resolved_count": 416275,
+      "selection_mode": "ALL_MATCHING",
+      "target_count": null,
+      "create_seconds": 52.046228
+    },
+    "top_decile_all_matching": {
+      "audience_id": 36,
+      "resolved_count": 500000,
+      "selection_mode": "ALL_MATCHING",
+      "target_count": null,
+      "create_seconds": 179.16686
+    }
+  },
+  "benchmark_cases": {
+    "EMAIL_TOP_1K": {
+      "case_name": "EMAIL_TOP_1K",
+      "channel": "EMAIL",
+      "campaign_id": 9,
+      "create_seconds": 5.803668,
+      "finalize_seconds": 5.501427,
+      "runs": [
+        {
+          "run": 1,
+          "export_seconds": 6.034234,
+          "throughput_rows_per_second": 165.721,
+          "event": {
+            "export_event_id": 13,
+            "status": "COMPLETED",
+            "selected_count": 1000,
+            "deliverable_count": 1000,
+            "undeliverable_count": 0,
+            "row_count": 1000,
+            "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8",
+            "export_snapshot_contract_version": "1",
+            "start_provenance_sha256": "5e77fe3db7a5d0538ef0234f5fb1d03d53900a100587fbcdde83bcdee0b07bbb",
+            "source_changed_during_export": false,
+            "completion_currentness_state": "CURRENT",
+            "started_at": "2026-09-03T09:05:49Z",
+            "completed_at": "2026-09-03T09:05:52Z"
+          },
+          "csv": {
+            "headers": [
+              "person_id",
+              "propensity_score",
+              "percentile_bucket",
+              "decile",
+              "rank_band",
+              "first_name",
+              "last_name",
+              "email"
+            ],
+            "row_count": 1000,
+            "person_order_sha256": "597d0b77ac79278bc74e29a65b90eab941c0ca07709442def15e307c6c0e602a",
+            "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8"
+          }
+        },
+        {
+          "run": 2,
+          "export_seconds": 6.549444,
+          "throughput_rows_per_second": 152.685,
+          "event": {
+            "export_event_id": 14,
+            "status": "COMPLETED",
+            "selected_count": 1000,
+            "deliverable_count": 1000,
+            "undeliverable_count": 0,
+            "row_count": 1000,
+            "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8",
+            "export_snapshot_contract_version": "1",
+            "start_provenance_sha256": "5e77fe3db7a5d0538ef0234f5fb1d03d53900a100587fbcdde83bcdee0b07bbb",
+            "source_changed_during_export": false,
+            "completion_currentness_state": "CURRENT",
+            "started_at": "2026-09-03T09:05:56Z",
+            "completed_at": "2026-09-03T09:05:59Z"
+          },
+          "csv": {
+            "headers": [
+              "person_id",
+              "propensity_score",
+              "percentile_bucket",
+              "decile",
+              "rank_band",
+              "first_name",
+              "last_name",
+              "email"
+            ],
+            "row_count": 1000,
+            "person_order_sha256": "597d0b77ac79278bc74e29a65b90eab941c0ca07709442def15e307c6c0e602a",
+            "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8"
+          }
+        }
+      ],
+      "reproducibility": {
+        "runs_compared": 2,
+        "selected_count_identical": true,
+        "deliverable_count_identical": true,
+        "person_order_sha256_identical": true,
+        "csv_sha256_identical": true
+      }
+    },
+    "DIRECT_MAIL_TOP_50K": {
+      "case_name": "DIRECT_MAIL_TOP_50K",
+      "channel": "DIRECT_MAIL",
+      "campaign_id": 10,
+      "create_seconds": 6.40867,
+      "finalize_seconds": 6.056945,
+      "runs": [
+        {
+          "run": 1,
+          "export_seconds": 15.968641,
+          "throughput_rows_per_second": 3131.137,
+          "event": {
+            "export_event_id": 15,
+            "status": "COMPLETED",
+            "selected_count": 50000,
+            "deliverable_count": 50000,
+            "undeliverable_count": 0,
+            "row_count": 50000,
+            "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d",
+            "export_snapshot_contract_version": "1",
+            "start_provenance_sha256": "17752c91f62ee3e6bf8cbe30b0077ad1539191818610bb801f9e84ef16336757",
+            "source_changed_during_export": false,
+            "completion_currentness_state": "CURRENT",
+            "started_at": "2026-09-03T09:06:15Z",
+            "completed_at": "2026-09-03T09:06:28Z"
+          },
+          "csv": {
+            "headers": [
+              "person_id",
+              "propensity_score",
+              "percentile_bucket",
+              "decile",
+              "rank_band",
+              "first_name",
+              "last_name",
+              "address_line_1",
+              "address_line_2",
+              "city",
+              "state",
+              "postal_code"
+            ],
+            "row_count": 50000,
+            "person_order_sha256": "21e5b34707df1ba742c73919bb73cf78941ec70ebcd21e402685e7a0bd8188f5",
+            "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d"
+          }
+        },
+        {
+          "run": 2,
+          "export_seconds": 10.532496,
+          "throughput_rows_per_second": 4747.213,
+          "event": {
+            "export_event_id": 16,
+            "status": "COMPLETED",
+            "selected_count": 50000,
+            "deliverable_count": 50000,
+            "undeliverable_count": 0,
+            "row_count": 50000,
+            "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d",
+            "export_snapshot_contract_version": "1",
+            "start_provenance_sha256": "17752c91f62ee3e6bf8cbe30b0077ad1539191818610bb801f9e84ef16336757",
+            "source_changed_during_export": false,
+            "completion_currentness_state": "CURRENT",
+            "started_at": "2026-09-03T09:06:32Z",
+            "completed_at": "2026-09-03T09:06:39Z"
+          },
+          "csv": {
+            "headers": [
+              "person_id",
+              "propensity_score",
+              "percentile_bucket",
+              "decile",
+              "rank_band",
+              "first_name",
+              "last_name",
+              "address_line_1",
+              "address_line_2",
+              "city",
+              "state",
+              "postal_code"
+            ],
+            "row_count": 50000,
+            "person_order_sha256": "21e5b34707df1ba742c73919bb73cf78941ec70ebcd21e402685e7a0bd8188f5",
+            "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d"
+          }
+        }
+      ],
+      "reproducibility": {
+        "runs_compared": 2,
+        "selected_count_identical": true,
+        "deliverable_count_identical": true,
+        "person_order_sha256_identical": true,
+        "csv_sha256_identical": true
+      }
+    },
+    "DIRECT_MAIL_FILTERED_ALL_MATCHING": {
+      "case_name": "DIRECT_MAIL_FILTERED_ALL_MATCHING",
+      "channel": "DIRECT_MAIL",
+      "campaign_id": 11,
+      "create_seconds": 6.825486,
+      "finalize_seconds": 7.420502,
+      "runs": [
+        {
+          "run": 1,
+          "export_seconds": 172.488632,
+          "throughput_rows_per_second": 2413.347,
+          "event": {
+            "export_event_id": 17,
+            "status": "COMPLETED",
+            "selected_count": 416275,
+            "deliverable_count": 416275,
+            "undeliverable_count": 0,
+            "row_count": 416275,
+            "csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab",
+            "export_snapshot_contract_version": "1",
+            "start_provenance_sha256": "f42de1fb1b5ca6ef4271446b7d188d755cba9f2cd19201f4eecf76a01f7a9a80",
+            "source_changed_during_export": false,
+            "completion_currentness_state": "CURRENT",
+            "started_at": "2026-09-03T09:06:57Z",
+            "completed_at": "2026-09-03T09:09:46Z"
+          },
+          "csv": {
+            "headers": [
+              "person_id",
+              "propensity_score",
+              "percentile_bucket",
+              "decile",
+              "rank_band",
+              "first_name",
+              "last_name",
+              "address_line_1",
+              "address_line_2",
+              "city",
+              "state",
+              "postal_code"
+            ],
+            "row_count": 416275,
+            "person_order_sha256": "d7c719b417f57db5761253aa423db545d912d9d2e3958c94ebb40f521775bc06",
+            "csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab"
+          }
+        },
+        {
+          "run": 2,
+          "export_seconds": 138.386951,
+          "throughput_rows_per_second": 3008.051,
+          "event": {
+            "export_event_id": 18,
+            "status": "COMPLETED",
+            "selected_count": 416275,
+            "deliverable_count": 416275,
+            "undeliverable_count": 0,
+            "row_count": 416275,
+            "csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab",
+            "export_snapshot_contract_version": "1",
+            "start_provenance_sha256": "f42de1fb1b5ca6ef4271446b7d188d755cba9f2cd19201f4eecf76a01f7a9a80",
+            "source_changed_during_export": false,
+            "completion_currentness_state": "CURRENT",
+            "started_at": "2026-09-03T09:09:50Z",
+            "completed_at": "2026-09-03T09:12:06Z"
+          },
+          "csv": {
+            "headers": [
+              "person_id",
+              "propensity_score",
+              "percentile_bucket",
+              "decile",
+              "rank_band",
+              "first_name",
+              "last_name",
+              "address_line_1",
+              "address_line_2",
+              "city",
+              "state",
+              "postal_code"
+            ],
+            "row_count": 416275,
+            "person_order_sha256": "d7c719b417f57db5761253aa423db545d912d9d2e3958c94ebb40f521775bc06",
+            "csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab"
+          }
+        }
+      ],
+      "reproducibility": {
+        "runs_compared": 2,
+        "selected_count_identical": true,
+        "deliverable_count_identical": true,
+        "person_order_sha256_identical": true,
+        "csv_sha256_identical": true
+      }
+    },
+    "TOP_DECILE_ALL_MATCHING": {
+      "case_name": "TOP_DECILE_ALL_MATCHING",
+      "channel": "DIRECT_MAIL",
+      "campaign_id": 12,
+      "create_seconds": 3.494032,
+      "finalize_seconds": 3.535777,
+      "runs": [
+        {
+          "run": 1,
+          "export_seconds": 31.397867,
+          "throughput_rows_per_second": 15924.649,
+          "event": {
+            "export_event_id": 19,
+            "status": "COMPLETED",
+            "selected_count": 500000,
+            "deliverable_count": 500000,
+            "undeliverable_count": 0,
+            "row_count": 500000,
+            "csv_sha256": "c965c74ae37096a7fba7fd409140ec031249973c3d536ed11746a205d95aeea2",
+            "export_snapshot_contract_version": "1",
+            "start_provenance_sha256": "6ae817292c2cc76be7b6e7230128fae8aa5d3c0fc19402a005213c31b4616edc",
+            "source_changed_during_export": false,
+            "completion_currentness_state": "CURRENT",
+            "started_at": "2026-09-03T09:12:17Z",
+            "completed_at": "2026-09-03T09:12:46Z"
+          },
+          "csv": {
+            "headers": [
+              "person_id",
+              "propensity_score",
+              "percentile_bucket",
+              "decile",
+              "rank_band",
+              "first_name",
+              "last_name",
+              "address_line_1",
+              "address_line_2",
+              "city",
+              "state",
+              "postal_code"
+            ],
+            "row_count": 500000,
+            "person_order_sha256": "ff12d9d77e5060595c55c5f2d011439e68fe7d10c6bc8fac57cfd0b6b637c660",
+            "csv_sha256": "c965c74ae37096a7fba7fd409140ec031249973c3d536ed11746a205d95aeea2"
+          }
+        }
+      ],
+      "reproducibility": {
+        "runs_compared": 1,
+        "selected_count_identical": true,
+        "deliverable_count_identical": true,
+        "person_order_sha256_identical": true,
+        "csv_sha256_identical": true
+      }
+    },
+    "DIRECT_MAIL_TOP_10K_UNDELIVERABLE_HEAVY_DB_COPY": {
+      "temporary_db_copy": true,
+      "copy_db_name": "campaign_poc_undeliverable_copy.db",
+      "saved_audience_id": 37,
+      "saved_resolved_count": 10000,
+      "result": {
+        "case_name": "DIRECT_MAIL_TOP_10K_UNDELIVERABLE_HEAVY",
+        "channel": "DIRECT_MAIL",
+        "campaign_id": 13,
+        "create_seconds": 7.021225,
+        "finalize_seconds": 7.488215,
+        "runs": [
+          {
+            "run": 1,
+            "export_seconds": 7.68666,
+            "throughput_rows_per_second": 130.096,
+            "event": {
+              "export_event_id": 20,
+              "status": "COMPLETED",
+              "selected_count": 10000,
+              "deliverable_count": 1000,
+              "undeliverable_count": 9000,
+              "row_count": 1000,
+              "csv_sha256": "0d6d22abe29c2d7ddc05a5438ebbed0659dbfa5077981e5a13d79f92e8d8dd02",
+              "export_snapshot_contract_version": "1",
+              "start_provenance_sha256": "509267f8c0d8b01272143415a4ff7a1fe9b72c1f30528af7ae1c7a0641673096",
+              "source_changed_during_export": false,
+              "completion_currentness_state": "CURRENT",
+              "started_at": "2026-09-03T09:16:33Z",
+              "completed_at": "2026-09-03T09:16:37Z"
+            },
+            "csv": {
+              "headers": [
+                "person_id",
+                "propensity_score",
+                "percentile_bucket",
+                "decile",
+                "rank_band",
+                "first_name",
+                "last_name",
+                "address_line_1",
+                "address_line_2",
+                "city",
+                "state",
+                "postal_code"
+              ],
+              "row_count": 1000,
+              "person_order_sha256": "a07dc879e634c71b87d2bb869d7922c433adc2fc511a63d7dd9f9f664f4f6c2e",
+              "csv_sha256": "0d6d22abe29c2d7ddc05a5438ebbed0659dbfa5077981e5a13d79f92e8d8dd02"
+            }
+          }
+        ],
+        "reproducibility": {
+          "runs_compared": 1,
+          "selected_count_identical": true,
+          "deliverable_count_identical": true,
+          "person_order_sha256_identical": true,
+          "csv_sha256_identical": true
+        }
+      }
+    }
+  },
+  "pipeline_profiles": {
+    "EMAIL_TOP_1K": {
+      "query_seconds": 0.05001,
+      "deliverability_seconds": 0.001824,
+      "csv_encoding_seconds": 0.009109,
+      "selected_count": 1000,
+      "deliverable_count": 1000,
+      "undeliverable_count": 0,
+      "row_count": 1000,
+      "chunk_count": 1,
+      "peak_chunk_rows": 1000,
+      "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8"
+    },
+    "DIRECT_MAIL_TOP_50K": {
+      "query_seconds": 2.779568,
+      "deliverability_seconds": 0.063356,
+      "csv_encoding_seconds": 0.55941,
+      "selected_count": 50000,
+      "deliverable_count": 50000,
+      "undeliverable_count": 0,
+      "row_count": 50000,
+      "chunk_count": 2,
+      "peak_chunk_rows": 25000,
+      "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d"
+    },
+    "DIRECT_MAIL_FILTERED_ALL_MATCHING": {
+      "query_seconds": 178.03857,
+      "deliverability_seconds": 0.511969,
+      "csv_encoding_seconds": 4.578615,
+      "selected_count": 416275,
+      "deliverable_count": 416275,
+      "undeliverable_count": 0,
+      "row_count": 416275,
+      "chunk_count": 17,
+      "peak_chunk_rows": 25000,
+      "csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab"
+    }
+  },
+  "selection_query_plans": {
+    "EMAIL_TOP_1K": [
+      "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
+      "SEARCH d USING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
+    ],
+    "DIRECT_MAIL_TOP_50K": [
+      "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
+      "SEARCH d USING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
+    ],
+    "DIRECT_MAIL_FILTERED_ALL_MATCHING": [
+      "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
+      "SEARCH d USING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
+    ]
+  },
+  "baseline_equivalence": {
+    "EMAIL_TOP_1K": {
+      "selected_count_identical": true,
+      "deliverable_count_identical": true,
+      "undeliverable_count_identical": true,
+      "row_count_identical": true,
+      "person_order_sha256_identical": true,
+      "csv_sha256_identical": true,
+      "headers_identical": true,
+      "baseline_csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8",
+      "optimized_csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8"
+    },
+    "DIRECT_MAIL_TOP_50K": {
+      "selected_count_identical": true,
+      "deliverable_count_identical": true,
+      "undeliverable_count_identical": true,
+      "row_count_identical": true,
+      "person_order_sha256_identical": true,
+      "csv_sha256_identical": true,
+      "headers_identical": true,
+      "baseline_csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d",
+      "optimized_csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d"
+    },
+    "DIRECT_MAIL_FILTERED_ALL_MATCHING": {
+      "selected_count_identical": true,
+      "deliverable_count_identical": true,
+      "undeliverable_count_identical": true,
+      "row_count_identical": true,
+      "person_order_sha256_identical": true,
+      "csv_sha256_identical": true,
+      "headers_identical": true,
+      "baseline_csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab",
+      "optimized_csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab"
+    }
+  },
+  "performance_analysis": {
+    "dominant_cost_component": "query_seconds",
+    "large_case_cost_components_seconds": {
+      "query_seconds": 178.03857,
+      "deliverability_seconds": 0.511969,
+      "csv_encoding_seconds": 4.578615
+    },
+    "architecture_after": [
+      "Single ordered SELECT cursor per export with one demographics join.",
+      "Fetchmany chunk streaming over one SQLite read snapshot transaction.",
+      "Bounded aggregate status updates for long-running STARTED exports.",
+      "Snapshot provenance token and completion currentness state captured in export events."
+    ],
+    "no_additional_indexes_added": true
+  },
+  "hardening_contracts": {
+    "snapshot_contract_version": "1",
+    "source_changed_during_export_recorded": true,
+    "future_stale_export_blocked_by_currentness_gate": true
+  }
+}

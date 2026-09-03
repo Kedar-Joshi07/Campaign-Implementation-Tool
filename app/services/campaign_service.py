@@ -23,18 +23,19 @@ from app.repositories.campaign_export_repository import (
     CampaignExportNotFoundError,
     CampaignExportRepository,
     CampaignExportValidationError,
+    EXPORT_CURRENTNESS_STATE_CURRENT,
+    EXPORT_CURRENTNESS_STATE_STALE,
+    EXPORT_CURRENTNESS_STATE_UNKNOWN,
+    EXPORT_RECOVERY_INTERRUPTED_MESSAGE,
 )
 from app.repositories.campaign_repository import (
     CampaignNotFoundError,
     CampaignRepository,
     CampaignValidationError,
 )
-from app.repositories.saved_audience_repository import SavedAudienceRepository
-from app.repositories.scoring_repository import ScoringRepository
 from app.services.audience_preparation_service import (
     AUDIENCE_ANALYTICS_CONTRACT_VERSION,
     classify_decile,
-    classify_percentile_bucket,
     validate_audience_analytics_snapshot_currentness,
 )
 from app.services.audience_query_service import (
@@ -80,7 +81,10 @@ MAXIMUM_CAMPAIGN_LIST_LIMIT = 100
 DEFAULT_EXPORT_EVENT_LIST_LIMIT = 50
 MAXIMUM_EXPORT_EVENT_LIST_LIMIT = 200
 MEMBER_RESOLUTION_CHUNK_SIZE = 25_000
+EXPORT_PROGRESS_UPDATE_CHUNK_INTERVAL = 3
 MAX_CAMPAIGN_ISSUES = 12
+CAMPAIGN_EXPORT_SNAPSHOT_CONTRACT_VERSION = "1"
+CAMPAIGN_EXPORT_RECOVERY_THRESHOLD_SECONDS = 900
 
 CAMPAIGN_NOT_FOUND_MESSAGE = "The requested campaign was not found."
 CAMPAIGN_IMMUTABLE_MESSAGE = "FINALIZED campaigns are immutable."
@@ -279,6 +283,17 @@ def _filter_hash_from_payload(filters_payload: dict[str, Any]) -> str:
         separators=(",", ":"),
     )
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _provenance_sha256(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=True,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _validate_list_bounds(*, limit: int, offset: int, maximum_limit: int) -> tuple[int, int]:
@@ -804,6 +819,7 @@ def list_campaign_export_events(
             "export_event_id": int(row["export_event_id"]),
             "campaign_id": int(row["campaign_id"]),
             "export_contract_version": str(row["export_contract_version"]),
+            "export_snapshot_contract_version": str(row["export_snapshot_contract_version"]),
             "export_profile": str(row["export_profile"]),
             "status": str(row["status"]),
             "selected_count": int(row["selected_count"]),
@@ -811,6 +827,9 @@ def list_campaign_export_events(
             "undeliverable_count": int(row["undeliverable_count"]),
             "row_count": int(row["row_count"]),
             "csv_sha256": row.get("csv_sha256"),
+            "start_provenance_sha256": row.get("start_provenance_sha256"),
+            "source_changed_during_export": bool(row.get("source_changed_during_export")),
+            "completion_currentness_state": row.get("completion_currentness_state"),
             "started_at": row["started_at"],
             "completed_at": row.get("completed_at"),
             "safe_error_message": row.get("safe_error_message"),
@@ -819,11 +838,56 @@ def list_campaign_export_events(
     ]
 
 
+def reconcile_stale_campaign_export_events(database_path: str | Path) -> int:
+    path = initialize_database(database_path)
+    repository = CampaignExportRepository(path)
+
+    now = datetime.now(timezone.utc)
+    stale_cutoff = now.timestamp() - CAMPAIGN_EXPORT_RECOVERY_THRESHOLD_SECONDS
+    stale_cutoff_iso = datetime.fromtimestamp(stale_cutoff, tz=timezone.utc).isoformat(timespec="seconds").replace(
+        "+00:00",
+        "Z",
+    )
+    reconciled_at = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+    try:
+        return repository.reconcile_stale_started_events(
+            stale_started_at_max=stale_cutoff_iso,
+            reconciled_at=reconciled_at,
+            safe_error_message=EXPORT_RECOVERY_INTERRUPTED_MESSAGE,
+        )
+    except CampaignExportValidationError as exc:
+        raise CampaignServiceUnavailableError("Campaign export startup reconciliation failed.") from exc
+
+
 def _resolve_campaign_member_query_context(path: Path, campaign_row: dict[str, Any]) -> dict[str, Any]:
+    with get_connection(path) as connection:
+        connection.execute("BEGIN")
+        return _resolve_campaign_member_query_context_on_connection(connection, campaign_row=campaign_row)
+
+
+def _resolve_campaign_member_query_context_on_connection(
+    connection: sqlite3.Connection,
+    *,
+    campaign_row: dict[str, Any],
+) -> dict[str, Any]:
     saved_audience_id = int(campaign_row["saved_audience_id"])
-    saved_row = SavedAudienceRepository(path).fetch_saved_audience(saved_audience_id)
-    saved_filters = _decode_json_object(saved_row["filters_json"], field_name="saved_audience.filters_json")
-    saved_selection = _decode_json_object(saved_row["selection_json"], field_name="saved_audience.selection_json")
+    saved_row = connection.execute(
+        "SELECT * FROM saved_audiences WHERE audience_id = ?",
+        (saved_audience_id,),
+    ).fetchone()
+    if saved_row is None:
+        raise CampaignServiceConflictError("Saved audience backing this campaign was not found.")
+
+    saved_row_dict = dict(saved_row)
+    saved_filters = _decode_json_object(
+        saved_row_dict["filters_json"],
+        field_name="saved_audience.filters_json",
+    )
+    saved_selection = _decode_json_object(
+        saved_row_dict["selection_json"],
+        field_name="saved_audience.selection_json",
+    )
 
     normalized_filters = normalize_audience_filters(saved_filters)
     normalized_selection = normalize_selection(saved_selection)
@@ -836,33 +900,51 @@ def _resolve_campaign_member_query_context(path: Path, campaign_row: dict[str, A
     if selection_json != str(campaign_row["saved_audience_selection_json"]):
         raise CampaignServiceConflictError("Campaign selection no longer matches immutable saved audience selection.")
 
-    if int(saved_row["resolved_count"]) != int(campaign_row["saved_audience_resolved_count"]):
+    if int(saved_row_dict["resolved_count"]) != int(campaign_row["saved_audience_resolved_count"]):
         raise CampaignServiceConflictError("Campaign resolved_count no longer matches immutable saved audience selection.")
 
     scoring_run_id = int(campaign_row["scoring_run_id"])
-    scoring_row = ScoringRepository(path).fetch_scoring_run(scoring_run_id)
+    scoring_row = connection.execute(
+        "SELECT * FROM scoring_runs WHERE scoring_run_id = ?",
+        (scoring_run_id,),
+    ).fetchone()
     if scoring_row is None:
         raise CampaignServiceConflictError("Campaign scoring run was not found.")
-    if str(scoring_row["status"]) != "COMPLETED":
+    scoring_row_dict = dict(scoring_row)
+    if str(scoring_row_dict["status"]) != "COMPLETED":
         raise CampaignServiceConflictError("Campaign scoring run is not completed.")
 
-    boundaries = AudienceRankRepository(path).fetch_boundaries(scoring_run_id)
+    boundary_rows = connection.execute(
+        """
+        SELECT percentile_bucket, boundary_score, boundary_person_id
+        FROM audience_rank_boundaries
+        WHERE scoring_run_id = ?
+        ORDER BY percentile_bucket ASC
+        """,
+        (scoring_run_id,),
+    ).fetchall()
+    boundaries = [dict(row) for row in boundary_rows]
     if len(boundaries) != 100:
         raise CampaignServiceConflictError("Audience rank boundaries are not prepared for this scoring run.")
 
-    analytics = validate_audience_analytics_snapshot_currentness(
-        path,
-        scoring_run_id=scoring_run_id,
-        analytics_contract_version=AUDIENCE_ANALYTICS_CONTRACT_VERSION,
-    )
-    if not analytics["analytics_prepared"]:
+    analytics_row = connection.execute(
+        """
+        SELECT *
+        FROM audience_analytics_snapshots
+        WHERE scoring_run_id = ? AND analytics_contract_version = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+        """,
+        (scoring_run_id, AUDIENCE_ANALYTICS_CONTRACT_VERSION),
+    ).fetchone()
+    if analytics_row is None:
         raise CampaignServiceConflictError("Audience analytics snapshot is not prepared for this scoring run.")
+    analytics_snapshot = dict(analytics_row)
 
-    snapshot = analytics.get("snapshot")
-    if not isinstance(snapshot, dict):
-        raise CampaignServiceConflictError("Audience analytics snapshot is not available.")
-
-    categorical_vocabularies = _categorical_vocabularies_from_snapshot(snapshot)
+    try:
+        categorical_vocabularies = _categorical_vocabularies_from_snapshot(analytics_snapshot)
+    except Exception as exc:
+        raise CampaignServiceConflictError("Audience analytics snapshot is not prepared for this scoring run.") from exc
     (
         score_predicates,
         score_parameters,
@@ -874,6 +956,30 @@ def _resolve_campaign_member_query_context(path: Path, campaign_row: dict[str, A
         categorical_vocabularies=categorical_vocabularies,
     )
 
+    export_provenance_payload = {
+        "campaign_id": int(campaign_row["campaign_id"]),
+        "campaign_contract_version": str(campaign_row["campaign_contract_version"]),
+        "export_contract_version": str(campaign_row["export_contract_version"]),
+        "export_snapshot_contract_version": CAMPAIGN_EXPORT_SNAPSHOT_CONTRACT_VERSION,
+        "saved_audience_id": int(campaign_row["saved_audience_id"]),
+        "scoring_run_id": int(campaign_row["scoring_run_id"]),
+        "model_run_id": int(campaign_row["model_run_id"]),
+        "analysis_run_id": int(campaign_row["analysis_run_id"]),
+        "saved_audience_filter_hash": str(campaign_row["saved_audience_filter_hash"]),
+        "saved_audience_selection_json": str(campaign_row["saved_audience_selection_json"]),
+        "saved_audience_resolved_count": int(campaign_row["saved_audience_resolved_count"]),
+        "customer_import_id": int(saved_row_dict["customer_import_id"]),
+        "customer_source_checksum": str(saved_row_dict["customer_source_checksum"]),
+        "campaign_sales_import_id": int(saved_row_dict["campaign_sales_import_id"]),
+        "campaign_sales_source_checksum": str(saved_row_dict["campaign_sales_source_checksum"]),
+        "demographic_import_id": int(saved_row_dict["demographic_import_id"]),
+        "demographic_source_checksum": str(saved_row_dict["demographic_source_checksum"]),
+        "feature_contract_version": str(saved_row_dict["feature_contract_version"]),
+        "feature_contract_sha256": str(saved_row_dict["feature_contract_sha256"]),
+        "artifact_sha256": str(saved_row_dict["artifact_sha256"]),
+        "selected_candidate": str(scoring_row_dict["selected_candidate"]),
+    }
+
     return {
         "normalized_selection": normalized_selection,
         "boundaries": boundaries,
@@ -882,13 +988,75 @@ def _resolve_campaign_member_query_context(path: Path, campaign_row: dict[str, A
         "score_parameters": score_parameters,
         "demographic_predicates": demographic_predicates,
         "demographic_parameters": demographic_parameters,
+        "start_provenance_sha256": _provenance_sha256(export_provenance_payload),
     }
+
+
+def _compile_boundary_lookup(boundaries: list[dict[str, Any]]) -> tuple[list[tuple[int, float, str]], bool]:
+    if len(boundaries) != 100:
+        raise CampaignServiceConflictError("Audience rank boundaries are not prepared for this scoring run.")
+
+    compiled: list[tuple[int, float, str]] = []
+    previous_score: float | None = None
+    previous_person_id: str | None = None
+    binary_safe = True
+
+    for expected_bucket, row in enumerate(boundaries, start=1):
+        bucket = int(row["percentile_bucket"])
+        score = float(row["boundary_score"])
+        person_id = str(row["boundary_person_id"])
+        compiled.append((bucket, score, person_id))
+
+        if bucket != expected_bucket:
+            binary_safe = False
+        if previous_score is not None:
+            if score > previous_score:
+                binary_safe = False
+            if score == previous_score and previous_person_id is not None and person_id < previous_person_id:
+                binary_safe = False
+        previous_score = score
+        previous_person_id = person_id
+
+    return compiled, binary_safe
+
+
+def _classify_percentile_bucket_from_lookup(
+    score: float,
+    person_id: str,
+    boundary_lookup: list[tuple[int, float, str]],
+    *,
+    binary_safe: bool,
+) -> int:
+    if not binary_safe:
+        for bucket, boundary_score, boundary_person_id in boundary_lookup:
+            if score > boundary_score:
+                return bucket
+            if score == boundary_score and person_id <= boundary_person_id:
+                return bucket
+        return 100
+
+    low = 0
+    high = len(boundary_lookup) - 1
+    best_index = len(boundary_lookup) - 1
+
+    while low <= high:
+        mid = (low + high) // 2
+        _, boundary_score, boundary_person_id = boundary_lookup[mid]
+        qualifies = score > boundary_score or (score == boundary_score and person_id <= boundary_person_id)
+        if qualifies:
+            best_index = mid
+            high = mid - 1
+        else:
+            low = mid + 1
+
+    return boundary_lookup[best_index][0]
 
 
 def _iter_selected_member_chunks(
     connection: sqlite3.Connection,
     *,
     query_context: dict[str, Any],
+    export_profile: str,
     chunk_size: int,
 ) -> Iterator[list[dict[str, Any]]]:
     scoring_run_id = int(query_context["scoring_run_id"])
@@ -899,7 +1067,28 @@ def _iter_selected_member_chunks(
     demographic_parameters = list(query_context["demographic_parameters"])
     selection_payload = dict(query_context["normalized_selection"].payload)
 
-    join_clause = ""
+    boundary_lookup, binary_safe = _compile_boundary_lookup(boundaries)
+
+    if export_profile == EXPORT_PROFILE_EMAIL_CONTACT_V1:
+        contact_select = (
+            "d.first_name AS first_name",
+            "d.last_name AS last_name",
+            "d.email AS email",
+        )
+    elif export_profile == EXPORT_PROFILE_DIRECT_MAIL_CONTACT_V1:
+        contact_select = (
+            "d.first_name AS first_name",
+            "d.last_name AS last_name",
+            "d.address_line_1 AS address_line_1",
+            "d.address_line_2 AS address_line_2",
+            "d.city AS city",
+            "d.state AS state",
+            "d.postal_code AS postal_code",
+        )
+    else:
+        raise CampaignServiceValidationError("Unsupported export profile.")
+
+    join_clause = "INNER JOIN demographics d ON d.person_id = p.person_id"
     where_predicates = ["p.scoring_run_id = ?"]
     base_params: list[Any] = [scoring_run_id]
 
@@ -908,42 +1097,39 @@ def _iter_selected_member_chunks(
         base_params.extend(score_parameters)
 
     if demographic_predicates:
-        join_clause = "INNER JOIN demographics d ON d.person_id = p.person_id"
         where_predicates.extend(demographic_predicates)
         base_params.extend(demographic_parameters)
 
-    top_n_remaining: int | None = None
+    top_n_limit: int | None = None
     if selection_payload["mode"] == "TOP_N":
         target = selection_payload.get("target_count")
         if not isinstance(target, int) or target <= 0:
             raise CampaignServiceValidationError("selection.target_count is required when mode is TOP_N.")
-        top_n_remaining = target
+        top_n_limit = target
 
-    last_score: float | None = None
-    last_person_id: str | None = None
+    params = list(base_params)
+    limit_clause = ""
+    if top_n_limit is not None:
+        limit_clause = "LIMIT ?"
+        params.append(top_n_limit)
 
+    select_columns = [
+        "p.person_id AS person_id",
+        "p.propensity_score AS propensity_score",
+        *contact_select,
+    ]
+    query = f"""
+        SELECT {', '.join(select_columns)}
+        FROM propensity_scores p
+        {join_clause}
+        WHERE {' AND '.join(where_predicates)}
+        ORDER BY p.propensity_score DESC, p.person_id ASC
+        {limit_clause}
+    """
+
+    cursor = connection.execute(query, params)
     while True:
-        if top_n_remaining is not None and top_n_remaining <= 0:
-            break
-
-        current_limit = chunk_size if top_n_remaining is None else min(chunk_size, top_n_remaining)
-        params = list(base_params)
-        predicates = list(where_predicates)
-
-        if last_score is not None and last_person_id is not None:
-            predicates.append("(p.propensity_score < ? OR (p.propensity_score = ? AND p.person_id > ?))")
-            params.extend([last_score, last_score, last_person_id])
-
-        params.append(current_limit)
-        query = f"""
-            SELECT p.person_id, p.propensity_score
-            FROM propensity_scores p
-            {join_clause}
-            WHERE {' AND '.join(predicates)}
-            ORDER BY p.propensity_score DESC, p.person_id ASC
-            LIMIT ?
-        """
-        rows = [dict(row) for row in connection.execute(query, params).fetchall()]
+        rows = cursor.fetchmany(chunk_size)
         if not rows:
             break
 
@@ -951,77 +1137,36 @@ def _iter_selected_member_chunks(
         for row in rows:
             person_id = str(row["person_id"])
             propensity_score = float(row["propensity_score"])
-            percentile_bucket = classify_percentile_bucket(propensity_score, person_id, boundaries)
+            percentile_bucket = _classify_percentile_bucket_from_lookup(
+                propensity_score,
+                person_id,
+                boundary_lookup,
+                binary_safe=binary_safe,
+            )
             decile = classify_decile(percentile_bucket)
             rank_band = _rank_band_for_bucket(percentile_bucket)
-            chunk.append(
-                {
-                    "person_id": person_id,
-                    "propensity_score": propensity_score,
-                    "percentile_bucket": percentile_bucket,
-                    "decile": decile,
-                    "rank_band": rank_band,
-                }
-            )
+            row_payload: dict[str, Any] = {
+                "person_id": person_id,
+                "propensity_score": propensity_score,
+                "percentile_bucket": percentile_bucket,
+                "decile": decile,
+                "rank_band": rank_band,
+            }
+            for field in (
+                "first_name",
+                "last_name",
+                "email",
+                "address_line_1",
+                "address_line_2",
+                "city",
+                "state",
+                "postal_code",
+            ):
+                if field in row.keys():
+                    row_payload[field] = row[field]
+            chunk.append(row_payload)
 
         yield chunk
-        last_score = float(rows[-1]["propensity_score"])
-        last_person_id = str(rows[-1]["person_id"])
-
-        if top_n_remaining is not None:
-            top_n_remaining -= len(chunk)
-
-
-def _fetch_contact_rows(
-    connection: sqlite3.Connection,
-    *,
-    person_ids: list[str],
-    export_profile: str,
-) -> dict[str, dict[str, Any]]:
-    if not person_ids:
-        return {}
-
-    connection.execute(
-        "CREATE TEMP TABLE IF NOT EXISTS temp_campaign_export_ids (person_id TEXT PRIMARY KEY)"
-    )
-    connection.execute("DELETE FROM temp_campaign_export_ids")
-    connection.executemany(
-        "INSERT INTO temp_campaign_export_ids (person_id) VALUES (?)",
-        [(person_id,) for person_id in person_ids],
-    )
-
-    if export_profile == EXPORT_PROFILE_EMAIL_CONTACT_V1:
-        query = """
-            SELECT
-                t.person_id,
-                d.first_name,
-                d.last_name,
-                d.email
-            FROM temp_campaign_export_ids t
-            INNER JOIN demographics d ON d.person_id = t.person_id
-        """
-    elif export_profile == EXPORT_PROFILE_DIRECT_MAIL_CONTACT_V1:
-        query = """
-            SELECT
-                t.person_id,
-                d.first_name,
-                d.last_name,
-                d.address_line_1,
-                d.address_line_2,
-                d.city,
-                d.state,
-                d.postal_code
-            FROM temp_campaign_export_ids t
-            INNER JOIN demographics d ON d.person_id = t.person_id
-        """
-    else:
-        raise CampaignServiceValidationError("Unsupported export profile.")
-
-    rows = [dict(row) for row in connection.execute(query).fetchall()]
-    by_person_id = {str(row["person_id"]): row for row in rows}
-    if len(by_person_id) != len(person_ids):
-        raise CampaignServiceConflictError("Some selected campaign members are missing from demographics.")
-    return by_person_id
 
 
 def _export_header_bytes(columns: tuple[str, ...], writer: csv.writer, buffer: io.StringIO) -> bytes:
@@ -1071,55 +1216,57 @@ def stream_campaign_export_csv(
     if export_profile is None:
         raise CampaignServiceValidationError("Campaign channel cannot resolve an export profile.")
 
-    started_at = _utc_timestamp()
-    try:
-        export_event_id = export_repository.create_started_event(
-            campaign_id=int(campaign_row["campaign_id"]),
-            export_profile=export_profile,
-            started_at=started_at,
-        )
-    except CampaignExportValidationError as exc:
-        raise CampaignServiceValidationError(str(exc)) from exc
-
     expected_selected_count = int(campaign_row["saved_audience_resolved_count"])
     columns = PROFILE_EXPORT_COLUMNS[export_profile]
     filename = f"campaign_{int(campaign_row['campaign_id'])}_{export_profile.lower()}.csv"
 
     async def _stream() -> AsyncIterator[bytes]:
+        export_event_id: int | None = None
         selected_count = 0
         deliverable_count = 0
         undeliverable_count = 0
         row_count = 0
+        processed_chunks = 0
         digest = hashlib.sha256()
 
         writer_buffer = io.StringIO()
         writer = csv.writer(writer_buffer, lineterminator="\n")
 
         try:
-            if await request.is_disconnected():
-                raise CampaignExportAbortedError(CAMPAIGN_EXPORT_ABORTED_MESSAGE)
-
-            header = _export_header_bytes(columns, writer, writer_buffer)
-            digest.update(header)
-            yield header
-
             with get_connection(path) as connection:
-                query_context = _resolve_campaign_member_query_context(path, campaign_row)
+                connection.execute("BEGIN")
+                query_context = _resolve_campaign_member_query_context_on_connection(
+                    connection,
+                    campaign_row=campaign_row,
+                )
+
+                if await request.is_disconnected():
+                    raise CampaignExportAbortedError(CAMPAIGN_EXPORT_ABORTED_MESSAGE)
+
+                started_at = _utc_timestamp()
+                export_event_id = export_repository.create_started_event(
+                    campaign_id=int(campaign_row["campaign_id"]),
+                    export_profile=export_profile,
+                    started_at=started_at,
+                    export_snapshot_contract_version=CAMPAIGN_EXPORT_SNAPSHOT_CONTRACT_VERSION,
+                    start_provenance_sha256=str(query_context["start_provenance_sha256"]),
+                )
+
+                header = _export_header_bytes(columns, writer, writer_buffer)
+                digest.update(header)
+                yield header
+
                 previous_person_id: str | None = None
                 for chunk in _iter_selected_member_chunks(
                     connection,
                     query_context=query_context,
+                    export_profile=export_profile,
                     chunk_size=MEMBER_RESOLUTION_CHUNK_SIZE,
                 ):
                     if await request.is_disconnected():
                         raise CampaignExportAbortedError(CAMPAIGN_EXPORT_ABORTED_MESSAGE)
 
-                    person_ids = [str(item["person_id"]) for item in chunk]
-                    contact_by_person = _fetch_contact_rows(
-                        connection,
-                        person_ids=person_ids,
-                        export_profile=export_profile,
-                    )
+                    processed_chunks += 1
 
                     for member in chunk:
                         selected_count += 1
@@ -1128,16 +1275,10 @@ def stream_campaign_export_csv(
                             raise CampaignServiceConflictError("Duplicate person_id detected during deterministic export.")
                         previous_person_id = person_id
 
-                        contact_row = contact_by_person.get(person_id)
-                        if contact_row is None:
-                            raise CampaignServiceConflictError(
-                                "Selected campaign member is missing contact metadata."
-                            )
-
                         if export_profile == EXPORT_PROFILE_EMAIL_CONTACT_V1:
-                            deliverable = _validate_email_deliverability(contact_row.get("email"))
+                            deliverable = _validate_email_deliverability(member.get("email"))
                         else:
-                            deliverable = _validate_direct_mail_deliverability(contact_row)
+                            deliverable = _validate_direct_mail_deliverability(member)
 
                         if not deliverable:
                             undeliverable_count += 1
@@ -1156,21 +1297,21 @@ def stream_campaign_export_csv(
                         if export_profile == EXPORT_PROFILE_EMAIL_CONTACT_V1:
                             output_row.extend(
                                 [
-                                    _csv_safe_value(contact_row.get("first_name")),
-                                    _csv_safe_value(contact_row.get("last_name")),
-                                    _csv_safe_value(contact_row.get("email")),
+                                    _csv_safe_value(member.get("first_name")),
+                                    _csv_safe_value(member.get("last_name")),
+                                    _csv_safe_value(member.get("email")),
                                 ]
                             )
                         else:
                             output_row.extend(
                                 [
-                                    _csv_safe_value(contact_row.get("first_name")),
-                                    _csv_safe_value(contact_row.get("last_name")),
-                                    _csv_safe_value(contact_row.get("address_line_1")),
-                                    _csv_safe_value(contact_row.get("address_line_2")),
-                                    _csv_safe_value(contact_row.get("city")),
-                                    _csv_safe_value(contact_row.get("state")),
-                                    _csv_safe_value(contact_row.get("postal_code")),
+                                    _csv_safe_value(member.get("first_name")),
+                                    _csv_safe_value(member.get("last_name")),
+                                    _csv_safe_value(member.get("address_line_1")),
+                                    _csv_safe_value(member.get("address_line_2")),
+                                    _csv_safe_value(member.get("city")),
+                                    _csv_safe_value(member.get("state")),
+                                    _csv_safe_value(member.get("postal_code")),
                                 ]
                             )
 
@@ -1178,6 +1319,18 @@ def stream_campaign_export_csv(
                         digest.update(encoded)
                         row_count += 1
                         yield encoded
+
+                    if (
+                        export_event_id is not None
+                        and processed_chunks % EXPORT_PROGRESS_UPDATE_CHUNK_INTERVAL == 0
+                    ):
+                        export_repository.update_started_progress(
+                            export_event_id=export_event_id,
+                            selected_count=selected_count,
+                            deliverable_count=deliverable_count,
+                            undeliverable_count=undeliverable_count,
+                            row_count=row_count,
+                        )
 
                 if selected_count != expected_selected_count:
                     raise CampaignServiceConflictError(
@@ -1196,64 +1349,72 @@ def stream_campaign_export_csv(
                 raise CampaignServiceConflictError("Exported row count does not match deliverable count.")
 
             refreshed_currentness = evaluate_campaign_currentness(path, campaign_id=int(campaign_row["campaign_id"]))
-            if not refreshed_currentness["ready_for_export"]:
-                issue = (
-                    refreshed_currentness["issues"][0]
-                    if refreshed_currentness["issues"]
-                    else CAMPAIGN_CURRENTNESS_REQUIRED_MESSAGE
-                )
-                raise CampaignServiceConflictError(issue)
-
-            export_repository.mark_completed(
-                export_event_id=export_event_id,
-                selected_count=selected_count,
-                deliverable_count=deliverable_count,
-                undeliverable_count=undeliverable_count,
-                row_count=row_count,
-                csv_sha256=digest.hexdigest(),
-                completed_at=_utc_timestamp(),
+            source_changed_during_export = not bool(refreshed_currentness.get("ready_for_export"))
+            completion_currentness_state = (
+                EXPORT_CURRENTNESS_STATE_STALE
+                if source_changed_during_export
+                else EXPORT_CURRENTNESS_STATE_CURRENT
             )
-        except asyncio.CancelledError as exc:
-            safe_message = _safe_export_error_message(CampaignExportAbortedError(str(exc) or CAMPAIGN_EXPORT_ABORTED_MESSAGE))
-            try:
-                export_repository.mark_aborted(
+
+            if export_event_id is not None:
+                export_repository.mark_completed(
                     export_event_id=export_event_id,
                     selected_count=selected_count,
                     deliverable_count=deliverable_count,
                     undeliverable_count=undeliverable_count,
                     row_count=row_count,
+                    csv_sha256=digest.hexdigest(),
                     completed_at=_utc_timestamp(),
-                    safe_error_message=safe_message,
+                    source_changed_during_export=source_changed_during_export,
+                    completion_currentness_state=completion_currentness_state,
                 )
+        except asyncio.CancelledError as exc:
+            safe_message = _safe_export_error_message(CampaignExportAbortedError(str(exc) or CAMPAIGN_EXPORT_ABORTED_MESSAGE))
+            try:
+                if export_event_id is not None:
+                    export_repository.mark_aborted(
+                        export_event_id=export_event_id,
+                        selected_count=selected_count,
+                        deliverable_count=deliverable_count,
+                        undeliverable_count=undeliverable_count,
+                        row_count=row_count,
+                        completed_at=_utc_timestamp(),
+                        safe_error_message=safe_message,
+                        completion_currentness_state=EXPORT_CURRENTNESS_STATE_UNKNOWN,
+                    )
             except (CampaignExportValidationError, CampaignExportNotFoundError):
                 pass
             raise
         except CampaignExportAbortedError as exc:
             safe_message = _safe_export_error_message(exc)
             try:
-                export_repository.mark_aborted(
-                    export_event_id=export_event_id,
-                    selected_count=selected_count,
-                    deliverable_count=deliverable_count,
-                    undeliverable_count=undeliverable_count,
-                    row_count=row_count,
-                    completed_at=_utc_timestamp(),
-                    safe_error_message=safe_message,
-                )
+                if export_event_id is not None:
+                    export_repository.mark_aborted(
+                        export_event_id=export_event_id,
+                        selected_count=selected_count,
+                        deliverable_count=deliverable_count,
+                        undeliverable_count=undeliverable_count,
+                        row_count=row_count,
+                        completed_at=_utc_timestamp(),
+                        safe_error_message=safe_message,
+                        completion_currentness_state=EXPORT_CURRENTNESS_STATE_UNKNOWN,
+                    )
             except (CampaignExportValidationError, CampaignExportNotFoundError):
                 pass
         except Exception as exc:  # pragma: no cover - guarded by public API tests
             safe_message = _safe_export_error_message(exc)
             try:
-                export_repository.mark_failed(
-                    export_event_id=export_event_id,
-                    selected_count=selected_count,
-                    deliverable_count=deliverable_count,
-                    undeliverable_count=undeliverable_count,
-                    row_count=row_count,
-                    completed_at=_utc_timestamp(),
-                    safe_error_message=safe_message,
-                )
+                if export_event_id is not None:
+                    export_repository.mark_failed(
+                        export_event_id=export_event_id,
+                        selected_count=selected_count,
+                        deliverable_count=deliverable_count,
+                        undeliverable_count=undeliverable_count,
+                        row_count=row_count,
+                        completed_at=_utc_timestamp(),
+                        safe_error_message=safe_message,
+                        completion_currentness_state=EXPORT_CURRENTNESS_STATE_UNKNOWN,
+                    )
             except (CampaignExportValidationError, CampaignExportNotFoundError):
                 pass
             raise
@@ -1284,6 +1445,7 @@ __all__ = (
     "get_campaign_options",
     "list_campaign_export_events",
     "list_campaigns",
+    "reconcile_stale_campaign_export_events",
     "stream_campaign_export_csv",
     "update_campaign",
 )

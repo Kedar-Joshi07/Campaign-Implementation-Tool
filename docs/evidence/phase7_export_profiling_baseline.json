@@ -1,0 +1,196 @@
+{
+  "generated_at": "2026-09-03T08:40:57Z",
+  "scope": "phase7_export_profiling_baseline",
+  "database": {
+    "path": "data\\campaign_poc.db",
+    "schema_version": "11",
+    "no_data_regeneration": true,
+    "no_model_retraining": true,
+    "no_model_rescoring": true
+  },
+  "canonical_context": {
+    "scoring_run_id": 8,
+    "model_run_id": 8
+  },
+  "audience_preparation": {
+    "prepared": true,
+    "analytics_prepared": true,
+    "boundary_count": 100
+  },
+  "saved_audiences": {
+    "email_top_1k": {
+      "audience_id": 30,
+      "resolved_count": 1000,
+      "selection_mode": "TOP_N",
+      "target_count": 1000,
+      "creation_seconds": 4.124195
+    },
+    "direct_mail_top_50k": {
+      "audience_id": 31,
+      "resolved_count": 50000,
+      "selection_mode": "TOP_N",
+      "target_count": 50000,
+      "creation_seconds": 19.31619
+    },
+    "direct_mail_all_matching_filtered": {
+      "audience_id": 32,
+      "resolved_count": 416275,
+      "selection_mode": "ALL_MATCHING",
+      "target_count": null,
+      "creation_seconds": 25.576234
+    }
+  },
+  "baseline_cases": [
+    {
+      "case_name": "EMAIL_TOP_1K",
+      "channel": "EMAIL",
+      "campaign_id": 6,
+      "create_seconds": 6.337909,
+      "finalize_seconds": 5.513786,
+      "export_seconds": 6.439852,
+      "throughput_rows_per_second": 155.283,
+      "event": {
+        "export_event_id": 10,
+        "status": "COMPLETED",
+        "selected_count": 1000,
+        "deliverable_count": 1000,
+        "undeliverable_count": 0,
+        "row_count": 1000,
+        "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8",
+        "started_at": "2026-09-03T08:37:22Z",
+        "completed_at": "2026-09-03T08:37:26Z"
+      },
+      "csv": {
+        "headers": [
+          "person_id",
+          "propensity_score",
+          "percentile_bucket",
+          "decile",
+          "rank_band",
+          "first_name",
+          "last_name",
+          "email"
+        ],
+        "row_count": 1000,
+        "person_order_sha256": "597d0b77ac79278bc74e29a65b90eab941c0ca07709442def15e307c6c0e602a",
+        "csv_sha256": "105429c8fdb57fd3282e594ea934bd5e6f098473dbe2ab0ae92a1b2b60f94ee8"
+      }
+    },
+    {
+      "case_name": "DIRECT_MAIL_TOP_50K",
+      "channel": "DIRECT_MAIL",
+      "campaign_id": 7,
+      "create_seconds": 5.64849,
+      "finalize_seconds": 5.6297,
+      "export_seconds": 7.873801,
+      "throughput_rows_per_second": 6350.173,
+      "event": {
+        "export_event_id": 11,
+        "status": "COMPLETED",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d",
+        "started_at": "2026-09-03T08:37:40Z",
+        "completed_at": "2026-09-03T08:37:45Z"
+      },
+      "csv": {
+        "headers": [
+          "person_id",
+          "propensity_score",
+          "percentile_bucket",
+          "decile",
+          "rank_band",
+          "first_name",
+          "last_name",
+          "address_line_1",
+          "address_line_2",
+          "city",
+          "state",
+          "postal_code"
+        ],
+        "row_count": 50000,
+        "person_order_sha256": "21e5b34707df1ba742c73919bb73cf78941ec70ebcd21e402685e7a0bd8188f5",
+        "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d"
+      }
+    },
+    {
+      "case_name": "DIRECT_MAIL_FILTERED_ALL_MATCHING",
+      "channel": "DIRECT_MAIL",
+      "campaign_id": 8,
+      "create_seconds": 5.827405,
+      "finalize_seconds": 5.565322,
+      "export_seconds": 176.326108,
+      "throughput_rows_per_second": 2360.825,
+      "event": {
+        "export_event_id": 12,
+        "status": "COMPLETED",
+        "selected_count": 416275,
+        "deliverable_count": 416275,
+        "undeliverable_count": 0,
+        "row_count": 416275,
+        "csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab",
+        "started_at": "2026-09-03T08:37:59Z",
+        "completed_at": "2026-09-03T08:40:53Z"
+      },
+      "csv": {
+        "headers": [
+          "person_id",
+          "propensity_score",
+          "percentile_bucket",
+          "decile",
+          "rank_band",
+          "first_name",
+          "last_name",
+          "address_line_1",
+          "address_line_2",
+          "city",
+          "state",
+          "postal_code"
+        ],
+        "row_count": 416275,
+        "person_order_sha256": "d7c719b417f57db5761253aa423db545d912d9d2e3958c94ebb40f521775bc06",
+        "csv_sha256": "0023c034945c0b5fb087883b0d9ac3d89a67a4025b8dbc452d61021a718549ab"
+      }
+    }
+  ],
+  "selection_query_plan_samples": {
+    "email_top_1k": {
+      "selection_mode": "TOP_N",
+      "target_count": 1000,
+      "has_demographic_predicates": false,
+      "plan": [
+        "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)"
+      ]
+    },
+    "direct_mail_top_50k": {
+      "selection_mode": "TOP_N",
+      "target_count": 50000,
+      "has_demographic_predicates": false,
+      "plan": [
+        "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)"
+      ]
+    },
+    "direct_mail_filtered_all_matching": {
+      "selection_mode": "ALL_MATCHING",
+      "target_count": null,
+      "has_demographic_predicates": true,
+      "plan": [
+        "SEARCH p USING COVERING INDEX idx_propensity_scores_run_score_person (scoring_run_id=?)",
+        "SEARCH d USING INDEX sqlite_autoindex_demographics_1 (person_id=?)"
+      ]
+    }
+  },
+  "implementation_signals": {
+    "keyset_loop_present": true,
+    "temp_id_table_rejoin_present": true,
+    "boundary_linear_scan_present": false
+  },
+  "dominant_unnecessary_work": [
+    "Selected-member retrieval repeats ordered selection query for every 25K page via keyset loop.",
+    "Each page performs temp ID table delete/insert churn before second demographics lookup.",
+    "Percentile classification scans all 100 boundaries for each selected row."
+  ],
+  "next_gate": "H2 optimize unnecessary repeated work while preserving exact output equivalence."
+}
