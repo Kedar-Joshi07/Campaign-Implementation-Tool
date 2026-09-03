@@ -1,7 +1,9 @@
 import { getCachedJSON, getJSON } from "./api.js";
 import {
   formatDate,
-  formatNumber,
+  formatDecimal,
+  formatExactInteger,
+  formatId,
   formatPercent,
   hideError,
   setButtonLoading,
@@ -88,7 +90,7 @@ function populateAnalysisOptions(analyses) {
   for (const item of analyses) {
     const option = document.createElement("option");
     option.value = String(item.analysis_run_id);
-    option.textContent = `#${formatNumber(item.analysis_run_id)} · ${item.analysis_name}`;
+    option.textContent = `#${formatId(item.analysis_run_id)} · ${item.analysis_name}`;
     select.append(option);
   }
 }
@@ -96,14 +98,14 @@ function populateAnalysisOptions(analyses) {
 function updateSourceSummary(item) {
   selectedAnalysis = item || null;
   document.querySelector("#source-analysis-name").textContent = item?.analysis_name || "-";
-  document.querySelector("#source-analysis-id").textContent = item ? `#${formatNumber(item.analysis_run_id)}` : "-";
+  document.querySelector("#source-analysis-id").textContent = item ? `#${formatId(item.analysis_run_id)}` : "-";
   document.querySelector("#source-conversion-definition").textContent = item
     ? String(item.conversion_definition || "").replaceAll("_", " ")
     : "-";
   document.querySelector("#source-date-range").textContent = item ? "Loading date range..." : "-";
-  document.querySelector("#source-selected-count").textContent = formatNumber(item?.selected_customer_count);
-  document.querySelector("#source-positive-count").textContent = formatNumber(item?.positive_customer_count);
-  document.querySelector("#source-unlabeled-count").textContent = formatNumber(item?.unlabeled_customer_count);
+  document.querySelector("#source-selected-count").textContent = formatExactInteger(item?.selected_customer_count);
+  document.querySelector("#source-positive-count").textContent = formatExactInteger(item?.positive_customer_count);
+  document.querySelector("#source-unlabeled-count").textContent = formatExactInteger(item?.unlabeled_customer_count);
 }
 
 async function loadSourceDateRange(analysisRunId) {
@@ -167,18 +169,18 @@ function shortHash(value) {
 }
 
 function formatScore(value) {
-  return formatNumber(value);
+  return formatDecimal(value, 2, 6);
 }
 
 function formatRowsPerSecond(value) {
   if (!Number.isFinite(Number(value))) return "-";
-  return `${formatNumber(Math.round(Number(value)))} rows/s`;
+  return `${formatExactInteger(Math.round(Number(value)))} rows/s`;
 }
 
 function formatSeconds(value) {
   if (!Number.isFinite(Number(value))) return "-";
   const totalSeconds = Math.max(0, Number(value));
-  return `${formatNumber(totalSeconds)}s`;
+  return `${formatDecimal(totalSeconds, 2, 2)}s`;
 }
 
 function setScoringText(id, value) {
@@ -243,11 +245,11 @@ function applySubmitDisabledState() {
 
   if (hasActiveJob) {
     setModelAnnouncement(
-      `Training is unavailable while job #${formatNumber(activeJob.job_id)} is ${activeJob.status.toLowerCase()}.`,
+      `Training is unavailable while job #${formatId(activeJob.job_id)} is ${activeJob.status.toLowerCase()}.`,
     );
     if (scoringPanelVisible) {
       setScoringAnnouncement(
-        `Scoring is unavailable while job #${formatNumber(activeJob.job_id)} is ${activeJob.status.toLowerCase()}.`,
+        `Scoring is unavailable while job #${formatId(activeJob.job_id)} is ${activeJob.status.toLowerCase()}.`,
       );
     }
   } else if (!loadingJob) {
@@ -276,7 +278,7 @@ function setJobProgress(progressPercent) {
   fill.style.width = `${progress}%`;
   const track = document.querySelector(".model-job-progress-track");
   track.setAttribute("aria-valuenow", String(progress));
-  document.querySelector("#model-job-progress-percent").textContent = `${formatNumber(progress)}%`;
+  document.querySelector("#model-job-progress-percent").textContent = `${formatDecimal(progress, 0, 2)}%`;
 }
 
 function formatElapsed(createdAt, finishedAt) {
@@ -285,24 +287,24 @@ function formatElapsed(createdAt, finishedAt) {
   const end = finishedAt ? new Date(finishedAt).getTime() : Date.now();
   if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "-";
   const seconds = (end - start) / 1000;
-  return `${formatNumber(seconds)}s`;
+  return `${formatDecimal(seconds, 2, 2)}s`;
 }
 
 function showJobPanel(job) {
   const isScoringJob = job.job_type === "PROSPECT_SCORING";
   document.querySelector("#model-job-empty").hidden = true;
   document.querySelector("#model-job-content").hidden = false;
-  document.querySelector("#model-job-id").textContent = `#${formatNumber(job.job_id)}`;
+  document.querySelector("#model-job-id").textContent = `#${formatId(job.job_id)}`;
   document.querySelector("#model-job-stage").textContent = job.stage || "-";
   document.querySelector("#model-job-message").textContent = job.message || (
     isScoringJob ? "Prospect scoring in progress." : "Model training in progress."
   );
-  document.querySelector("#model-job-analysis").textContent = job.analysis_run_id ? `#${formatNumber(job.analysis_run_id)}` : "-";
+  document.querySelector("#model-job-analysis").textContent = job.analysis_run_id ? `#${formatId(job.analysis_run_id)}` : "-";
   document.querySelector("#model-job-created").textContent = formatDate(job.created_at, true);
   document.querySelector("#model-job-started").textContent = formatDate(job.started_at, true);
   document.querySelector("#model-job-finished").textContent = formatDate(job.finished_at, true);
   document.querySelector("#model-job-elapsed").textContent = formatElapsed(job.created_at, job.finished_at);
-  document.querySelector("#model-job-model-run").textContent = job.model_run_id ? `#${formatNumber(job.model_run_id)}` : "-";
+  document.querySelector("#model-job-model-run").textContent = job.model_run_id ? `#${formatId(job.model_run_id)}` : "-";
   setStatusBadge(document.querySelector("#model-job-status"), job.status);
   setJobProgress(job.progress_percent);
 
@@ -336,10 +338,10 @@ function renderScoringSummaryFromDetail(detail) {
     && scoredCount >= 0
     && snapshotCount >= 0
   )
-    ? `${formatNumber(scoredCount)} / ${formatNumber(snapshotCount)}`
+    ? `${formatExactInteger(scoredCount)} / ${formatExactInteger(snapshotCount)}`
     : "-";
 
-  setScoringText("#scoring-summary-scored-count", formatNumber(population.scored_person_count));
+  setScoringText("#scoring-summary-scored-count", formatExactInteger(population.scored_person_count));
   setScoringText("#scoring-summary-reconciliation", reconciliation);
   setScoringText("#scoring-summary-min", formatScore(scoreSummary.score_min));
   setScoringText("#scoring-summary-mean", formatScore(scoreSummary.score_mean));
@@ -366,10 +368,10 @@ function renderScoringSummaryFromJobResult(resultPayload) {
     && demographicCount >= 0
     && scoredCount >= 0
   )
-    ? `${formatNumber(scoredCount)} / ${formatNumber(demographicCount)}`
+    ? `${formatExactInteger(scoredCount)} / ${formatExactInteger(demographicCount)}`
     : "-";
 
-  setScoringText("#scoring-summary-scored-count", formatNumber(resultPayload.scored_person_count));
+  setScoringText("#scoring-summary-scored-count", formatExactInteger(resultPayload.scored_person_count));
   setScoringText("#scoring-summary-reconciliation", reconciliation);
   setScoringText("#scoring-summary-min", formatScore(resultPayload.score_min));
   setScoringText("#scoring-summary-mean", formatScore(resultPayload.score_mean));
@@ -388,9 +390,9 @@ function renderScoringStatus(status) {
   scoringStatusSnapshot = status;
   document.querySelector("#prospect-scoring-panel").hidden = false;
 
-  setScoringText("#scoring-model-run-id", `#${formatNumber(status.model_run_id)}`);
+  setScoringText("#scoring-model-run-id", `#${formatId(status.model_run_id)}`);
   setScoringText("#scoring-selected-primary", status.selected_candidate || "-");
-  setScoringText("#scoring-demographic-count", formatNumber(status.demographic_count));
+  setScoringText("#scoring-demographic-count", formatExactInteger(status.demographic_count));
   setScoringText("#scoring-availability", status.eligible ? "Eligible" : "Not eligible");
   setScoringText("#scoring-historical-source", status.historical_source_verified ? "Current" : "Stale");
   setScoringText("#scoring-model-artifact", status.artifact_feature_compatible ? "Verified" : "Verification required");
@@ -410,12 +412,12 @@ function renderScoringStatus(status) {
     if (status.demographic_source_verified) {
       setScoringText(
         "#scoring-completed-run",
-        `#${formatNumber(completed.scoring_run_id)} · ${completionStamp}`,
+        `#${formatId(completed.scoring_run_id)} · ${completionStamp}`,
       );
     } else {
       setScoringText(
         "#scoring-completed-run",
-        `#${formatNumber(completed.scoring_run_id)} · Historical (${completionStamp})`,
+        `#${formatId(completed.scoring_run_id)} · Historical (${completionStamp})`,
       );
     }
   } else {
@@ -486,7 +488,7 @@ async function loadScoringStatus(modelRunId, { force = false } = {}) {
     }
 
     document.querySelector("#prospect-scoring-panel").hidden = false;
-    setScoringText("#scoring-model-run-id", `#${formatNumber(modelRunId)}`);
+    setScoringText("#scoring-model-run-id", `#${formatId(modelRunId)}`);
     setScoringText("#scoring-selected-primary", "-");
     setScoringText("#scoring-artifact-compatibility", "Unavailable");
     setScoringText("#scoring-demographic-count", "-");
@@ -515,13 +517,13 @@ function metricFromCandidate(candidate, metric) {
   if (metric === "recall5") return formatPercent(topSlices.top_05_percent?.known_positive_recall_at_k);
   if (metric === "recall10") return formatPercent(topSlices.top_10_percent?.known_positive_recall_at_k);
   if (metric === "recall20") return formatPercent(topSlices.top_20_percent?.known_positive_recall_at_k);
-  if (metric === "lift5") return formatNumber(topSlices.top_05_percent?.known_positive_lift_at_k);
-  if (metric === "lift10") return formatNumber(topSlices.top_10_percent?.known_positive_lift_at_k);
-  if (metric === "lift20") return formatNumber(topSlices.top_20_percent?.known_positive_lift_at_k);
-  if (metric === "rocAuc") return formatNumber(observed.observed_label_roc_auc);
-  if (metric === "avgPrecision") return formatNumber(observed.observed_label_average_precision);
-  if (metric === "ks") return formatNumber(separation.observed_label_ks_statistic);
-  if (metric === "fitSeconds") return `${formatNumber(runtime.fit_seconds)}s`;
+  if (metric === "lift5") return formatDecimal(topSlices.top_05_percent?.known_positive_lift_at_k, 2, 2);
+  if (metric === "lift10") return formatDecimal(topSlices.top_10_percent?.known_positive_lift_at_k, 2, 2);
+  if (metric === "lift20") return formatDecimal(topSlices.top_20_percent?.known_positive_lift_at_k, 2, 2);
+  if (metric === "rocAuc") return formatDecimal(observed.observed_label_roc_auc, 2, 4);
+  if (metric === "avgPrecision") return formatDecimal(observed.observed_label_average_precision, 2, 4);
+  if (metric === "ks") return formatDecimal(separation.observed_label_ks_statistic, 2, 4);
+  if (metric === "fitSeconds") return `${formatDecimal(runtime.fit_seconds, 2, 2)}s`;
   return "-";
 }
 
@@ -574,15 +576,15 @@ function renderSummary(detail) {
   const selectedCandidate = selected ? candidates[selected] : null;
   const top10 = selectedCandidate?.top_slice_metrics?.top_10_percent || {};
 
-  document.querySelector("#summary-model-run-id").textContent = identity.model_run_id ? `#${formatNumber(identity.model_run_id)}` : "-";
-  document.querySelector("#summary-analysis-run-id").textContent = identity.analysis_run_id ? `#${formatNumber(identity.analysis_run_id)}` : "-";
+  document.querySelector("#summary-model-run-id").textContent = identity.model_run_id ? `#${formatId(identity.model_run_id)}` : "-";
+  document.querySelector("#summary-analysis-run-id").textContent = identity.analysis_run_id ? `#${formatId(identity.analysis_run_id)}` : "-";
   document.querySelector("#summary-selected-primary").textContent = governance.primary_candidate || "BAGGING_PU";
   document.querySelector("#summary-policy-version").textContent = governance.model_role_policy_version || "legacy";
-  document.querySelector("#summary-selected-count").textContent = formatNumber(cohort.selected_customer_count);
-  document.querySelector("#summary-positive-count").textContent = formatNumber(cohort.positive_customer_count);
-  document.querySelector("#summary-unlabeled-count").textContent = formatNumber(cohort.unlabeled_customer_count);
-  document.querySelector("#summary-feature-count").textContent = formatNumber((contract.ordered_features || []).length);
-  document.querySelector("#summary-top10-lift").textContent = formatNumber(top10.known_positive_lift_at_k);
+  document.querySelector("#summary-selected-count").textContent = formatExactInteger(cohort.selected_customer_count);
+  document.querySelector("#summary-positive-count").textContent = formatExactInteger(cohort.positive_customer_count);
+  document.querySelector("#summary-unlabeled-count").textContent = formatExactInteger(cohort.unlabeled_customer_count);
+  document.querySelector("#summary-feature-count").textContent = formatExactInteger((contract.ordered_features || []).length);
+  document.querySelector("#summary-top10-lift").textContent = formatDecimal(top10.known_positive_lift_at_k, 2, 2);
   document.querySelector("#summary-top10-recall").textContent = formatPercent(top10.known_positive_recall_at_k);
   document.querySelector("#summary-quality-flags").textContent = (detail.quality_flags || []).join(", ") || "None";
   document.querySelector("#summary-artifact-verification").textContent = artifact.verified
@@ -600,9 +602,9 @@ function renderSummary(detail) {
 function createRunCell(run) {
   const container = document.createElement("td");
   const title = document.createElement("strong");
-  title.textContent = `#${formatNumber(run.model_run_id)} · ${run.model_name}`;
+  title.textContent = `#${formatId(run.model_run_id)} · ${run.model_name}`;
   const meta = document.createElement("small");
-  meta.textContent = `Analysis #${formatNumber(run.analysis_run_id)} · ${formatDate(run.completed_at || run.created_at, true)}`;
+  meta.textContent = `Analysis #${formatId(run.analysis_run_id)} · ${formatDate(run.completed_at || run.created_at, true)}`;
   container.append(title, meta);
   return container;
 }
@@ -641,7 +643,7 @@ function renderRecentRuns(runs) {
     row.append(selectedCell);
 
     const liftCell = document.createElement("td");
-    liftCell.textContent = formatNumber(run.validation_lift_at_10_percent);
+    liftCell.textContent = formatDecimal(run.validation_lift_at_10_percent, 2, 2);
     row.append(liftCell);
 
     const qualityCell = document.createElement("td");
@@ -705,7 +707,7 @@ async function loadJobDetail(jobId, { silent = false } = {}) {
       if (job.status === "COMPLETED") {
         if (job.job_type === "MODEL_TRAINING" && job.model_run_id) {
           await Promise.all([loadModelDetail(job.model_run_id), loadRecentRuns(true)]);
-          setModelAnnouncement(`Model training completed as run #${formatNumber(job.model_run_id)}.`);
+          setModelAnnouncement(`Model training completed as run #${formatId(job.model_run_id)}.`);
         }
         if (job.job_type === "PROSPECT_SCORING") {
           if (job.model_run_id) {
@@ -717,7 +719,7 @@ async function loadJobDetail(jobId, { silent = false } = {}) {
           const scoringRunId = job.result?.scoring_run_id;
           if (Number.isFinite(Number(scoringRunId))) {
             await loadScoringRunDetail(Number(scoringRunId), { silent: true });
-            setScoringAnnouncement(`Prospect scoring completed as run #${formatNumber(scoringRunId)}.`);
+            setScoringAnnouncement(`Prospect scoring completed as run #${formatId(scoringRunId)}.`);
           } else {
             setScoringAnnouncement("Prospect scoring completed.");
           }
@@ -739,9 +741,9 @@ async function loadJobDetail(jobId, { silent = false } = {}) {
 
     if (!silent) {
       if (job.job_type === "PROSPECT_SCORING") {
-        setScoringAnnouncement(`Scoring job #${formatNumber(job.job_id)} is ${job.status.toLowerCase()}.`);
+        setScoringAnnouncement(`Scoring job #${formatId(job.job_id)} is ${job.status.toLowerCase()}.`);
       } else {
-        setModelAnnouncement(`Job #${formatNumber(job.job_id)} is ${job.status.toLowerCase()}.`);
+        setModelAnnouncement(`Job #${formatId(job.job_id)} is ${job.status.toLowerCase()}.`);
       }
     }
     schedulePoll();
@@ -809,7 +811,7 @@ async function submitTraining(event) {
       active_job: job,
     };
     applySubmitDisabledState();
-    setModelAnnouncement(`Job #${formatNumber(job.job_id)} accepted and queued.`);
+    setModelAnnouncement(`Job #${formatId(job.job_id)} accepted and queued.`);
     schedulePoll();
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {
@@ -859,7 +861,7 @@ async function submitScoring() {
     document.querySelector("#scoring-completed-summary").hidden = true;
     resetScoringSummary();
     applySubmitDisabledState();
-    setScoringAnnouncement(`Scoring job #${formatNumber(job.job_id)} accepted and queued.`);
+    setScoringAnnouncement(`Scoring job #${formatId(job.job_id)} accepted and queued.`);
     schedulePoll();
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {

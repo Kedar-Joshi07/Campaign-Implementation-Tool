@@ -1,7 +1,8 @@
 import { clearCachedJSON, getCachedJSON, getJSON } from "./api.js";
 import {
   formatDate,
-  formatNumber,
+  formatExactInteger,
+  formatId,
   hideError,
   setButtonLoading,
   setStatusBadge,
@@ -22,8 +23,11 @@ const API_PATHS = {
 
 const STEP_IDS = ["1", "2", "3", "4"];
 const PREFILL_AUDIENCE_STORAGE_KEY = "campaign_prefill_audience_id";
-const HISTORY_POLL_INTERVAL_MS = 2_000;
-const HISTORY_POLL_MAX_ATTEMPTS = 60;
+const EXPORT_POLL_FAST_INTERVAL_MS = 2_000;
+const EXPORT_POLL_MEDIUM_INTERVAL_MS = 5_000;
+const EXPORT_POLL_SLOW_INTERVAL_MS = 12_000;
+const EXPORT_POLL_FAST_WINDOW_MS = 30_000;
+const EXPORT_POLL_MEDIUM_WINDOW_MS = 150_000;
 const OPTIONS_CACHE_MS = 10_000;
 const CAMPAIGNS_CACHE_MS = 10_000;
 const AUDIENCE_DETAIL_CACHE_MS = 10_000;
@@ -67,7 +71,7 @@ let loadRequestToken = 0;
 let audienceDetailRequestToken = 0;
 let campaignDetailRequestToken = 0;
 let exportHistoryPollTimer = null;
-let exportHistoryPollAttempts = 0;
+let exportHistoryPollStartedAtMs = 0;
 let pendingPrefillAudienceId = null;
 let mutationInFlight = false;
 
@@ -77,6 +81,39 @@ function dispatchBackendStatus(state, text) {
 
 function setCampaignAnnouncement(message) {
   document.querySelector("#campaigns-status-announcement").textContent = message;
+}
+
+function setExportStatusNote(message) {
+  document.querySelector("#campaign-export-status-note").textContent = message;
+}
+
+function isCampaignViewActive() {
+  const campaignsView = document.querySelector("#campaigns-view");
+  return window.location.hash === "#campaigns" && campaignsView && !campaignsView.hidden;
+}
+
+function formatElapsedSeconds(startedAt, completedAt = null) {
+  if (!startedAt) {
+    return "-";
+  }
+  const startMs = new Date(startedAt).getTime();
+  const endMs = completedAt ? new Date(completedAt).getTime() : Date.now();
+  if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs < startMs) {
+    return "-";
+  }
+  const elapsedSeconds = Math.floor((endMs - startMs) / 1000);
+  return `${formatExactInteger(elapsedSeconds)}s`;
+}
+
+function nextExportPollIntervalMs() {
+  const elapsedMs = Math.max(0, Date.now() - exportHistoryPollStartedAtMs);
+  if (elapsedMs < EXPORT_POLL_FAST_WINDOW_MS) {
+    return EXPORT_POLL_FAST_INTERVAL_MS;
+  }
+  if (elapsedMs < EXPORT_POLL_MEDIUM_WINDOW_MS) {
+    return EXPORT_POLL_MEDIUM_INTERVAL_MS;
+  }
+  return EXPORT_POLL_SLOW_INTERVAL_MS;
 }
 
 function clearStepError() {
@@ -226,10 +263,10 @@ function renderExportProfile(channel) {
 
 function formatAudienceOption(item) {
   const mode = item.selection_mode === "TOP_N"
-    ? `Top ${formatNumber(item.target_count || 0)}`
+    ? `Top ${formatExactInteger(item.target_count || 0)}`
     : "All matching";
   const status = item.is_current ? "CURRENT" : "STALE";
-  return `#${formatNumber(item.audience_id)} · ${item.audience_name} · ${formatNumber(item.resolved_count)} selected · ${mode} · ${status}`;
+  return `#${formatId(item.audience_id)} · ${item.audience_name} · ${formatExactInteger(item.resolved_count)} selected · ${mode} · ${status}`;
 }
 
 function renderAudienceSelector() {
@@ -278,14 +315,14 @@ function renderAudienceSummary(detail) {
 
   const definition = detail.definition || {};
   const selectionMode = definition.selection_mode === "TOP_N"
-    ? `TOP_N (${formatNumber(definition.target_count || 0)})`
+    ? `TOP_N (${formatExactInteger(definition.target_count || 0)})`
     : "ALL_MATCHING";
 
-  addSummaryRow(summary, "Audience", `${detail.audience_name} (#${formatNumber(detail.audience_id)})`);
-  addSummaryRow(summary, "Selected count", formatNumber(definition.resolved_count));
+  addSummaryRow(summary, "Audience", `${detail.audience_name} (#${formatId(detail.audience_id)})`);
+  addSummaryRow(summary, "Selected count", formatExactInteger(definition.resolved_count));
   addSummaryRow(summary, "Selection mode", selectionMode);
-  addSummaryRow(summary, "Scoring run", definition.scoring_run_id ? `#${formatNumber(definition.scoring_run_id)}` : "-");
-  addSummaryRow(summary, "Model run", detail.provenance?.model_run_id ? `#${formatNumber(detail.provenance.model_run_id)}` : "-");
+  addSummaryRow(summary, "Scoring run", definition.scoring_run_id ? `#${formatId(definition.scoring_run_id)}` : "-");
+  addSummaryRow(summary, "Model run", detail.provenance?.model_run_id ? `#${formatId(detail.provenance.model_run_id)}` : "-");
   addSummaryRow(summary, "Currentness", detail.currentness?.is_current ? "CURRENT" : "STALE");
   addSummaryRow(summary, "Created", formatDate(detail.created_at, true));
 }
@@ -299,11 +336,11 @@ function renderCampaignDetailSummary() {
     return;
   }
 
-  addSummaryRow(detailSummary, "Campaign", `${activeCampaignDetail.campaign_name} (#${formatNumber(activeCampaignDetail.campaign_id)})`);
+  addSummaryRow(detailSummary, "Campaign", `${activeCampaignDetail.campaign_name} (#${formatId(activeCampaignDetail.campaign_id)})`);
   addSummaryRow(detailSummary, "Status", activeCampaignDetail.status);
   addSummaryRow(detailSummary, "Channel", activeCampaignDetail.channel || "-");
-  addSummaryRow(detailSummary, "Saved audience", `#${formatNumber(activeCampaignDetail.saved_audience_id)}`);
-  addSummaryRow(detailSummary, "Resolved count", formatNumber(activeCampaignDetail.saved_audience_resolved_count));
+  addSummaryRow(detailSummary, "Saved audience", `#${formatId(activeCampaignDetail.saved_audience_id)}`);
+  addSummaryRow(detailSummary, "Resolved count", formatExactInteger(activeCampaignDetail.saved_audience_resolved_count));
   addSummaryRow(detailSummary, "Created", formatDate(activeCampaignDetail.created_at, true));
   addSummaryRow(detailSummary, "Updated", formatDate(activeCampaignDetail.updated_at, true));
   addSummaryRow(detailSummary, "Finalized", activeCampaignDetail.finalized_at ? formatDate(activeCampaignDetail.finalized_at, true) : "-");
@@ -333,6 +370,9 @@ function renderCurrentnessSummary(currentness) {
   addSummaryRow(list, "Ready for export", currentness.ready_for_export ? "Yes" : "No");
   addSummaryRow(list, "Saved audience current", currentness.saved_audience_current ? "Yes" : "No");
   addSummaryRow(list, "Scoring current", currentness.scoring_current ? "Yes" : "No");
+  addSummaryRow(list, "Historical source current", currentness.historical_source_verified ? "Yes" : "No");
+  addSummaryRow(list, "Demographic source current", currentness.demographic_source_verified ? "Yes" : "No");
+  addSummaryRow(list, "Model/artifact verified", currentness.model_verified ? "Yes" : "No");
   addSummaryRow(list, "Rank boundaries", currentness.rank_ready ? "Prepared" : "Missing");
   addSummaryRow(list, "Analytics snapshot", currentness.analytics_ready ? "Prepared" : "Missing");
 
@@ -360,13 +400,13 @@ function renderReviewSummary() {
   if (selectedAudienceDetail) {
     const definition = selectedAudienceDetail.definition || {};
     const selectionMode = definition.selection_mode === "TOP_N"
-      ? `TOP_N (${formatNumber(definition.target_count || 0)})`
+      ? `TOP_N (${formatExactInteger(definition.target_count || 0)})`
       : "ALL_MATCHING";
 
-    addSummaryRow(review, "Selected audience", `${selectedAudienceDetail.audience_name} (#${formatNumber(selectedAudienceDetail.audience_id)})`);
-    addSummaryRow(review, "Resolved audience count", formatNumber(definition.resolved_count));
+    addSummaryRow(review, "Selected audience", `${selectedAudienceDetail.audience_name} (#${formatId(selectedAudienceDetail.audience_id)})`);
+    addSummaryRow(review, "Resolved audience count", formatExactInteger(definition.resolved_count));
     addSummaryRow(review, "Immutable audience selection", selectionMode);
-    addSummaryRow(review, "Scoring run", definition.scoring_run_id ? `#${formatNumber(definition.scoring_run_id)}` : "-");
+    addSummaryRow(review, "Scoring run", definition.scoring_run_id ? `#${formatId(definition.scoring_run_id)}` : "-");
     addSummaryRow(review, "Currentness", selectedAudienceDetail.currentness?.is_current ? "CURRENT" : "STALE");
   }
 
@@ -398,7 +438,7 @@ function renderRecentCampaigns() {
     const row = document.createElement("tr");
 
     const idCell = document.createElement("td");
-    idCell.textContent = `#${formatNumber(item.campaign_id)}`;
+    idCell.textContent = `#${formatId(item.campaign_id)}`;
 
     const nameCell = document.createElement("td");
     nameCell.textContent = item.campaign_name;
@@ -415,7 +455,7 @@ function renderRecentCampaigns() {
 
     const countCell = document.createElement("td");
     countCell.className = "numeric";
-    countCell.textContent = formatNumber(item.saved_audience_resolved_count);
+    countCell.textContent = formatExactInteger(item.saved_audience_resolved_count);
 
     const updatedCell = document.createElement("td");
     updatedCell.textContent = formatDate(item.updated_at, true);
@@ -457,10 +497,11 @@ function renderExportHistory(events) {
     const row = document.createElement("tr");
     row.className = "empty-row";
     const cell = document.createElement("td");
-    cell.colSpan = 6;
+    cell.colSpan = 10;
     cell.textContent = "No export events yet for this campaign.";
     row.append(cell);
     body.append(row);
+    setExportStatusNote("No export events yet.");
     return;
   }
 
@@ -468,7 +509,7 @@ function renderExportHistory(events) {
     const row = document.createElement("tr");
 
     const idCell = document.createElement("td");
-    idCell.textContent = `#${formatNumber(event.export_event_id)}`;
+    idCell.textContent = `#${formatId(event.export_event_id)}`;
 
     const timeCell = document.createElement("td");
     timeCell.textContent = formatDate(event.completed_at || event.started_at, true);
@@ -491,15 +532,52 @@ function renderExportHistory(events) {
     badge.textContent = event.status;
     statusCell.append(badge);
 
+    const elapsedCell = document.createElement("td");
+    elapsedCell.className = "numeric";
+    elapsedCell.textContent = formatElapsedSeconds(event.started_at, event.completed_at);
+
+    const selectedCell = document.createElement("td");
+    selectedCell.className = "numeric";
+    selectedCell.textContent = formatExactInteger(event.selected_count);
+
+    const deliverableCell = document.createElement("td");
+    deliverableCell.className = "numeric";
+    deliverableCell.textContent = formatExactInteger(event.deliverable_count);
+
+    const undeliverableCell = document.createElement("td");
+    undeliverableCell.className = "numeric";
+    undeliverableCell.textContent = formatExactInteger(event.undeliverable_count);
+
     const rowsCell = document.createElement("td");
     rowsCell.className = "numeric";
-    rowsCell.textContent = formatNumber(event.row_count);
+    rowsCell.textContent = formatExactInteger(event.row_count);
 
     const checksumCell = document.createElement("td");
     checksumCell.textContent = event.csv_sha256 || "-";
 
-    row.append(idCell, timeCell, profileCell, statusCell, rowsCell, checksumCell);
+    row.append(
+      idCell,
+      timeCell,
+      profileCell,
+      statusCell,
+      elapsedCell,
+      selectedCell,
+      deliverableCell,
+      undeliverableCell,
+      rowsCell,
+      checksumCell,
+    );
     body.append(row);
+  }
+
+  const latest = events[0];
+  if (latest.status === "STARTED") {
+    setExportStatusNote(
+      `Still running - refresh status. Event #${formatId(latest.export_event_id)} has been running for ${formatElapsedSeconds(latest.started_at, null)}.`,
+    );
+  } else {
+    const finishedAt = formatDate(latest.completed_at || latest.started_at, true);
+    setExportStatusNote(`Latest export ${latest.status.toLowerCase()} at ${finishedAt}.`);
   }
 }
 
@@ -526,7 +604,7 @@ function stopExportHistoryPolling() {
     window.clearTimeout(exportHistoryPollTimer);
     exportHistoryPollTimer = null;
   }
-  exportHistoryPollAttempts = 0;
+  exportHistoryPollStartedAtMs = 0;
 }
 
 function synchronizeActionState() {
@@ -693,7 +771,12 @@ async function loadCampaignDetail(campaignId, { force = false } = {}) {
   renderReviewSummary();
   renderExportProfile(activeCampaignDetail.channel || normalizeChannel());
 
-  await loadExportHistory(campaignId, { force });
+  const events = await loadExportHistory(campaignId, { force });
+  if (events[0]?.status === "STARTED" && isCampaignViewActive()) {
+    startExportHistoryPolling(campaignId);
+  } else {
+    stopExportHistoryPolling();
+  }
   synchronizeActionState();
 }
 
@@ -714,7 +797,7 @@ async function loadRecentCampaigns({ force = false } = {}) {
 async function loadExportHistory(campaignId, { force = false } = {}) {
   if (!campaignId) {
     renderExportHistory([]);
-    return;
+    return [];
   }
 
   if (force) {
@@ -725,7 +808,9 @@ async function loadExportHistory(campaignId, { force = false } = {}) {
     maxAgeMs: CAMPAIGNS_CACHE_MS,
     force,
   });
-  renderExportHistory(Array.isArray(events) ? events : []);
+  const normalized = Array.isArray(events) ? events : [];
+  renderExportHistory(normalized);
+  return normalized;
 }
 
 function chooseAudienceFromPrefill() {
@@ -754,7 +839,7 @@ async function openCampaign(campaignId) {
   } else {
     setStep("2");
   }
-  setCampaignAnnouncement(`Opened campaign #${formatNumber(campaignId)}.`);
+  setCampaignAnnouncement(`Opened campaign #${formatId(campaignId)}.`);
 }
 
 async function submitDraft() {
@@ -802,8 +887,8 @@ async function submitDraft() {
     dispatchBackendStatus("is-online", "Backend online");
     setCampaignAnnouncement(
       draftCampaignId
-        ? `Campaign draft #${formatNumber(detail.campaign_id)} updated.`
-        : `Campaign draft #${formatNumber(detail.campaign_id)} created.`,
+        ? `Campaign draft #${formatId(detail.campaign_id)} updated.`
+        : `Campaign draft #${formatId(detail.campaign_id)} created.`,
     );
   } catch (error) {
     showStepError(error.message || "Unable to save campaign draft.");
@@ -834,7 +919,7 @@ async function refreshActiveCampaign() {
     await loadCampaignDetail(campaignId, { force: true });
     await loadRecentCampaigns({ force: true });
     setStep("3");
-    setCampaignAnnouncement(`Campaign #${formatNumber(campaignId)} refreshed.`);
+    setCampaignAnnouncement(`Campaign #${formatId(campaignId)} refreshed.`);
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {
     showStepError(error.message || "Unable to refresh campaign detail.");
@@ -872,7 +957,7 @@ async function finalizeActiveCampaign() {
     await loadRecentCampaigns({ force: true });
     await loadCampaignDetail(campaignId, { force: true });
     setStep("4");
-    setCampaignAnnouncement(`Campaign #${formatNumber(campaignId)} finalized and immutable.`);
+    setCampaignAnnouncement(`Campaign #${formatId(campaignId)} finalized and immutable.`);
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {
     showStepError(error.message || "Unable to finalize campaign.");
@@ -900,33 +985,64 @@ function triggerDownload(url, filename) {
 
 function startExportHistoryPolling(campaignId) {
   stopExportHistoryPolling();
-  exportHistoryPollAttempts = 0;
+  exportHistoryPollStartedAtMs = Date.now();
 
   const poll = async () => {
-    exportHistoryPollAttempts += 1;
+    if (!isCampaignViewActive()) {
+      stopExportHistoryPolling();
+      return;
+    }
+
     try {
-      await loadExportHistory(campaignId, { force: true });
-      const latest = document.querySelector("#campaign-export-history-body tr td:nth-child(4) span")?.textContent || "";
+      const events = await loadExportHistory(campaignId, { force: true });
+      const latest = events[0]?.status || "";
       if (["COMPLETED", "FAILED", "ABORTED"].includes(latest)) {
         setCampaignAnnouncement(`Latest export finished with status ${latest}.`);
         synchronizeActionState();
         stopExportHistoryPolling();
         return;
       }
+      if (latest === "STARTED") {
+        setCampaignAnnouncement("Export is still running. Status will keep refreshing while Campaigns is open.");
+      }
     } catch {
       stopExportHistoryPolling();
       return;
     }
 
-    if (exportHistoryPollAttempts >= HISTORY_POLL_MAX_ATTEMPTS) {
-      stopExportHistoryPolling();
-      return;
-    }
-
-    exportHistoryPollTimer = window.setTimeout(poll, HISTORY_POLL_INTERVAL_MS);
+    exportHistoryPollTimer = window.setTimeout(poll, nextExportPollIntervalMs());
   };
 
-  exportHistoryPollTimer = window.setTimeout(poll, HISTORY_POLL_INTERVAL_MS);
+  exportHistoryPollTimer = window.setTimeout(poll, EXPORT_POLL_FAST_INTERVAL_MS);
+}
+
+async function refreshExportStatus() {
+  clearStepError();
+  const campaignId = activeCampaignId();
+  if (!campaignId) {
+    showStepError("Open a campaign before refreshing export status.");
+    return;
+  }
+
+  setButtonLoading(document.querySelector("#campaign-export-history-refresh"), true, "Refreshing...");
+  try {
+    const events = await loadExportHistory(campaignId, { force: true });
+    const latest = events[0]?.status;
+    if (latest === "STARTED") {
+      startExportHistoryPolling(campaignId);
+    } else {
+      stopExportHistoryPolling();
+    }
+    dispatchBackendStatus("is-online", "Backend online");
+  } catch (error) {
+    showStepError(error.message || "Unable to refresh export status.");
+    dispatchBackendStatus(
+      error.status && error.status < 500 ? "is-online" : "is-offline",
+      error.status && error.status < 500 ? "Backend online" : "Backend unavailable",
+    );
+  } finally {
+    setButtonLoading(document.querySelector("#campaign-export-history-refresh"), false, "Refreshing...");
+  }
 }
 
 async function exportCampaignCsv() {
@@ -968,7 +1084,7 @@ async function exportCampaignCsv() {
     clearCampaignCaches(campaignId);
     await loadExportHistory(campaignId, { force: true });
     startExportHistoryPolling(campaignId);
-    setCampaignAnnouncement(`Export started for campaign #${formatNumber(campaignId)}.`);
+    setCampaignAnnouncement(`Export started for campaign #${formatId(campaignId)}.`);
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {
     showStepError(error.message || "Unable to start campaign export.");
@@ -1093,6 +1209,10 @@ function bindActions() {
 
   document.querySelector("#campaign-export").addEventListener("click", () => {
     exportCampaignCsv();
+  });
+
+  document.querySelector("#campaign-export-history-refresh").addEventListener("click", () => {
+    refreshExportStatus();
   });
 }
 
@@ -1224,6 +1344,7 @@ export function initializeCampaigns() {
   renderCampaignDetailSummary();
   renderCurrentnessSummary(null);
   renderExportHistory([]);
+  setExportStatusNote("Export status updates appear here.");
   synchronizeActionState();
   setStep("1");
 }

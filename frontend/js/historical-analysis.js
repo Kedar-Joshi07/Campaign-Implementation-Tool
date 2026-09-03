@@ -2,7 +2,8 @@ import { getCachedJSON, getJSON } from "./api.js";
 import {
   formatCurrency,
   formatDate,
-  formatNumber,
+  formatExactInteger,
+  formatId,
   formatPercent,
   hideError,
   setButtonLoading,
@@ -250,10 +251,10 @@ function renderMonthlyRows(rows) {
     const row = document.createElement("tr");
     row.append(
       createCell(item.month || "Unknown/Other"),
-      createCell(formatNumber(item.observation_count), "numeric"),
-      createCell(formatNumber(item.response_count), "numeric"),
-      createCell(formatNumber(item.purchase_count), "numeric"),
-      createCell(formatNumber(item.attributed_purchase_count), "numeric"),
+      createCell(formatExactInteger(item.observation_count), "numeric"),
+      createCell(formatExactInteger(item.response_count), "numeric"),
+      createCell(formatExactInteger(item.purchase_count), "numeric"),
+      createCell(formatExactInteger(item.attributed_purchase_count), "numeric"),
     );
     body.append(row);
   }
@@ -261,10 +262,10 @@ function renderMonthlyRows(rows) {
 
 function breakdownItemLabel(item) {
   if (activeBreakdown === "top_campaigns") {
-    return `${item.campaign_name || "Unknown campaign"} · ${item.campaign_id}`;
+    return `${item.campaign_name || "Unknown campaign"} · ${formatId(item.campaign_id)}`;
   }
   if (activeBreakdown === "top_products") {
-    return `${item.product_name || "Unknown product"} · ${item.product_id}`;
+    return `${item.product_name || "Unknown product"} · ${formatId(item.product_id)}`;
   }
   return item.label || "Unknown/Other";
 }
@@ -293,7 +294,7 @@ function renderBreakdown() {
     label.textContent = breakdownItemLabel(item);
     label.title = label.textContent;
     const value = document.createElement("strong");
-    value.textContent = formatNumber(item.observation_count);
+    value.textContent = formatExactInteger(item.observation_count);
     heading.append(label, value);
     const track = document.createElement("div");
     track.className = "performance-bar-track";
@@ -303,7 +304,7 @@ function renderBreakdown() {
     fill.setAttribute("aria-hidden", "true");
     track.append(fill);
     const context = document.createElement("small");
-    context.textContent = `${formatNumber(item.response_count)} responses · ${formatNumber(item.purchase_count)} purchases · ${formatCurrency(item.net_sales_amount)} net sales`;
+    context.textContent = `${formatExactInteger(item.response_count)} responses · ${formatExactInteger(item.purchase_count)} purchases · ${formatCurrency(item.net_sales_amount)} net sales`;
     row.append(heading, track, context);
     list.append(row);
   }
@@ -320,7 +321,7 @@ function renderProfile() {
     summary.textContent = "Profile data is unavailable.";
     return;
   }
-  summary.textContent = `${PROFILE_GROUP_LABELS[activeProfileGroup]} · ${formatNumber(profile.group_count)} customers · ${PROFILE_DIMENSIONS[dimension]}`;
+  summary.textContent = `${PROFILE_GROUP_LABELS[activeProfileGroup]} · ${formatExactInteger(profile.group_count)} customers · ${PROFILE_DIMENSIONS[dimension]}`;
   const list = document.createElement("ol");
   list.className = "profile-bars";
   list.setAttribute("aria-label", `${PROFILE_GROUP_LABELS[activeProfileGroup]} by ${PROFILE_DIMENSIONS[dimension]}`);
@@ -336,7 +337,7 @@ function renderProfile() {
     const label = document.createElement("span");
     label.textContent = category.label || "Unknown/Other";
     const value = document.createElement("strong");
-    value.textContent = `${formatNumber(category.count)} · ${formatPercent(category.share)}`;
+    value.textContent = `${formatExactInteger(category.count)} · ${formatPercent(category.share)}`;
     heading.append(label, value);
     const track = document.createElement("div");
     track.className = "profile-bar-track";
@@ -382,13 +383,13 @@ function renderAnalysisResult(result, { focus = true } = {}) {
   currentResult = result;
   const summary = result.summary;
   document.querySelector("#analysis-results-name").textContent = result.analysis_name;
-  document.querySelector("#analysis-run-id").textContent = `#${formatNumber(result.analysis_run_id)}`;
-  document.querySelector("#result-run-id").textContent = `#${formatNumber(result.analysis_run_id)}`;
+  document.querySelector("#analysis-run-id").textContent = `#${formatId(result.analysis_run_id)}`;
+  document.querySelector("#result-run-id").textContent = `#${formatId(result.analysis_run_id)}`;
   setStatusBadge(document.querySelector("#analysis-results-status"), result.status);
-  document.querySelector("#result-observations").textContent = formatNumber(summary.observation_count);
-  document.querySelector("#result-selected").textContent = formatNumber(summary.selected_customer_count);
-  document.querySelector("#result-positive").textContent = formatNumber(summary.positive_customer_count);
-  document.querySelector("#result-unlabeled").textContent = formatNumber(summary.unlabeled_customer_count);
+  document.querySelector("#result-observations").textContent = formatExactInteger(summary.observation_count);
+  document.querySelector("#result-selected").textContent = formatExactInteger(summary.selected_customer_count);
+  document.querySelector("#result-positive").textContent = formatExactInteger(summary.positive_customer_count);
+  document.querySelector("#result-unlabeled").textContent = formatExactInteger(summary.unlabeled_customer_count);
   document.querySelector("#result-positive-rate").textContent = formatPercent(summary.positive_customer_rate);
   document.querySelector("#result-net-sales").textContent = formatCurrency(summary.net_sales_amount);
   document.querySelector("#result-gross-margin").textContent = formatCurrency(summary.gross_margin_amount);
@@ -400,7 +401,7 @@ function renderAnalysisResult(result, { focus = true } = {}) {
   setAnalysisRunning(false);
   document.querySelector("#historical-analysis-results").hidden = false;
   document.querySelector("#analysis-results-content").hidden = false;
-  document.querySelector("#analysis-run-announcement").textContent = `Analysis run ${formatNumber(result.analysis_run_id)} completed.`;
+  document.querySelector("#analysis-run-announcement").textContent = `Analysis run ${formatId(result.analysis_run_id)} completed.`;
   if (focus) document.querySelector("#analysis-results-title").focus();
 }
 
@@ -432,14 +433,14 @@ function renderRecentAnalyses(items) {
     const name = document.createElement("strong");
     name.textContent = item.analysis_name;
     const metadata = document.createElement("small");
-    metadata.textContent = `Run #${formatNumber(item.analysis_run_id)} · ${formatDate(item.completed_at || item.created_at, true)} · ${conversionLabel(item.conversion_definition)}`;
+    metadata.textContent = `Run #${formatId(item.analysis_run_id)} · ${formatDate(item.completed_at || item.created_at, true)} · ${conversionLabel(item.conversion_definition)}`;
     identity.append(name, metadata);
 
     const customers = document.createElement("td");
     const selected = document.createElement("strong");
-    selected.textContent = formatNumber(item.selected_customer_count);
+    selected.textContent = formatExactInteger(item.selected_customer_count);
     const customerDetail = document.createElement("small");
-    customerDetail.textContent = `${formatNumber(item.positive_customer_count)} positive · ${formatNumber(item.unlabeled_customer_count)} unlabeled`;
+    customerDetail.textContent = `${formatExactInteger(item.positive_customer_count)} positive · ${formatExactInteger(item.unlabeled_customer_count)} unlabeled`;
     customers.append(selected, customerDetail);
 
     const outcome = document.createElement("td");
@@ -492,7 +493,7 @@ async function reopenAnalysis(analysisRunId, button) {
   if (analysisRunning) return;
   hideFormError();
   setButtonLoading(button, true, "Opening…");
-  document.querySelector("#analysis-run-announcement").textContent = `Opening analysis run ${formatNumber(analysisRunId)}.`;
+  document.querySelector("#analysis-run-announcement").textContent = `Opening analysis run ${formatId(analysisRunId)}.`;
   try {
     const result = await getJSON(`/api/historical/analyses/${analysisRunId}`);
     renderAnalysisResult(result);

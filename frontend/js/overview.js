@@ -1,6 +1,6 @@
 import { getCachedJSON } from "./api.js";
 import { loadHistoricalOverview } from "./historical-overview.js";
-import { formatDate, formatNumber, hideError, setButtonLoading, setStatusBadge, showError } from "./ui.js";
+import { formatDate, formatExactInteger, hideError, setButtonLoading, setStatusBadge, showError } from "./ui.js";
 
 const metricIds = [
   "customer-count", "campaign-sales-count", "demographic-count",
@@ -12,7 +12,7 @@ let loadedOnce = false;
 function setMetric(id, value, loaded) {
   const element = document.querySelector(`#${id}`);
   element.classList.remove("is-loading");
-  element.textContent = loaded ? formatNumber(value) : "Not loaded";
+  element.textContent = loaded ? formatExactInteger(value) : "Not loaded";
 }
 
 function setSummaryLoading() {
@@ -54,7 +54,7 @@ function renderSummary(summary) {
     ? `${formatDate(summary.campaign_contact_date_min)} — ${formatDate(summary.campaign_contact_date_max)}`
     : "Not loaded";
   document.querySelector("#attributed-purchase-count").textContent = campaignsLoaded
-    ? formatNumber(summary.attributed_purchase_count)
+    ? formatExactInteger(summary.attributed_purchase_count)
     : "Not loaded";
   document.querySelector("#database-name").textContent = summary.database_path || "—";
   document.querySelector("#schema-version").textContent = summary.schema_version

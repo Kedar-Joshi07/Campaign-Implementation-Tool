@@ -1,0 +1,75 @@
+{
+  "phase": "phase7",
+  "section": "section1_ui_finalization",
+  "step": "ui_1_baseline_and_exactness_audit",
+  "starting_head": "4748d9e7aa837ad2e66876c20714d576d3ed1f31",
+  "captured_at": "2026-09-03T06:55:45Z",
+  "baseline_gates": {
+    "git_rev_parse_head": "4748d9e7aa837ad2e66876c20714d576d3ed1f31",
+    "git_status_short": "pass",
+    "pip_check": "pass",
+    "pytest": {
+      "status": "pass",
+      "summary": "451 passed in 704.42s"
+    },
+    "compileall": "pass",
+    "git_diff_check": "pass",
+    "validate_data_json": {
+      "status": "pass",
+      "overall_status": "OK",
+      "customers": 125000,
+      "campaign_sales": 570000,
+      "demographics": 5000000
+    }
+  },
+  "formatter_audit": {
+    "legacy_shared_formatter": {
+      "file": "frontend/js/ui.js",
+      "symbol": "formatNumber",
+      "behavior": "compact 2-decimal formatter with K/M/B suffixes",
+      "risk_examples": [
+        "ID-like values can render as #8.00",
+        "Exact counts can render as 416.28K instead of 416,275",
+        "Population counts can render as 5.00M instead of 5,000,000"
+      ]
+    },
+    "classification": {
+      "IDENTIFIER": [
+        "campaign_id, audience_id, scoring_run_id, model_run_id, analysis_run_id, export_event_id, job_id"
+      ],
+      "EXACT_COUNT": [
+        "target_count, resolved_count, selected_count, deliverable_count, undeliverable_count, row_count",
+        "reconciliation and dataset count surfaces"
+      ],
+      "COMPACT_KPI": [
+        "high-level cards where trend readability is the primary task"
+      ],
+      "DECIMAL_METRIC": [
+        "scores, lift, ks, runtime seconds, progress percentages"
+      ]
+    }
+  },
+  "browser_contract_audit": {
+    "age_min_max": {
+      "before": "min=0 with no upper bound",
+      "required": "min=18 max=100"
+    },
+    "family_member_count_min_max": {
+      "before": "min=0",
+      "required": "min=1"
+    },
+    "score_bounds": "already constrained to 0..1",
+    "top_percentile_bounds": "already constrained to 1..100",
+    "top_n_minimum": "already constrained to min=1"
+  },
+  "stale_wording_audit": {
+    "found": [
+      "Phase 7 shell label in Campaigns navigation",
+      "Loading Campaign Builder shell copy",
+      "States covered in shell copy",
+      "Export history metadata appears after Section 2 backend integration"
+    ],
+    "required_direction": "Replace shell/gated wording with implemented backend wording while preserving no-activation scope"
+  },
+  "status": "baseline_complete"
+}

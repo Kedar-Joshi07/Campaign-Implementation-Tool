@@ -1,5 +1,5 @@
 import { getCachedJSON } from "./api.js";
-import { formatCurrency, formatDate, formatNumber, formatPercent } from "./ui.js";
+import { formatCurrency, formatDate, formatExactInteger, formatPercent } from "./ui.js";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
@@ -100,7 +100,7 @@ function renderMonthlyTrend(rows) {
     }
 
     const item = document.createElement("li");
-    item.textContent = `${safeLabel(row.month)}: ${formatPercent(rate)}, ${formatNumber(row.attributed_purchase_count)} attributed purchases from ${formatNumber(row.contacted_count)} contacted observations.`;
+    item.textContent = `${safeLabel(row.month)}: ${formatPercent(rate)}, ${formatExactInteger(row.attributed_purchase_count)} attributed purchases from ${formatExactInteger(row.contacted_count)} contacted observations.`;
     dataList.append(item);
   });
 
@@ -166,7 +166,7 @@ function renderPerformanceBars(selector, rows) {
     track.append(fill);
 
     const context = document.createElement("small");
-    context.textContent = `${formatNumber(row.attributed_purchase_count)} attributed purchases · ${formatNumber(row.observation_count)} observations`;
+    context.textContent = `${formatExactInteger(row.attributed_purchase_count)} attributed purchases · ${formatExactInteger(row.observation_count)} observations`;
     item.append(heading, track, context);
     list.append(item);
   }
@@ -179,7 +179,7 @@ function renderHistoricalOverview(payload) {
     return;
   }
 
-  document.querySelector("#historical-observation-count").textContent = formatNumber(summary.observation_count);
+  document.querySelector("#historical-observation-count").textContent = formatExactInteger(summary.observation_count);
   document.querySelector("#historical-attributed-rate").textContent = formatPercent(summary.attributed_purchase_rate);
   document.querySelector("#historical-net-sales").textContent = formatCurrency(summary.net_sales_amount);
   document.querySelector("#historical-date-range").textContent = `${formatDate(summary.contact_date_from)} — ${formatDate(summary.contact_date_to)}`;

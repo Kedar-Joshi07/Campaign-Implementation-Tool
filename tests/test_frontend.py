@@ -72,7 +72,8 @@ def test_navigation_groups_and_phase7_shell_labels_are_visible(client: TestClien
     assert "Phase 2</small>" not in html
     assert "Phases 4-5</small>" not in html
     assert "Phase 6</small>" not in html
-    assert "Phase 7 shell</small>" in html
+    assert "Phase 7 shell</small>" not in html
+    assert "Current workflow</small>" in html
     assert "Model Training &amp; Prospect Scoring" in html
     assert "Audience Explorer" in html
     assert "Campaigns" in html
@@ -154,13 +155,16 @@ def test_data_status_script_renders_exact_and_approximate_policy_labels(
     assert "5,000,000" not in script
 
 
-def test_ui_numeric_formatter_uses_compact_two_decimal_suffix_contract(
+def test_ui_numeric_formatter_supports_exact_compact_and_decimal_contracts(
     client: TestClient,
 ) -> None:
     script = client.get("/static/js/ui.js").text
 
-    assert "minimumFractionDigits: 2" in script
-    assert "maximumFractionDigits: 2" in script
+    assert "export function formatId(value)" in script
+    assert "export function formatExactInteger(value)" in script
+    assert "export function formatCompactNumber(value)" in script
+    assert "export function formatDecimal(value" in script
+    assert "return formatCompactNumber(value);" in script
     assert "absoluteValue >= 1_000_000_000" in script
     assert "absoluteValue >= 1_000_000" in script
     assert "absoluteValue >= 1_000" in script
@@ -308,6 +312,10 @@ def test_audience_explorer_workspace_contains_required_sections_and_controls(
         assert f'id="{control_id}"' in html
 
     assert "Prepare Audience Explorer" in html
+    assert 'id="audience-age-min" name="age_min" type="number" min="18" max="100"' in html
+    assert 'id="audience-age-max" name="age_max" type="number" min="18" max="100"' in html
+    assert 'id="audience-family-min" name="family_member_count_min" type="number" min="1"' in html
+    assert 'id="audience-family-max" name="family_member_count_max" type="number" min="1"' in html
     assert "Selected vs Universe" in html
     assert "Selected vs Historical Positives" in html
     assert "Aggregate demographic comparison only. No prospect is matched to a historical customer." in html
@@ -411,6 +419,8 @@ def test_campaign_builder_shell_contains_required_regions_and_controls(
         "campaign-detail-summary",
         "campaign-export-profile-fields",
         "campaign-export-history-body",
+        "campaign-export-history-refresh",
+        "campaign-export-status-note",
     ):
         assert f'id="{control_id}"' in html
 

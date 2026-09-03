@@ -1,7 +1,9 @@
 import { clearCachedJSON, getCachedJSON, getJSON } from "./api.js";
 import {
   formatDate,
-  formatNumber,
+  formatDecimal,
+  formatExactInteger,
+  formatId,
   formatPercent,
   hideError,
   setButtonLoading,
@@ -163,11 +165,11 @@ function createOption(value, label) {
 }
 
 function formatScore(value) {
-  return formatNumber(value);
+  return formatDecimal(value, 2, 6);
 }
 
 function formatNumericMean(value) {
-  return formatNumber(value);
+  return formatDecimal(value, 2, 2);
 }
 
 function estimateScoreRangeText(estimate) {
@@ -242,8 +244,20 @@ function validateFiltersAndSelection(filters, selection) {
   if (filters.score_min !== null && filters.score_max !== null && filters.score_min > filters.score_max) {
     return "Score min cannot exceed score max.";
   }
+  if (filters.score_min !== null && (filters.score_min < 0 || filters.score_min > 1)) {
+    return "Score min must be between 0 and 1.";
+  }
+  if (filters.score_max !== null && (filters.score_max < 0 || filters.score_max > 1)) {
+    return "Score max must be between 0 and 1.";
+  }
   if (filters.age_min !== null && filters.age_max !== null && filters.age_min > filters.age_max) {
     return "Age min cannot exceed age max.";
+  }
+  if (filters.age_min !== null && (filters.age_min < 18 || filters.age_min > 100)) {
+    return "Age min must be between 18 and 100.";
+  }
+  if (filters.age_max !== null && (filters.age_max < 18 || filters.age_max > 100)) {
+    return "Age max must be between 18 and 100.";
   }
   if (
     filters.individual_yearly_income_min !== null
@@ -258,6 +272,12 @@ function validateFiltersAndSelection(filters, selection) {
     && filters.family_member_count_min > filters.family_member_count_max
   ) {
     return "Family member count min cannot exceed max.";
+  }
+  if (filters.family_member_count_min !== null && filters.family_member_count_min < 1) {
+    return "Family member count min must be at least 1.";
+  }
+  if (filters.family_member_count_max !== null && filters.family_member_count_max < 1) {
+    return "Family member count max must be at least 1.";
   }
 
   if (filters.top_percentile_max !== null) {
@@ -333,10 +353,10 @@ function setContextHeader(run, options) {
   activeScoringRunId = run.scoring_run_id;
   activeModelRunId = run.model_run_id;
 
-  document.querySelector("#audience-context-scoring-run").textContent = `#${formatNumber(run.scoring_run_id)}`;
-  document.querySelector("#audience-context-model-run").textContent = `#${formatNumber(run.model_run_id)}`;
+  document.querySelector("#audience-context-scoring-run").textContent = `#${formatId(run.scoring_run_id)}`;
+  document.querySelector("#audience-context-model-run").textContent = `#${formatId(run.model_run_id)}`;
   document.querySelector("#audience-context-model-role").textContent = "BAGGING_PU";
-  document.querySelector("#audience-context-population").textContent = formatNumber(options.population_count);
+  document.querySelector("#audience-context-population").textContent = formatExactInteger(options.population_count);
   document.querySelector("#audience-context-score-range").textContent = `${formatScore(options.score_summary?.score_min)} - ${formatScore(options.score_summary?.score_max)}`;
   document.querySelector("#audience-context-score-mean").textContent = formatScore(options.score_summary?.score_mean);
 
@@ -369,7 +389,7 @@ function populateCategoricalOptions(options) {
     const select = document.querySelector(selector);
     select.replaceChildren();
     for (const item of options.categorical_options?.[field] || []) {
-      select.append(createOption(item.value, `${item.value} (${formatNumber(item.count)})`));
+      select.append(createOption(item.value, `${item.value} (${formatExactInteger(item.count)})`));
     }
   }
 }
@@ -449,14 +469,14 @@ function renderEstimate(estimate) {
   activeFilters = estimate.normalized_filters;
   activeSelection = estimate.selection;
 
-  document.querySelector("#audience-estimate-matching").textContent = formatNumber(estimate.matching_count);
-  document.querySelector("#audience-estimate-selected").textContent = formatNumber(estimate.selected_count);
+  document.querySelector("#audience-estimate-matching").textContent = formatExactInteger(estimate.matching_count);
+  document.querySelector("#audience-estimate-selected").textContent = formatExactInteger(estimate.selected_count);
   document.querySelector("#audience-estimate-score-range").textContent = estimateScoreRangeText(estimate);
   document.querySelector("#audience-estimate-score-mean").textContent = formatScore(estimate.score_mean);
 
   const selectionText = estimate.selection.mode === "TOP_N"
-    ? `Top ${formatNumber(estimate.selection.target_count)} of ${formatNumber(estimate.matching_count)} matching prospects.`
-    : `All ${formatNumber(estimate.selected_count)} matching prospects.`;
+    ? `Top ${formatExactInteger(estimate.selection.target_count)} of ${formatExactInteger(estimate.matching_count)} matching prospects.`
+    : `All ${formatExactInteger(estimate.selected_count)} matching prospects.`;
   document.querySelector("#audience-save-summary").textContent = selectionText;
 }
 
@@ -471,10 +491,10 @@ function activeFilterEntries(filters) {
   if (filters.age_min !== null) entries.push(["Age min", String(filters.age_min)]);
   if (filters.age_max !== null) entries.push(["Age max", String(filters.age_max)]);
   if (filters.individual_yearly_income_min !== null) {
-    entries.push(["Income min", formatNumber(filters.individual_yearly_income_min)]);
+    entries.push(["Income min", formatExactInteger(filters.individual_yearly_income_min)]);
   }
   if (filters.individual_yearly_income_max !== null) {
-    entries.push(["Income max", formatNumber(filters.individual_yearly_income_max)]);
+    entries.push(["Income max", formatExactInteger(filters.individual_yearly_income_max)]);
   }
   if (filters.family_member_count_min !== null) {
     entries.push(["Family min", String(filters.family_member_count_min)]);
@@ -517,7 +537,7 @@ function renderFilterSummary(filters, selection) {
 
   const summary = document.querySelector("#audience-filter-summary-text");
   const selectionSummary = selection.mode === "TOP_N"
-    ? `Selection: top ${formatNumber(selection.target_count)} matching prospects.`
+    ? `Selection: top ${formatExactInteger(selection.target_count)} matching prospects.`
     : "Selection: all matching prospects.";
 
   if (!entries.length) {
@@ -546,19 +566,19 @@ function renderSearchRows(rows, { append = false } = {}) {
     const row = document.createElement("tr");
     appendSearchCell(row, formatScore(item.propensity_score), "numeric");
     appendSearchCell(row, item.rank_band || "-");
-    appendSearchCell(row, formatNumber(item.percentile_bucket), "numeric");
-    appendSearchCell(row, formatNumber(item.decile), "numeric");
-    appendSearchCell(row, item.person_id || "-");
-    appendSearchCell(row, formatNumber(item.age), "numeric");
+    appendSearchCell(row, formatExactInteger(item.percentile_bucket), "numeric");
+    appendSearchCell(row, formatExactInteger(item.decile), "numeric");
+    appendSearchCell(row, formatId(item.person_id));
+    appendSearchCell(row, formatExactInteger(item.age), "numeric");
     appendSearchCell(row, item.gender || "Unknown/Other");
     appendSearchCell(row, item.state || "Unknown/Other");
-    appendSearchCell(row, formatNumber(item.individual_yearly_income), "numeric");
+    appendSearchCell(row, formatExactInteger(item.individual_yearly_income), "numeric");
     appendSearchCell(row, item.marital_status || "Unknown/Other");
     appendSearchCell(row, item.education || "Unknown/Other");
     appendSearchCell(row, item.employment_status || "Unknown/Other");
     appendSearchCell(row, item.resident_status || "Unknown/Other");
     appendSearchCell(row, item.resident_type || "Unknown/Other");
-    appendSearchCell(row, formatNumber(item.family_member_count), "numeric");
+    appendSearchCell(row, formatExactInteger(item.family_member_count), "numeric");
     appendSearchCell(row, item.type_of_employment || "Unknown/Other");
     body.append(row);
   }
@@ -586,7 +606,7 @@ function renderTraitsRows(traits) {
     appendSearchCell(row, trait.category || "Unknown/Other");
     appendSearchCell(row, formatPercent(trait.selected_share), "numeric");
     appendSearchCell(row, formatPercent(trait.reference_share), "numeric");
-    appendSearchCell(row, formatNumber(trait.index), "numeric");
+    appendSearchCell(row, formatDecimal(trait.index, 2, 2), "numeric");
     body.append(row);
   }
 }
@@ -640,7 +660,7 @@ function renderProfileComparisonBars(profilePayload) {
     referenceTrack.append(referenceFill);
 
     const note = document.createElement("small");
-    const indexText = formatNumber(item.index);
+    const indexText = formatDecimal(item.index, 2, 2);
     note.textContent = `Share-point delta: ${formatPercent(item.share_point_difference)} · Index: ${indexText}`;
 
     entry.append(top, selectedTrack, referenceTrack, note);
@@ -656,12 +676,12 @@ function renderProfileKpis(summary) {
   const selected = summary?.selected || {};
   const historicalPositives = summary?.historical_positives || {};
 
-  document.querySelector("#audience-kpi-universe-count").textContent = formatNumber(universe.count);
-  document.querySelector("#audience-kpi-matching-count").textContent = formatNumber(matching.count);
-  document.querySelector("#audience-kpi-selected-count").textContent = formatNumber(selected.count);
-  document.querySelector("#audience-kpi-positive-count").textContent = formatNumber(historicalPositives.count);
+  document.querySelector("#audience-kpi-universe-count").textContent = formatExactInteger(universe.count);
+  document.querySelector("#audience-kpi-matching-count").textContent = formatExactInteger(matching.count);
+  document.querySelector("#audience-kpi-selected-count").textContent = formatExactInteger(selected.count);
+  document.querySelector("#audience-kpi-positive-count").textContent = formatExactInteger(historicalPositives.count);
   document.querySelector("#audience-kpi-selected-age").textContent = formatNumericMean(selected.age_mean);
-  document.querySelector("#audience-kpi-selected-income").textContent = formatNumber(
+  document.querySelector("#audience-kpi-selected-income").textContent = formatExactInteger(
     Number.isFinite(Number(selected.individual_yearly_income_mean))
       ? Math.round(Number(selected.individual_yearly_income_mean))
       : null,
@@ -873,11 +893,11 @@ function setPreparationRunningCopy(job) {
   const status = String(job?.status || "QUEUED").toLowerCase();
   const progress = Number(job?.progress_percent);
   const normalizedProgress = Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : 0;
-  const progressText = `${formatNumber(normalizedProgress)}%`;
+  const progressText = `${formatDecimal(normalizedProgress, 0, 2)}%`;
   const stage = job?.stage || "QUEUED";
 
   document.querySelector("#audience-prep-running-title").textContent = "Preparing audience rank boundaries";
-  document.querySelector("#audience-prep-running-message").textContent = `Job #${formatNumber(job.job_id)} is ${status} at stage ${stage} (${progressText}).`;
+  document.querySelector("#audience-prep-running-message").textContent = `Job #${formatId(job.job_id)} is ${status} at stage ${stage} (${progressText}).`;
 }
 
 function showPreparationFailed(message) {
@@ -944,7 +964,7 @@ async function submitPreparation() {
     prepJobId = job.job_id;
     setScreenState("prepRunning");
     setPreparationRunningCopy(job);
-    setAudienceAnnouncement(`Preparation job #${formatNumber(job.job_id)} accepted.`);
+    setAudienceAnnouncement(`Preparation job #${formatId(job.job_id)} accepted.`);
     await pollPreparationJob(job.job_id);
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {
@@ -1105,9 +1125,9 @@ async function loadSavedAudiences(force = false) {
       const meta = document.createElement("p");
       meta.className = "saved-audience-meta";
       const mode = item.selection_mode === "TOP_N"
-        ? `Top ${formatNumber(item.target_count || 0)}`
+        ? `Top ${formatExactInteger(item.target_count || 0)}`
         : "All matching";
-      meta.textContent = `${formatDate(item.created_at, true)} · ${formatNumber(item.resolved_count)} selected · ${mode}`;
+      meta.textContent = `${formatDate(item.created_at, true)} · ${formatExactInteger(item.resolved_count)} selected · ${mode}`;
 
       const actions = document.createElement("div");
       actions.className = "saved-audience-item-actions";
@@ -1133,9 +1153,9 @@ function renderSavedAudienceDetail(detail) {
 
   document.querySelector("#saved-audience-detail-title").textContent = detail.audience_name;
   const mode = detail.definition.selection_mode === "TOP_N"
-    ? `Top ${formatNumber(detail.definition.target_count || 0)}`
+    ? `Top ${formatExactInteger(detail.definition.target_count || 0)}`
     : "All matching";
-  document.querySelector("#saved-audience-detail-meta").textContent = `${formatDate(detail.created_at, true)} · ${formatNumber(detail.definition.resolved_count)} selected · ${mode}`;
+  document.querySelector("#saved-audience-detail-meta").textContent = `${formatDate(detail.created_at, true)} · ${formatExactInteger(detail.definition.resolved_count)} selected · ${mode}`;
 
   const currentness = document.querySelector("#saved-audience-currentness");
   setStatusBadge(currentness, detail.currentness?.is_current ? "COMPLETED" : "WARNING");
@@ -1299,7 +1319,7 @@ async function submitSaveAudience(event) {
       }),
     });
 
-    document.querySelector("#audience-save-status").textContent = `Saved audience #${formatNumber(saved.audience_id)}.`;
+    document.querySelector("#audience-save-status").textContent = `Saved audience #${formatId(saved.audience_id)}.`;
     clearCachedJSON(API_PATHS.audiences);
     await loadSavedAudiences(true);
     renderSavedAudienceDetail(saved);

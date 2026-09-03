@@ -1,5 +1,5 @@
 import { getCachedJSON } from "./api.js";
-import { datasetLabel, formatDate, formatNumber, hideError, setButtonLoading, setStatusBadge, showError } from "./ui.js";
+import { datasetLabel, formatDate, formatDecimal, formatExactInteger, hideError, setButtonLoading, setStatusBadge, showError } from "./ui.js";
 
 let initialized = false;
 let loadedOnce = false;
@@ -15,7 +15,7 @@ function targetPolicyLabel(dataset) {
   if (dataset.exact_match_required) {
     return "Exact target";
   }
-  const displayTolerance = formatNumber(dataset.count_tolerance_percent);
+  const displayTolerance = formatDecimal(dataset.count_tolerance_percent, 0, 2);
   return `Approximate target (±${displayTolerance}%)`;
 }
 
@@ -25,8 +25,8 @@ function renderDatasetStatus(datasets) {
     if (!card) continue;
     card.classList.remove("is-loading");
     setStatusBadge(card.querySelector('[data-field="status"]'), dataset.reconciliation_status);
-    card.querySelector('[data-field="actual"]').textContent = dataset.actual_rows > 0 ? formatNumber(dataset.actual_rows) : "Not loaded";
-    card.querySelector('[data-field="expected"]').textContent = dataset.expected_rows === null ? "Not configured" : formatNumber(dataset.expected_rows);
+    card.querySelector('[data-field="actual"]').textContent = dataset.actual_rows > 0 ? formatExactInteger(dataset.actual_rows) : "Not loaded";
+    card.querySelector('[data-field="expected"]').textContent = dataset.expected_rows === null ? "Not configured" : formatExactInteger(dataset.expected_rows);
     card.querySelector('[data-field="policy"]').textContent = targetPolicyLabel(dataset);
     const importStatus = dataset.last_import_status
       ? `${dataset.last_import_status.toLowerCase()} · ${formatDate(dataset.last_import_completed_at || dataset.last_import_started_at, true)}`
@@ -40,7 +40,7 @@ function renderDatasetStatus(datasets) {
       : publishedAt;
     card.querySelector('[data-field="source"]').textContent = dataset.source_path || "—";
     card.querySelector('[data-field="source"]').title = dataset.source_path || "";
-    card.querySelector('[data-field="rejected"]').textContent = dataset.rows_rejected === null ? "—" : formatNumber(dataset.rows_rejected);
+    card.querySelector('[data-field="rejected"]').textContent = dataset.rows_rejected === null ? "—" : formatExactInteger(dataset.rows_rejected);
   }
 }
 
@@ -86,8 +86,8 @@ function renderImports(imports) {
     const sourceCell = createCell(item.source_path || "—");
     sourceCell.title = item.source_path || "";
     row.append(sourceCell);
-    row.append(createCell(formatNumber(item.rows_inserted), "numeric"));
-    row.append(createCell(formatNumber(item.rows_rejected), "numeric"));
+    row.append(createCell(formatExactInteger(item.rows_inserted), "numeric"));
+    row.append(createCell(formatExactInteger(item.rows_rejected), "numeric"));
     body.append(row);
   }
 }

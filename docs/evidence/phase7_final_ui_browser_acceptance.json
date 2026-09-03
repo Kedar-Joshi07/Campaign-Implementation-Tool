@@ -1,0 +1,134 @@
+{
+  "phase": "phase7",
+  "section": "section1_ui_finalization",
+  "step": "ui_5_browser_regression_and_freeze",
+  "captured_at": "2026-09-03T08:15:00Z",
+  "environment": {
+    "url": "http://127.0.0.1:8000/#campaigns",
+    "browser": "integrated_playwright"
+  },
+  "viewports": [
+    {
+      "size": "1920x1080",
+      "campaigns_view_loaded": true,
+      "navigation_campaigns_subtitle": "Current workflow",
+      "loading_heading": "Loading Campaign Builder workspace",
+      "stale_shell_wording_present": false,
+      "section2_placeholder_present": false,
+      "refresh_export_status_visible": true,
+      "export_status_note": "Latest export completed at Sep 2, 2026, 7:23 PM.",
+      "exactness_samples": {
+        "audience_option_id": "#29",
+        "audience_selected_count": "416,275",
+        "campaign_row_sample": "#5 ... 50,000",
+        "export_event_sample": "#9 ... 50,000"
+      }
+    },
+    {
+      "size": "1366x768",
+      "campaigns_view_loaded": true,
+      "navigation_campaigns_subtitle": "Current workflow",
+      "loading_heading": "Loading Campaign Builder workspace",
+      "stale_shell_wording_present": false,
+      "section2_placeholder_present": false,
+      "refresh_export_status_visible": true,
+      "export_status_note": "Latest export completed at Sep 2, 2026, 7:23 PM.",
+      "exactness_samples": {
+        "audience_option_id": "#29",
+        "audience_selected_count": "416,275",
+        "campaign_row_sample": "#5 ... 50,000",
+        "export_event_sample": "#9 ... 50,000"
+      }
+    },
+    {
+      "size": "1024x768",
+      "campaigns_view_loaded": true,
+      "navigation_campaigns_subtitle": "Current workflow",
+      "loading_heading": "Loading Campaign Builder workspace",
+      "stale_shell_wording_present": false,
+      "section2_placeholder_present": false,
+      "refresh_export_status_visible": true,
+      "export_status_note": "Latest export completed at Sep 2, 2026, 7:23 PM.",
+      "exactness_samples": {
+        "audience_option_id": "#29",
+        "audience_selected_count": "416,275",
+        "campaign_row_sample": "#5 ... 50,000",
+        "export_event_sample": "#9 ... 50,000"
+      }
+    },
+    {
+      "size": "390x844",
+      "campaigns_view_loaded": true,
+      "navigation_campaigns_subtitle": "Current workflow",
+      "loading_heading": "Loading Campaign Builder workspace",
+      "stale_shell_wording_present": false,
+      "section2_placeholder_present": false,
+      "refresh_export_status_visible": true,
+      "export_status_note": "Latest export completed at Sep 2, 2026, 7:23 PM.",
+      "exactness_samples": {
+        "audience_option_id": "#29",
+        "audience_selected_count": "416,275",
+        "campaign_row_sample": "#5 ... 50,000",
+        "export_event_sample": "#9 ... 50,000"
+      }
+    }
+  ],
+  "audience_explorer_contract_checks": {
+    "age_min_input": {
+      "min": 18,
+      "max": 100
+    },
+    "age_max_input": {
+      "min": 18,
+      "max": 100
+    },
+    "family_member_count_min_input": {
+      "min": 1
+    },
+    "family_member_count_max_input": {
+      "min": 1
+    },
+    "score_bounds": {
+      "min": 0,
+      "max": 1
+    },
+    "top_percentile_bounds": {
+      "min": 1,
+      "max": 100
+    },
+    "top_n_min": 1
+  },
+  "campaign_currentness_surface": {
+    "expected_fields_visible": [
+      "Saved audience current",
+      "Scoring current",
+      "Historical source current",
+      "Demographic source current",
+      "Model/artifact verified",
+      "Rank boundaries",
+      "Analytics snapshot"
+    ]
+  },
+  "long_running_status_contract": {
+    "manual_refresh_control": true,
+    "adaptive_polling_implemented": true,
+    "export_history_columns": [
+      "Event ID",
+      "Time",
+      "Profile",
+      "Status",
+      "Elapsed",
+      "Selected",
+      "Deliverable",
+      "Undeliverable",
+      "Exported rows",
+      "Checksum"
+    ],
+    "silent_120s_stop_removed": true
+  },
+  "negative_scope_checks": {
+    "activate_or_send_action_visible": false,
+    "pii_preview_visible": false
+  },
+  "status": "pass"
+}

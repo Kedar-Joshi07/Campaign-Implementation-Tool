@@ -1,6 +1,9 @@
-const numberFormatter = new Intl.NumberFormat("en-US", {
+const compactNumberFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
+});
+const exactIntegerFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 0,
 });
 const percentFormatter = new Intl.NumberFormat("en-US", {
   style: "percent",
@@ -36,24 +39,70 @@ const statusPresentation = {
   FAILED: ["Failed", "is-failed"],
 };
 
-export function formatNumber(value) {
+const decimalFormatterCache = new Map();
+
+function getDecimalFormatter(minimumFractionDigits, maximumFractionDigits) {
+  const key = `${minimumFractionDigits}:${maximumFractionDigits}`;
+  if (!decimalFormatterCache.has(key)) {
+    decimalFormatterCache.set(key, new Intl.NumberFormat("en-US", {
+      minimumFractionDigits,
+      maximumFractionDigits,
+    }));
+  }
+  return decimalFormatterCache.get(key);
+}
+
+function finiteNumber(value) {
   const numericValue = Number(value);
-  if (!Number.isFinite(numericValue)) {
+  return Number.isFinite(numericValue) ? numericValue : null;
+}
+
+export function formatId(value) {
+  const numericValue = finiteNumber(value);
+  if (numericValue === null || !Number.isInteger(numericValue)) {
+    return "—";
+  }
+  return exactIntegerFormatter.format(numericValue);
+}
+
+export function formatExactInteger(value) {
+  const numericValue = finiteNumber(value);
+  if (numericValue === null || !Number.isInteger(numericValue)) {
+    return "—";
+  }
+  return exactIntegerFormatter.format(numericValue);
+}
+
+export function formatCompactNumber(value) {
+  const numericValue = finiteNumber(value);
+  if (numericValue === null) {
     return "—";
   }
 
   const absoluteValue = Math.abs(numericValue);
   const sign = numericValue < 0 ? "-" : "";
   if (absoluteValue >= 1_000_000_000) {
-    return `${sign}${numberFormatter.format(absoluteValue / 1_000_000_000)}B`;
+    return `${sign}${compactNumberFormatter.format(absoluteValue / 1_000_000_000)}B`;
   }
   if (absoluteValue >= 1_000_000) {
-    return `${sign}${numberFormatter.format(absoluteValue / 1_000_000)}M`;
+    return `${sign}${compactNumberFormatter.format(absoluteValue / 1_000_000)}M`;
   }
   if (absoluteValue >= 1_000) {
-    return `${sign}${numberFormatter.format(absoluteValue / 1_000)}K`;
+    return `${sign}${compactNumberFormatter.format(absoluteValue / 1_000)}K`;
   }
-  return `${sign}${numberFormatter.format(absoluteValue)}`;
+  return `${sign}${compactNumberFormatter.format(absoluteValue)}`;
+}
+
+export function formatDecimal(value, minimumFractionDigits = 2, maximumFractionDigits = 2) {
+  const numericValue = finiteNumber(value);
+  if (numericValue === null) {
+    return "—";
+  }
+  return getDecimalFormatter(minimumFractionDigits, maximumFractionDigits).format(numericValue);
+}
+
+export function formatNumber(value) {
+  return formatCompactNumber(value);
 }
 
 export function formatPercent(value) {
@@ -61,12 +110,12 @@ export function formatPercent(value) {
 }
 
 export function formatCurrency(value) {
-  const numericValue = Number(value);
-  if (!Number.isFinite(numericValue)) {
+  const numericValue = finiteNumber(value);
+  if (numericValue === null) {
     return "—";
   }
   const sign = numericValue < 0 ? "-" : "";
-  return `${sign}$${formatNumber(Math.abs(numericValue))}`;
+  return `${sign}$${formatCompactNumber(Math.abs(numericValue))}`;
 }
 
 export function formatDate(value, includeTime = false) {

@@ -46,7 +46,8 @@ def test_phase5_api_surface_includes_scoring_and_step7_navigation_state() -> Non
     assert '<span>Historical Analysis</span><small>Phase 2</small>' not in html
     assert '<span>Model Training &amp; Prospect Scoring</span><small>Phases 4-5</small>' not in html
     assert '<span>Audience Explorer</span><small>Phase 6</small>' not in html
-    assert '<span>Campaigns</span><small>Phase 7 shell</small>' in html
+    assert '<span>Campaigns</span><small>Phase 7 shell</small>' not in html
+    assert '<span>Campaigns</span><small>Current workflow</small>' in html
 
 
 def test_phase3_documentation_records_contract_cli_caveat_and_phase4_boundary() -> None:

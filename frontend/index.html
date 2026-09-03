@@ -42,7 +42,7 @@
 
           <p class="navigation-label">Campaign Execution</p>
           <button class="navigation-item" type="button" data-view-target="campaigns">
-            <span class="nav-icon" aria-hidden="true">P7</span><span>Campaigns</span><small>Phase 7 shell</small>
+            <span class="nav-icon" aria-hidden="true">P7</span><span>Campaigns</span><small>Current workflow</small>
           </button>
         </nav>
 
@@ -833,11 +833,11 @@
                   <div class="audience-filter-grid">
                     <div class="form-field">
                       <label for="audience-age-min">Age min</label>
-                      <input id="audience-age-min" name="age_min" type="number" min="0" step="1" inputmode="numeric">
+                      <input id="audience-age-min" name="age_min" type="number" min="18" max="100" step="1" inputmode="numeric">
                     </div>
                     <div class="form-field">
                       <label for="audience-age-max">Age max</label>
-                      <input id="audience-age-max" name="age_max" type="number" min="0" step="1" inputmode="numeric">
+                      <input id="audience-age-max" name="age_max" type="number" min="18" max="100" step="1" inputmode="numeric">
                     </div>
                     <div class="form-field">
                       <label for="audience-income-min">Income min</label>
@@ -849,11 +849,11 @@
                     </div>
                     <div class="form-field">
                       <label for="audience-family-min">Family member count min</label>
-                      <input id="audience-family-min" name="family_member_count_min" type="number" min="0" step="1" inputmode="numeric">
+                      <input id="audience-family-min" name="family_member_count_min" type="number" min="1" step="1" inputmode="numeric">
                     </div>
                     <div class="form-field">
                       <label for="audience-family-max">Family member count max</label>
-                      <input id="audience-family-max" name="family_member_count_max" type="number" min="0" step="1" inputmode="numeric">
+                      <input id="audience-family-max" name="family_member_count_max" type="number" min="1" step="1" inputmode="numeric">
                     </div>
                   </div>
                 </section>
@@ -1193,11 +1193,11 @@
             <p>This POC stops at target-list export and does not activate or send campaigns.</p>
           </div>
 
-          <div id="campaigns-status-announcement" class="visually-hidden" role="status" aria-live="polite">Campaign Builder loading state.</div>
+          <div id="campaigns-status-announcement" class="visually-hidden" role="status" aria-live="polite">Campaign Builder loading.</div>
 
           <div id="campaigns-state-loading" class="analysis-page-loading" role="status" aria-live="polite">
             <span class="spinner" aria-hidden="true"></span>
-            <div><strong>Loading Campaign Builder shell</strong><p>Preparing saved audience eligibility and campaign workspace regions.</p></div>
+            <div><strong>Loading Campaign Builder workspace</strong><p>Preparing saved audience eligibility and campaign workspace regions.</p></div>
           </div>
 
           <div id="campaigns-state-backend-unavailable" class="historical-empty" role="status" hidden>
@@ -1222,7 +1222,7 @@
                 <div><p class="eyebrow">1. Campaign header</p><h3 id="campaign-header-title">Draft campaign workspace</h3></div>
                 <span id="campaign-shell-status" class="status-badge is-checking">Loading</span>
               </div>
-              <p class="panel-note">States covered in shell: loading, no eligible audience, ready, draft, finalized, stale/blocking issue, export preparing/streaming/completed/failed, backend unavailable.</p>
+              <p class="panel-note">States covered: loading, no eligible audience, ready, draft, finalized, stale/blocking issue, export preparing/streaming/completed/failed, backend unavailable.</p>
             </section>
 
             <section class="campaign-builder-stepper" aria-label="Campaign Builder steps" role="navigation">
@@ -1366,6 +1366,10 @@
                   </dl>
                 </div>
               </div>
+              <div class="analysis-form-actions">
+                <button id="campaign-export-history-refresh" class="button button-secondary" type="button">Refresh Export Status</button>
+                <span id="campaign-export-status-note" role="status" aria-live="polite">Export status updates appear here.</span>
+              </div>
               <div class="table-scroll">
                 <table>
                   <thead>
@@ -1374,12 +1378,16 @@
                       <th scope="col">Time</th>
                       <th scope="col">Profile</th>
                       <th scope="col">Status</th>
-                      <th scope="col" class="numeric">Row count</th>
+                      <th scope="col" class="numeric">Elapsed</th>
+                      <th scope="col" class="numeric">Selected</th>
+                      <th scope="col" class="numeric">Deliverable</th>
+                      <th scope="col" class="numeric">Undeliverable</th>
+                      <th scope="col" class="numeric">Exported rows</th>
                       <th scope="col">Checksum</th>
                     </tr>
                   </thead>
                   <tbody id="campaign-export-history-body">
-                    <tr class="empty-row"><td colspan="6">Export history metadata appears after Section 2 backend integration.</td></tr>
+                    <tr class="empty-row"><td colspan="10">No export events yet for this campaign.</td></tr>
                   </tbody>
                 </table>
               </div>
