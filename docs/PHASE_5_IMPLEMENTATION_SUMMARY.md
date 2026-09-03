@@ -164,7 +164,7 @@ Confirmed absent from backend/frontend runtime surfaces:
 
 ### Step 7 rerun after data remediation (historical GO evidence)
 
-- Historical rerun evidence artifacts retained: `logs/phase5_step7_rerun_report.json` and `logs/phase5_step7_validation.log`.
+- Historical rerun evidence artifacts retained: `docs/evidence/phase5_step7_rerun_report.json` and `docs/evidence/phase5_step7_validation.log`.
 - Historical real API path completed on `model_run_id=7` with `job_id=16`, `scoring_run_id=5` and exact 5M reconciliation.
 - This remains preserved as historical evidence and was not deleted.
 

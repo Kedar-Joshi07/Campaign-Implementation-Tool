@@ -1,0 +1,7 @@
+2026-08-24 | phase5-step7-rerun | Full hardening command suite passed: pip check, pytest -q (311 passed, 1 warning), compileall, git diff --check, validate_data --json OK.
+2026-08-24 | phase5-step7-rerun | Real API path: POST /api/models/7/score -> 202, job_id=16, scoring_run_id=5, terminal COMPLETED.
+2026-08-24 | phase5-step7-rerun | 5M reconciliation met: snapshot=5000000, scored=5000000, score_rows=5000000, duplicate_ids=0, invalid_fk=0, nonfinite=0, below0=0, above1=0.
+2026-08-24 | phase5-step7-rerun | Summary: min=0.006214199504618037, mean=0.04663573730897857, max=0.9908241192195328, chunk_size=25000, chunk_count=200, rows_per_second=1929.3563606367618.
+2026-08-24 | phase5-step7-rerun | Concurrency guards validated in live path: scoring-vs-scoring=409, training-vs-scoring=409.
+2026-08-24 | phase5-step7-rerun | Deterministic sample verification passed: sample_size=256, max_abs_diff=0.0.
+2026-08-24 | phase5-step7-rerun | Decision: GO for Phase 6 handoff.

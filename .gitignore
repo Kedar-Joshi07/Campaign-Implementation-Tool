@@ -3,25 +3,51 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.pyre/
+
+# Notebook/editor caches
+.ipynb_checkpoints/
 
 # Local environment and configuration
 .venv/
+.envrc
 .env
 
 # Runtime files and generated data
 data/*.db
 data/*.db-wal
 data/*.db-shm
+data/step7_regen/
+data/step7_validation_runtime/
 logs/*
 !logs/.gitkeep
 output/
 source/
+downloads/
+traces/
+videos/
+playwright-report/
+test-results/
 artifacts/models/*
 !artifacts/models/.gitkeep
 artifacts/*.db
 artifacts/*.db-wal
 artifacts/*.db-shm
+artifacts/**/*.db
+artifacts/**/*.db-wal
+artifacts/**/*.db-shm
+
+# Temp/backup files
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
 
 # Editors and operating systems
 .vscode/

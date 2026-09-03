@@ -149,7 +149,7 @@ All required Step 8 gates were executed.
 ## Step 8 Deliverables
 
 - `tests/test_phase6_step8_hardening.py`
-- `scripts/phase6_step8_capture_evidence.py`
+- `scripts/validation/phase6/phase6_step8_capture_evidence.py`
 - `docs/evidence/phase6_step8_query_plan_and_timing.json`
 - service hardening in:
   - `app/services/audience_query_service.py`
@@ -261,7 +261,7 @@ execution.
 
 ## Step 9 Deliverables
 
-- `scripts/phase6_step9_real_5m_validation.py`
+- `scripts/validation/phase6/phase6_step9_real_5m_validation.py`
 - `docs/evidence/phase6_step9_pre_run_gates.json`
 - `docs/evidence/phase6_5m_acceptance.json`
 

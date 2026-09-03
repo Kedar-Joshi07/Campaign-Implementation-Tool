@@ -1,0 +1,749 @@
+{
+  "preflight": {
+    "database_path": "data\\campaign_poc.db",
+    "database_size_bytes": 3342602240,
+    "free_disk_bytes": 326868164608,
+    "demographic_count": 5000000,
+    "model_run_id": 7,
+    "selected_candidate": "BAGGING_PU",
+    "model_role_policy_version": "2",
+    "evaluation_contract_version": "2",
+    "feature_contract_version": "1",
+    "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+    "artifact_sha256": "a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210"
+  },
+  "submit": {
+    "job_id": 16,
+    "job_type": "PROSPECT_SCORING",
+    "status": "QUEUED",
+    "progress_percent": 0,
+    "stage": "QUEUED",
+    "model_run_id": 7,
+    "created_at": "2026-08-24T09:43:51Z"
+  },
+  "job_terminal": {
+    "job_id": 16,
+    "job_type": "PROSPECT_SCORING",
+    "status": "COMPLETED",
+    "progress_percent": 100,
+    "stage": "COMPLETED",
+    "message": "Prospect scoring completed.",
+    "model_run_id": 7,
+    "created_at": "2026-08-24T09:43:51Z",
+    "started_at": "2026-08-24T09:44:02Z",
+    "finished_at": "2026-08-24T10:27:14Z",
+    "result": {
+      "artifact_sha256": "a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210",
+      "chunk_count": 200,
+      "chunk_size": 25000,
+      "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+      "feature_contract_version": "1",
+      "largest_chunk_rows": 25000,
+      "largest_transformed_matrix_bytes": 3280796,
+      "model_role_policy_version": "2",
+      "model_run_id": 7,
+      "rows_per_second": 1929.3563606367618,
+      "score_max": 0.9908241192195328,
+      "score_mean": 0.04663573730897857,
+      "score_min": 0.006214199504618037,
+      "scored_person_count": 5000000,
+      "scoring_run_id": 5,
+      "selected_candidate": "BAGGING_PU",
+      "total_seconds": 2591.537831999998
+    }
+  },
+  "job_poll_history": [
+    {
+      "status": "QUEUED",
+      "stage": "QUEUED",
+      "progress_percent": 0,
+      "message": null,
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 10,
+      "message": "Scored 25000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 13,
+      "message": "Scored 200000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 14,
+      "message": "Scored 250000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 16,
+      "message": "Scored 375000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 18,
+      "message": "Scored 500000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 19,
+      "message": "Scored 575000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 20,
+      "message": "Scored 625000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 22,
+      "message": "Scored 750000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 23,
+      "message": "Scored 825000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 25,
+      "message": "Scored 950000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 26,
+      "message": "Scored 1000000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 27,
+      "message": "Scored 1075000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 28,
+      "message": "Scored 1125000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 29,
+      "message": "Scored 1200000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 30,
+      "message": "Scored 1250000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 31,
+      "message": "Scored 1325000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 32,
+      "message": "Scored 1375000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 33,
+      "message": "Scored 1450000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 34,
+      "message": "Scored 1500000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 35,
+      "message": "Scored 1575000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 36,
+      "message": "Scored 1625000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 37,
+      "message": "Scored 1700000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 38,
+      "message": "Scored 1750000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 39,
+      "message": "Scored 1825000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 40,
+      "message": "Scored 1875000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 41,
+      "message": "Scored 1950000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 42,
+      "message": "Scored 2000000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 43,
+      "message": "Scored 2075000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 44,
+      "message": "Scored 2125000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 45,
+      "message": "Scored 2200000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 46,
+      "message": "Scored 2250000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 47,
+      "message": "Scored 2325000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 48,
+      "message": "Scored 2375000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 49,
+      "message": "Scored 2450000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 50,
+      "message": "Scored 2500000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 51,
+      "message": "Scored 2575000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 52,
+      "message": "Scored 2625000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 53,
+      "message": "Scored 2700000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 54,
+      "message": "Scored 2750000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 55,
+      "message": "Scored 2825000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 56,
+      "message": "Scored 2875000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 57,
+      "message": "Scored 2950000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 58,
+      "message": "Scored 3000000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 59,
+      "message": "Scored 3075000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 60,
+      "message": "Scored 3125000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 61,
+      "message": "Scored 3200000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 62,
+      "message": "Scored 3250000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 63,
+      "message": "Scored 3325000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 64,
+      "message": "Scored 3375000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 65,
+      "message": "Scored 3450000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 66,
+      "message": "Scored 3500000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 67,
+      "message": "Scored 3575000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 68,
+      "message": "Scored 3625000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 69,
+      "message": "Scored 3700000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 70,
+      "message": "Scored 3750000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 71,
+      "message": "Scored 3825000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 72,
+      "message": "Scored 3875000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 73,
+      "message": "Scored 3950000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 74,
+      "message": "Scored 4000000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 75,
+      "message": "Scored 4075000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 76,
+      "message": "Scored 4125000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 77,
+      "message": "Scored 4200000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 78,
+      "message": "Scored 4250000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 79,
+      "message": "Scored 4325000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 80,
+      "message": "Scored 4375000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 81,
+      "message": "Scored 4450000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 82,
+      "message": "Scored 4500000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 83,
+      "message": "Scored 4575000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 84,
+      "message": "Scored 4625000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 85,
+      "message": "Scored 4700000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 86,
+      "message": "Scored 4750000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 87,
+      "message": "Scored 4825000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 88,
+      "message": "Scored 4875000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "SCORING_PROSPECTS",
+      "progress_percent": 89,
+      "message": "Scored 4950000 of 5000000 prospects.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "FINALIZING_SCORES",
+      "progress_percent": 94,
+      "message": "Finalizing score aggregates.",
+      "finished_at": null
+    },
+    {
+      "status": "RUNNING",
+      "stage": "VERIFYING_COMPLETENESS",
+      "progress_percent": 98,
+      "message": "Verifying scored population completeness.",
+      "finished_at": null
+    },
+    {
+      "status": "COMPLETED",
+      "stage": "COMPLETED",
+      "progress_percent": 100,
+      "message": "Prospect scoring completed.",
+      "finished_at": "2026-08-24T10:27:14Z"
+    }
+  ],
+  "scoring_status_before": {
+    "model_run_id": 7,
+    "eligible": true,
+    "demographic_count": 5000000,
+    "selected_candidate": "BAGGING_PU",
+    "artifact_feature_compatible": true,
+    "feature_contract_version": "1",
+    "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+    "artifact_sha256": "a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210"
+  },
+  "scoring_status_after": {
+    "model_run_id": 7,
+    "eligible": false,
+    "reason": "A completed prospect scoring run already exists for this model.",
+    "demographic_count": 5000000,
+    "selected_candidate": "BAGGING_PU",
+    "artifact_feature_compatible": true,
+    "feature_contract_version": "1",
+    "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+    "artifact_sha256": "a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210",
+    "completed_scoring_run": {
+      "scoring_run_id": 5,
+      "status": "COMPLETED",
+      "completed_at": "2026-08-24T10:27:14Z",
+      "scored_person_count": 5000000,
+      "score_min": 0.006214199504618037,
+      "score_max": 0.9908241192195328,
+      "score_mean": 0.04663573730897857
+    }
+  },
+  "scoring_run_detail": {
+    "identity": {
+      "scoring_run_id": 5,
+      "job_id": 16,
+      "model_run_id": 7,
+      "status": "COMPLETED",
+      "created_at": "2026-08-24T09:44:04Z",
+      "completed_at": "2026-08-24T10:27:14Z"
+    },
+    "population": {
+      "demographic_snapshot_count": 5000000,
+      "scored_person_count": 5000000,
+      "chunk_size": 25000
+    },
+    "model_contract": {
+      "selected_candidate": "BAGGING_PU",
+      "model_role_policy_version": "2",
+      "feature_contract_version": "1",
+      "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+      "artifact_sha256": "a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210"
+    },
+    "score_summary": {
+      "score_min": 0.006214199504618037,
+      "score_max": 0.9908241192195328,
+      "score_mean": 0.04663573730897857,
+      "summary_payload": {
+        "age_semantics_note": "For this synthetic POC, demographic age is treated as compatible prospect snapshot age and validated under the frozen 18-100 feature contract.",
+        "artifact_sha256": "a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210",
+        "chunk_count": 200,
+        "chunk_size": 25000,
+        "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+        "feature_contract_version": "1",
+        "largest_chunk_rows": 25000,
+        "largest_transformed_matrix_bytes": 3280796,
+        "model_role_policy_version": "2",
+        "model_run_id": 7,
+        "rows_per_second": 1929.3563606367618,
+        "score_count": 5000000,
+        "score_max": 0.9908241192195328,
+        "score_mean": 0.04663573730897857,
+        "score_min": 0.006214199504618037,
+        "score_semantics": "LOOK_ALIKE_PROPENSITY_SCORE",
+        "selected_candidate": "BAGGING_PU",
+        "total_seconds": 2591.537831999998
+      }
+    },
+    "job": {
+      "job_id": 16,
+      "job_type": "PROSPECT_SCORING",
+      "status": "COMPLETED",
+      "progress_percent": 100,
+      "stage": "COMPLETED",
+      "message": "Prospect scoring completed.",
+      "model_run_id": 7,
+      "created_at": "2026-08-24T09:43:51Z",
+      "started_at": "2026-08-24T09:44:02Z",
+      "finished_at": "2026-08-24T10:27:14Z"
+    }
+  },
+  "sqlite_reconciliation": {
+    "scoring_run_id": 5,
+    "job_id": 16,
+    "model_run_id": 7,
+    "status": "COMPLETED",
+    "demographic_snapshot_count": 5000000,
+    "scored_person_count": 5000000,
+    "score_min": 0.006214199504618037,
+    "score_max": 0.9908241192195328,
+    "score_mean": 0.04663573730897857,
+    "score_summary_json": {
+      "age_semantics_note": "For this synthetic POC, demographic age is treated as compatible prospect snapshot age and validated under the frozen 18-100 feature contract.",
+      "artifact_sha256": "a6f50f3391997bec539f1371306a81d314079020686b588a28b3c44815a1a210",
+      "chunk_count": 200,
+      "chunk_size": 25000,
+      "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+      "feature_contract_version": "1",
+      "largest_chunk_rows": 25000,
+      "largest_transformed_matrix_bytes": 3280796,
+      "model_role_policy_version": "2",
+      "model_run_id": 7,
+      "rows_per_second": 1929.3563606367618,
+      "score_count": 5000000,
+      "score_max": 0.9908241192195328,
+      "score_mean": 0.04663573730897857,
+      "score_min": 0.006214199504618037,
+      "score_semantics": "LOOK_ALIKE_PROPENSITY_SCORE",
+      "selected_candidate": "BAGGING_PU",
+      "total_seconds": 2591.537831999998
+    },
+    "score_rows": 5000000,
+    "duplicate_person_ids": 0,
+    "invalid_demographic_fk_count": 0,
+    "nonfinite_count": 0,
+    "below_zero_count": 0,
+    "above_one_count": 0
+  },
+  "conflict_checks": {
+    "scoring_during_active_status_code": 409,
+    "scoring_during_active_body": {
+      "detail": "A compute job is already active."
+    },
+    "training_during_active_status_code": 409,
+    "training_during_active_body": {
+      "detail": "A model training job is already active."
+    },
+    "expected_conflict_reason": "A compute job is already active."
+  },
+  "sample_verification": {
+    "result": {
+      "scoring_run_id": 5,
+      "sample_size": 256,
+      "max_abs_diff": 0.0,
+      "verified": true
+    },
+    "error": null
+  }
+}
