@@ -56,6 +56,6 @@ diff: PASS (line-ending warnings only).
 validate_data: PASS (overall_status=OK; 125000/570000/5000000 counts).
 browser: PASS (campaign #13 finalized; PII gate enforced; export event #20 COMPLETED).
 hardening SHA: 5625bfdea132131deb4b8c34e72b4fcf2d9c035b.
-closure SHA: 5625bfdea132131deb4b8c34e72b4fcf2d9c035b (single finalization commit).
+closure SHA: ddb496877cd068fef98d144be56d28a71f6e3b15.
 
 FINAL DECISION: GO.

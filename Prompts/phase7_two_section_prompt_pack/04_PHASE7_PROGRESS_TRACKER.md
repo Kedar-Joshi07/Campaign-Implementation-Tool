@@ -25,5 +25,5 @@ S2-7 streaming/audit: Completed. Streaming export and metadata-only audit retain
 S2-8 UI integration: Completed. Browser flow verified with PII acknowledgement gate and export history refresh.
 S2-9 hardening: Completed. Evidence in docs/evidence/phase7_export_profiling_baseline.json and docs/evidence/phase7_final_export_hardening_5m.json.
 S2-10 real 5M evidence: Completed. Historical file sanitized and superseded; final file confirms reproducibility.
-S2-11 final Phase 7 SHA: 5625bfdea132131deb4b8c34e72b4fcf2d9c035b.
+S2-11 final Phase 7 SHA: ddb496877cd068fef98d144be56d28a71f6e3b15.
 FINAL DECISION: GO.
