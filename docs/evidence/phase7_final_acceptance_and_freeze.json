@@ -8,7 +8,7 @@
     "phase6_closure_sha": "0b22fe60b52d4a9b15c2748ae2ef16e9a56241b0",
     "phase6_substantive_parent_sha": "808df26ec2d3cc11f9382db1d265840cf2b1b3d9",
     "phase7_step1_baseline_sha": "dda2ac69540ad96896d379f83da2d338a1292854",
-    "current_head_sha": "f1525c6f65f237529b2ddcdab0b51e9abeb00578"
+    "current_head_sha": "5625bfdea132131deb4b8c34e72b4fcf2d9c035b"
   },
   "step11_gates": {
     "pip_check": {

@@ -55,7 +55,7 @@ compileall: PASS (COMPILEALL_OK).
 diff: PASS (line-ending warnings only).
 validate_data: PASS (overall_status=OK; 125000/570000/5000000 counts).
 browser: PASS (campaign #13 finalized; PII gate enforced; export event #20 COMPLETED).
-hardening SHA: pending commit; working tree based on f1525c6f65f237529b2ddcdab0b51e9abeb00578.
-closure SHA: pending commit.
+hardening SHA: 5625bfdea132131deb4b8c34e72b4fcf2d9c035b.
+closure SHA: 5625bfdea132131deb4b8c34e72b4fcf2d9c035b (single finalization commit).
 
 FINAL DECISION: GO.
