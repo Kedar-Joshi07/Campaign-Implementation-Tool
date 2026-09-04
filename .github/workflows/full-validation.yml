@@ -1,0 +1,69 @@
+name: Full Validation (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_full_fresh:
+        description: "Run full-fresh Phase1-7 runner when available"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: full-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  manual-full-validation:
+    name: Manual Full Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with LFS)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          lfs: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements.lock
+
+      - name: Install locked dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock
+
+      - name: Baseline validation gates
+        run: |
+          python -m pip check
+          python -m compileall app scripts tests
+          pytest -m "not full5m"
+
+      - name: Run full-fresh runner when available
+        if: ${{ inputs.run_full_fresh }}
+        shell: bash
+        run: |
+          if [ -f "scripts/validation/run_full_fresh_phase1_to_phase7.py" ]; then
+            python scripts/validation/run_full_fresh_phase1_to_phase7.py
+          else
+            echo "Workstream 5 full-fresh runner not available yet; skipping invocation."
+          fi
+
+      - name: Upload compact evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-validation-evidence
+          if-no-files-found: ignore
+          path: |
+            docs/evidence/*.md
+            docs/evidence/*.json
