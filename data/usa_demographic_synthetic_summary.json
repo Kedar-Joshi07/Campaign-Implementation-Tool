@@ -5,7 +5,7 @@
   "id_offset": 0,
   "id_start": 1,
   "id_end": 5000000,
-  "file": "data\\usa_demographic_synthetic_5000000_rows.csv.gz",
+  "file": "C:\\POCs\\Campaign Implementation Tool\\data\\usa_demographic_synthetic_5000000_rows.csv.gz",
   "file_size_bytes": 333670576,
   "mean_age": 48.6629524,
   "mean_individual_yearly_income": 43249.85366,

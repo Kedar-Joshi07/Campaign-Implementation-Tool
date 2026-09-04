@@ -1,0 +1,604 @@
+{
+  "completed_at": "2026-09-04T14:55:56Z",
+  "environment": {
+    "dependency_versions": {
+      "fastapi": "0.141.1",
+      "numpy": "2.4.6",
+      "pandas": "3.0.5",
+      "pulearn": "0.0.12",
+      "pytest": "8.4.2",
+      "scikit-learn": "1.7.2",
+      "uvicorn": "0.52.4"
+    },
+    "os": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.0",
+    "python_executable": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe"
+  },
+  "final_decision": {
+    "reason": "All full-fresh generation/import/scoring/audience/campaign/export and regression gates passed.",
+    "status": "GO"
+  },
+  "generated_at": "2026-09-04T13:20:06Z",
+  "git": {
+    "branch": "main",
+    "head": "c8f01d100a5d0e2204f17aeecf7c97cfd956094c",
+    "origin_main": "c8f01d100a5d0e2204f17aeecf7c97cfd956094c"
+  },
+  "overall_status": "PASS",
+  "stages": {
+    "step1": {
+      "duration_seconds": 17.486,
+      "post_cleanup": {
+        "database_exists": false,
+        "remaining_generated_sources": []
+      },
+      "precheck": {
+        "accepted_source_hashes": {
+          "campaign_master": {
+            "canonical_sha256": "1e453d77ad8dae2bb2c4dc997f53b900b1706117b7a22d095f0b13281b67be84",
+            "compressed_sha256": "1e453d77ad8dae2bb2c4dc997f53b900b1706117b7a22d095f0b13281b67be84"
+          },
+          "campaign_sales": {
+            "canonical_sha256": "f0a391bbd2ef8262644b1f5c879f3ba1d473476889db8b48e6fde222ea640e0d",
+            "compressed_sha256": "19598e5ed106248a857aa1908e9e69ff5d1b07bcb53af9e344cd6af87f384e8a"
+          },
+          "customers": {
+            "canonical_sha256": "fa0e53b055e0340d0a7cfc6dfdd2fc8bcf18c606e7c8b2b13853ef9a561447bd",
+            "compressed_sha256": "e4eea4ec87d890c0b471eda6ada3083327a0e1e891667c3689a033c95f62a9e6"
+          },
+          "demographics": {
+            "canonical_sha256": "a664b1a3904079a3c8b5c398de10009d52e8fd2ec6b4751a5caebb4512cb7dba",
+            "compressed_sha256": "d382a888202452bcb3274f399f3328e726644496008d04a957209c7403d509e5"
+          },
+          "product_master": {
+            "canonical_sha256": "317778cd2f591ad34757413915c33ad9298c7fb70fbbe22605d8078be3b9ba6a",
+            "compressed_sha256": "317778cd2f591ad34757413915c33ad9298c7fb70fbbe22605d8078be3b9ba6a"
+          }
+        },
+        "application": {
+          "app_version": "c8f01d1 2026-09-04 13:58:21 +0530 ci: freeze reproducible phase1-7 quality gates",
+          "python": "3.12.0",
+          "python_executable": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe"
+        },
+        "database_snapshot": {
+          "database_exists": true,
+          "integrity_check": "deferred_to_step14",
+          "quick_check": "deferred_to_step14",
+          "size_bytes": 3951042560,
+          "table_counts": {
+            "campaign_export_events": 9,
+            "campaign_sales": 570000,
+            "campaigns": 5,
+            "customers": 125000,
+            "demographics": 5000000,
+            "historical_analysis_runs": 4,
+            "model_runs": 1,
+            "saved_audiences": 5,
+            "scoring_runs": 1
+          }
+        },
+        "git": {
+          "branch": "main",
+          "dirty_override_used": true,
+          "head": "c8f01d100a5d0e2204f17aeecf7c97cfd956094c",
+          "origin_main": "c8f01d100a5d0e2204f17aeecf7c97cfd956094c",
+          "status_short": [
+            "M data/campaign_sales_570000.csv.gz",
+            " M data/campaign_sales_summary.json",
+            " M data/customer_master_125000.csv.gz",
+            " M data/customer_master_summary.json",
+            " M data/usa_demographic_synthetic_5000000_rows.csv.gz",
+            " M data/usa_demographic_synthetic_summary.json",
+            " M docs/evidence/CLEANROOM_PHASE1_TO_PHASE7_REPORT.md",
+            " M docs/evidence/cleanroom_phase1_to_phase7.json",
+            "?? docs/evidence/full_fresh_e2e/",
+            "?? scripts/validation/run_full_fresh_phase1_to_phase7.py",
+            "?? scripts/validation/system_chrome_campaign_test.py",
+            "?? scripts/validation/system_chrome_full_fresh_e2e.py"
+          ]
+        },
+        "timestamp": "2026-09-04T13:20:21Z"
+      },
+      "removed_items": [
+        "artifacts/models/*",
+        "data\\campaign_master.csv",
+        "data\\campaign_poc.db",
+        "data\\campaign_sales_570000.csv.gz",
+        "data\\campaign_sales_sample_10000.csv",
+        "data\\campaign_sales_summary.json",
+        "data\\customer_master_125000.csv.gz",
+        "data\\customer_master_sample_10000.csv",
+        "data\\customer_master_summary.json",
+        "data\\product_master.csv",
+        "data\\usa_demographic_synthetic_5000000_rows.csv.gz",
+        "data\\usa_demographic_synthetic_sample_10000.csv",
+        "data\\usa_demographic_synthetic_summary.json"
+      ],
+      "removed_items_count": 13,
+      "status": "PASS"
+    },
+    "step13": {
+      "controls_total": 107,
+      "duration_seconds": 0.065,
+      "status": "PASS",
+      "ui_control_inventory_path": "docs\\evidence\\full_fresh_e2e\\ui_control_inventory.json"
+    },
+    "step14": {
+      "pragma_integrity_check": "ok",
+      "removed_artifact_count": 0,
+      "runtime_cleanup_performed": true,
+      "status": "PASS"
+    },
+    "step2": {
+      "accepted_manifest_hash_check": {
+        "canonical_mismatches": [],
+        "compressed_mismatch_explanation": "Compressed GZIP bytes can vary due to container metadata while canonical decompressed payload remains identical.",
+        "compressed_mismatches": [
+          {
+            "accepted": "e4eea4ec87d890c0b471eda6ada3083327a0e1e891667c3689a033c95f62a9e6",
+            "dataset": "customers",
+            "generated": "0cedbaa5d549be534b054d126dc7f061498618e87187a6484e5642b7ed49fdf7",
+            "hash_type": "compressed_sha256"
+          },
+          {
+            "accepted": "19598e5ed106248a857aa1908e9e69ff5d1b07bcb53af9e344cd6af87f384e8a",
+            "dataset": "campaign_sales",
+            "generated": "6d84305c09a53477a0baa72d9329c965f1845d8b818f014497c10f563f19c6ba",
+            "hash_type": "compressed_sha256"
+          },
+          {
+            "accepted": "d382a888202452bcb3274f399f3328e726644496008d04a957209c7403d509e5",
+            "dataset": "demographics",
+            "generated": "abaf51153c53c8790fe1569453fffd3ab434a1081be0c68edfd9240d9f5767e4",
+            "hash_type": "compressed_sha256"
+          }
+        ],
+        "status": "PASS"
+      },
+      "duration_seconds": 320.985,
+      "generated_hashes": {
+        "campaign_master": {
+          "canonical_sha256": "1e453d77ad8dae2bb2c4dc997f53b900b1706117b7a22d095f0b13281b67be84",
+          "compressed_sha256": "1e453d77ad8dae2bb2c4dc997f53b900b1706117b7a22d095f0b13281b67be84"
+        },
+        "campaign_sales": {
+          "canonical_sha256": "f0a391bbd2ef8262644b1f5c879f3ba1d473476889db8b48e6fde222ea640e0d",
+          "compressed_sha256": "6d84305c09a53477a0baa72d9329c965f1845d8b818f014497c10f563f19c6ba"
+        },
+        "customers": {
+          "canonical_sha256": "fa0e53b055e0340d0a7cfc6dfdd2fc8bcf18c606e7c8b2b13853ef9a561447bd",
+          "compressed_sha256": "0cedbaa5d549be534b054d126dc7f061498618e87187a6484e5642b7ed49fdf7"
+        },
+        "demographics": {
+          "canonical_sha256": "a664b1a3904079a3c8b5c398de10009d52e8fd2ec6b4751a5caebb4512cb7dba",
+          "compressed_sha256": "abaf51153c53c8790fe1569453fffd3ab434a1081be0c68edfd9240d9f5767e4"
+        },
+        "product_master": {
+          "canonical_sha256": "317778cd2f591ad34757413915c33ad9298c7fb70fbbe22605d8078be3b9ba6a",
+          "compressed_sha256": "317778cd2f591ad34757413915c33ad9298c7fb70fbbe22605d8078be3b9ba6a"
+        }
+      },
+      "outputs": {
+        "campaign_master": "data\\campaign_master.csv",
+        "campaign_sales": "data\\campaign_sales_570000.csv.gz",
+        "customers": "data\\customer_master_125000.csv.gz",
+        "demographics": "data\\usa_demographic_synthetic_5000000_rows.csv.gz",
+        "product_master": "data\\product_master.csv"
+      },
+      "row_counts": {
+        "campaign_sales": 570000,
+        "customers": 125000,
+        "demographics": 5000000
+      },
+      "seeds": {
+        "campaign_sales": 20260820,
+        "customers": 20260819,
+        "demographics": 20260818
+      },
+      "status": "PASS"
+    },
+    "step3": {
+      "duration_seconds": 354.719,
+      "import_runs": [
+        {
+          "dataset_name": "customers",
+          "import_id": 1,
+          "rows_inserted": 125000,
+          "rows_read": 125000,
+          "rows_rejected": 0,
+          "source_checksum": "7b91b60379df6c56d7e7bf2fb528875d84470b287df325510d51367d87dd34fe",
+          "status": "COMPLETED"
+        },
+        {
+          "dataset_name": "campaign_sales",
+          "import_id": 2,
+          "rows_inserted": 570000,
+          "rows_read": 570000,
+          "rows_rejected": 0,
+          "source_checksum": "06ebb5d4dac144a9d8d1f08712e680e7d978cc8cfbfa66caf30287e305de2ec1",
+          "status": "COMPLETED"
+        },
+        {
+          "dataset_name": "demographics",
+          "import_id": 3,
+          "rows_inserted": 5000000,
+          "rows_read": 5000000,
+          "rows_rejected": 0,
+          "source_checksum": "50cd8e048ed893fc2ddb7feb5c102953fff4dfa686220b73b6e502b953b57f9e",
+          "status": "COMPLETED"
+        }
+      ],
+      "imports": {
+        "campaign_sales": {
+          "import_id": 2,
+          "rows_inserted": 570000,
+          "rows_read": 570000,
+          "rows_rejected": 0
+        },
+        "customers": {
+          "import_id": 1,
+          "rows_inserted": 125000,
+          "rows_read": 125000,
+          "rows_rejected": 0
+        },
+        "demographics": {
+          "import_id": 3,
+          "rows_inserted": 5000000,
+          "rows_read": 5000000,
+          "rows_rejected": 0
+        }
+      },
+      "post_import_snapshot": {
+        "campaign_sales_count": 570000,
+        "customers_count": 125000,
+        "demographics_count": 5000000,
+        "family_violation_count": 0,
+        "income_violation_count": 0,
+        "invalid_adults_count": 0,
+        "invalid_age_count": 0,
+        "orphan_fk_count": 0,
+        "overlap_count": 0,
+        "underage_contacts": 0
+      },
+      "reconciliation": {
+        "database_path": "C:\\POCs\\Campaign Implementation Tool\\data\\campaign_poc.db",
+        "datasets": {
+          "campaign_sales": {
+            "acceptable_count": true,
+            "acceptable_max_rows": 570000,
+            "acceptable_min_rows": 570000,
+            "actual_count": 570000,
+            "count_tolerance_percent": null,
+            "exact_match_required": true,
+            "expected_count": 570000,
+            "expected_count_match": true,
+            "metrics": {
+              "attributed_purchase_count": 34077,
+              "distinct_campaign_id": 96,
+              "distinct_campaign_sales_id": 570000,
+              "distinct_customer_id": 119909,
+              "distinct_product_id": 36,
+              "invalid_customer_fk_count": 0,
+              "max_contact_date": "2025-12-31",
+              "min_contact_date": "2024-01-01",
+              "pu_consistency_violation_count": 0,
+              "pu_positive_count": 34077,
+              "purchase_count": 54480,
+              "total_rows": 570000,
+              "underage_campaign_contact_count": 0
+            },
+            "query_seconds": 17.002233,
+            "status": "OK",
+            "structural_error_count": 0,
+            "structural_issues": {
+              "duplicate_campaign_sales_id_count": 0,
+              "invalid_customer_fk_count": 0,
+              "pu_consistency_violation_count": 0,
+              "underage_campaign_contact_count": 0
+            }
+          },
+          "customers": {
+            "acceptable_count": true,
+            "acceptable_max_rows": 125000,
+            "acceptable_min_rows": 125000,
+            "actual_count": 125000,
+            "count_tolerance_percent": null,
+            "exact_match_required": true,
+            "expected_count": 125000,
+            "expected_count_match": true,
+            "metrics": {
+              "distinct_customer_id": 125000,
+              "max_date_of_birth": "2007-12-31",
+              "min_date_of_birth": "1935-01-02",
+              "null_or_blank_critical_identifiers": 0,
+              "total_rows": 125000
+            },
+            "query_seconds": 0.274151,
+            "status": "OK",
+            "structural_error_count": 0,
+            "structural_issues": {
+              "duplicate_customer_id_count": 0,
+              "null_or_blank_critical_identifiers": 0
+            }
+          },
+          "demographics": {
+            "acceptable_count": true,
+            "acceptable_max_rows": 5000000,
+            "acceptable_min_rows": 5000000,
+            "actual_count": 5000000,
+            "count_tolerance_percent": null,
+            "exact_match_required": true,
+            "expected_count": 5000000,
+            "expected_count_match": true,
+            "metrics": {
+              "adult_count_below_1": 0,
+              "age_above_100_count": 0,
+              "age_below_18_count": 0,
+              "distinct_person_id": 5000000,
+              "family_arithmetic_violation_count": 0,
+              "family_income_below_individual_violation_count": 0,
+              "max_age": 100,
+              "max_individual_yearly_income": 2500000.0,
+              "min_age": 18,
+              "min_individual_yearly_income": 0.0,
+              "total_rows": 5000000
+            },
+            "query_seconds": 5.262948,
+            "status": "OK",
+            "structural_error_count": 0,
+            "structural_issues": {
+              "adult_count_below_1": 0,
+              "age_above_100_count": 0,
+              "age_below_18_count": 0,
+              "duplicate_person_id_count": 0,
+              "family_arithmetic_violation_count": 0,
+              "family_income_below_individual_violation_count": 0
+            }
+          }
+        },
+        "generated_at": "2026-09-04T13:31:16Z",
+        "overall_status": "OK",
+        "total_query_seconds": 22.566944
+      },
+      "status": "PASS"
+    },
+    "step4": {
+      "analysis_run_id": 1,
+      "duration_seconds": 1620.174,
+      "model_contract": {
+        "artifact_sha256": "755e8f81bc1238673d17f59fb52044f44b5f00a8810fee82e694b4c4b8709d18",
+        "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+        "feature_contract_version": "1",
+        "feature_count": 11,
+        "selected_candidate": "BAGGING_PU"
+      },
+      "model_job": {
+        "job_id": 1,
+        "model_run_id": 1,
+        "status_sequence": [
+          "QUEUED",
+          "RUNNING",
+          "COMPLETED"
+        ]
+      },
+      "scoring_integrity": {
+        "deterministic_sample": {
+          "max_abs_diff": 0.0,
+          "sample_size": 256,
+          "scoring_run_id": 1,
+          "verified": true
+        },
+        "distinct_person_count": 5000000,
+        "invalid_fk_count": 0,
+        "provenance": {
+          "demographic_source_verified": true,
+          "historical_source_verified": true,
+          "is_canonical": true,
+          "issues": [],
+          "scoring_run_id": 1,
+          "status": "COMPLETED"
+        },
+        "score_count": 5000000,
+        "score_max": 0.9782832402557606,
+        "score_mean": 0.20595671379862576,
+        "score_min": 0.06774103945805435
+      },
+      "scoring_job": {
+        "job_id": 2,
+        "scoring_run_id": 1,
+        "status_sequence": [
+          "QUEUED",
+          "RUNNING",
+          "COMPLETED"
+        ]
+      },
+      "status": "PASS"
+    },
+    "step5": {
+      "campaign_results": {
+        "DIRECT_MAIL": {
+          "campaign_id": 2,
+          "csv_sha256": "c965c74ae37096a7fba7fd409140ec031249973c3d536ed11746a205d95aeea2",
+          "deliverable_count": 500000,
+          "export_profile": "DIRECT_MAIL_CONTACT_V1",
+          "row_count": 500000,
+          "saved_audience_id": 2,
+          "selected_count": 500000,
+          "undeliverable_count": 0
+        },
+        "EMAIL": {
+          "campaign_id": 1,
+          "csv_sha256": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c",
+          "deliverable_count": 50000,
+          "export_profile": "EMAIL_CONTACT_V1",
+          "row_count": 50000,
+          "saved_audience_id": 1,
+          "selected_count": 50000,
+          "undeliverable_count": 0
+        }
+      },
+      "duration_seconds": 1665.976,
+      "preparation": {
+        "active_job": null,
+        "analytics_contract_version": "1",
+        "analytics_prepared": true,
+        "analytics_snapshot_created_at": "2026-09-04T14:14:57Z",
+        "boundary_count": 100,
+        "currentness_issues": [],
+        "is_canonical": true,
+        "model_run_id": 1,
+        "prepared": true,
+        "rank_contract_version": "1",
+        "ready_for_current_audience_actions": true,
+        "scoring_run_id": 1,
+        "source_verified": true,
+        "status": "COMPLETED",
+        "total_population": 5000000
+      },
+      "saved_audience_ids": {
+        "direct_mail": 2,
+        "email": 1
+      },
+      "scenarios": {
+        "all_matching": {
+          "matching_count": 5000000,
+          "score_max": 0.9782832402557606,
+          "score_mean": 0.20595671379862576,
+          "score_min": 0.06774103945805435,
+          "selected_count": 5000000
+        },
+        "demographic_filter": {
+          "matching_count": 549754,
+          "score_max": 0.9691976919854112,
+          "score_mean": 0.23335654577603418,
+          "score_min": 0.09001358967051214,
+          "selected_count": 549754
+        },
+        "rank_plus_demographic": {
+          "matching_count": 478373,
+          "score_max": 0.32459823980713026,
+          "score_mean": 0.27927431643851997,
+          "score_min": 0.24873987807820228,
+          "selected_count": 478373
+        },
+        "top_1_percent": {
+          "matching_count": 50000,
+          "score_max": 0.9782832402557606,
+          "score_mean": 0.41279193054609414,
+          "score_min": 0.37890242842446953,
+          "selected_count": 50000
+        },
+        "top_decile": {
+          "matching_count": 500000,
+          "score_max": 0.9782832402557606,
+          "score_mean": 0.3340270970740776,
+          "score_min": 0.29571562433223897,
+          "selected_count": 500000
+        },
+        "top_n_50k": {
+          "matching_count": 5000000,
+          "score_max": 0.9782832402557606,
+          "score_mean": 0.20595671379862576,
+          "score_min": 0.06774103945805435,
+          "selected_count": 50000
+        }
+      },
+      "status": "PASS"
+    },
+    "step6": {
+      "deterministic_scoring_sample": {
+        "details": {
+          "sample_size": 256,
+          "scoring_run_id": 1
+        },
+        "name": "deterministic_scoring_sample_validation",
+        "passed": true
+      },
+      "duration_seconds": 998.157,
+      "gates": [
+        {
+          "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m pytest -q",
+          "duration_seconds": 573.499,
+          "name": "pytest_full",
+          "passed": true,
+          "returncode": 0,
+          "stderr_tail": "",
+          "stdout_tail": "........................................................................ [ 15%]\n........................................................................ [ 31%]\n........................................................................ [ 47%]\n........................................................................ [ 62%]\n........................................................................ [ 78%]\n........................................................................ [ 94%]\n..........................                                               [100%]\n458 passed in 568.46s (0:09:28)"
+        },
+        {
+          "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\validation\\run_cleanroom_phase1_to_phase7.py --customers 1200 --campaign-sales 9000 --demographics 12000",
+          "duration_seconds": 155.813,
+          "name": "cleanroom_bounded",
+          "passed": true,
+          "returncode": 0,
+          "stderr_tail": "2026-09-04 20:08:33,040 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,092 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,157 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,272 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,355 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,391 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,494 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,540 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,576 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,700 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,774 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,822 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:33,990 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,048 | INFO | httpx2 | HTTP Request: GET http://testserver/api/campaigns/1/currentness \"HTTP/1.1 200 OK\"\n2026-09-04 20:08:34,080 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,124 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,176 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,285 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,364 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,409 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,512 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,559 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,605 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,745 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,860 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:34,928 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:35,080 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\drift_copy.db version=12\n2026-09-04 20:08:35,152 | INFO | httpx2 | HTTP Request: GET http://testserver/api/campaigns/1/export.csv?acknowledge_pii=true \"HTTP/1.1 409 Conflict\"\n2026-09-04 20:08:35,153 | INFO | app.main | Application stopping | name=Campaign Implementation Intelligence\n2026-09-04 20:08:35,157 | INFO | app.main | Application stopping | name=Campaign Implementation Intelligence",
+          "stdout_tail": "[cleanroom:step1] Starting isolated environment and deterministic generation checks.\n[cleanroom:step1] Generating bounded synthetic data (run_a).\n[cleanroom:step1] Generating bounded synthetic data (run_b).\n[cleanroom:step2] Importing generated data through official importers and running reconciliation.\n[cleanroom:step3] Running historical analysis, model training, scoring, and stale-job recovery checks.\n[cleanroom:step4] Validating audience explorer contracts, filters, keyset pagination, and saved audience currentness.\n[cleanroom:step5] Validating campaign workflow, deterministic exports, CSV safety, and source-drift behavior.\n[cleanroom:pass] Clean-room Phase 1 to Phase 7 validation completed successfully.\n[cleanroom:pass] Report written to: C:\\POCs\\Campaign Implementation Tool\\docs\\evidence\\CLEANROOM_PHASE1_TO_PHASE7_REPORT.md\n[cleanroom:pass] JSON evidence written to: C:\\POCs\\Campaign Implementation Tool\\docs\\evidence\\cleanroom_phase1_to_phase7.json"
+        },
+        {
+          "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m compileall -q app scripts tests",
+          "duration_seconds": 1.026,
+          "name": "compileall",
+          "passed": true,
+          "returncode": 0,
+          "stderr_tail": "",
+          "stdout_tail": ""
+        },
+        {
+          "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m pip check",
+          "duration_seconds": 7.314,
+          "name": "pip_check",
+          "passed": true,
+          "returncode": 0,
+          "stderr_tail": "",
+          "stdout_tail": "No broken requirements found."
+        },
+        {
+          "command": "git diff --check",
+          "duration_seconds": 14.74,
+          "name": "git_diff_check",
+          "passed": true,
+          "returncode": 0,
+          "stderr_tail": "warning: in the working copy of 'data/campaign_sales_summary.json', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'data/customer_master_summary.json', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'data/usa_demographic_synthetic_summary.json', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'docs/evidence/CLEANROOM_PHASE1_TO_PHASE7_REPORT.md', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'docs/evidence/cleanroom_phase1_to_phase7.json', CRLF will be replaced by LF the next time Git touches it",
+          "stdout_tail": ""
+        },
+        {
+          "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\validation\\validate_ci_hygiene.py",
+          "duration_seconds": 1.164,
+          "name": "repository_hygiene",
+          "passed": true,
+          "returncode": 0,
+          "stderr_tail": "",
+          "stdout_tail": "CI hygiene validation passed."
+        },
+        {
+          "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\validate_data.py --json",
+          "duration_seconds": 174.403,
+          "name": "validate_data_json",
+          "passed": true,
+          "returncode": 0,
+          "stderr_tail": "2026-09-04 20:11:18,931 | INFO | app.database.schema | SQLite index verified | index=idx_campaign_sales_campaign_channel seconds=0.000\n2026-09-04 20:11:18,931 | INFO | app.database.schema | SQLite index verified | index=idx_campaign_sales_product_category seconds=0.000\n2026-09-04 20:11:18,932 | INFO | app.database.schema | SQLite index verified | index=idx_campaign_sales_campaign_type seconds=0.000\n2026-09-04 20:11:18,933 | INFO | app.database.schema | SQLite index verified | index=idx_model_runs_newest seconds=0.000\n2026-09-04 20:11:18,933 | INFO | app.database.schema | SQLite index verified | index=idx_model_runs_analysis_run_id seconds=0.000\n2026-09-04 20:11:18,934 | INFO | app.database.schema | SQLite index verified | index=idx_jobs_newest seconds=0.000\n2026-09-04 20:11:18,934 | INFO | app.database.schema | SQLite index verified | index=idx_jobs_status seconds=0.000\n2026-09-04 20:11:18,934 | INFO | app.database.schema | SQLite index verified | index=idx_jobs_analysis_run_id seconds=0.000\n2026-09-04 20:11:18,934 | INFO | app.database.schema | SQLite index verified | index=idx_jobs_model_run_id seconds=0.000\n2026-09-04 20:11:18,935 | INFO | app.database.schema | SQLite index verified | index=idx_scoring_runs_newest seconds=0.000\n2026-09-04 20:11:18,936 | INFO | app.database.schema | SQLite index verified | index=idx_scoring_runs_model_newest seconds=0.000\n2026-09-04 20:11:18,936 | INFO | app.database.schema | SQLite index verified | index=idx_scoring_runs_status seconds=0.000\n2026-09-04 20:11:18,937 | INFO | app.database.schema | SQLite index verified | index=idx_scoring_runs_completed_model_newest seconds=0.000\n2026-09-04 20:11:18,937 | INFO | app.database.schema | SQLite index verified | index=idx_propensity_scores_run_score_person seconds=0.000\n2026-09-04 20:11:18,937 | INFO | app.database.schema | SQLite index verified | index=idx_audience_rank_boundaries_scoring_bucket seconds=0.000\n2026-09-04 20:11:18,938 | INFO | app.database.schema | SQLite index verified | index=idx_saved_audiences_newest seconds=0.000\n2026-09-04 20:11:18,938 | INFO | app.database.schema | SQLite index verified | index=idx_saved_audiences_scoring_run_id seconds=0.000\n2026-09-04 20:11:18,938 | INFO | app.database.schema | SQLite index verified | index=idx_saved_audiences_model_run_id seconds=0.000\n2026-09-04 20:11:18,938 | INFO | app.database.schema | SQLite index verified | index=idx_campaigns_newest seconds=0.000\n2026-09-04 20:11:18,938 | INFO | app.database.schema | SQLite index verified | index=idx_campaigns_status_newest seconds=0.000\n2026-09-04 20:11:18,938 | INFO | app.database.schema | SQLite index verified | index=idx_campaigns_saved_audience seconds=0.000\n2026-09-04 20:11:18,939 | INFO | app.database.schema | SQLite index verified | index=idx_campaign_export_events_campaign_started seconds=0.000\n2026-09-04 20:11:18,939 | INFO | app.database.schema | SQLite index verified | index=idx_campaign_export_events_status_started seconds=0.000\n2026-09-04 20:11:19,015 | INFO | app.database.schema | SQLite schema initialized or verified | path=data\\campaign_poc.db version=12\n2026-09-04 20:11:19,411 | INFO | app.services.data_reconciliation_service | Reconciliation query completed | dataset=customers seconds=0.388\n2026-09-04 20:11:25,626 | INFO | app.services.data_reconciliation_service | Reconciliation query completed | dataset=campaign_sales seconds=6.215\n2026-09-04 20:11:26,404 | INFO | app.services.data_reconciliation_service | Reconciliation query completed | dataset=campaign_sales_invalid_customer_fk seconds=0.778\n2026-09-04 20:11:40,885 | INFO | app.services.data_reconciliation_service | Reconciliation query completed | dataset=campaign_sales_underage_contacts seconds=14.480\n2026-09-04 20:11:53,929 | INFO | app.services.data_reconciliation_service | Reconciliation query completed | dataset=demographics seconds=13.044\n2026-09-04 20:11:53,931 | INFO | app.services.data_reconciliation_service | Reconciliation completed | status=OK seconds=34.916",
+          "stdout_tail": "      \"exists\": true\n    },\n    \"idx_saved_audiences_newest\": {\n      \"creation_seconds\": 6.1e-05,\n      \"exists\": true\n    },\n    \"idx_saved_audiences_scoring_run_id\": {\n      \"creation_seconds\": 5.5e-05,\n      \"exists\": true\n    },\n    \"idx_scoring_runs_completed_model_newest\": {\n      \"creation_seconds\": 0.000175,\n      \"exists\": true\n    },\n    \"idx_scoring_runs_model_newest\": {\n      \"creation_seconds\": 9.3e-05,\n      \"exists\": true\n    },\n    \"idx_scoring_runs_newest\": {\n      \"creation_seconds\": 0.000127,\n      \"exists\": true\n    },\n    \"idx_scoring_runs_status\": {\n      \"creation_seconds\": 0.000108,\n      \"exists\": true\n    }\n  },\n  \"overall_status\": \"OK\",\n  \"total_query_seconds\": 34.91557\n}"
+        },
+        {
+          "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\validation\\validate_workflow_syntax.py",
+          "duration_seconds": 0.744,
+          "name": "workflow_syntax_validation",
+          "passed": true,
+          "returncode": 0,
+          "stderr_tail": "",
+          "stdout_tail": "Workflow YAML syntax validation passed."
+        },
+        {
+          "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m pytest -q tests/test_campaign_api.py tests/test_campaign_export_hardening.py",
+          "duration_seconds": 69.454,
+          "name": "campaign_export_contract_tests",
+          "passed": true,
+          "returncode": 0,
+          "stderr_tail": "",
+          "stdout_tail": "...........                                                              [100%]\n11 passed in 62.18s (0:01:02)"
+        }
+      ],
+      "status": "PASS"
+    }
+  }
+}

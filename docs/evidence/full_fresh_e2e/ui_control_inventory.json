@@ -1,0 +1,863 @@
+{
+  "controls": [
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "OV",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "[data-view-target='overview']",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "DS",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "[data-view-target='data-status']",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "HA",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "[data-view-target='historical-analysis']",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "MT",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "[data-view-target='model-training']",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "AE",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "[data-view-target='audience-explorer']",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "P7",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "[data-view-target='campaigns']",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Check backend connection",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#backend-status",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Try again",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#overview-retry",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Refresh data",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#overview-refresh",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Analyze historical campaigns",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#historical-analysis-cta",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Try again",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#historical-analysis-retry",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Refresh options and runs",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#historical-analysis-refresh",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Reset to defaults",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#historical-analysis-reset",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#analysis-name",
+      "type": "input:text"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#contact-date-from",
+      "type": "input:date"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#contact-date-to",
+      "type": "input:date"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-filter",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#product-filter",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#product-category-filter",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#channel-filter",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-type-filter",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#contacted-only",
+      "type": "input:checkbox"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Analyze Population",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#analyze-population",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Refresh",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#recent-analyses-refresh",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Channels",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "button",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Categories",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "button",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Campaigns",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "button",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Products",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "button",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#profile-dimension",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Selected",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "button",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Known positive",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "button",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Unlabeled",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "button",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Historical baseline",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "button",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Try again",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#model-training-retry",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Refresh training workspace",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#model-training-refresh",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#source-analysis-select",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#model-name-input",
+      "type": "input:text"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#random-seed-input",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#validation-fraction-input",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#run-elkan-challenger-input",
+      "type": "input:checkbox"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Train Look-alike Model",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#train-model-submit",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Refresh",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#recent-model-runs-refresh",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Score Prospect Universe",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#score-prospect-submit",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Try again",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-explorer-retry",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Refresh audience workspace",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-explorer-refresh",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Prepare Audience Explorer",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-prepare-submit",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Retry preparation",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-prepare-retry",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Reset filters",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-filter-reset",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-score-min",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-score-max",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-top-percentile",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-deciles",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-rank-bands",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-age-min",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-age-max",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-income-min",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-income-max",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-family-min",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-family-max",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-gender",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-state",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-marital-status",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-education",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-employment-status",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-resident-status",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-resident-type",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-type-of-employment",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-selection-all",
+      "type": "input:radio"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-selection-topn",
+      "type": "input:radio"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-target-count",
+      "type": "input:number"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Apply filters",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-apply-filters",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Clear active chips",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-clear-filter-chips",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Refresh",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#saved-audiences-refresh",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-save-name",
+      "type": "input:text"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-save-description",
+      "type": "input:text"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Save audience",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-save-submit",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Reopen definition",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#saved-audience-reopen",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Use in Campaign Builder",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#saved-audience-use-campaign",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Load more",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-load-more",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#audience-profile-dimension",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Selected vs Universe",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "button",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Selected vs Historical Positives",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "button",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Try again",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#data-status-retry",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Run checks again",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#data-status-refresh",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Try again",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaigns-retry",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Refresh campaign workspace",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaigns-refresh",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "1",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-step-1",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "2",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-step-2",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "3",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-step-3",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "4",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-step-4",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-audience-select",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Continue to Campaign Details",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-step-next-1",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-name",
+      "type": "input:text"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-description",
+      "type": "input:text"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-channel",
+      "type": "select"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-launch-date",
+      "type": "input:date"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Back",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-step-back-2",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Continue to Review",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-step-next-2",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Back",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-step-back-3",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Continue to Finalize / Export",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-step-next-3",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-pii-ack",
+      "type": "input:checkbox"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Back",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-step-back-4",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Create Draft",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-create-draft",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Review",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-review-draft",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Finalize Campaign",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-finalize",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Export Target List",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-export",
+      "type": "button"
+    },
+    {
+      "expected_behavior": "Actionable control is visible and interactive in its allowed state.",
+      "label": "Refresh Export Status",
+      "page": "global",
+      "planned_test": "Browser click/type assertion with resulting UI or API state change.",
+      "selector": "#campaign-export-history-refresh",
+      "type": "button"
+    }
+  ],
+  "controls_total": 107,
+  "generated_at": "2026-09-04T14:26:26Z",
+  "source": "frontend/index.html"
+}

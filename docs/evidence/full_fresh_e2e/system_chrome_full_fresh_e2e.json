@@ -1,0 +1,467 @@
+{
+  "generated_at": "2026-09-04T12:36:29Z",
+  "browser": "system_chrome",
+  "step5": {
+    "overview": {
+      "customers": "\u2014",
+      "campaignSales": "\u2014",
+      "demographics": "\u2014"
+    },
+    "data_status": {
+      "datasetCards": 3,
+      "importHistoryRows": 3
+    }
+  },
+  "step6": {
+    "hasAnalyzeButton": true,
+    "hasFilters": true,
+    "recentRows": 4
+  },
+  "step7": {
+    "hasTrainButton": true,
+    "hasScoreButton": true,
+    "modelSummaryTitle": "4. Completed Model Summary",
+    "scoringRunText": ""
+  },
+  "step8_9": {
+    "scenarios": {
+      "all_matching": {
+        "matching": "5,000,000",
+        "selected": "5,000,000",
+        "scoreRange": "0.067741 - 0.978283",
+        "scoreMean": "0.205957",
+        "summary": "No active filters. Selection: all matching prospects.",
+        "errorVisible": false,
+        "errorText": ""
+      },
+      "top_1_percent": {
+        "matching": "50,000",
+        "selected": "50,000",
+        "scoreRange": "0.378902 - 0.978283",
+        "scoreMean": "0.412792",
+        "summary": "1 active filter. Selection: all matching prospects.",
+        "errorVisible": false,
+        "errorText": ""
+      },
+      "top_decile": {
+        "matching": "500,000",
+        "selected": "500,000",
+        "scoreRange": "0.295716 - 0.978283",
+        "scoreMean": "0.334027",
+        "summary": "1 active filter. Selection: all matching prospects.",
+        "errorVisible": false,
+        "errorText": ""
+      },
+      "demographic_filter": {
+        "matching": "549,754",
+        "selected": "549,754",
+        "scoreRange": "0.090014 - 0.969198",
+        "scoreMean": "0.233357",
+        "summary": "3 active filters. Selection: all matching prospects.",
+        "errorVisible": false,
+        "errorText": ""
+      },
+      "rank_plus_demographic": {
+        "matching": "478,373",
+        "selected": "478,373",
+        "scoreRange": "0.24874 - 0.324598",
+        "scoreMean": "0.279274",
+        "summary": "2 active filters. Selection: all matching prospects.",
+        "errorVisible": false,
+        "errorText": ""
+      },
+      "top_n_50k": {
+        "matching": "5,000,000",
+        "selected": "50,000",
+        "scoreRange": "0.067741 - 0.978283",
+        "scoreMean": "0.205957",
+        "summary": "No active filters. Selection: top 50,000 matching prospects.",
+        "errorVisible": false,
+        "errorText": ""
+      }
+    },
+    "invalid_age": {
+      "visible": true,
+      "text": "Age min cannot exceed age max."
+    },
+    "invalid_topn": {
+      "visible": true,
+      "text": "Top N target count must be a positive whole number."
+    },
+    "saved_audience_name": "System Chrome UI Save 1788525543",
+    "saved_all_matching": {
+      "matching": "5,000,000",
+      "selected": "5,000,000",
+      "scoreRange": "0.067741 - 0.978283",
+      "scoreMean": "0.205957",
+      "summary": "No active filters. Selection: all matching prospects.",
+      "errorVisible": false,
+      "errorText": "Top N target count must be a positive whole number."
+    }
+  },
+  "step10_12": {
+    "negatives": {
+      "selected_audience": {
+        "value": "1",
+        "label": "#1 \u00b7 Full-fresh EMAIL TopN50K \u00b7 50,000 selected \u00b7 Top 50,000 \u00b7 CURRENT"
+      },
+      "missing_audience_error": "Select a current saved audience before continuing.",
+      "blank_name_error": "Campaign name is required.",
+      "missing_channel_error": "Channel is required and must be EMAIL or DIRECT_MAIL.",
+      "preserved_values": {
+        "name": "Preserve 1788525557",
+        "description": "Back-forward preservation",
+        "channel": "EMAIL",
+        "launchDate": "2026-12-10"
+      }
+    },
+    "email_campaign": {
+      "name": "System Chrome EMAIL 1788525558",
+      "selected_audience": {
+        "value": "1",
+        "label": "#1 \u00b7 Full-fresh EMAIL TopN50K \u00b7 50,000 selected \u00b7 Top 50,000 \u00b7 CURRENT"
+      },
+      "summary": {
+        "shellStatus": "FINALIZED",
+        "currentnessBadge": "CURRENT",
+        "actionHelp": "Check the PII acknowledgement to enable export streaming.",
+        "finalizeDisabled": false,
+        "exportDisabled": true,
+        "details": {
+          "Campaign": "System Chrome EMAIL 1788525558 (#4)",
+          "Status": "FINALIZED",
+          "Channel": "EMAIL",
+          "Saved audience": "#1",
+          "Resolved count": "50,000",
+          "Created": "Sep 4, 2026, 6:09 PM",
+          "Updated": "Sep 4, 2026, 6:09 PM",
+          "Finalized": "Sep 4, 2026, 6:09 PM"
+        }
+      }
+    },
+    "email_export": {
+      "history": {
+        "eventId": "#8",
+        "profile": "EMAIL_CONTACT_V1",
+        "status": "COMPLETED",
+        "selected": "50,000",
+        "deliverable": "50,000",
+        "undeliverable": "0",
+        "exportedRows": "50,000",
+        "checksum": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c"
+      },
+      "headers": {
+        "content-disposition": "attachment; filename=\"campaign_4_email_contact_v1.csv\"",
+        "content-type": "text/csv; charset=utf-8",
+        "date": "Fri, 04 Sep 2026 12:39:47 GMT",
+        "server": "uvicorn",
+        "transfer-encoding": "chunked"
+      },
+      "csv": {
+        "header": [
+          "person_id",
+          "propensity_score",
+          "percentile_bucket",
+          "decile",
+          "rank_band",
+          "first_name",
+          "last_name",
+          "email"
+        ],
+        "row_count": 50000,
+        "sha256": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c"
+      },
+      "contract": {
+        "channel": "EMAIL",
+        "expected_profile": "EMAIL_CONTACT_V1",
+        "observed_profile": "EMAIL_CONTACT_V1",
+        "status": "COMPLETED",
+        "header_exact": true,
+        "forbidden_present": [],
+        "row_count": 50000,
+        "missing_required_rows": 0,
+        "selected_equals_deliverable_plus_undeliverable": true,
+        "row_count_equals_deliverable": true,
+        "history_exported_equals_row_count": true,
+        "checksum_match": true,
+        "safe_filename": true,
+        "monotonic_violations": 0,
+        "tie_order_violations": 0
+      }
+    },
+    "direct_mail_campaign": {
+      "name": "System Chrome DIRECT_MAIL 1788525614",
+      "selected_audience": {
+        "value": "1",
+        "label": "#1 \u00b7 Full-fresh EMAIL TopN50K \u00b7 50,000 selected \u00b7 Top 50,000 \u00b7 CURRENT"
+      },
+      "summary": {
+        "shellStatus": "FINALIZED",
+        "currentnessBadge": "CURRENT",
+        "actionHelp": "Finalize and export are governed by campaign status, currentness, and PII acknowledgement.",
+        "finalizeDisabled": false,
+        "exportDisabled": false,
+        "details": {
+          "Campaign": "System Chrome DIRECT_MAIL 1788525614 (#5)",
+          "Status": "FINALIZED",
+          "Channel": "DIRECT_MAIL",
+          "Saved audience": "#1",
+          "Resolved count": "50,000",
+          "Created": "Sep 4, 2026, 6:10 PM",
+          "Updated": "Sep 4, 2026, 6:10 PM",
+          "Finalized": "Sep 4, 2026, 6:10 PM"
+        }
+      }
+    },
+    "direct_mail_export": {
+      "history": {
+        "eventId": "#9",
+        "profile": "DIRECT_MAIL_CONTACT_V1",
+        "status": "COMPLETED",
+        "selected": "50,000",
+        "deliverable": "50,000",
+        "undeliverable": "0",
+        "exportedRows": "50,000",
+        "checksum": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d"
+      },
+      "headers": {
+        "content-disposition": "attachment; filename=\"campaign_5_direct_mail_contact_v1.csv\"",
+        "content-type": "text/csv; charset=utf-8",
+        "date": "Fri, 04 Sep 2026 12:40:46 GMT",
+        "server": "uvicorn",
+        "transfer-encoding": "chunked"
+      },
+      "csv": {
+        "header": [
+          "person_id",
+          "propensity_score",
+          "percentile_bucket",
+          "decile",
+          "rank_band",
+          "first_name",
+          "last_name",
+          "address_line_1",
+          "address_line_2",
+          "city",
+          "state",
+          "postal_code"
+        ],
+        "row_count": 50000,
+        "sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d"
+      },
+      "contract": {
+        "channel": "DIRECT_MAIL",
+        "expected_profile": "DIRECT_MAIL_CONTACT_V1",
+        "observed_profile": "DIRECT_MAIL_CONTACT_V1",
+        "status": "COMPLETED",
+        "header_exact": true,
+        "forbidden_present": [],
+        "row_count": 50000,
+        "missing_required_rows": 0,
+        "selected_equals_deliverable_plus_undeliverable": true,
+        "row_count_equals_deliverable": true,
+        "history_exported_equals_row_count": true,
+        "checksum_match": true,
+        "safe_filename": true,
+        "monotonic_violations": 0,
+        "tie_order_violations": 0
+      }
+    }
+  },
+  "step13": {
+    "accessibility": {
+      "labels": {
+        "campaign_name": true,
+        "campaign_channel": true,
+        "audience_name": true
+      },
+      "ariaLive": {
+        "audience_announce": "polite",
+        "campaign_status": "polite",
+        "export_status": "polite"
+      },
+      "focusTransition": {
+        "before": "BUTTON",
+        "after": "BUTTON"
+      },
+      "keyboardReachableControlCount": 122
+    },
+    "responsive": {
+      "viewports": [
+        {
+          "name": "desktop_1920x1080",
+          "view": "overview",
+          "width": 1920,
+          "height": 1080,
+          "ok": true,
+          "screenshot": "docs/evidence/full_fresh_e2e/screenshots/responsive_desktop_1920x1080.png"
+        },
+        {
+          "name": "laptop_1366x768",
+          "view": "model-training",
+          "width": 1366,
+          "height": 768,
+          "ok": true,
+          "screenshot": "docs/evidence/full_fresh_e2e/screenshots/responsive_laptop_1366x768.png"
+        },
+        {
+          "name": "tablet_768x1024",
+          "view": "audience-explorer",
+          "width": 768,
+          "height": 1024,
+          "ok": true,
+          "screenshot": "docs/evidence/full_fresh_e2e/screenshots/responsive_tablet_768x1024.png"
+        },
+        {
+          "name": "mobile_390x844",
+          "view": "campaigns",
+          "width": 390,
+          "height": 844,
+          "ok": true,
+          "screenshot": "docs/evidence/full_fresh_e2e/screenshots/responsive_mobile_390x844.png"
+        }
+      ]
+    }
+  },
+  "step12_security_fixture_pytest": {
+    "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m pytest -q tests/test_campaign_export_hardening.py::test_csv_formula_protection_and_utf8_escaping",
+    "returncode": 0,
+    "passed": true,
+    "stdout_tail": ".                                                                        [100%]\n1 passed in 84.38s (0:01:24)",
+    "stderr_tail": ""
+  },
+  "step12_recent_export_events": {
+    "available": true,
+    "recent_export_events": [
+      {
+        "export_event_id": 9,
+        "status": "COMPLETED",
+        "export_profile": "DIRECT_MAIL_CONTACT_V1",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "f98cd7d0e843f26cecc31c5dfc4f9e46a63107b54a9276cec674c8f922ce586d",
+        "started_at": "2026-09-04T12:40:48Z",
+        "completed_at": "2026-09-04T12:40:58Z"
+      },
+      {
+        "export_event_id": 8,
+        "status": "COMPLETED",
+        "export_profile": "EMAIL_CONTACT_V1",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c",
+        "started_at": "2026-09-04T12:39:49Z",
+        "completed_at": "2026-09-04T12:40:06Z"
+      },
+      {
+        "export_event_id": 7,
+        "status": "COMPLETED",
+        "export_profile": "EMAIL_CONTACT_V1",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c",
+        "started_at": "2026-09-04T12:26:54Z",
+        "completed_at": "2026-09-04T12:27:06Z"
+      },
+      {
+        "export_event_id": 6,
+        "status": "COMPLETED",
+        "export_profile": "EMAIL_CONTACT_V1",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c",
+        "started_at": "2026-09-04T12:15:25Z",
+        "completed_at": "2026-09-04T12:15:31Z"
+      },
+      {
+        "export_event_id": 5,
+        "status": "COMPLETED",
+        "export_profile": "EMAIL_CONTACT_V1",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c",
+        "started_at": "2026-09-04T12:12:06Z",
+        "completed_at": "2026-09-04T12:12:11Z"
+      },
+      {
+        "export_event_id": 4,
+        "status": "COMPLETED",
+        "export_profile": "EMAIL_CONTACT_V1",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c",
+        "started_at": "2026-09-04T12:09:19Z",
+        "completed_at": "2026-09-04T12:09:25Z"
+      },
+      {
+        "export_event_id": 3,
+        "status": "COMPLETED",
+        "export_profile": "EMAIL_CONTACT_V1",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c",
+        "started_at": "2026-09-04T12:03:01Z",
+        "completed_at": "2026-09-04T12:03:27Z"
+      },
+      {
+        "export_event_id": 2,
+        "status": "COMPLETED",
+        "export_profile": "DIRECT_MAIL_CONTACT_V1",
+        "selected_count": 500000,
+        "deliverable_count": 500000,
+        "undeliverable_count": 0,
+        "row_count": 500000,
+        "csv_sha256": "c965c74ae37096a7fba7fd409140ec031249973c3d536ed11746a205d95aeea2",
+        "started_at": "2026-09-04T11:08:04Z",
+        "completed_at": "2026-09-04T11:08:39Z"
+      },
+      {
+        "export_event_id": 1,
+        "status": "COMPLETED",
+        "export_profile": "EMAIL_CONTACT_V1",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c",
+        "started_at": "2026-09-04T11:07:41Z",
+        "completed_at": "2026-09-04T11:07:47Z"
+      }
+    ]
+  },
+  "ui_errors": {
+    "console_errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "page_errors": [],
+    "request_failures": []
+  },
+  "screenshots": [
+    "docs/evidence/full_fresh_e2e/screenshots/step5_overview.png",
+    "docs/evidence/full_fresh_e2e/screenshots/step5_data_status.png",
+    "docs/evidence/full_fresh_e2e/screenshots/step6_historical_analysis.png",
+    "docs/evidence/full_fresh_e2e/screenshots/step7_model_training.png",
+    "docs/evidence/full_fresh_e2e/screenshots/step9_audience_explorer.png",
+    "docs/evidence/full_fresh_e2e/screenshots/step10_12_campaigns.png",
+    "docs/evidence/full_fresh_e2e/screenshots/responsive_desktop_1920x1080.png",
+    "docs/evidence/full_fresh_e2e/screenshots/responsive_laptop_1366x768.png",
+    "docs/evidence/full_fresh_e2e/screenshots/responsive_tablet_768x1024.png",
+    "docs/evidence/full_fresh_e2e/screenshots/responsive_mobile_390x844.png"
+  ],
+  "ui_control_coverage_path": "docs/evidence/full_fresh_e2e/UI_CONTROL_COVERAGE.md",
+  "overall_status": "PASS"
+}

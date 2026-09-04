@@ -52,8 +52,8 @@
   },
   "label_semantics": "pu_label=1 is a confirmed campaign-attributed purchase. pu_label=0 is unlabeled and must NOT be treated as a confirmed negative.",
   "anti_leakage": "Prior behavior is used internally in chronological order to synthesize realistic outcomes but is not stored as precomputed raw features. Future feature engineering should rebuild prior features using only events before each observation date.",
-  "main_output": "data\\step7_regen\\run1\\campaign_sales_570000.csv.gz",
-  "campaign_master": "data\\step7_regen\\run1\\campaign_master.csv",
-  "product_master": "data\\step7_regen\\run1\\product_master.csv",
-  "sample_output": "data\\step7_regen\\run1\\campaign_sales_sample_10000.csv"
+  "main_output": "C:\\POCs\\Campaign Implementation Tool\\data\\campaign_sales_570000.csv.gz",
+  "campaign_master": "C:\\POCs\\Campaign Implementation Tool\\data\\campaign_master.csv",
+  "product_master": "C:\\POCs\\Campaign Implementation Tool\\data\\product_master.csv",
+  "sample_output": "C:\\POCs\\Campaign Implementation Tool\\data\\campaign_sales_sample_10000.csv"
 }

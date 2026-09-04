@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-09-04T12:26:01Z",
+  "app_url": "http://127.0.0.1:8000/#campaigns",
+  "browser": {
+    "name": "system_chrome",
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+  },
+  "result": {
+    "status": "PASS",
+    "shell_status": "FINALIZED",
+    "before_row": {
+      "event_id": "#6",
+      "profile": "EMAIL_CONTACT_V1",
+      "status": "COMPLETED",
+      "selected": "50,000",
+      "deliverable": "50,000",
+      "undeliverable": "0",
+      "exported_rows": "50,000",
+      "checksum": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c"
+    },
+    "after_row": {
+      "event_id": "#7",
+      "profile": "EMAIL_CONTACT_V1",
+      "status": "COMPLETED",
+      "selected": "50,000",
+      "deliverable": "50,000",
+      "undeliverable": "0",
+      "exported_rows": "50,000",
+      "checksum": "f17fe97982cca3a27916a03719ac82e17e799f568040eab4ff14f99e7221213c"
+    },
+    "status_note": "Latest export completed at Sep 4, 2026, 5:57 PM.",
+    "announcement": "Latest export finished with status COMPLETED.",
+    "action_help": "Finalize and export are governed by campaign status, currentness, and PII acknowledgement.",
+    "console_errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "request_failures": [],
+    "debug": {
+      "hash": "#campaigns",
+      "shell_status": "FINALIZED",
+      "status_announcement": "Latest export finished with status COMPLETED.",
+      "action_help": "Finalize and export are governed by campaign status, currentness, and PII acknowledgement.",
+      "step_error_visible": false,
+      "step_error_text": "",
+      "backend_error_visible": false,
+      "backend_error_text": "The backend request could not be completed.",
+      "state_ready_visible": true,
+      "state_loading_visible": false,
+      "state_no_eligible_visible": false,
+      "state_backend_unavailable_visible": false,
+      "step1_visible": false,
+      "step2_visible": false,
+      "step3_visible": false,
+      "step4_visible": true,
+      "campaign_recent_rows": [
+        {
+          "id": "#3",
+          "name": "Full Fresh Browser EMAIL 1788522361470",
+          "status": "FINALIZED",
+          "channel": "EMAIL"
+        },
+        {
+          "id": "#2",
+          "name": "Full-fresh DIRECT_MAIL campaign",
+          "status": "FINALIZED",
+          "channel": "DIRECT_MAIL"
+        },
+        {
+          "id": "#1",
+          "name": "Full-fresh EMAIL campaign",
+          "status": "FINALIZED",
+          "channel": "EMAIL"
+        }
+      ]
+    },
+    "screenshot": "docs/evidence/full_fresh_e2e/screenshots/system_chrome_campaigns.png"
+  },
+  "overall_status": "PASS"
+}
