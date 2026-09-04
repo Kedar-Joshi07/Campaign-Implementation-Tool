@@ -1,0 +1,413 @@
+{
+  "completed_at": "2026-09-04T05:04:37Z",
+  "generated_at": "2026-09-04T04:59:55Z",
+  "overall_status": "PASS",
+  "runtime_root": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-72b6tbat",
+  "stages": {
+    "cleanup": {
+      "runtime_removed": true,
+      "status": "PASS"
+    },
+    "step1": {
+      "counts": {
+        "campaign_sales": 9000,
+        "customers": 1200,
+        "demographics": 12000
+      },
+      "dependency_versions": {
+        "fastapi": "0.141.1",
+        "joblib": "1.5.3",
+        "numpy": "2.4.6",
+        "pandas": "3.0.5",
+        "pulearn": "0.0.12",
+        "pytest": "8.4.2",
+        "scikit-learn": "1.7.2"
+      },
+      "deterministic_hashes": {
+        "campaign_master": {
+          "match": true,
+          "run_a": "7a77c7090780f7402bbdf20ca89fc3f47692e2524077fa12cc3e4951bb133eda",
+          "run_b": "7a77c7090780f7402bbdf20ca89fc3f47692e2524077fa12cc3e4951bb133eda"
+        },
+        "campaign_sales": {
+          "match": true,
+          "run_a": "4dfca941149f856ec6e04f00f66610ed1c5bd5109e6f1bcdca0c34d9ba71b3e3",
+          "run_b": "4dfca941149f856ec6e04f00f66610ed1c5bd5109e6f1bcdca0c34d9ba71b3e3"
+        },
+        "customers": {
+          "match": true,
+          "run_a": "28f589cdee4ed8bd56a5752fca8dec6719b91483a873b9580bee2ed5c2aaa4cd",
+          "run_b": "28f589cdee4ed8bd56a5752fca8dec6719b91483a873b9580bee2ed5c2aaa4cd"
+        },
+        "demographics": {
+          "match": true,
+          "run_a": "9ddedcc23666bcdfaad90d4bd604804fea24ca369493d470a3f346177d4f929a",
+          "run_b": "9ddedcc23666bcdfaad90d4bd604804fea24ca369493d470a3f346177d4f929a"
+        },
+        "product_master": {
+          "match": true,
+          "run_a": "082af8365afe0471d7d1781a1affc641a2b7c6d390d3556a1a04ee6b1c1f793f",
+          "run_b": "082af8365afe0471d7d1781a1affc641a2b7c6d390d3556a1a04ee6b1c1f793f"
+        }
+      },
+      "duration_seconds": 48.682,
+      "python": {
+        "executable": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe",
+        "version": "3.12.0"
+      },
+      "seeds": {
+        "campaign_sales": 20260904,
+        "customers": 20260903,
+        "demographics": 20260905
+      },
+      "selected_input_files": {
+        "campaign_sales": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-72b6tbat\\generated\\run_a\\campaign_sales.csv.gz",
+        "customers": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-72b6tbat\\generated\\run_a\\customers.csv.gz",
+        "demographics": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-72b6tbat\\generated\\run_a\\demographics.csv.gz"
+      },
+      "status": "PASS"
+    },
+    "step2": {
+      "duration_seconds": 6.252,
+      "identity_isolation": {
+        "customer_person_id_overlap_count": 0
+      },
+      "imports": {
+        "campaign_sales": {
+          "import_id": 2,
+          "rows_inserted": 9000,
+          "rows_rejected": 0
+        },
+        "customers": {
+          "import_id": 1,
+          "rows_inserted": 1200,
+          "rows_rejected": 0
+        },
+        "demographics": {
+          "import_id": 3,
+          "rows_inserted": 12000,
+          "rows_rejected": 0
+        }
+      },
+      "reconciliation": {
+        "database_path": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-72b6tbat\\cleanroom.db",
+        "datasets": {
+          "campaign_sales": {
+            "acceptable_count": true,
+            "acceptable_max_rows": 9000,
+            "acceptable_min_rows": 9000,
+            "actual_count": 9000,
+            "count_tolerance_percent": null,
+            "exact_match_required": true,
+            "expected_count": 9000,
+            "expected_count_match": true,
+            "metrics": {
+              "attributed_purchase_count": 511,
+              "distinct_campaign_id": 24,
+              "distinct_campaign_sales_id": 9000,
+              "distinct_customer_id": 1192,
+              "distinct_product_id": 20,
+              "invalid_customer_fk_count": 0,
+              "max_contact_date": "2025-12-31",
+              "min_contact_date": "2024-01-01",
+              "pu_consistency_violation_count": 0,
+              "pu_positive_count": 511,
+              "purchase_count": 815,
+              "total_rows": 9000,
+              "underage_campaign_contact_count": 0
+            },
+            "query_seconds": 0.10673,
+            "status": "OK",
+            "structural_error_count": 0,
+            "structural_issues": {
+              "duplicate_campaign_sales_id_count": 0,
+              "invalid_customer_fk_count": 0,
+              "pu_consistency_violation_count": 0,
+              "underage_campaign_contact_count": 0
+            }
+          },
+          "customers": {
+            "acceptable_count": true,
+            "acceptable_max_rows": 1200,
+            "acceptable_min_rows": 1200,
+            "actual_count": 1200,
+            "count_tolerance_percent": null,
+            "exact_match_required": true,
+            "expected_count": 1200,
+            "expected_count_match": true,
+            "metrics": {
+              "distinct_customer_id": 1200,
+              "max_date_of_birth": "2007-12-27",
+              "min_date_of_birth": "1935-02-25",
+              "null_or_blank_critical_identifiers": 0,
+              "total_rows": 1200
+            },
+            "query_seconds": 0.002168,
+            "status": "OK",
+            "structural_error_count": 0,
+            "structural_issues": {
+              "duplicate_customer_id_count": 0,
+              "null_or_blank_critical_identifiers": 0
+            }
+          },
+          "demographics": {
+            "acceptable_count": true,
+            "acceptable_max_rows": 12000,
+            "acceptable_min_rows": 12000,
+            "actual_count": 12000,
+            "count_tolerance_percent": null,
+            "exact_match_required": true,
+            "expected_count": 12000,
+            "expected_count_match": true,
+            "metrics": {
+              "adult_count_below_1": 0,
+              "age_above_100_count": 0,
+              "age_below_18_count": 0,
+              "distinct_person_id": 12000,
+              "family_arithmetic_violation_count": 0,
+              "family_income_below_individual_violation_count": 0,
+              "max_age": 100,
+              "max_individual_yearly_income": 665500.0,
+              "min_age": 18,
+              "min_individual_yearly_income": 0.0,
+              "total_rows": 12000
+            },
+            "query_seconds": 0.028207,
+            "status": "OK",
+            "structural_error_count": 0,
+            "structural_issues": {
+              "adult_count_below_1": 0,
+              "age_above_100_count": 0,
+              "age_below_18_count": 0,
+              "duplicate_person_id_count": 0,
+              "family_arithmetic_violation_count": 0,
+              "family_income_below_individual_violation_count": 0
+            }
+          }
+        },
+        "generated_at": "2026-09-04T05:00:50Z",
+        "overall_status": "OK",
+        "total_query_seconds": 0.182
+      },
+      "status": "PASS"
+    },
+    "step3": {
+      "analysis_run_id": 1,
+      "duration_seconds": 9.45,
+      "model_contract": {
+        "artifact_sha256": "382994c1343905326477465108264dcd60ff9471da97d95ea4e28a22ebdfadb7",
+        "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+        "feature_contract_version": "1",
+        "selected_candidate": "BAGGING_PU"
+      },
+      "model_job": {
+        "job_id": 1,
+        "model_run_id": 1,
+        "status_sequence": [
+          "QUEUED",
+          "RUNNING",
+          "COMPLETED"
+        ]
+      },
+      "scoring_integrity": {
+        "deterministic_sample": {
+          "max_abs_diff": 0.0,
+          "sample_size": 128,
+          "scoring_run_id": 1,
+          "verified": true
+        },
+        "distinct_person_count": 12000,
+        "provenance": {
+          "demographic_source_verified": true,
+          "historical_source_verified": true,
+          "is_canonical": true,
+          "issues": [],
+          "scoring_run_id": 1,
+          "status": "COMPLETED"
+        },
+        "score_count": 12000,
+        "score_max": 0.8108389219566563,
+        "score_min": 0.031795288454137254
+      },
+      "scoring_job": {
+        "job_id": 2,
+        "scoring_run_id": 1,
+        "status_sequence": [
+          "QUEUED",
+          "RUNNING",
+          "COMPLETED"
+        ]
+      },
+      "stale_recovery": {
+        "stale_job_id": 3,
+        "stale_jobs_failed_count": 1,
+        "stale_scoring_run_id": 2
+      },
+      "status": "PASS"
+    },
+    "step4": {
+      "duration_seconds": 80.829,
+      "filter_family_checks": {
+        "age": 12000,
+        "band": 720,
+        "decile": 2400,
+        "education": 1146,
+        "employment": 6354,
+        "employment_type": 156,
+        "family": 12000,
+        "gender": 5914,
+        "income": 12000,
+        "marital": 5902,
+        "percentile": 1200,
+        "resident_status": 10101,
+        "resident_type": 4165,
+        "score": 12000,
+        "state": 342
+      },
+      "invalid_cases": {
+        "age_min_gt_max": 422,
+        "invalid_decile": 422,
+        "unsupported_state": 422
+      },
+      "keyset_pagination": {
+        "checked_pages": 5,
+        "unique_person_count_seen": 200
+      },
+      "preparation_status": {
+        "active_job": null,
+        "analytics_contract_version": "1",
+        "analytics_prepared": true,
+        "analytics_snapshot_created_at": "2026-09-04T05:01:05Z",
+        "boundary_count": 100,
+        "currentness_issues": [],
+        "is_canonical": true,
+        "model_run_id": 1,
+        "prepared": true,
+        "rank_contract_version": "1",
+        "ready_for_current_audience_actions": true,
+        "scoring_run_id": 1,
+        "source_verified": true,
+        "status": "COMPLETED",
+        "total_population": 12000
+      },
+      "saved_audience_id": 1,
+      "status": "PASS",
+      "unknown_other_case": {
+        "field": "state",
+        "mode": "unsupported_value",
+        "status_code": 422
+      }
+    },
+    "step5": {
+      "campaigns": {
+        "DIRECT_MAIL": {
+          "campaign_id": 2,
+          "dangerous_prefix_hits": {
+            "at": true,
+            "equals": true,
+            "minus": true,
+            "plus": true
+          },
+          "runs": [
+            {
+              "csv_sha256": "af5a730879f99c109a2f19ee0dbadb0ff471046474afff1746873649cb3e4c96",
+              "deliverable_count": 57,
+              "order_hash": "3b95218b7b31c8013233529b3c0c53327110fd3c8a0c0bb5843464c8d6cb3fab",
+              "row_count": 57,
+              "run": 1,
+              "selected_count": 60,
+              "undeliverable_count": 3
+            },
+            {
+              "csv_sha256": "af5a730879f99c109a2f19ee0dbadb0ff471046474afff1746873649cb3e4c96",
+              "deliverable_count": 57,
+              "order_hash": "3b95218b7b31c8013233529b3c0c53327110fd3c8a0c0bb5843464c8d6cb3fab",
+              "row_count": 57,
+              "run": 2,
+              "selected_count": 60,
+              "undeliverable_count": 3
+            }
+          ],
+          "saved_audience_id": 3,
+          "special_char_checks": {
+            "contains_comma": true,
+            "contains_newline": true,
+            "contains_quote": true,
+            "contains_unicode": true
+          }
+        },
+        "EMAIL": {
+          "campaign_id": 1,
+          "dangerous_prefix_hits": {
+            "at": true,
+            "equals": true,
+            "minus": true,
+            "plus": true
+          },
+          "runs": [
+            {
+              "csv_sha256": "9584ec56eb166371b70367b1e0a928765f5d46b9c9aa2d0fb5375c918f297368",
+              "deliverable_count": 58,
+              "order_hash": "8a1373e100ead5abb01d109ad97f94a58112caba35627221ba7d03f32333b67d",
+              "row_count": 58,
+              "run": 1,
+              "selected_count": 60,
+              "undeliverable_count": 2
+            },
+            {
+              "csv_sha256": "9584ec56eb166371b70367b1e0a928765f5d46b9c9aa2d0fb5375c918f297368",
+              "deliverable_count": 58,
+              "order_hash": "8a1373e100ead5abb01d109ad97f94a58112caba35627221ba7d03f32333b67d",
+              "row_count": 58,
+              "run": 2,
+              "selected_count": 60,
+              "undeliverable_count": 2
+            }
+          ],
+          "saved_audience_id": 2,
+          "special_char_checks": {
+            "contains_comma": true,
+            "contains_newline": true,
+            "contains_quote": true,
+            "contains_unicode": true
+          }
+        }
+      },
+      "duration_seconds": 136.27,
+      "source_drift": {
+        "blocked_export_detail": "saved audience: Saved scoring run provenance is stale or invalid.",
+        "blocked_export_status": 409,
+        "campaign_id": 1,
+        "currentness_after_drift": {
+          "analytics_ready": false,
+          "campaign_id": 1,
+          "demographic_source_verified": false,
+          "historical_source_verified": true,
+          "is_current": false,
+          "issues": [
+            "saved audience: Saved scoring run provenance is stale or invalid.",
+            "saved audience: provenance: current demographics import_id does not match completed scoring provenance",
+            "saved audience: provenance: current demographics checksum does not match completed scoring provenance",
+            "saved audience: provenance: scoring run is not the current canonical run for this model",
+            "scoring: current demographics import_id does not match completed scoring provenance",
+            "scoring: current demographics checksum does not match completed scoring provenance",
+            "scoring: scoring run is not the current canonical run for this model",
+            "analytics: Demographic source provenance is stale for this scoring run.",
+            "analytics: current demographics import_id does not match completed scoring provenance",
+            "analytics: current demographics checksum does not match completed scoring provenance",
+            "analytics: scoring run is not the current canonical run for this model"
+          ],
+          "model_verified": false,
+          "rank_ready": true,
+          "ready_for_export": false,
+          "ready_for_finalize": false,
+          "saved_audience_current": false,
+          "scoring_current": false,
+          "status": "FINALIZED"
+        }
+      },
+      "status": "PASS",
+      "step4_saved_audience_id": 1
+    }
+  }
+}
