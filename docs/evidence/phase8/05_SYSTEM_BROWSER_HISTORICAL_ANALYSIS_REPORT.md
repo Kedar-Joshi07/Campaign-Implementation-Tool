@@ -1,6 +1,6 @@
 # Phase 8 Step 5 System Browser Historical Analysis Report
 
-Generated at: 2026-09-07T19:15:33Z
+Generated at: 2026-09-08T04:56:12Z
 
 ## Scope
 - Prompt executed: Prompts/phase8_release_assurance_system_browser_prompt_pack/05_STEP_05_SYSTEM_BROWSER_OVERVIEW_DATA_STATUS_HISTORICAL_ANALYSIS.md
@@ -13,8 +13,8 @@ Generated at: 2026-09-07T19:15:33Z
 - mode: headless
 
 ## Historical Analyses Submitted Through UI
-- Broad run: id=8, selected=119748, positive=35416, unlabeled=84332
-- Narrow run: id=9, selected=11662, positive=1297, unlabeled=10365
+- Broad run: id=1, selected=119748, positive=35416, unlabeled=84332
+- Narrow run: id=2, selected=11662, positive=1297, unlabeled=10365
 - UI reconciliation verified: positive + unlabeled == selected for both runs.
 
 ## Validation and Control Coverage
@@ -24,8 +24,8 @@ Generated at: 2026-09-07T19:15:33Z
 - Inventory statuses updated this step: 34 controls
 
 ## Backend Assertions (Post-UI Creation)
-- Broad API run 8: status=COMPLETED, selected=119748, positive=35416, unlabeled=84332
-- Narrow API run 9: status=COMPLETED, selected=11662, positive=1297, unlabeled=10365
+- Broad API run 1: status=COMPLETED, selected=119748, positive=35416, unlabeled=84332
+- Narrow API run 2: status=COMPLETED, selected=11662, positive=1297, unlabeled=10365
 
 ## UI Error Telemetry
 - Console errors: 0

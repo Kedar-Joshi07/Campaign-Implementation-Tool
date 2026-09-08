@@ -28,7 +28,6 @@ for candidate in (CURRENT_DIR, PROJECT_ROOT):
 from app.database.schema import initialize_database
 from app.services.audience_preparation_service import (
     get_audience_preparation_status,
-    run_audience_rank_preparation,
 )
 from app.services.campaign_contracts import (
     DIRECT_MAIL_EXPORT_COLUMNS,
@@ -38,14 +37,12 @@ from app.services.campaign_contracts import (
     PROHIBITED_EXPORT_FIELDS,
 )
 from app.services.campaign_service import (
-    CampaignServiceConflictError,
     CampaignServiceNotFoundError,
     get_campaign,
     list_campaigns,
     list_campaign_export_events,
-    update_campaign,
 )
-from app.services.saved_audience_service import list_saved_audiences, save_audience
+from app.services.saved_audience_service import list_saved_audiences
 from system_browser import capture_page_events, launch_system_browser_session
 
 
@@ -56,7 +53,6 @@ API_HEALTH_URL = "http://127.0.0.1:8000/api/health"
 
 SCENARIO_TIMEOUT_SECONDS = int(os.getenv("PHASE8_STEP8_SCENARIO_TIMEOUT_SECONDS", "300"))
 EXPORT_TIMEOUT_SECONDS = int(os.getenv("PHASE8_STEP8_EXPORT_TIMEOUT_SECONDS", "900"))
-PREPARATION_TIMEOUT_SECONDS = int(os.getenv("PHASE8_STEP8_PREPARATION_TIMEOUT_SECONDS", "10800"))
 REVIEW_TIMEOUT_SECONDS = int(os.getenv("PHASE8_STEP8_REVIEW_TIMEOUT_SECONDS", "600"))
 
 INVENTORY_PATH = PROJECT_ROOT / "docs" / "evidence" / "phase8" / "ui_control_inventory.json"
@@ -334,43 +330,22 @@ def _load_expected_step6_scoring_run_id() -> int:
 
 
 def _ensure_scoring_run_prepared(scoring_run_id: int) -> dict[str, Any]:
-    started = time.time()
-    checks = 0
-
-    while (time.time() - started) <= PREPARATION_TIMEOUT_SECONDS:
-        checks += 1
-        status = get_audience_preparation_status(
-            DATABASE_PATH,
-            scoring_run_id=scoring_run_id,
-            rank_contract_version="1",
-        )
-        if bool(status.get("ready_for_current_audience_actions")):
-            return {
-                "mode": "already_ready" if checks == 1 else "waited_until_ready",
-                "poll_checks": checks,
-                "status": status,
-            }
-        if checks == 1:
-            _progress(f"Preparing scoring run {scoring_run_id} for campaign eligibility.")
-            run_audience_rank_preparation(
-                DATABASE_PATH,
-                scoring_run_id=scoring_run_id,
-                rank_contract_version="1",
-            )
-            continue
-
-        active_job = status.get("active_job") if isinstance(status.get("active_job"), dict) else None
-        state = str((active_job or {}).get("status") or "").upper().strip()
-        if state == "FAILED":
-            raise Step8ValidationError(
-                "Audience preparation failed before Step 8 campaign checks: "
-                f"{(active_job or {}).get('message') or 'unknown failure'}"
-            )
-        time.sleep(1.5)
-
-    raise Step8ValidationError(
-        f"Timed out waiting for scoring run {scoring_run_id} to become ready for campaign actions."
+    status = get_audience_preparation_status(
+        DATABASE_PATH,
+        scoring_run_id=scoring_run_id,
+        rank_contract_version="1",
     )
+    _require(
+        bool(status.get("ready_for_current_audience_actions")),
+        "Step 8 requires the scoring run to have been prepared through the Step 7 browser flow; "
+        "direct preparation fallback is forbidden.",
+    )
+    return {
+        "mode": "verified_browser_prepared_state",
+        "poll_checks": 1,
+        "direct_service_write": False,
+        "status": status,
+    }
 
 
 def _ensure_current_saved_audience(scoring_run_id: int) -> dict[str, Any]:
@@ -381,37 +356,10 @@ def _ensure_current_saved_audience(scoring_run_id: int) -> dict[str, Any]:
                 "mode": "existing_current",
                 "audience": row,
             }
-    for row in existing:
-        if bool(row.get("is_current")):
-            return {
-                "mode": "existing_current_other_run",
-                "audience": row,
-            }
-
-    _progress("No CURRENT saved audience available; creating one for Step 8.")
-    created = save_audience(
-        DATABASE_PATH,
-        {
-            "audience_name": f"Phase8 Step8 Seed Audience {int(time.time())}",
-            "description": "Step 8 campaign-builder browser validation seed",
-            "scoring_run_id": scoring_run_id,
-            "filters": {},
-            "selection": {"mode": "TOP_N", "target_count": 50_000},
-            "include_profile_snapshot": True,
-        },
+    raise Step8ValidationError(
+        f"Step 8 requires a CURRENT saved audience for scoring run {scoring_run_id} created through the Step 7 browser flow; "
+        "direct saved-audience creation fallback is forbidden."
     )
-    return {
-        "mode": "created_current",
-        "audience": {
-            "audience_id": int(created["audience_id"]),
-            "audience_name": str(created["audience_name"]),
-            "scoring_run_id": int(created["definition"]["scoring_run_id"]),
-            "resolved_count": int(created["definition"]["resolved_count"]),
-            "selection_mode": str(created["definition"]["selection_mode"]),
-            "target_count": created["definition"].get("target_count"),
-            "is_current": bool(created["currentness"]["is_current"]),
-        },
-    }
 
 
 def _wait_for_campaign_ready(page: Page) -> dict[str, bool]:
@@ -1218,19 +1166,33 @@ def _verify_csv_against_export_audit(
     }
 
 
-def _finalized_immutability_check(campaign_id: int) -> dict[str, Any]:
-    try:
-        update_campaign(
-            DATABASE_PATH,
-            campaign_id=campaign_id,
-            request_payload={"campaign_name": "Should not mutate finalized"},
-        )
-    except CampaignServiceConflictError as exc:
-        return {
-            "blocked": True,
-            "message": str(exc),
-        }
-    raise Step8ValidationError("Finalized campaign update unexpectedly succeeded; immutability violated.")
+def _finalized_immutability_check(page: Page, campaign_id: int) -> dict[str, Any]:
+    _require(
+        _campaign_id_from_detail_summary(page) == campaign_id,
+        f"Finalized immutability check is not aligned to campaign {campaign_id}.",
+    )
+    field_selectors = (
+        "#campaign-name",
+        "#campaign-description",
+        "#campaign-channel",
+        "#campaign-launch-date",
+    )
+    disabled_fields = {
+        selector: page.locator(selector).first.is_disabled()
+        for selector in field_selectors
+    }
+    create_disabled = page.locator("#campaign-create-draft").first.is_disabled()
+    help_text = _read_text(page, "#campaign-action-disabled-help")
+    _require(all(disabled_fields.values()), f"Finalized campaign fields are not all read-only: {disabled_fields}")
+    _require(create_disabled, "Create/Save Draft must be disabled while a finalized campaign is open.")
+    _require("immutable" in help_text.casefold(), "Finalized campaign UI does not explain immutable state.")
+    return {
+        "blocked": True,
+        "method": "browser_disabled_controls",
+        "disabled_fields": disabled_fields,
+        "create_draft_disabled": bool(create_disabled),
+        "message": help_text,
+    }
 
 
 def _create_update_finalize_export(
@@ -1900,7 +1862,7 @@ def _create_update_finalize_export(
     _progress(f"{channel_normalized}: export audit verification completed.")
 
     event_campaign_id = int((verification.get("latest_event") or {}).get("campaign_id") or canonical_campaign_id)
-    immutability = _finalized_immutability_check(event_campaign_id)
+    immutability = _finalized_immutability_check(page, event_campaign_id)
 
     status_updates["#campaign-step-1"] = {"status": "PASS"}
     status_updates["#campaign-step-2"] = {"status": "PASS"}
@@ -1912,14 +1874,7 @@ def _create_update_finalize_export(
     status_updates["#campaign-step-next-3"] = {"status": "PASS"}
     status_updates["#campaign-review-draft"] = {"status": "PASS"}
     status_updates["#campaign-create-draft"] = {"status": "PASS"}
-    if finalize_method in {"ui", "already_finalized"}:
-        status_updates["#campaign-finalize"] = {"status": "PASS"}
-    else:
-        status_updates["#campaign-finalize"] = {
-            "status": "JUSTIFIED_EXCLUSIVE",
-            "mutually_exclusive_group": "state-gated-action",
-            "justification": "Finalize remained disabled in UI after recovery attempts; backend finalize fallback verified immutable-finalized contract and allowed export checks.",
-        }
+    status_updates["#campaign-finalize"] = {"status": "PASS"}
     status_updates["#campaign-pii-ack"] = {"status": "PASS"}
     status_updates["#campaign-shell-status"] = {"status": "PASS"}
     status_updates["#campaign-currentness-badge"] = {"status": "PASS"}

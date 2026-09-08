@@ -27,8 +27,6 @@ from app.repositories.audience_rank_repository import AudienceRankRepository
 from app.services.model_api_service import search_audience_rows
 from app.services.audience_preparation_service import (
     AUDIENCE_ANALYTICS_CONTRACT_VERSION,
-    get_audience_preparation_status,
-    run_audience_rank_preparation,
     validate_audience_analytics_snapshot_currentness,
 )
 from system_browser import capture_page_events, launch_system_browser_session
@@ -39,7 +37,6 @@ DATABASE_PATH = PROJECT_ROOT / "data" / "campaign_poc.db"
 APP_URL = "http://127.0.0.1:8000/"
 API_HEALTH_URL = "http://127.0.0.1:8000/api/health"
 
-PREPARATION_TIMEOUT_SECONDS = int(os.getenv("PHASE8_STEP7_PREP_TIMEOUT_SECONDS", "10800"))
 WORKSPACE_READY_TIMEOUT_SECONDS = int(os.getenv("PHASE8_STEP7_WORKSPACE_TIMEOUT_SECONDS", "900"))
 SCENARIO_TIMEOUT_SECONDS = int(os.getenv("PHASE8_STEP7_SCENARIO_TIMEOUT_SECONDS", "240"))
 
@@ -575,70 +572,6 @@ def _choose_audience_run(expected_scoring_run_id: int | None) -> dict[str, Any]:
     return runs_payload[0]
 
 
-def _get_preparation_status(scoring_run_id: int) -> dict[str, Any]:
-    payload = get_audience_preparation_status(
-        DATABASE_PATH,
-        scoring_run_id=scoring_run_id,
-        rank_contract_version="1",
-    )
-    _require(isinstance(payload, dict), "Preparation status service returned invalid payload.")
-    return payload
-
-
-def _ensure_expected_run_prepared(scoring_run_id: int) -> dict[str, Any]:
-    status = _get_preparation_status(scoring_run_id)
-    observations: dict[str, Any] = {
-        "precondition_mode": "already_ready",
-        "job_statuses": [],
-        "poll_checks": 0,
-    }
-
-    ready = bool(status.get("ready_for_current_audience_actions"))
-    if ready:
-        observations["final_status"] = status
-        return observations
-
-    observations["precondition_mode"] = "service_preparation"
-    active_job = status.get("active_job") if isinstance(status.get("active_job"), dict) else None
-    started = time.time()
-    seen_job_states: list[str] = []
-
-    if active_job is None:
-        _progress(f"Preparing expected run {scoring_run_id} via service precondition.")
-        run_audience_rank_preparation(
-            DATABASE_PATH,
-            scoring_run_id=scoring_run_id,
-            rank_contract_version="1",
-        )
-
-    while (time.time() - started) <= PREPARATION_TIMEOUT_SECONDS:
-        observations["poll_checks"] = int(observations["poll_checks"]) + 1
-
-        status = _get_preparation_status(scoring_run_id)
-        active_job = status.get("active_job") if isinstance(status.get("active_job"), dict) else None
-        job_state = str((active_job or {}).get("status") or "COMPLETED").upper().strip()
-        if job_state and (not seen_job_states or seen_job_states[-1] != job_state):
-            seen_job_states.append(job_state)
-            _progress(f"Preparation precondition state -> {job_state}")
-
-        if bool(status.get("ready_for_current_audience_actions")):
-            observations["job_statuses"] = seen_job_states
-            observations["final_status"] = status
-            return observations
-
-        if job_state == "FAILED":
-            raise Step7ValidationError(
-                "Audience preparation precondition failed for run "
-                f"{scoring_run_id}: {(active_job or {}).get('message') or 'unknown failure'}"
-            )
-
-        time.sleep(1.5)
-
-    raise Step7ValidationError(
-        f"Timed out waiting for run {scoring_run_id} preparation readiness (>{PREPARATION_TIMEOUT_SECONDS}s)."
-    )
-
-
 def _load_expected_step6_scoring_run_id() -> int | None:
     if not STEP6_EVIDENCE_PATH.is_file():
         return None
@@ -1116,7 +1049,10 @@ def _run_step7() -> RunArtifacts:
         scoring_run_id = int(run_choice.get("scoring_run_id") or 0)
         _require(scoring_run_id > 0, "Unable to resolve candidate scoring run for Audience Explorer.")
         results["resolved_audience_run"] = run_choice
-        results["preparation_precondition"] = _ensure_expected_run_prepared(scoring_run_id)
+        results["preparation_precondition"] = {
+            "mode": "browser_ui_only",
+            "direct_service_write": False,
+        }
         with sync_playwright() as playwright:
             with launch_system_browser_session(
                 playwright,

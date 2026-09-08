@@ -1,10 +1,9 @@
 {
-  "generated_at": "2026-09-07T19:15:33Z",
+  "generated_at": "2026-09-08T04:56:12Z",
   "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/05_STEP_05_SYSTEM_BROWSER_OVERVIEW_DATA_STATUS_HISTORICAL_ANALYSIS.md",
   "server": {
-    "managed": true,
-    "started_by_script": true,
-    "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+    "managed": false,
+    "started_by_script": false
   },
   "browser": {
     "name": "system_chrome",
@@ -19,27 +18,27 @@
   },
   "historical_runs": {
     "broad": {
-      "run_id_text": "#8",
+      "run_id_text": "#1",
       "selected": "119,748",
       "positive": "35,416",
       "unlabeled": "84,332",
       "positive_rate": "29.58%",
       "observations": "563,250",
       "status": "Completed",
-      "run_id": 8,
+      "run_id": 1,
       "selected_count": 119748,
       "positive_count": 35416,
       "unlabeled_count": 84332
     },
     "narrow": {
-      "run_id_text": "#9",
+      "run_id_text": "#2",
       "selected": "11,662",
       "positive": "1,297",
       "unlabeled": "10,365",
       "positive_rate": "11.12%",
       "observations": "11,662",
       "status": "Completed",
-      "run_id": 9,
+      "run_id": 2,
       "selected_count": 11662,
       "positive_count": 1297,
       "unlabeled_count": 10365,
@@ -56,9 +55,9 @@
     },
     "reopen": {
       "reopen_available": true,
-      "reopen_target_run_id": 9,
+      "reopen_target_run_id": 2,
       "reopen_succeeded": true,
-      "reopened_run_id": 9
+      "reopened_run_id": 2
     },
     "profile_tabs": {
       "profile_dimensions_exercised": [
@@ -79,14 +78,14 @@
   },
   "backend_assertions": {
     "broad": {
-      "analysis_run_id": 8,
+      "analysis_run_id": 1,
       "status": "COMPLETED",
       "selected": 119748,
       "positive": 35416,
       "unlabeled": 84332
     },
     "narrow": {
-      "analysis_run_id": 9,
+      "analysis_run_id": 2,
       "status": "COMPLETED",
       "selected": 11662,
       "positive": 1297,

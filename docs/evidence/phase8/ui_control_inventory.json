@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T04:10:29Z",
+  "generated_at": "2026-09-08T05:34:35Z",
   "source": {
     "frontend_index": "frontend/index.html",
     "frontend_js_glob": "frontend/js/*.js"
@@ -508,7 +508,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -521,7 +521,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -534,7 +534,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -547,7 +547,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -560,7 +560,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -573,7 +573,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -586,7 +586,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -599,7 +599,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -612,7 +612,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -625,7 +625,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -638,7 +638,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -651,7 +651,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -664,7 +664,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -677,7 +677,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -690,7 +690,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -703,7 +703,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -716,7 +716,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -729,7 +729,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -742,7 +742,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -755,7 +755,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -768,7 +768,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -781,7 +781,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -794,7 +794,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "dom"
     },
@@ -804,11 +804,11 @@
       "label": "Try again",
       "type": "button",
       "enable_conditions": "Visible in active view and enabled by currentness/job-state guards.",
-      "mutually_exclusive_group": "error-state-only",
+      "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "JUSTIFIED_EXCLUSIVE",
-      "justification": "Retry control is visible only when the campaigns backend-unavailable error banner is shown.",
+      "status": "NOT_RUN",
+      "justification": "",
       "source": "dom"
     },
     {
@@ -820,7 +820,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise campaigns control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
+      "status": "NOT_RUN",
       "justification": "",
       "source": "js-created:campaigns.js"
     },
@@ -833,7 +833,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise data-status control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -843,11 +843,11 @@
       "label": "Try again",
       "type": "button",
       "enable_conditions": "Visible in active view and enabled by currentness/job-state guards.",
-      "mutually_exclusive_group": "",
+      "mutually_exclusive_group": "error-state-only",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise data-status control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
-      "justification": "",
+      "status": "JUSTIFIED_EXCLUSIVE",
+      "justification": "Retry control is shown only when data-status backend-error banner is visible.",
       "source": "dom"
     },
     {
@@ -860,7 +860,7 @@
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise global control in system browser and assert observable UI/API state transition.",
       "status": "PASS",
-      "justification": "Step 9 system-browser navigation/accessibility/responsive coverage passed.",
+      "justification": "",
       "source": "dom"
     },
     {
@@ -872,8 +872,8 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise global control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
-      "justification": "Step 9 system-browser navigation/accessibility/responsive coverage passed.",
+      "status": "NOT_RUN",
+      "justification": "",
       "source": "dom"
     },
     {
@@ -885,8 +885,8 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise global control in system browser and assert observable UI/API state transition.",
-      "status": "PASS",
-      "justification": "Step 9 system-browser navigation/accessibility/responsive coverage passed.",
+      "status": "NOT_RUN",
+      "justification": "",
       "source": "dom"
     },
     {
@@ -899,7 +899,7 @@
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise global control in system browser and assert observable UI/API state transition.",
       "status": "PASS",
-      "justification": "Step 9 system-browser navigation/accessibility/responsive coverage passed.",
+      "justification": "",
       "source": "dom"
     },
     {
@@ -912,7 +912,7 @@
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise global control in system browser and assert observable UI/API state transition.",
       "status": "PASS",
-      "justification": "Step 9 system-browser navigation/accessibility/responsive coverage passed.",
+      "justification": "",
       "source": "dom"
     },
     {
@@ -925,7 +925,7 @@
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise global control in system browser and assert observable UI/API state transition.",
       "status": "PASS",
-      "justification": "Step 9 system-browser navigation/accessibility/responsive coverage passed.",
+      "justification": "",
       "source": "dom"
     },
     {
@@ -938,7 +938,7 @@
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise global control in system browser and assert observable UI/API state transition.",
       "status": "PASS",
-      "justification": "Step 9 system-browser navigation/accessibility/responsive coverage passed.",
+      "justification": "",
       "source": "dom"
     },
     {
@@ -950,7 +950,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -963,7 +963,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -976,7 +976,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -989,7 +989,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1002,7 +1002,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1015,7 +1015,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1028,7 +1028,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1041,7 +1041,7 @@
       "mutually_exclusive_group": "contacted_only",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1054,7 +1054,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1067,7 +1067,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1077,11 +1077,11 @@
       "label": "Try again",
       "type": "button",
       "enable_conditions": "Visible in active view and enabled by currentness/job-state guards.",
-      "mutually_exclusive_group": "",
+      "mutually_exclusive_group": "error-state-only",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
-      "justification": "",
+      "status": "JUSTIFIED_EXCLUSIVE",
+      "justification": "Retry control is shown only when historical-analysis backend-error banner is visible.",
       "source": "dom"
     },
     {
@@ -1093,7 +1093,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1106,7 +1106,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1119,7 +1119,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1132,7 +1132,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1145,7 +1145,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "js-created:historical-analysis.js"
     },
@@ -1158,7 +1158,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1171,7 +1171,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1184,7 +1184,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1197,7 +1197,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1210,7 +1210,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1223,7 +1223,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1236,7 +1236,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1249,7 +1249,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1262,7 +1262,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise historical-analysis control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "js-created:historical-analysis.js"
     },
@@ -1275,7 +1275,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1288,7 +1288,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1298,11 +1298,11 @@
       "label": "Try again",
       "type": "button",
       "enable_conditions": "Visible in active view and enabled by currentness/job-state guards.",
-      "mutually_exclusive_group": "",
+      "mutually_exclusive_group": "error-state-only",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
-      "justification": "",
+      "status": "JUSTIFIED_EXCLUSIVE",
+      "justification": "Retry control is shown only when model-training backend error banner is visible.",
       "source": "dom"
     },
     {
@@ -1314,7 +1314,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1327,7 +1327,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1340,7 +1340,7 @@
       "mutually_exclusive_group": "run_elkan_challenger",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1353,7 +1353,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1366,7 +1366,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1379,7 +1379,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1392,7 +1392,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1405,7 +1405,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise model-training control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "js-created:model-training.js"
     },
@@ -1418,7 +1418,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise overview control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1431,7 +1431,7 @@
       "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise overview control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
+      "status": "PASS",
       "justification": "",
       "source": "dom"
     },
@@ -1441,17 +1441,18 @@
       "label": "Try again",
       "type": "button",
       "enable_conditions": "Visible in active view and enabled by currentness/job-state guards.",
-      "mutually_exclusive_group": "",
+      "mutually_exclusive_group": "error-state-only",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise overview control in system browser and assert observable UI/API state transition.",
-      "status": "NOT_RUN",
-      "justification": "",
+      "status": "JUSTIFIED_EXCLUSIVE",
+      "justification": "Retry control is shown only when overview backend-error banner is visible.",
       "source": "dom"
     }
   ],
   "status_summary": {
-    "NOT_RUN": 79,
-    "PASS": 31,
-    "JUSTIFIED_EXCLUSIVE": 1
+    "NOT_RUN": 65,
+    "PASS": 42,
+    "FAIL": 0,
+    "JUSTIFIED_EXCLUSIVE": 4
   }
 }

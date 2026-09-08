@@ -623,6 +623,7 @@ function stopExportHistoryPolling() {
 }
 
 function synchronizeActionState() {
+  const newDraftButton = document.querySelector("#campaign-new-draft");
   const createButton = document.querySelector("#campaign-create-draft");
   const reviewButton = document.querySelector("#campaign-review-draft");
   const finalizeButton = document.querySelector("#campaign-finalize");
@@ -633,16 +634,27 @@ function synchronizeActionState() {
   const campaignStatus = String(activeCampaignDetail?.status || "").toUpperCase();
   const readyForFinalize = activeCampaignDetail?.currentness?.ready_for_finalize === true;
   const readyForExport = activeCampaignDetail?.currentness?.ready_for_export === true;
+  const immutableCampaign = Boolean(activeCampaignDetail)
+    && (campaignStatus === "FINALIZED" || activeCampaignDetail?.currentness?.is_current !== true);
+
+  for (const selector of ["#campaign-name", "#campaign-description", "#campaign-channel", "#campaign-launch-date"]) {
+    document.querySelector(selector).disabled = immutableCampaign;
+  }
 
   createButton.dataset.defaultLabel = campaignStatus === "DRAFT" ? "Save Draft" : "Create Draft";
   createButton.textContent = createButton.dataset.defaultLabel;
 
-  createButton.disabled = mutationInFlight || !hasCurrentAudience;
+  newDraftButton.disabled = mutationInFlight;
+  createButton.disabled = mutationInFlight || !hasCurrentAudience || immutableCampaign;
   reviewButton.disabled = mutationInFlight;
   finalizeButton.disabled = mutationInFlight || campaignStatus !== "DRAFT" || !readyForFinalize;
   exportButton.disabled = mutationInFlight || campaignStatus !== "FINALIZED" || !readyForExport || !piiAcknowledged;
 
-  if (!activeCampaignDetail) {
+  if (campaignStatus === "FINALIZED") {
+    setActionHelp("Finalized campaign details are immutable. Choose New Campaign to start another draft.");
+  } else if (activeCampaignDetail && activeCampaignDetail.currentness?.is_current !== true) {
+    setActionHelp("Stale campaign details are historical and read-only. Choose New Campaign to start another draft.");
+  } else if (!activeCampaignDetail) {
     setActionHelp("Create or open a campaign to enable finalize and export checks.");
   } else if (campaignStatus === "DRAFT" && !readyForFinalize) {
     const issue = activeCampaignDetail.currentness?.issues?.[0] || "Campaign is not current for finalize.";

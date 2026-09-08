@@ -75,3 +75,40 @@ def test_missing_selected_browser_fails_clearly() -> None:
         resolve_system_browser(system_browser="chrome", path_exists=lambda _: False)
 
     assert "SYSTEM_BROWSER=chrome requested" in str(exc.value)
+
+
+def test_step7_browser_runner_does_not_write_preparation_state_directly() -> None:
+    runner_path = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "validation"
+        / "browser"
+        / "run_phase8_step7_audience_explorer_all_controls.py"
+    )
+    runner = runner_path.read_text(encoding="utf-8")
+
+    assert '"#audience-prepare-submit"' in runner
+    assert "run_audience_rank_preparation(" not in runner
+    assert '"direct_service_write": False' in runner
+
+
+def test_step8_browser_runner_has_no_direct_workflow_state_write_fallbacks() -> None:
+    runner_path = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "validation"
+        / "browser"
+        / "run_phase8_step8_campaign_builder_and_exports.py"
+    )
+    runner = runner_path.read_text(encoding="utf-8")
+
+    for forbidden_call in (
+        "run_audience_rank_preparation(",
+        "save_audience(",
+        "create_campaign(",
+        "update_campaign(",
+        "finalize_campaign(",
+    ):
+        assert forbidden_call not in runner
+    assert '"method": "browser_disabled_controls"' in runner
+    assert '"direct_service_write": False' in runner

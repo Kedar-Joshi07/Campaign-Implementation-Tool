@@ -456,4 +456,8 @@ def test_campaign_builder_script_uses_campaign_api_workflow_and_export_profiles(
     assert 'setCampaignAnnouncement("New campaign draft form ready.")' in script
     assert '"Currentness", detail.currentness?.is_current ? "CURRENT" : "STALE"' in script
     assert "Campaign is current for immutable audience and source/model provenance." in script
+    assert "document.querySelector(selector).disabled = immutableCampaign;" in script
+    assert "createButton.disabled = mutationInFlight || !hasCurrentAudience || immutableCampaign;" in script
+    assert "Finalized campaign details are immutable. Choose New Campaign to start another draft." in script
+    assert "Stale campaign details are historical and read-only. Choose New Campaign to start another draft." in script
     assert script.index("await loadSelectedAudienceDetail({ force });") < script.index('setState("ready");')
