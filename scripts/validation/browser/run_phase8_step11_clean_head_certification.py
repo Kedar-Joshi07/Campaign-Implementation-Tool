@@ -256,12 +256,29 @@ def _managed_server(python_exe: Path) -> Iterator[dict[str, Any]]:
                 "command": f"{python_exe} -m uvicorn app.main:app --host 127.0.0.1 --port 8000",
             }
         finally:
-            process.terminate()
-            try:
-                process.wait(timeout=20)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=10)
+            if os.name == "nt":
+                # Audience preparation runs in a multiprocessing child. Killing
+                # only Uvicorn orphans that worker and leaves inherited DB/log
+                # handles open, so tear down the complete managed process tree.
+                subprocess.run(
+                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                    cwd=str(PROJECT_ROOT),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                try:
+                    process.wait(timeout=20)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=10)
+            else:
+                process.terminate()
+                try:
+                    process.wait(timeout=20)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=10)
 
 
 def _wait_for_backend_ready(*, timeout_seconds: int) -> None:

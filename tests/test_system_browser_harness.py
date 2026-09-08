@@ -114,3 +114,16 @@ def test_step8_browser_runner_has_no_direct_workflow_state_write_fallbacks() -> 
         assert forbidden_call not in runner
     assert '"method": "browser_disabled_controls"' in runner
     assert '"direct_service_write": False' in runner
+
+
+def test_step11_tears_down_the_complete_managed_server_tree_on_windows() -> None:
+    runner_path = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "validation"
+        / "browser"
+        / "run_phase8_step11_clean_head_certification.py"
+    )
+    runner = runner_path.read_text(encoding="utf-8")
+
+    assert '["taskkill", "/PID", str(process.pid), "/T", "/F"]' in runner
