@@ -1519,7 +1519,6 @@ def submit_audience_preparation_job_request(
     except JobValidationError as exc:
         raise AudiencePreparationValidationError(str(exc)) from exc
 
-    worker_submitter = submit_audience_preparation_job if submitter is None else submitter
     try:
         if submitter is None:
             from app.jobs.executor import submit_audience_preparation_job

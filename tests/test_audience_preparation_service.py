@@ -520,6 +520,34 @@ def test_submit_conflicts_when_already_prepared(database_path: Path) -> None:
         )
 
 
+def test_submit_uses_default_worker_submitter_without_local_import_error(
+    database_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    scoring_run_id, _ = _seed_canonical_scoring_run(database_path, size=120)
+    submitted: dict[str, Any] = {}
+
+    def _fake_submitter(path: str | Path, job_id: int) -> None:
+        submitted["path"] = Path(path)
+        submitted["job_id"] = job_id
+
+    monkeypatch.setattr(
+        "app.jobs.executor.submit_audience_preparation_job",
+        _fake_submitter,
+    )
+
+    job = submit_audience_preparation_job_request(
+        database_path,
+        {"scoring_run_id": scoring_run_id, "rank_contract_version": "1"},
+    )
+
+    assert submitted == {
+        "path": database_path,
+        "job_id": int(job["job_id"]),
+    }
+    assert job["status"] == "QUEUED"
+
+
 def test_submit_rejects_when_scoring_count_mismatch(database_path: Path) -> None:
     scoring_run_id, _ = _seed_canonical_scoring_run(database_path, size=50)
     with get_connection(database_path, write=True) as connection:
