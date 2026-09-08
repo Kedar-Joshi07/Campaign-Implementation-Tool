@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T10:16:54Z",
+  "generated_at": "2026-09-08T11:01:59Z",
   "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/06_STEP_06_SYSTEM_BROWSER_MODEL_TRAINING_AND_FULL_5M_SCORING.md",
   "server": {
     "managed": false,
@@ -14,10 +14,10 @@
   "training": {
     "selected_source_analysis": {
       "analysis_run_id": 2,
-      "option_text": "#2 \u00b7 Phase8 Step5 Narrow 1788862579"
+      "option_text": "#2 \u00b7 Phase8 Step5 Narrow 1788865283"
     },
     "inputs": {
-      "model_name": "Phase8 Step6 Browser Model 1788862625",
+      "model_name": "Phase8 Step6 Browser Model 1788865332",
       "random_seed": 42,
       "validation_fraction": 0.2,
       "challenger_toggle": {
@@ -36,7 +36,7 @@
           "progress_percent": 0,
           "message": "Model training in progress.",
           "job_id": 1,
-          "observed_at": "2026-09-08T10:17:06Z"
+          "observed_at": "2026-09-08T11:02:13Z"
         },
         {
           "status": "RUNNING",
@@ -44,7 +44,7 @@
           "progress_percent": 15,
           "message": "Reconstructing customer-grain training cohort.",
           "job_id": 1,
-          "observed_at": "2026-09-08T10:17:20Z"
+          "observed_at": "2026-09-08T11:02:37Z"
         },
         {
           "status": "COMPLETED",
@@ -52,7 +52,7 @@
           "progress_percent": 100,
           "message": "Model training completed.",
           "job_id": 1,
-          "observed_at": "2026-09-08T10:17:23Z"
+          "observed_at": "2026-09-08T11:02:40Z"
         }
       ],
       "seen_statuses": [
@@ -61,11 +61,11 @@
         "COMPLETED"
       ],
       "saw_queued_stage": true,
-      "elapsed_seconds": 16.79
+      "elapsed_seconds": 27.21
     },
     "ui_summary": {
       "model_run_id": 1,
-      "source_analysis_name": "Phase8 Step5 Narrow 1788862579",
+      "source_analysis_name": "Phase8 Step5 Narrow 1788865283",
       "source_analysis_id": 2,
       "source_counts": {
         "selected": 11662,
@@ -145,8 +145,8 @@
         ],
         [
           "Fit time",
-          "0.50s",
-          "0.05s",
+          "0.42s",
+          "0.04s",
           "0.05s"
         ]
       ]
@@ -163,7 +163,7 @@
           "progress_percent": 0,
           "message": "Prospect scoring in progress.",
           "job_id": 2,
-          "observed_at": "2026-09-08T10:17:24Z"
+          "observed_at": "2026-09-08T11:02:42Z"
         },
         {
           "status": "RUNNING",
@@ -171,7 +171,7 @@
           "progress_percent": 10,
           "message": "Capturing prospect snapshot and creating scoring run.",
           "job_id": 2,
-          "observed_at": "2026-09-08T10:17:26Z"
+          "observed_at": "2026-09-08T11:02:44Z"
         },
         {
           "status": "COMPLETED",
@@ -179,7 +179,7 @@
           "progress_percent": 100,
           "message": "Prospect scoring completed.",
           "job_id": 2,
-          "observed_at": "2026-09-08T10:32:43Z"
+          "observed_at": "2026-09-08T11:17:15Z"
         }
       ],
       "seen_statuses": [
@@ -188,7 +188,7 @@
         "COMPLETED"
       ],
       "saw_queued_stage": true,
-      "elapsed_seconds": 918.83
+      "elapsed_seconds": 873.46
     },
     "ui_summary": {
       "model_run_id": 1,
@@ -199,8 +199,8 @@
       "scored_count": 5000000,
       "universe_count": 5000000,
       "reconciliation": "5,000,000 / 5,000,000",
-      "runtime_text": "916.16s",
-      "rows_per_second_text": "5,458 rows/s",
+      "runtime_text": "871.83s",
+      "rows_per_second_text": "5,735 rows/s",
       "feature_contract_text": "1 \u00b7 a0cd5e8f9585...",
       "artifact_sha_text": "3c5a8e083aca..."
     }
@@ -240,8 +240,8 @@
       "score_min": 0.013816964266637796,
       "score_mean": 0.10948734931891452,
       "score_max": 0.2473882014318153,
-      "runtime_seconds": 916.1634407999954,
-      "rows_per_second": 5457.541501147428,
+      "runtime_seconds": 871.8283718000021,
+      "rows_per_second": 5735.0737389709575,
       "chunk_size": 25000,
       "chunk_count": 200,
       "largest_chunk_rows": 25000,
