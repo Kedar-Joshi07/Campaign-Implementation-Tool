@@ -465,8 +465,8 @@ def _collect_integrity_and_ids(step_payloads: dict[str, dict[str, Any]]) -> dict
 
         latest_model = connection.execute(
             """
-            SELECT model_run_id, status, selected_candidate, feature_contract_version,
-                   feature_contract_sha256, model_role_policy_version, artifact_sha256
+            SELECT model_run_id, status, selected_candidate, feature_contract_json,
+                   artifact_sha256
             FROM model_runs
             ORDER BY model_run_id DESC
             LIMIT 1
@@ -477,7 +477,8 @@ def _collect_integrity_and_ids(step_payloads: dict[str, dict[str, Any]]) -> dict
             """
             SELECT scoring_run_id, model_run_id, status, scored_person_count,
                    demographic_snapshot_count, feature_contract_version,
-                   feature_contract_sha256, artifact_sha256, completed_at
+                   feature_contract_sha256, artifact_sha256, completed_at,
+                   model_role_policy_version
             FROM scoring_runs
             ORDER BY scoring_run_id DESC
             LIMIT 1
@@ -543,6 +544,24 @@ def _collect_integrity_and_ids(step_payloads: dict[str, dict[str, Any]]) -> dict
         .get("scoring", {})
         .get("deterministic_rescore", {})
     )
+    model_feature_contract: dict[str, Any] = {}
+    model_feature_contract_sha256: str | None = None
+    if latest_model and latest_model[3]:
+        try:
+            parsed_contract = json.loads(str(latest_model[3]))
+            if isinstance(parsed_contract, dict):
+                model_feature_contract = parsed_contract
+                canonical_contract = json.dumps(
+                    parsed_contract,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                model_feature_contract_sha256 = hashlib.sha256(canonical_contract.encode("utf-8")).hexdigest()
+        except (TypeError, ValueError):
+            model_feature_contract = {}
+
+    model_feature_contract_version = model_feature_contract.get("version")
+    deterministic_max_abs_diff = deterministic_rescore.get("max_abs_diff")
 
     run_ids = {
         "historical_analysis_run_ids": {
@@ -582,15 +601,21 @@ def _collect_integrity_and_ids(step_payloads: dict[str, dict[str, Any]]) -> dict
         "governed_model_present": bool(latest_model)
         and str(latest_model[1]).upper() == "COMPLETED"
         and bool(latest_model[2])
-        and bool(latest_model[3])
+        and bool(model_feature_contract_version)
+        and bool(model_feature_contract_sha256)
         and bool(latest_model[4])
-        and bool(latest_model[5])
-        and bool(latest_model[6]),
+        and bool(latest_scoring)
+        and latest_model[0] == latest_scoring[1]
+        and str(model_feature_contract_version) == str(latest_scoring[5])
+        and model_feature_contract_sha256 == latest_scoring[6]
+        and latest_model[4] == latest_scoring[7]
+        and bool(latest_scoring[9]),
         "scores_5m_completed": bool(latest_scoring)
         and str(latest_scoring[2]).upper() == "COMPLETED"
         and int(latest_scoring[3] or 0) == 5_000_000,
         "deterministic_rescore_sample": bool(deterministic_rescore.get("verified"))
-        and float(deterministic_rescore.get("max_abs_diff") or 1.0) == 0.0,
+        and deterministic_max_abs_diff is not None
+        and float(deterministic_max_abs_diff) == 0.0,
         "rank_boundaries_100": rank_boundary_count == 100,
         "analytics_current": analytics_snapshot_count > 0,
         "saved_audience_present": saved_audience_count > 0,
@@ -614,10 +639,10 @@ def _collect_integrity_and_ids(step_payloads: dict[str, dict[str, Any]]) -> dict
             "model_run_id": latest_model[0] if latest_model else None,
             "status": latest_model[1] if latest_model else None,
             "selected_candidate": latest_model[2] if latest_model else None,
-            "feature_contract_version": latest_model[3] if latest_model else None,
-            "feature_contract_sha256": latest_model[4] if latest_model else None,
-            "model_role_policy_version": latest_model[5] if latest_model else None,
-            "artifact_sha256": latest_model[6] if latest_model else None,
+            "feature_contract_version": model_feature_contract_version,
+            "feature_contract_sha256": model_feature_contract_sha256,
+            "model_role_policy_version": latest_scoring[9] if latest_scoring else None,
+            "artifact_sha256": latest_model[4] if latest_model else None,
         },
         "latest_scoring": {
             "scoring_run_id": latest_scoring[0] if latest_scoring else None,

@@ -131,3 +131,7 @@ def test_step11_tears_down_the_complete_managed_server_tree_on_windows() -> None
     assert '["taskkill", "/PID", str(process.pid), "/T", "/F"]' in runner
     assert 'RESUME_EXISTING_ENV = "PHASE8_STEP11_RESUME_EXISTING"' in runner
     assert '"user_directed_no_scoring_rerun": True' in runner
+    assert "SELECT model_run_id, status, selected_candidate, feature_contract_json," in runner
+    assert "model_feature_contract_sha256 == latest_scoring[6]" in runner
+    assert 'deterministic_max_abs_diff is not None' in runner
+    assert 'deterministic_rescore.get("max_abs_diff") or 1.0' not in runner
