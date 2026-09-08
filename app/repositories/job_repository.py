@@ -145,6 +145,8 @@ _ALLOWED_AUDIENCE_PREPARATION_RESULT_FIELDS = (
     "total_population",
     "rank_contract_version",
     "boundary_count",
+    "analytics_contract_version",
+    "analytics_prepared",
     "scanned_rows",
     "chunk_size",
     "chunk_count",
@@ -554,6 +556,25 @@ def _normalize_audience_preparation_result_payload(payload: Any) -> dict[str, An
         ),
         "boundary_count": boundary_count,
     }
+
+    analytics_fields = ("analytics_contract_version", "analytics_prepared")
+    analytics_presence = [field in payload for field in analytics_fields]
+    if any(analytics_presence) and not all(analytics_presence):
+        raise JobValidationError("audience analytics result fields must be provided together.")
+    if all(analytics_presence):
+        analytics_prepared = payload.get("analytics_prepared")
+        if not isinstance(analytics_prepared, bool):
+            raise JobValidationError("analytics_prepared must be a boolean.")
+        normalized.update(
+            {
+                "analytics_contract_version": _bounded_required_text(
+                    payload.get("analytics_contract_version"),
+                    field_name="analytics_contract_version",
+                    maximum=24,
+                ),
+                "analytics_prepared": analytics_prepared,
+            }
+        )
 
     metric_fields = (
         "scanned_rows",

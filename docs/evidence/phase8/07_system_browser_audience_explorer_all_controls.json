@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-09-07T19:30:51Z",
+  "generated_at": "2026-09-08T14:31:15Z",
   "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/07_STEP_07_SYSTEM_BROWSER_AUDIENCE_EXPLORER_ALL_CONTROLS.md",
-  "expected_step6_scoring_run_id": 4,
+  "expected_step6_scoring_run_id": 1,
   "server": {
     "managed": true,
     "started_by_script": true,
     "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
   },
   "resolved_audience_run": {
-    "scoring_run_id": 4,
-    "model_run_id": 4,
-    "completed_at": "2026-09-06T17:18:40Z",
+    "scoring_run_id": 1,
+    "model_run_id": 1,
+    "completed_at": "2026-09-08T12:11:26Z",
     "scored_person_count": 5000000,
     "prepared": true,
     "is_canonical": true,
@@ -21,29 +21,11 @@
     "boundary_count": 100,
     "analytics_prepared": true,
     "analytics_contract_version": "1",
-    "analytics_snapshot_created_at": "2026-09-07T02:14:30Z"
+    "analytics_snapshot_created_at": "2026-09-08T12:57:24Z"
   },
   "preparation_precondition": {
-    "precondition_mode": "already_ready",
-    "job_statuses": [],
-    "poll_checks": 0,
-    "final_status": {
-      "scoring_run_id": 4,
-      "model_run_id": 4,
-      "status": "COMPLETED",
-      "rank_contract_version": "1",
-      "analytics_contract_version": "1",
-      "prepared": true,
-      "analytics_prepared": true,
-      "is_canonical": true,
-      "source_verified": true,
-      "ready_for_current_audience_actions": true,
-      "currentness_issues": [],
-      "analytics_snapshot_created_at": "2026-09-07T02:14:30Z",
-      "boundary_count": 100,
-      "total_population": 5000000,
-      "active_job": null
-    }
+    "mode": "browser_ui_only",
+    "direct_service_write": false
   },
   "browser": {
     "name": "system_chrome",
@@ -52,25 +34,25 @@
     "execution_mode": "headless"
   },
   "preparation": {
-    "active_scoring_run_id": 4,
+    "active_scoring_run_id": 1,
     "source_verified_badge": "Current source verified",
     "ui_observations": {
       "states_seen": [
         {
           "state": "loading",
-          "observed_at": "2026-09-07T19:31:20Z"
+          "observed_at": "2026-09-08T14:31:49Z"
         },
         {
           "state": "loading",
-          "observed_at": "2026-09-07T19:31:20Z"
+          "observed_at": "2026-09-08T14:31:49Z"
         },
         {
           "state": "loading",
-          "observed_at": "2026-09-07T19:31:21Z"
+          "observed_at": "2026-09-08T14:31:50Z"
         },
         {
           "state": "workspace",
-          "observed_at": "2026-09-07T19:31:21Z"
+          "observed_at": "2026-09-08T14:31:51Z"
         }
       ],
       "messages": [],
@@ -98,79 +80,79 @@
     "1_no_filters_all_matching": {
       "estimate_matching": 5000000,
       "estimate_selected": 5000000,
-      "estimate_score_range": "0.109688 - 0.986922",
-      "estimate_score_mean": "0.287378",
+      "estimate_score_range": "0.013817 - 0.247388",
+      "estimate_score_mean": "0.109487",
       "search_rows_rendered": 50,
       "search_has_more": true,
       "profile_kpi_universe": 5000000,
       "profile_kpi_matching": 5000000,
       "profile_kpi_selected": 5000000,
-      "profile_kpi_historical_positives": 35416,
+      "profile_kpi_historical_positives": 1297,
       "profile_summary_text": "Selected vs universe by Age band"
     },
     "2_top_1_percent": {
       "estimate_matching": 50000,
       "estimate_selected": 50000,
-      "estimate_score_range": "0.487114 - 0.986922",
-      "estimate_score_mean": "0.522584",
+      "estimate_score_range": "0.16659 - 0.247388",
+      "estimate_score_mean": "0.176558",
       "search_rows_rendered": 50,
       "search_has_more": true,
       "profile_kpi_universe": 5000000,
       "profile_kpi_matching": 50000,
       "profile_kpi_selected": 50000,
-      "profile_kpi_historical_positives": 35416,
+      "profile_kpi_historical_positives": 1297,
       "profile_summary_text": "Selected vs universe by Age band"
     },
     "3_top_decile": {
       "estimate_matching": 500000,
       "estimate_selected": 500000,
-      "estimate_score_range": "0.394674 - 0.986922",
-      "estimate_score_mean": "0.437382",
+      "estimate_score_range": "0.13733 - 0.247388",
+      "estimate_score_mean": "0.150636",
       "search_rows_rendered": 50,
       "search_has_more": true,
       "profile_kpi_universe": 5000000,
       "profile_kpi_matching": 500000,
       "profile_kpi_selected": 500000,
-      "profile_kpi_historical_positives": 35416,
+      "profile_kpi_historical_positives": 1297,
       "profile_summary_text": "Selected vs universe by Age band"
     },
     "4_demographic_filter": {
       "estimate_matching": 67943,
       "estimate_selected": 67943,
-      "estimate_score_range": "0.123122 - 0.87688",
-      "estimate_score_mean": "0.279758",
+      "estimate_score_range": "0.020968 - 0.214461",
+      "estimate_score_mean": "0.123037",
       "search_rows_rendered": 50,
       "search_has_more": true,
       "profile_kpi_universe": 5000000,
       "profile_kpi_matching": 67943,
       "profile_kpi_selected": 67943,
-      "profile_kpi_historical_positives": 35416,
+      "profile_kpi_historical_positives": 1297,
       "profile_summary_text": "Selected vs universe by Age band"
     },
     "5_rank_plus_demographic": {
-      "estimate_matching": 809,
-      "estimate_selected": 809,
-      "estimate_score_range": "0.487181 - 0.87688",
-      "estimate_score_mean": "0.517605",
+      "estimate_matching": 1658,
+      "estimate_selected": 1658,
+      "estimate_score_range": "0.16659 - 0.230615",
+      "estimate_score_mean": "0.175481",
       "search_rows_rendered": 50,
       "search_has_more": true,
       "profile_kpi_universe": 5000000,
-      "profile_kpi_matching": 809,
-      "profile_kpi_selected": 809,
-      "profile_kpi_historical_positives": 35416,
+      "profile_kpi_matching": 1658,
+      "profile_kpi_selected": 1658,
+      "profile_kpi_historical_positives": 1297,
       "profile_summary_text": "Selected vs universe by Age band"
     },
     "6_top_n_50k": {
       "estimate_matching": 5000000,
       "estimate_selected": 50000,
-      "estimate_score_range": "0.109688 - 0.986922",
-      "estimate_score_mean": "0.287378",
+      "estimate_score_range": "0.013817 - 0.247388",
+      "estimate_score_mean": "0.109487",
       "search_rows_rendered": 50,
       "search_has_more": true,
       "profile_kpi_universe": 5000000,
       "profile_kpi_matching": 5000000,
       "profile_kpi_selected": 50000,
-      "profile_kpi_historical_positives": 35416,
+      "profile_kpi_historical_positives": 1297,
       "profile_summary_text": "Selected vs universe by Age band"
     },
     "7_invalid_score_range": {
@@ -208,20 +190,20 @@
       "profile_kpi_universe": 5000000,
       "profile_kpi_matching": 0,
       "profile_kpi_selected": 0,
-      "profile_kpi_historical_positives": 35416,
+      "profile_kpi_historical_positives": 1297,
       "profile_summary_text": "Selected vs universe by Age band"
     },
     "extra_categorical_exercise": {
       "estimate_matching": 943,
       "estimate_selected": 943,
-      "estimate_score_range": "0.227909 - 0.5636",
-      "estimate_score_mean": "0.359183",
+      "estimate_score_range": "0.074197 - 0.145259",
+      "estimate_score_mean": "0.101064",
       "search_rows_rendered": 50,
       "search_has_more": true,
       "profile_kpi_universe": 5000000,
       "profile_kpi_matching": 943,
       "profile_kpi_selected": 943,
-      "profile_kpi_historical_positives": 35416,
+      "profile_kpi_historical_positives": 1297,
       "profile_summary_text": "Selected vs universe by Age band"
     }
   },
@@ -239,8 +221,8 @@
     ]
   },
   "saved_audience_flow": {
-    "saved_audience_id": 10,
-    "saved_audience_name": "Phase8 Step7 Current Audience 1788809854",
+    "saved_audience_id": 1,
+    "saved_audience_name": "Phase8 Step7 Current Audience 1788879374",
     "reopened_from_list": true,
     "reopen_note": "Saved audience row reopened successfully from list.",
     "currentness_badge": "CURRENT - usable in Campaign Builder",
@@ -265,7 +247,7 @@
       "hundredth_percentile_rank": 5000000,
       "total_population": 5000000,
       "analytics_contract_version": "1",
-      "analytics_snapshot_created_at": "2026-09-07T02:14:30Z",
+      "analytics_snapshot_created_at": "2026-09-08T12:57:24Z",
       "analytics_prepared": true,
       "is_canonical": true,
       "source_verified": true,
@@ -317,10 +299,10 @@
     "audience-explorer:#audience-explorer-retry": "JUSTIFIED_EXCLUSIVE"
   },
   "inventory_status_summary": {
-    "NOT_RUN": 38,
-    "PASS": 66,
+    "NOT_RUN": 27,
+    "PASS": 77,
     "FAIL": 0,
-    "JUSTIFIED_EXCLUSIVE": 6
+    "JUSTIFIED_EXCLUSIVE": 7
   },
   "audience_inventory_status_summary": {
     "NOT_RUN": 0,

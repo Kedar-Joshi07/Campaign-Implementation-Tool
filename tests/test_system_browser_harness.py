@@ -91,6 +91,7 @@ def test_step7_browser_runner_does_not_write_preparation_state_directly() -> Non
     assert "run_audience_rank_preparation(" not in runner
     assert '"direct_service_write": False' in runner
     assert 'PHASE8_STEP7_WORKSPACE_TIMEOUT_SECONDS", "10800"' in runner
+    assert 'PHASE8_STEP7_SCENARIO_TIMEOUT_SECONDS", "900"' in runner
     assert 'if not prep_observations["submit_clicked"]:' in runner
     assert 'not prep_observations["retry_clicked"]' in runner
 
@@ -128,3 +129,5 @@ def test_step11_tears_down_the_complete_managed_server_tree_on_windows() -> None
     runner = runner_path.read_text(encoding="utf-8")
 
     assert '["taskkill", "/PID", str(process.pid), "/T", "/F"]' in runner
+    assert 'RESUME_EXISTING_ENV = "PHASE8_STEP11_RESUME_EXISTING"' in runner
+    assert '"user_directed_no_scoring_rerun": True' in runner

@@ -1,6 +1,6 @@
 # Phase 8 Step 9 Browser Quality Report
 
-Generated at: 2026-09-08T04:30:06Z
+Generated at: 2026-09-08T15:09:30Z
 Prompt: Prompts/phase8_release_assurance_system_browser_prompt_pack/09_STEP_09_BROWSER_ERROR_ACCESSIBILITY_RESPONSIVE_AND_STATE_TESTS.md
 
 ## Browser
@@ -29,7 +29,7 @@ Prompt: Prompts/phase8_release_assurance_system_browser_prompt_pack/09_STEP_09_B
 - Disabled-action explanation: {'finalize_disabled': True, 'export_disabled': True, 'help_text': 'Create or open a campaign to enable finalize and export checks.', 'help_present': True}
 - Stepper semantics: [{'id': 'campaign-step-1', 'ariaCurrent': 'false', 'ariaSelected': 'false', 'tabIndex': -1}, {'id': 'campaign-step-2', 'ariaCurrent': 'step', 'ariaSelected': 'true', 'tabIndex': 0}, {'id': 'campaign-step-3', 'ariaCurrent': 'false', 'ariaSelected': 'false', 'tabIndex': -1}, {'id': 'campaign-step-4', 'ariaCurrent': 'false', 'ariaSelected': 'false', 'tabIndex': -1}]
 - Table/control reachability: {'open_button_focusable': True, 'open_button_activates': True}
-- No color-only status check: {'visible_badges': 23, 'badges_missing_text': 0}
+- No color-only status check: {'visible_badges': 5, 'badges_missing_text': 0}
 - Reduced motion behavior: {'reduce_media_query_matches': True, 'navigation_still_operational': True}
 
 ## Responsive Validation

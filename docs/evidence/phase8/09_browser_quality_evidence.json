@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T04:30:06Z",
+  "generated_at": "2026-09-08T15:09:30Z",
   "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/09_STEP_09_BROWSER_ERROR_ACCESSIBILITY_RESPONSIVE_AND_STATE_TESTS.md",
   "server": {
     "managed": true,
@@ -75,7 +75,7 @@
       "open_button_activates": true
     },
     "no_color_only_status": {
-      "visible_badges": 23,
+      "visible_badges": 5,
       "badges_missing_text": 0
     },
     "aria_live_states": [
@@ -545,9 +545,8 @@
       "[data-view-target='overview']"
     ],
     "status_summary": {
-      "NOT_RUN": 79,
-      "PASS": 31,
-      "JUSTIFIED_EXCLUSIVE": 1
+      "PASS": 103,
+      "JUSTIFIED_EXCLUSIVE": 8
     }
   },
   "overall_status": "PASS"

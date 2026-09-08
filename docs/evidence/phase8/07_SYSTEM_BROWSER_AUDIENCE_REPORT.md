@@ -1,6 +1,6 @@
 # Phase 8 Step 7 System Browser Audience Explorer Report
 
-Generated at: 2026-09-07T19:30:51Z
+Generated at: 2026-09-08T14:31:15Z
 
 ## Scope
 - Prompt executed: Prompts/phase8_release_assurance_system_browser_prompt_pack/07_STEP_07_SYSTEM_BROWSER_AUDIENCE_EXPLORER_ALL_CONTROLS.md
@@ -13,7 +13,7 @@ Generated at: 2026-09-07T19:30:51Z
 - mode: headless
 
 ## Preparation
-- Active scoring run: 4
+- Active scoring run: 1
 - Source badge: Current source verified
 - Prep submit clicked: False
 - Prep retry clicked: False
@@ -24,7 +24,7 @@ Generated at: 2026-09-07T19:30:51Z
 - 2_top_1_percent: matching=50000, selected=50000, rows_rendered=50
 - 3_top_decile: matching=500000, selected=500000, rows_rendered=50
 - 4_demographic_filter: matching=67943, selected=67943, rows_rendered=50
-- 5_rank_plus_demographic: matching=809, selected=809, rows_rendered=50
+- 5_rank_plus_demographic: matching=1658, selected=1658, rows_rendered=50
 - 6_top_n_50k: matching=5000000, selected=50000, rows_rendered=50
 - 7_invalid_score_range: Score min cannot exceed score max.
 - 8_invalid_age_range: Age min cannot exceed age max.
@@ -36,11 +36,11 @@ Generated at: 2026-09-07T19:30:51Z
 ## Backend Assertions
 - Search determinism/no-duplicates: checked_pages=5, unique_person_ids=200
 - Boundaries: count=100, p1_rank=50000, p10_rank=500000, p100_rank=5000000, population=5000000
-- Analytics snapshot: prepared=True, is_canonical=True, source_verified=True, created_at=2026-09-07T02:14:30Z
+- Analytics snapshot: prepared=True, is_canonical=True, source_verified=True, created_at=2026-09-08T12:57:24Z
 
 ## Saved Audience and Handoff
-- Saved audience id: 10
-- Saved audience name: Phase8 Step7 Current Audience 1788809854
+- Saved audience id: 1
+- Saved audience name: Phase8 Step7 Current Audience 1788879374
 - Currentness badge: CURRENT - usable in Campaign Builder
 - Campaign handoff hash after click: #campaigns
 - Stale saved definition exercised: False

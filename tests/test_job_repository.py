@@ -470,6 +470,8 @@ def test_create_and_complete_audience_preparation_job(database_path: Path) -> No
             "total_population": 100,
             "rank_contract_version": "1",
             "boundary_count": 100,
+            "analytics_contract_version": "1",
+            "analytics_prepared": True,
             "scanned_rows": 100,
             "chunk_size": 1000,
             "chunk_count": 1,
@@ -484,6 +486,8 @@ def test_create_and_complete_audience_preparation_job(database_path: Path) -> No
     assert completed["stage"] == JOB_STAGE_COMPLETED
     payload = json.loads(completed["result_json"])
     assert payload["boundary_count"] == 100
+    assert payload["analytics_contract_version"] == "1"
+    assert payload["analytics_prepared"] is True
     assert payload["metrics_available"] is True
     assert payload["scanned_rows"] == 100
     assert payload["chunk_count"] == 1

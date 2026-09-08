@@ -1,6 +1,6 @@
 # Phase 8 UI Control Coverage Contract
 
-Generated at: 2026-09-08T10:59:36Z
+Generated at: 2026-09-08T11:46:07Z
 
 ## Contract Rules
 - Allowed statuses: `NOT_RUN`, `PASS`, `FAIL`, `JUSTIFIED_EXCLUSIVE`.

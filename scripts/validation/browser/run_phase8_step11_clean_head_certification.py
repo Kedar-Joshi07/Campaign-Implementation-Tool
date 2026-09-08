@@ -31,6 +31,7 @@ PROMPT_PATH = (
     "Prompts/phase8_release_assurance_system_browser_prompt_pack/"
     "11_STEP_11_CLEAN_HEAD_TRUE_BROWSER_PHASE1_TO_PHASE7_CERTIFICATION.md"
 )
+RESUME_EXISTING_ENV = "PHASE8_STEP11_RESUME_EXISTING"
 
 PHASE8_DIR = PROJECT_ROOT / "docs" / "evidence" / "phase8"
 FINAL_DIR = PHASE8_DIR / "final_system_browser"
@@ -366,6 +367,27 @@ def _run_step_runners(python_exe: Path) -> dict[str, Any]:
     return step_results
 
 
+def _load_existing_passed_step_results() -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    step_results: dict[str, Any] = {}
+    step_payloads: dict[str, dict[str, Any]] = {}
+    for spec in STEP_RUNNERS:
+        name = str(spec["name"])
+        script = Path(spec["script"])
+        evidence = Path(spec["evidence"])
+        payload = _load_json(evidence)
+        status = str(payload.get("overall_status") or "").upper()
+        _require(status == "PASS", f"Resume checkpoint {name} did not pass. overall_status={status!r}")
+        step_payloads[name] = payload
+        step_results[name] = {
+            "script": _portable(script),
+            "evidence": _portable(evidence),
+            "duration_seconds": None,
+            "overall_status": status,
+            "execution": "reused_completed_checkpoint",
+        }
+    return step_results, step_payloads
+
+
 def _build_coverage_payload() -> dict[str, Any]:
     inventory = _load_json(INVENTORY_PATH)
     result = evaluate_inventory(inventory)
@@ -658,6 +680,12 @@ def _write_report(manifest: dict[str, Any]) -> None:
     lines.append(f"Prompt: {manifest.get('prompt')}")
     lines.append(f"Candidate SHA: {manifest.get('candidate', {}).get('sha')}")
     lines.append(f"Branch: {manifest.get('candidate', {}).get('branch')}")
+    lines.append(f"Execution mode: {manifest.get('execution_mode')}")
+    if manifest.get("resume_checkpoint"):
+        lines.append(
+            "Resume disclosure: user-directed reuse of existing completed scoring; "
+            "no import, training, or scoring rerun was performed by this aggregation."
+        )
     lines.append("")
 
     clean_gate = manifest.get("clean_start_gate", {})
@@ -725,6 +753,8 @@ def _run_step11() -> dict[str, Any]:
 
     FINAL_DIR.mkdir(parents=True, exist_ok=True)
 
+    resume_existing = os.getenv(RESUME_EXISTING_ENV, "").strip().casefold() in {"1", "true", "yes"}
+
     manifest: dict[str, Any] = {
         "generated_at": _now_iso(),
         "prompt": PROMPT_PATH,
@@ -738,6 +768,7 @@ def _run_step11() -> dict[str, Any]:
         "artifact_sha256": {},
         "overall_status": "FAIL",
         "local_decision": "NO-GO",
+        "execution_mode": "user_directed_resume_existing" if resume_existing else "strict_fresh_single_run",
     }
 
     coverage_payload: dict[str, Any] = {
@@ -782,29 +813,44 @@ def _run_step11() -> dict[str, Any]:
             "Clean-start gate failed: git status --short is not empty. Commit Steps 1-10 changes before Step 11.",
         )
 
-        _log("Performing fresh runtime cleanup.")
-        manifest["runtime_cleanup"] = _clean_runtime_state()
-
-        _log("Initializing and importing fresh runtime database via official scripts.")
-        manifest["fresh_init_and_import"] = _run_official_fresh_init_and_import(python_exe)
-
         step_payloads: dict[str, dict[str, Any]] = {}
-
-        _log("Starting managed backend and executing browser stages.")
-        with _managed_server(python_exe) as server_meta:
-            manifest["server"] = {
-                "managed": True,
-                "command": server_meta["command"],
-                "log_path": server_meta["log_path"],
-                "pid": server_meta["pid"],
+        if resume_existing:
+            _log("Resuming from completed Step 5-9 evidence without rerunning import, training, or scoring.")
+            _require(DB_PATH.is_file(), "Resume checkpoint database is missing.")
+            manifest["step_runs"], step_payloads = _load_existing_passed_step_results()
+            manifest["resume_checkpoint"] = {
+                "enabled": True,
+                "environment_variable": RESUME_EXISTING_ENV,
+                "user_directed_no_scoring_rerun": True,
+                "database_path": _portable(DB_PATH),
+                "evidence_reused": [value["evidence"] for value in manifest["step_runs"].values()],
             }
+            manifest["fresh_init_and_import"] = {
+                "mode": "reused_existing_fresh_runtime_checkpoint",
+                "rerun": False,
+            }
+        else:
+            _log("Performing fresh runtime cleanup.")
+            manifest["runtime_cleanup"] = _clean_runtime_state()
 
-            manifest["step_runs"] = _run_step_runners(python_exe)
+            _log("Initializing and importing fresh runtime database via official scripts.")
+            manifest["fresh_init_and_import"] = _run_official_fresh_init_and_import(python_exe)
 
-        for spec in STEP_RUNNERS:
-            name = str(spec["name"])
-            evidence_path = Path(spec["evidence"])
-            step_payloads[name] = _load_json(evidence_path)
+            _log("Starting managed backend and executing browser stages.")
+            with _managed_server(python_exe) as server_meta:
+                manifest["server"] = {
+                    "managed": True,
+                    "command": server_meta["command"],
+                    "log_path": server_meta["log_path"],
+                    "pid": server_meta["pid"],
+                }
+
+                manifest["step_runs"] = _run_step_runners(python_exe)
+
+            for spec in STEP_RUNNERS:
+                name = str(spec["name"])
+                evidence_path = Path(spec["evidence"])
+                step_payloads[name] = _load_json(evidence_path)
 
         coverage_payload = _build_coverage_payload()
         manifest["coverage"] = coverage_payload

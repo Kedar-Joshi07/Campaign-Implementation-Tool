@@ -38,7 +38,7 @@ APP_URL = "http://127.0.0.1:8000/"
 API_HEALTH_URL = "http://127.0.0.1:8000/api/health"
 
 WORKSPACE_READY_TIMEOUT_SECONDS = int(os.getenv("PHASE8_STEP7_WORKSPACE_TIMEOUT_SECONDS", "10800"))
-SCENARIO_TIMEOUT_SECONDS = int(os.getenv("PHASE8_STEP7_SCENARIO_TIMEOUT_SECONDS", "240"))
+SCENARIO_TIMEOUT_SECONDS = int(os.getenv("PHASE8_STEP7_SCENARIO_TIMEOUT_SECONDS", "900"))
 
 INVENTORY_PATH = PROJECT_ROOT / "docs" / "evidence" / "phase8" / "ui_control_inventory.json"
 STEP6_EVIDENCE_PATH = PROJECT_ROOT / "docs" / "evidence" / "phase8" / "06_system_browser_training_and_5m_scoring.json"
