@@ -22,6 +22,16 @@ Classification labels:
 | phase8/09_BROWSER_QUALITY_REPORT.md | Human-readable Phase 8 Step 9 browser quality report aligned to system-browser validation gates. |
 | phase8/10_reproducibility_and_lfs_evidence.json | Phase 8 Step 10 structured evidence: deterministic regeneration, raw/decompressed SHA equivalence, portable paths, and LFS/duplicate-file checks. |
 | phase8/10_REPRODUCIBILITY_AND_LFS_REPORT.md | Human-readable Phase 8 Step 10 reproducibility and LFS closure report with final canonical hash manifest. |
+| phase8/05_system_browser_historical_analysis.json | Browser-driven Overview, Data Status, and Historical Analysis evidence. |
+| phase8/06_system_browser_training_and_5m_scoring.json | Browser-submitted governed training and completed 5M scoring evidence. |
+| phase8/07_system_browser_audience_explorer_all_controls.json | Complete Audience Explorer scenarios, control coverage, saved-audience lineage, and UI-only state transition evidence. |
+| phase8/08_system_browser_campaign_builder_and_exports.json | Complete Campaign Builder, finalized immutability, Email/Direct Mail export, and audit evidence. |
+| phase8/final_system_browser/phase8_certification_manifest.json | Step 11 clean-HEAD checkpoint aggregation, integrity gates, artifact hashes, execution mode, and local certification decision. |
+| phase8/final_system_browser/PHASE8_SYSTEM_BROWSER_CERTIFICATION_REPORT.md | Human-readable Step 11 system-browser certification report. |
+| phase8/12_ci_green_branch_protection_and_phase8_freeze.json | Final Step 12 local regression, exact-SHA CI, branch-protection documentation, SHA chain, and GO decision. |
+| phase8/12_master_acceptance_checklist_run.json | Machine-readable 28-item final acceptance checklist; 28 PASS, 0 FAIL, 0 PENDING. |
+| phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md | Human-readable final acceptance checklist and evidence map. |
+| phase8/PHASE8_FINAL_ACCEPTANCE.md | Authoritative Phase 8 final report and GO decision. |
 
 ## CURRENT SUPPORTING
 
@@ -57,6 +67,8 @@ Classification labels:
 | phase7_real_5m_acceptance.json | phase7_final_export_hardening_5m.json |
 | phase7_section1_ui_baseline_audit.json | phase7_final_ui_baseline.json |
 | phase7_section1_browser_acceptance.json | phase7_final_ui_browser_acceptance.json |
+| phase8/01_master_acceptance_checklist_run.json | phase8/12_master_acceptance_checklist_run.json |
+| phase8/01_MASTER_ACCEPTANCE_CHECKLIST_RUN.md | phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md |
 
 ## Diagram 1: End-to-end Phase 1 to 7 flow
 

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-07T15:26:00Z",
+  "generated_at": "2026-09-08T19:14:22Z",
   "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/10_STEP_10_DETERMINISTIC_GENERATION_PATH_HASH_AND_LFS_CLEANUP.md",
   "python_executable": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe",
   "equivalence_checks": [
@@ -126,8 +126,8 @@
     }
   },
   "git_lfs": {
-    "status_output": "On branch main\nObjects to be pushed to origin/main:\n\n\nObjects to be committed:\n\n\nObjects not staged for commit:\n\n\tREADME.md (Git: 5349455 -> File: 8943801)\n\tapp/schemas/audience.py (Git: 9fb4061 -> File: b94f4da)\n\tdata/README.md (Git: 018f421 -> File: 8ccb0e7)\n\tdata/campaign_sales_570000.csv.gz (LFS: 6d84305 -> File: 89e6f84)\n\tdata/campaign_sales_summary.json (Git: f80735e -> File: 9d4d175)\n\tdata/customer_master_125000.csv.gz (LFS: 0cedbaa -> File: 8a2c560)\n\tdata/customer_master_summary.json (Git: eba370d -> File: 074b03b)\n\tdata/usa_demographic_synthetic_5000000_rows.csv.gz (LFS: abaf511 -> File: adb33ce)\n\tdata/usa_demographic_synthetic_summary.json (Git: 2a2c555 -> File: b957c5f)\n\tdata_generation_scripts/generate_campaign_sales.py (Git: 1cc12ee -> File: ae325ed)\n\tdata_generation_scripts/generate_us_customer_master.py (Git: 97c7258 -> File: 3dc827f)\n\tdata_generation_scripts/generate_us_demographic_synthetic.py (Git: 0807802 -> File: 4ac8524)\n\tdocs/evidence/CLEANROOM_PHASE1_TO_PHASE7_REPORT.md (Git: ff68619 -> File: 09de862)\n\tdocs/evidence/README.md (Git: f234ac4 -> File: acc04ec)\n\tdocs/evidence/cleanroom_phase1_to_phase7.json (Git: 08621c1 -> File: 5d3e95b)\n\tfrontend/index.html (Git: 0a48752 -> File: 33d03f4)\n\tpytest.ini (Git: 3b7b343 -> File: 8e68b92)\n\tscripts/validation/system_chrome_campaign_test.py (Git: 853797f -> File: deleted)\n\tscripts/validation/system_chrome_full_fresh_e2e.py (Git: 9aa78ff -> File: 9d23e1c)",
-    "ls_files_output": "6d84305c09 - data/campaign_sales_570000.csv.gz\n0cedbaa5d5 - data/customer_master_125000.csv.gz\nabaf51153c - data/usa_demographic_synthetic_5000000_rows.csv.gz"
+    "status_output": "On branch main\nObjects to be pushed to origin/main:\n\n\nObjects to be committed:\n\n\nObjects not staged for commit:",
+    "ls_files_output": "89e6f846a9 * data/campaign_sales_570000.csv.gz\n8a2c5601a9 * data/customer_master_125000.csv.gz\nadb33ce1da * data/usa_demographic_synthetic_5000000_rows.csv.gz"
   },
   "large_file_scan": {
     "threshold_bytes": 52428800,

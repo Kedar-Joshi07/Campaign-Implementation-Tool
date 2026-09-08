@@ -1,6 +1,6 @@
 # Step 10 Reproducibility and LFS Report
 
-Generated at: 2026-09-07T15:26:00Z
+Generated at: 2026-09-08T19:14:22Z
 Prompt: Prompts/phase8_release_assurance_system_browser_prompt_pack/10_STEP_10_DETERMINISTIC_GENERATION_PATH_HASH_AND_LFS_CLEANUP.md
 
 ## Deterministic GZIP Controls
@@ -47,32 +47,12 @@ Objects to be committed:
 
 
 Objects not staged for commit:
-
-	README.md (Git: 5349455 -> File: 8943801)
-	app/schemas/audience.py (Git: 9fb4061 -> File: b94f4da)
-	data/README.md (Git: 018f421 -> File: 8ccb0e7)
-	data/campaign_sales_570000.csv.gz (LFS: 6d84305 -> File: 89e6f84)
-	data/campaign_sales_summary.json (Git: f80735e -> File: 9d4d175)
-	data/customer_master_125000.csv.gz (LFS: 0cedbaa -> File: 8a2c560)
-	data/customer_master_summary.json (Git: eba370d -> File: 074b03b)
-	data/usa_demographic_synthetic_5000000_rows.csv.gz (LFS: abaf511 -> File: adb33ce)
-	data/usa_demographic_synthetic_summary.json (Git: 2a2c555 -> File: b957c5f)
-	data_generation_scripts/generate_campaign_sales.py (Git: 1cc12ee -> File: ae325ed)
-	data_generation_scripts/generate_us_customer_master.py (Git: 97c7258 -> File: 3dc827f)
-	data_generation_scripts/generate_us_demographic_synthetic.py (Git: 0807802 -> File: 4ac8524)
-	docs/evidence/CLEANROOM_PHASE1_TO_PHASE7_REPORT.md (Git: ff68619 -> File: 09de862)
-	docs/evidence/README.md (Git: f234ac4 -> File: acc04ec)
-	docs/evidence/cleanroom_phase1_to_phase7.json (Git: 08621c1 -> File: 5d3e95b)
-	frontend/index.html (Git: 0a48752 -> File: 33d03f4)
-	pytest.ini (Git: 3b7b343 -> File: 8e68b92)
-	scripts/validation/system_chrome_campaign_test.py (Git: 853797f -> File: deleted)
-	scripts/validation/system_chrome_full_fresh_e2e.py (Git: 9aa78ff -> File: 9d23e1c)
 ```
 ### git lfs ls-files
 ```text
-6d84305c09 - data/campaign_sales_570000.csv.gz
-0cedbaa5d5 - data/customer_master_125000.csv.gz
-abaf51153c - data/usa_demographic_synthetic_5000000_rows.csv.gz
+89e6f846a9 * data/campaign_sales_570000.csv.gz
+8a2c5601a9 * data/customer_master_125000.csv.gz
+adb33ce1da * data/usa_demographic_synthetic_5000000_rows.csv.gz
 ```
 
 ## Large File and Duplicate Dataset Scan

@@ -1,0 +1,577 @@
+{
+  "generated_at": "2026-09-08T19:17:15Z",
+  "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/12_STEP_12_CI_GREEN_BRANCH_PROTECTION_AND_PHASE8_FREEZE.md",
+  "sha_chain": {
+    "starting_sha": "47a93d0a44c4df8ab12ff58157fbc204ec43a51d",
+    "ci_fix_sha": "da1d9ab42dc6152659533bc6b03e528644448cf7",
+    "browser_harness_sha": "da1d9ab42dc6152659533bc6b03e528644448cf7",
+    "certification_candidate_sha": "7b712bcecd9a8de20dd851bef457135c327dc5bf",
+    "final_implementation_sha": "0b0e2559fc4b98498bbc3bd34671ae342d7067e5",
+    "optional_closure_sha": null
+  },
+  "git": {
+    "branch": "main",
+    "head_sha": "0b0e2559fc4b98498bbc3bd34671ae342d7067e5",
+    "status_short": [],
+    "clean_head": true
+  },
+  "execution_policy": {
+    "full_5m_scoring_rerun": false,
+    "step6_runner_invoked": false,
+    "note": "Step 12 consumes the completed Step 6/11 evidence and does not rerun full 5M scoring."
+  },
+  "local_regression": {
+    "checks": [
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m pytest -vv",
+        "returncode": 0,
+        "duration_seconds": 998.856,
+        "passed": true,
+        "output_tail": [
+          "tests/test_scoring_job_orchestration.py::test_current_canonical_resolver_ignores_newer_stale_run PASSED [ 92%]",
+          "tests/test_scoring_job_orchestration.py::test_scoring_submit_failure_marks_queued_job_failed PASSED [ 92%]",
+          "tests/test_scoring_job_orchestration.py::test_scoring_worker_success_marks_completed_with_bounded_result PASSED [ 92%]",
+          "tests/test_scoring_job_orchestration.py::test_scoring_worker_failure_and_invalid_result_mark_job_failed PASSED [ 92%]",
+          "tests/test_scoring_job_orchestration.py::test_startup_reconciliation_fails_stale_scoring_jobs_and_running_scoring_runs PASSED [ 93%]",
+          "tests/test_scoring_repository.py::test_create_fetch_list_and_finders PASSED [ 93%]",
+          "tests/test_scoring_repository.py::test_update_counters_and_mark_completed PASSED [ 93%]",
+          "tests/test_scoring_repository.py::test_transition_guards_and_validation_errors PASSED [ 93%]",
+          "tests/test_scoring_repository.py::test_mark_completed_requires_non_empty_summary_payload PASSED [ 93%]",
+          "tests/test_scoring_repository.py::test_insert_scores_chunk_and_fetch_aggregates PASSED [ 94%]",
+          "tests/test_system_browser_harness.py::test_explicit_path_override_has_highest_priority PASSED [ 94%]",
+          "tests/test_system_browser_harness.py::test_auto_prefers_chrome_then_edge PASSED [ 94%]",
+          "tests/test_system_browser_harness.py::test_auto_falls_back_to_edge_when_chrome_missing PASSED [ 94%]",
+          "tests/test_system_browser_harness.py::test_system_browser_env_and_path_are_honored PASSED [ 94%]",
+          "tests/test_system_browser_harness.py::test_invalid_browser_choice_fails_clearly PASSED [ 95%]",
+          "tests/test_system_browser_harness.py::test_missing_selected_browser_fails_clearly PASSED [ 95%]",
+          "tests/test_system_browser_harness.py::test_step7_browser_runner_does_not_write_preparation_state_directly PASSED [ 95%]",
+          "tests/test_system_browser_harness.py::test_step8_browser_runner_has_no_direct_workflow_state_write_fallbacks PASSED [ 95%]",
+          "tests/test_system_browser_harness.py::test_step11_tears_down_the_complete_managed_server_tree_on_windows PASSED [ 96%]",
+          "tests/test_system_browser_harness.py::test_step12_checklist_uses_precise_phase8_evidence_gates PASSED [ 96%]",
+          "tests/test_system_browser_harness.py::test_step12_missing_browser_error_metrics_fail_closed PASSED [ 96%]",
+          "tests/test_system_browser_harness.py::test_step12_branch_protection_fallback_requires_complete_documentation PASSED [ 96%]",
+          "tests/test_system_browser_harness.py::test_step12_does_not_invoke_the_full_5m_scoring_runner PASSED [ 96%]",
+          "tests/test_training_cohort_service.py::test_reconstructs_one_customer_row_and_all_conversion_definitions[ATTRIBUTED_PURCHASE-expected_labels0] PASSED [ 97%]",
+          "tests/test_training_cohort_service.py::test_reconstructs_one_customer_row_and_all_conversion_definitions[ANY_PURCHASE-expected_labels1] PASSED [ 97%]",
+          "tests/test_training_cohort_service.py::test_reconstructs_one_customer_row_and_all_conversion_definitions[RESPONSE-expected_labels2] PASSED [ 97%]",
+          "tests/test_training_cohort_service.py::test_contacted_only_inclusive_dates_and_age_reference_are_preserved PASSED [ 97%]",
+          "tests/test_training_cohort_service.py::test_returned_frame_has_only_frozen_fields_and_nullable_types PASSED [ 97%]",
+          "tests/test_training_cohort_service.py::test_source_count_or_label_mutation_is_a_hard_stop PASSED [ 98%]",
+          "tests/test_training_cohort_service.py::test_missing_running_failed_and_invalid_analysis_ids_are_rejected PASSED [ 98%]",
+          "tests/test_training_cohort_service.py::test_malformed_saved_filters_or_results_are_rejected[filters_json] PASSED [ 98%]",
+          "tests/test_training_cohort_service.py::test_malformed_saved_filters_or_results_are_rejected[results_json] PASSED [ 98%]",
+          "tests/test_training_cohort_service.py::test_reconstruction_path_executes_no_demographics_sql PASSED [ 98%]",
+          "tests/test_ui_control_coverage_contract.py::test_inventory_builder_outputs_required_contract_fields PASSED [ 99%]",
+          "tests/test_ui_control_coverage_contract.py::test_inventory_excludes_non_actionable_javascript_output_selectors PASSED [ 99%]",
+          "tests/test_ui_control_coverage_contract.py::test_inventory_includes_page_scoped_runtime_created_controls PASSED [ 99%]",
+          "tests/test_ui_control_coverage_contract.py::test_coverage_checker_fails_with_not_run_controls PASSED [ 99%]",
+          "tests/test_ui_control_coverage_contract.py::test_coverage_checker_accepts_terminal_pass_set PASSED [100%]",
+          "",
+          "======================= 477 passed in 993.99s (0:16:33) ======================="
+        ],
+        "key": "full_pytest",
+        "required_for_go": true
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\validation\\run_cleanroom_phase1_to_phase7.py --report-path C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase8_step12_checks\\CLEANROOM_PHASE1_TO_PHASE7_REPORT.md --json-path C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase8_step12_checks\\cleanroom_phase1_to_phase7.json",
+        "returncode": 0,
+        "duration_seconds": 175.58,
+        "passed": true,
+        "output_tail": [
+          "2026-09-09 00:38:10,312 | INFO | httpx2 | HTTP Request: GET http://testserver/api/campaigns/2/exports?limit=20 \"HTTP/1.1 200 OK\"",
+          "2026-09-09 00:38:10,426 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:10,479 | INFO | app.main | Application starting | name=Campaign Implementation Intelligence version=0.1.0 environment=development",
+          "2026-09-09 00:38:10,563 | INFO | app.database.schema | SQLite schema initialized or verified | path=data\\campaign_poc.db version=12",
+          "2026-09-09 00:38:10,632 | INFO | app.main | Compute startup reconciliation completed | failed_stale_jobs=0",
+          "2026-09-09 00:38:10,722 | INFO | app.database.schema | SQLite schema initialized or verified | path=data\\campaign_poc.db version=12",
+          "2026-09-09 00:38:10,755 | INFO | app.main | Campaign export startup reconciliation completed | reconciled_stale_exports=0",
+          "2026-09-09 00:38:10,862 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:11,014 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:11,177 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:11,567 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:11,822 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:12,002 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:12,372 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:12,553 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:12,692 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:13,067 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:13,296 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:13,423 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:13,726 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:13,885 | INFO | httpx2 | HTTP Request: GET http://testserver/api/campaigns/1/currentness \"HTTP/1.1 200 OK\"",
+          "2026-09-09 00:38:13,955 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:14,102 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:14,234 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:14,578 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:14,819 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:14,976 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:15,363 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:15,551 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:15,711 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:16,104 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:16,394 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:16,573 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:17,129 | INFO | app.database.schema | SQLite schema initialized or verified | path=C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-x23brvjw\\drift_copy.db version=12",
+          "2026-09-09 00:38:17,329 | INFO | httpx2 | HTTP Request: GET http://testserver/api/campaigns/1/export.csv?acknowledge_pii=true \"HTTP/1.1 409 Conflict\"",
+          "2026-09-09 00:38:17,330 | INFO | app.main | Application stopping | name=Campaign Implementation Intelligence",
+          "2026-09-09 00:38:17,332 | INFO | app.main | Application stopping | name=Campaign Implementation Intelligence",
+          "[cleanroom:pass] Clean-room Phase 1 to Phase 7 validation completed successfully.",
+          "[cleanroom:pass] Report written to: C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase8_step12_checks\\CLEANROOM_PHASE1_TO_PHASE7_REPORT.md",
+          "[cleanroom:pass] JSON evidence written to: C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase8_step12_checks\\cleanroom_phase1_to_phase7.json"
+        ],
+        "key": "clean_room_phase1_to_phase7",
+        "required_for_go": true
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m pytest -q tests/test_system_browser_harness.py tests/test_ui_control_coverage_contract.py",
+        "returncode": 0,
+        "duration_seconds": 4.095,
+        "passed": true,
+        "output_tail": [
+          "..................                                                       [100%]",
+          "18 passed in 0.54s"
+        ],
+        "key": "system_browser_harness_unit_tests",
+        "required_for_go": true
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\validation\\browser\\check_ui_control_coverage.py --inventory C:\\POCs\\Campaign Implementation Tool\\docs\\evidence\\phase8\\ui_control_inventory.json",
+        "returncode": 0,
+        "duration_seconds": 0.677,
+        "passed": true,
+        "output_tail": [
+          "{",
+          "  \"ok\": true,",
+          "  \"counts\": {",
+          "    \"NOT_RUN\": 0,",
+          "    \"PASS\": 103,",
+          "    \"FAIL\": 0,",
+          "    \"JUSTIFIED_EXCLUSIVE\": 8,",
+          "    \"UNJUSTIFIED_EXCLUSIVE\": 0,",
+          "    \"INVALID_STATUS\": 0",
+          "  },",
+          "  \"errors\": []",
+          "}"
+        ],
+        "key": "control_coverage_checker",
+        "required_for_go": true
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m compileall -q app scripts tests",
+        "returncode": 0,
+        "duration_seconds": 2.159,
+        "passed": true,
+        "output_tail": [],
+        "key": "compileall",
+        "required_for_go": true
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m pip check",
+        "returncode": 0,
+        "duration_seconds": 5.391,
+        "passed": true,
+        "output_tail": [
+          "No broken requirements found."
+        ],
+        "key": "pip_check",
+        "required_for_go": true
+      },
+      {
+        "command": "git diff --check",
+        "returncode": 0,
+        "duration_seconds": 0.534,
+        "passed": true,
+        "output_tail": [],
+        "key": "git_diff_check",
+        "required_for_go": true
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\validation\\validate_ci_hygiene.py",
+        "returncode": 0,
+        "duration_seconds": 1.987,
+        "passed": true,
+        "output_tail": [
+          "CI hygiene validation passed."
+        ],
+        "key": "repository_hygiene",
+        "required_for_go": true
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\validate_data.py --json",
+        "returncode": 0,
+        "duration_seconds": 92.659,
+        "passed": true,
+        "output_tail": [
+          "    \"idx_model_runs_newest\": {",
+          "      \"creation_seconds\": 2.1e-05,",
+          "      \"exists\": true",
+          "    },",
+          "    \"idx_propensity_scores_run_score_person\": {",
+          "      \"creation_seconds\": 2.7e-05,",
+          "      \"exists\": true",
+          "    },",
+          "    \"idx_saved_audiences_model_run_id\": {",
+          "      \"creation_seconds\": 3.3e-05,",
+          "      \"exists\": true",
+          "    },",
+          "    \"idx_saved_audiences_newest\": {",
+          "      \"creation_seconds\": 2.5e-05,",
+          "      \"exists\": true",
+          "    },",
+          "    \"idx_saved_audiences_scoring_run_id\": {",
+          "      \"creation_seconds\": 2.5e-05,",
+          "      \"exists\": true",
+          "    },",
+          "    \"idx_scoring_runs_completed_model_newest\": {",
+          "      \"creation_seconds\": 2.5e-05,",
+          "      \"exists\": true",
+          "    },",
+          "    \"idx_scoring_runs_model_newest\": {",
+          "      \"creation_seconds\": 2.6e-05,",
+          "      \"exists\": true",
+          "    },",
+          "    \"idx_scoring_runs_newest\": {",
+          "      \"creation_seconds\": 2.7e-05,",
+          "      \"exists\": true",
+          "    },",
+          "    \"idx_scoring_runs_status\": {",
+          "      \"creation_seconds\": 2.5e-05,",
+          "      \"exists\": true",
+          "    }",
+          "  },",
+          "  \"overall_status\": \"OK\",",
+          "  \"total_query_seconds\": 17.592508",
+          "}"
+        ],
+        "key": "current_data_validation",
+        "required_for_go": true
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\validation\\browser\\run_phase8_step10_reproducibility_and_lfs.py",
+        "returncode": 0,
+        "duration_seconds": 257.021,
+        "passed": true,
+        "output_tail": [
+          "DONE",
+          "Campaign sales: C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase8_step10_regen_tmp\\campaign_sales_570000.csv.gz",
+          "Campaign master: C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase8_step10_regen_tmp\\campaign_master.csv",
+          "Product master: C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase8_step10_regen_tmp\\product_master.csv",
+          "Sample: C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase8_step10_regen_tmp\\campaign_sales_sample_10000.csv",
+          "Summary: C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase8_step10_regen_tmp\\campaign_sales_summary.json",
+          "PU positives: 34,077 (5.98%)",
+          "[step10] Regenerating 5M demographic universe in temporary validation location.",
+          "PROGRESS 200000/5000000 rows (4.0%) elapsed=3.7s",
+          "PROGRESS 400000/5000000 rows (8.0%) elapsed=8.1s",
+          "PROGRESS 600000/5000000 rows (12.0%) elapsed=13.5s",
+          "PROGRESS 800000/5000000 rows (16.0%) elapsed=18.7s",
+          "PROGRESS 1000000/5000000 rows (20.0%) elapsed=23.1s",
+          "PROGRESS 1200000/5000000 rows (24.0%) elapsed=27.6s",
+          "PROGRESS 1400000/5000000 rows (28.0%) elapsed=32.9s",
+          "PROGRESS 1600000/5000000 rows (32.0%) elapsed=37.0s",
+          "PROGRESS 1800000/5000000 rows (36.0%) elapsed=40.9s",
+          "PROGRESS 2000000/5000000 rows (40.0%) elapsed=44.8s",
+          "PROGRESS 2200000/5000000 rows (44.0%) elapsed=50.2s",
+          "PROGRESS 2400000/5000000 rows (48.0%) elapsed=55.7s",
+          "PROGRESS 2600000/5000000 rows (52.0%) elapsed=60.8s",
+          "PROGRESS 2800000/5000000 rows (56.0%) elapsed=65.7s",
+          "PROGRESS 3000000/5000000 rows (60.0%) elapsed=69.9s",
+          "PROGRESS 3200000/5000000 rows (64.0%) elapsed=74.0s",
+          "PROGRESS 3400000/5000000 rows (68.0%) elapsed=78.2s",
+          "PROGRESS 3600000/5000000 rows (72.0%) elapsed=81.5s",
+          "PROGRESS 3800000/5000000 rows (76.0%) elapsed=86.7s",
+          "PROGRESS 4000000/5000000 rows (80.0%) elapsed=90.3s",
+          "PROGRESS 4200000/5000000 rows (84.0%) elapsed=95.9s",
+          "PROGRESS 4400000/5000000 rows (88.0%) elapsed=101.2s",
+          "PROGRESS 4600000/5000000 rows (92.0%) elapsed=104.7s",
+          "PROGRESS 4800000/5000000 rows (96.0%) elapsed=109.4s",
+          "PROGRESS 5000000/5000000 rows (100.0%) elapsed=113.5s",
+          "DONE C:\\POCs\\Campaign Implementation Tool\\artifacts\\phase8_step10_regen_tmp\\usa_demographic_synthetic_5000000_rows.csv.gz size=318.2 MiB elapsed=113.5s",
+          "[step10] Comparing canonical and regenerated datasets.",
+          "[step10] Equivalence checks passed. Refreshing canonical data outputs from temporary generation.",
+          "[step10] Collecting Git LFS status and inventory.",
+          "Wrote evidence JSON: C:\\POCs\\Campaign Implementation Tool\\docs\\evidence\\phase8\\10_reproducibility_and_lfs_evidence.json",
+          "Wrote report: C:\\POCs\\Campaign Implementation Tool\\docs\\evidence\\phase8\\10_REPRODUCIBILITY_AND_LFS_REPORT.md",
+          "Status: PASS"
+        ],
+        "key": "deterministic_generation_hash_checks",
+        "required_for_go": true
+      }
+    ],
+    "required_local_pass": true,
+    "pytest_summary": {
+      "parsed": true,
+      "passed": 477,
+      "failed": 0
+    }
+  },
+  "control_coverage": {
+    "controls_discovered": 111,
+    "status_counts": {
+      "PASS": 103,
+      "JUSTIFIED_EXCLUSIVE": 8,
+      "FAIL": 0,
+      "NOT_RUN": 0,
+      "OTHER": 0
+    },
+    "coverage_ok": true,
+    "coverage_errors": [],
+    "justified_entries": [
+      {
+        "page": "audience-explorer",
+        "selector": "#audience-explorer-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is visible only when the Audience Explorer backend-error banner is shown."
+      },
+      {
+        "page": "audience-explorer",
+        "selector": "#audience-prepare-retry",
+        "label": "Retry preparation",
+        "mutually_exclusive_group": "prep-failed-only",
+        "justification": "Preparation retry control is shown only when preparation has failed."
+      },
+      {
+        "page": "audience-explorer",
+        "selector": "#audience-prepare-submit",
+        "label": "Prepare Audience Explorer",
+        "mutually_exclusive_group": "prep-needed-only",
+        "justification": "Preparation submit control is shown only when rank preparation is required."
+      },
+      {
+        "page": "campaigns",
+        "selector": "#campaigns-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is visible only when the campaigns backend-unavailable error banner is shown."
+      },
+      {
+        "page": "data-status",
+        "selector": "#data-status-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is shown only when data-status backend-error banner is visible."
+      },
+      {
+        "page": "historical-analysis",
+        "selector": "#historical-analysis-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is shown only when historical-analysis backend-error banner is visible."
+      },
+      {
+        "page": "model-training",
+        "selector": "#model-training-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is shown only when model-training backend error banner is visible."
+      },
+      {
+        "page": "overview",
+        "selector": "#overview-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is shown only when overview backend-error banner is visible."
+      }
+    ]
+  },
+  "db_integrity": {
+    "available": true,
+    "pragma_integrity_check": "ok",
+    "counts": {
+      "customers": 125000,
+      "campaign_sales": 570000,
+      "demographics": 5000000
+    },
+    "active_jobs": 0,
+    "started_exports": 0,
+    "integrity_ok": true
+  },
+  "github_ci": {
+    "available": true,
+    "workflow": "CI",
+    "run_id": 34264871003,
+    "run_number": 3,
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "0b0e2559fc4b98498bbc3bd34671ae342d7067e5",
+    "candidate_sha": "0b0e2559fc4b98498bbc3bd34671ae342d7067e5",
+    "candidate_matches": true,
+    "html_url": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34264871003",
+    "required_checks": {
+      "Clean-Room Phase1-7": {
+        "found": true,
+        "status": "COMPLETED",
+        "conclusion": "SUCCESS",
+        "green": true,
+        "html_url": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34264871003/job/102191999449"
+      },
+      "Frontend Contract": {
+        "found": true,
+        "status": "COMPLETED",
+        "conclusion": "SUCCESS",
+        "green": true,
+        "html_url": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34264871003/job/102191999592"
+      },
+      "Python Validation": {
+        "found": true,
+        "status": "COMPLETED",
+        "conclusion": "SUCCESS",
+        "green": true,
+        "html_url": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34264871003/job/102191790673"
+      },
+      "Repository Hygiene": {
+        "found": true,
+        "status": "COMPLETED",
+        "conclusion": "SUCCESS",
+        "green": true,
+        "html_url": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34264871003/job/102191592981"
+      },
+      "Tests": {
+        "found": true,
+        "status": "COMPLETED",
+        "conclusion": "SUCCESS",
+        "green": true,
+        "html_url": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34264871003/job/102191999705"
+      }
+    },
+    "required_all_green": true
+  },
+  "branch_protection": {
+    "available": false,
+    "status_code": 401,
+    "error": "{\r\n  \"message\": \"Requires authentication\",\r\n  \"documentation_url\": \"https://docs.github.com/rest\",\r\n  \"status\": \"401\"\r\n}",
+    "used_fallback_doc": true,
+    "fallback_doc": "docs/BRANCH_PROTECTION.md",
+    "evaluation": {
+      "api_settings_complete": false,
+      "documented_complete": true,
+      "acceptable": true,
+      "configured_required_checks": []
+    }
+  },
+  "phase8_references": {
+    "step5_historical": {
+      "run_id": 2,
+      "status": "PASS"
+    },
+    "step6_model": {
+      "model_run_id": 1,
+      "status": "PASS"
+    },
+    "step6_scoring": {
+      "scoring_run_id": 1,
+      "status": "PASS",
+      "scored_person_count": 5000000
+    },
+    "step7_saved_audience": {
+      "saved_audience_id": 1,
+      "saved_audience_name": "Phase8 Step7 Current Audience 1788879374",
+      "status": "PASS",
+      "inventory_status_summary": {
+        "NOT_RUN": 0,
+        "PASS": 35,
+        "FAIL": 0,
+        "JUSTIFIED_EXCLUSIVE": 3
+      },
+      "all_controls_complete": true
+    },
+    "step8_exports": {
+      "email_checksum": "14dcdcb8734483310d20ba539409f141de20aedfd14e68890a97d4fd980157a0",
+      "direct_mail_checksum": "9aee8cb3d70e80fe8b9f18e7b372bb4da8b00b1591af58fd3820ff4301822bed",
+      "email_campaign_id": 1,
+      "direct_mail_campaign_id": 2,
+      "status": "PASS",
+      "inventory_status_summary": {
+        "NOT_RUN": 0,
+        "PASS": 24,
+        "FAIL": 0,
+        "JUSTIFIED_EXCLUSIVE": 1
+      },
+      "all_controls_complete": true
+    },
+    "step9_browser_quality": {
+      "browser": {
+        "name": "system_chrome",
+        "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "product_version": "152.0.7977.82",
+        "execution_mode": "headless"
+      },
+      "unexplained_console_total": 0,
+      "unexplained_critical_network_total": 0,
+      "quality_gate": {
+        "status": "PASS",
+        "failures": {
+          "accessibility": [],
+          "responsive": [],
+          "state_coverage": []
+        }
+      },
+      "accessibility_pass": true,
+      "responsive_pass": true,
+      "trackability_pass": true,
+      "state_coverage": {
+        "campaign_initial_state": "ready",
+        "audience_terminal_state": "workspace",
+        "stale_read_only_state": {
+          "stale_candidate_found": true,
+          "source": "injected_response",
+          "stale_message_seen": true,
+          "use_in_campaign_disabled": true,
+          "stale_message": "Synthetic source/model lineage is stale for Step 9 state coverage."
+        },
+        "export_state_coverage": {
+          "started_seen": true,
+          "failed_and_aborted_seen": true,
+          "completed_seen": true
+        },
+        "loading_state": {
+          "campaigns_loading_seen": true,
+          "state_after_loading": "no_eligible"
+        },
+        "retryable_error_state": {
+          "campaigns_backend_unavailable_seen": true,
+          "state_after_retry": "no_eligible"
+        },
+        "empty_state": {
+          "campaigns_no_eligible_seen": true,
+          "state_after_empty": "no_eligible"
+        },
+        "job_state_coverage": {
+          "running_seen": true,
+          "failed_seen": true,
+          "restored_state": "workspace"
+        }
+      },
+      "status": "PASS"
+    },
+    "step10_deterministic": {
+      "status": "PASS",
+      "non_lfs_large_files": 0,
+      "duplicate_nested_full_datasets": 0
+    },
+    "step11_certification": {
+      "status": "PASS",
+      "clean_start_passed": true,
+      "candidate_sha": "7b712bcecd9a8de20dd851bef457135c327dc5bf",
+      "no_dirty_override": true
+    }
+  },
+  "final_decision": "GO",
+  "go_conditions": {
+    "local_regression_green": true,
+    "step11_certification_pass": true,
+    "required_ci_green": true,
+    "control_coverage_green": true
+  },
+  "artifacts": {
+    "final_acceptance": "docs/evidence/phase8/PHASE8_FINAL_ACCEPTANCE.md",
+    "checklist_json": "docs/evidence/phase8/12_master_acceptance_checklist_run.json",
+    "checklist_md": "docs/evidence/phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md"
+  },
+  "artifact_sha256": {
+    "docs/evidence/phase8/PHASE8_FINAL_ACCEPTANCE.md": "78a2f704c28deebf3111fa90745d091a19c5ce584b392c3292873c50992a2073",
+    "docs/evidence/phase8/12_master_acceptance_checklist_run.json": "9c92a86df0b68f7f59da08cf95c74faa32c27cbcfdde98325f7ac01a3d214019",
+    "docs/evidence/phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md": "40ee7c1d1ed266d4130e647dd082c5d4236eba988e0edbe90d5fbeee0c0908e3"
+  }
+}

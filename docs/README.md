@@ -1,6 +1,6 @@
 # Documentation Index
 
-This folder contains implementation summaries and evidence indexes for the Phase 1 to Phase 7 delivery history.
+This folder contains implementation summaries and evidence indexes for the Phase 1 to Phase 8 delivery history.
 
 ## Current implementation summaries
 
@@ -11,6 +11,7 @@ This folder contains implementation summaries and evidence indexes for the Phase
 - PHASE_5_IMPLEMENTATION_SUMMARY.md
 - PHASE_6_IMPLEMENTATION_SUMMARY.md
 - PHASE_7_IMPLEMENTATION_SUMMARY.md
+- PHASE_8_IMPLEMENTATION_SUMMARY.md
 
 ## Current authoritative references
 
@@ -20,6 +21,10 @@ This folder contains implementation summaries and evidence indexes for the Phase
   - Evidence artifact classification with supersession mapping.
 - evidence/DOCUMENTATION_FREEZE_REPORT.md
   - Documentation freeze audit, validation gates, and final status.
+- evidence/phase8/PHASE8_FINAL_ACCEPTANCE.md
+  - Final Phase 8 system-browser, local-regression, CI, and repository-freeze decision.
+- evidence/phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md
+  - Completed 28-item Phase 8 acceptance checklist with evidence references.
 
 ## Historical phase records
 
