@@ -658,9 +658,15 @@ def _wait_for_audience_workspace_ready(
             raise Step7ValidationError("Audience Explorer reported no canonical scoring run.")
 
         if state == "prepNeeded":
-            _click_when_enabled(page, "#audience-prepare-submit", timeout_seconds=180)
-            mark_pass("#audience-prepare-submit")
-            prep_observations["submit_clicked"] = True
+            if not prep_observations["submit_clicked"]:
+                _click_when_enabled(page, "#audience-prepare-submit", timeout_seconds=180)
+                mark_pass("#audience-prepare-submit")
+                prep_observations["submit_clicked"] = True
+            else:
+                # The POST handler disables the button before its response moves the
+                # screen to prepRunning. Keep polling page state during that interval
+                # instead of waiting for the now-hidden submit button to re-enable.
+                time.sleep(0.25)
             continue
 
         if state == "prepRunning":
@@ -678,7 +684,11 @@ def _wait_for_audience_workspace_ready(
         if state == "prepFailed":
             message = _read_text(page, "#audience-prep-failed-message")
             prep_observations["failure_message"] = message
-            if _exists(page, "#audience-prepare-retry") and page.locator("#audience-prepare-retry").first.is_visible():
+            if (
+                not prep_observations["retry_clicked"]
+                and _exists(page, "#audience-prepare-retry")
+                and page.locator("#audience-prepare-retry").first.is_visible()
+            ):
                 _click_when_enabled(page, "#audience-prepare-retry", timeout_seconds=180)
                 mark_pass("#audience-prepare-retry")
                 mark_pass("#audience-prep-failed-message")

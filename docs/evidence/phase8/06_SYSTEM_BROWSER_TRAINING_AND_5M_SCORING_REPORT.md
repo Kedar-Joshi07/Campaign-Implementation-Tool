@@ -1,6 +1,6 @@
 # Phase 8 Step 6 System Browser Training and Full 5M Scoring Report
 
-Generated at: 2026-09-08T04:59:04Z
+Generated at: 2026-09-08T09:32:06Z
 
 ## Scope
 - Prompt executed: Prompts/phase8_release_assurance_system_browser_prompt_pack/06_STEP_06_SYSTEM_BROWSER_MODEL_TRAINING_AND_FULL_5M_SCORING.md
@@ -13,7 +13,7 @@ Generated at: 2026-09-08T04:59:04Z
 - mode: headless
 
 ## Model Training Through UI
-- Source analysis: #2 · Phase8 Step5 Narrow 1788843503
+- Source analysis: #2 · Phase8 Step5 Narrow 1788859894
 - Source analysis run id: 2
 - Trained model run id: 1
 - Lifecycle observed: QUEUED -> RUNNING -> COMPLETED
@@ -31,8 +31,8 @@ Generated at: 2026-09-08T04:59:04Z
 - Prospect universe (UI): 5000000
 - Scored prospects (UI): 5000000
 - Reconciliation (UI): 5,000,000 / 5,000,000
-- Runtime (UI): 1,651.79s
-- Throughput (UI): 3,027 rows/s
+- Runtime (UI): 974.55s
+- Throughput (UI): 5,131 rows/s
 
 ## Independent Backend Assertions
 - Contracts and selection: features=11, feature_contract=1, model_role_policy=2, evaluation_contract=2, selected_candidate=BAGGING_PU
@@ -41,7 +41,7 @@ Generated at: 2026-09-08T04:59:04Z
 - 5M integrity: snapshot=5000000, score_rows=5000000, distinct_ids=5000000, duplicates=0, invalid_fk=0, non_finite=0, out_of_range=0
 - Provenance: canonical=True, demographic_source_verified=True, historical_source_verified=True
 - Deterministic rescore: sample_size=256, max_abs_diff=0.0, verified=True
-- Runtime/chunks/throughput: seconds=1651.7853347000055, rows_per_second=3027.027722647805, chunk_size=25000, chunk_count=200, largest_chunk_rows=25000
+- Runtime/chunks/throughput: seconds=974.5484334000066, rows_per_second=5130.581332480306, chunk_size=25000, chunk_count=200, largest_chunk_rows=25000
 
 ## UI Error Telemetry
 - Console errors: 0

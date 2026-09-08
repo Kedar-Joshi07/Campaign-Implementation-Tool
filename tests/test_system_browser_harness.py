@@ -90,6 +90,8 @@ def test_step7_browser_runner_does_not_write_preparation_state_directly() -> Non
     assert '"#audience-prepare-submit"' in runner
     assert "run_audience_rank_preparation(" not in runner
     assert '"direct_service_write": False' in runner
+    assert 'if not prep_observations["submit_clicked"]:' in runner
+    assert 'not prep_observations["retry_clicked"]' in runner
 
 
 def test_step8_browser_runner_has_no_direct_workflow_state_write_fallbacks() -> None:
