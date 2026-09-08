@@ -7,7 +7,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
+from playwright.sync_api import Page, sync_playwright
+
+try:
+    from scripts.validation.browser.system_browser import (
+        capture_page_events,
+        launch_system_browser_session,
+        save_screenshot,
+    )
+except ModuleNotFoundError:
+    from browser.system_browser import (  # type: ignore[no-redef]
+        capture_page_events,
+        launch_system_browser_session,
+        save_screenshot,
+    )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EVIDENCE_DIR = PROJECT_ROOT / "docs" / "evidence" / "full_fresh_e2e"
@@ -16,7 +29,6 @@ EVIDENCE_PATH = EVIDENCE_DIR / "system_chrome_campaign_test.json"
 SCREENSHOT_PATH = SCREENSHOT_DIR / "system_chrome_campaigns.png"
 
 APP_URL = "http://127.0.0.1:8000/#campaigns"
-CHROME_PATH = Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 
 
 @dataclass
@@ -199,27 +211,8 @@ def _ensure_campaigns_ready(page: Page) -> None:
         raise RuntimeError("Campaign workspace did not reach ready state.")
 
 
-def _run_campaign_export_probe(context: BrowserContext, page: Page) -> dict[str, Any]:
-    console_errors: list[str] = []
-    request_failures: list[dict[str, str]] = []
-
-    def on_console(msg):
-        if msg.type == "error":
-            console_errors.append(msg.text)
-
-    def on_request_failed(req):
-        request_failures.append(
-            {
-                "method": req.method,
-                "url": req.url,
-                "failure": (req.failure.error_text if req.failure else "unknown"),
-            }
-        )
-
-    page.on("console", on_console)
-    page.on("requestfailed", on_request_failed)
-
-    try:
+def _run_campaign_export_probe(page: Page) -> dict[str, Any]:
+    with capture_page_events(page) as events:
         _ensure_campaigns_ready(page)
         # Ensure we are operating on a finalized campaign context.
         shell_status_now = page.locator("#campaign-shell-status").inner_text().strip()
@@ -282,8 +275,7 @@ def _run_campaign_export_probe(context: BrowserContext, page: Page) -> dict[str,
         if after_row is None:
             raise RuntimeError("Unable to read latest export row.")
 
-        SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
-        page.screenshot(path=str(SCREENSHOT_PATH), full_page=True)
+        save_screenshot(page, SCREENSHOT_PATH, full_page=True)
 
         return {
             "status": "PASS",
@@ -293,28 +285,12 @@ def _run_campaign_export_probe(context: BrowserContext, page: Page) -> dict[str,
             "status_note": page.locator("#campaign-export-status-note").inner_text().strip(),
             "announcement": page.locator("#campaigns-status-announcement").inner_text().strip(),
             "action_help": page.locator("#campaign-action-disabled-help").inner_text().strip(),
-            "console_errors": console_errors,
-            "request_failures": request_failures,
+            "console_errors": events.console_errors,
+            "page_errors": events.page_errors,
+            "request_failures": events.request_failures,
             "debug": _ui_debug_snapshot(page),
             "screenshot": str(SCREENSHOT_PATH.relative_to(PROJECT_ROOT)).replace("\\", "/"),
         }
-    finally:
-        page.remove_listener("console", on_console)
-        page.remove_listener("requestfailed", on_request_failed)
-
-
-def _launch_system_chrome(playwright) -> tuple[Browser, BrowserContext, Page]:
-    if not CHROME_PATH.is_file():
-        raise FileNotFoundError(f"Chrome executable not found: {CHROME_PATH}")
-
-    browser = playwright.chromium.launch(
-        executable_path=str(CHROME_PATH),
-        headless=True,
-        args=["--disable-popup-blocking"],
-    )
-    context = browser.new_context(ignore_https_errors=True)
-    page = context.new_page()
-    return browser, context, page
 
 
 def main() -> int:
@@ -323,33 +299,40 @@ def main() -> int:
     payload: dict[str, Any] = {
         "generated_at": _now_iso(),
         "app_url": APP_URL,
-        "browser": {
-            "name": "system_chrome",
-            "executable_path": str(CHROME_PATH),
-        },
     }
 
     with sync_playwright() as playwright:
-        browser, context, page = _launch_system_chrome(playwright)
         try:
-            result = _run_campaign_export_probe(context, page)
-            payload["result"] = result
-            payload["overall_status"] = "PASS"
+            with launch_system_browser_session(
+                playwright,
+                app_url=APP_URL,
+                headless=True,
+                viewport={"width": 1440, "height": 900},
+            ) as session:
+                payload["browser"] = session.metadata.to_dict()
+                result = _run_campaign_export_probe(session.page)
+                payload["result"] = result
+                payload["overall_status"] = "PASS"
         except Exception as exc:
             debug_snapshot: dict[str, Any] | None = None
             try:
-                debug_snapshot = _ui_debug_snapshot(page)
+                if "session" in locals():
+                    debug_snapshot = _ui_debug_snapshot(session.page)
             except Exception:
                 debug_snapshot = None
+            if "browser" not in payload:
+                payload["browser"] = {
+                    "name": "unresolved",
+                    "executable_path": "",
+                    "product_version": "unknown",
+                    "execution_mode": "headless",
+                }
             payload["result"] = {
                 "status": "FAIL",
                 "error": str(exc),
                 "debug": debug_snapshot,
             }
             payload["overall_status"] = "FAIL"
-        finally:
-            context.close()
-            browser.close()
 
     EVIDENCE_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(f"Wrote evidence: {EVIDENCE_PATH}")

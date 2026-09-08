@@ -1,0 +1,283 @@
+{
+  "generated_at": "2026-09-06T17:30:44Z",
+  "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/06_STEP_06_SYSTEM_BROWSER_MODEL_TRAINING_AND_FULL_5M_SCORING.md",
+  "recovery_mode": "post_completion_finalize",
+  "recovered_job_ids": {
+    "training_job_id": 7,
+    "scoring_job_id": 8
+  },
+  "server": {
+    "managed": true,
+    "started_by_script": true,
+    "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+  },
+  "browser": {
+    "name": "system_chrome",
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "product_version": "152.0.7977.82",
+    "execution_mode": "headless"
+  },
+  "ui_errors": {
+    "console_errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "page_errors": [],
+    "request_failures": []
+  },
+  "training": {
+    "selected_source_analysis": {
+      "analysis_run_id": 3,
+      "option_text": "#3 - Phase8 Step5 Narrow 1788712038"
+    },
+    "inputs": {
+      "analysis_run_id": 3,
+      "model_name": "Phase8 Step6 Browser Model 1788713117",
+      "random_seed": 42,
+      "run_elkan_challenger": true,
+      "validation_fraction": 0.2
+    },
+    "lifecycle": {
+      "job_id": 7,
+      "terminal_status": "COMPLETED",
+      "seen_statuses": [
+        "QUEUED",
+        "RUNNING",
+        "COMPLETED"
+      ],
+      "transitions": [],
+      "recovered_from_terminal_output": true
+    },
+    "ui_summary": {
+      "model_run_id": 4,
+      "source_analysis_name": "Phase8 Step5 Narrow 1788712038",
+      "source_analysis_id": 3,
+      "source_counts": {
+        "selected": 119748,
+        "positive": 35416,
+        "unlabeled": 84332
+      },
+      "summary_counts": {
+        "selected": 119748,
+        "positive": 35416,
+        "unlabeled": 84332
+      },
+      "summary_selected_primary": "BAGGING_PU",
+      "summary_policy_version": "2",
+      "summary_feature_count": 11,
+      "summary_quality_flags": "CHALLENGER_OUTPERFORMED_PRIMARY, OBSERVED_LABEL_METRICS_ONLY",
+      "summary_artifact_verification": "Verified",
+      "candidate_table_rows": [
+        [
+          "Status",
+          "FITTED",
+          "FITTED",
+          "FITTED"
+        ],
+        [
+          "Recall @ Top 5%",
+          "7.26%",
+          "7.41%",
+          "7.33%"
+        ],
+        [
+          "Recall @ Top 10%",
+          "14.37%",
+          "14.57%",
+          "14.54%"
+        ],
+        [
+          "Recall @ Top 20%",
+          "26.88%",
+          "26.84%",
+          "26.99%"
+        ],
+        [
+          "Lift @ Top 5%",
+          "1.45",
+          "1.48",
+          "1.46"
+        ],
+        [
+          "Lift @ Top 10%",
+          "1.44",
+          "1.46",
+          "1.45"
+        ],
+        [
+          "Lift @ Top 20%",
+          "1.34",
+          "1.34",
+          "1.35"
+        ],
+        [
+          "Observed-label ROC-AUC",
+          "0.6038",
+          "0.604",
+          "0.6039"
+        ],
+        [
+          "Observed-label AP",
+          "0.3736",
+          "0.3737",
+          "0.3736"
+        ],
+        [
+          "KS",
+          "0.1561",
+          "0.1579",
+          "0.1561"
+        ],
+        [
+          "Fit time",
+          "12.58s",
+          "1.01s",
+          "0.87s"
+        ]
+      ]
+    }
+  },
+  "scoring": {
+    "lifecycle": {
+      "job_id": 8,
+      "terminal_status": "COMPLETED",
+      "seen_statuses": [
+        "QUEUED",
+        "RUNNING",
+        "COMPLETED"
+      ],
+      "transitions": [],
+      "recovered_from_terminal_output": true
+    },
+    "ui_summary": {
+      "model_run_id": 4,
+      "scoring_run_id": 4,
+      "selected_primary": "BAGGING_PU",
+      "availability": "Not eligible",
+      "compatibility": "Compatible (1 \u00b7 cd50dc7a39bf...)",
+      "scored_count": 5000000,
+      "universe_count": 5000000,
+      "reconciliation": "5,000,000 / 5,000,000",
+      "runtime_text": "1,927.28s",
+      "rows_per_second_text": "2,594 rows/s",
+      "feature_contract_text": "1 \u00b7 a0cd5e8f9585...",
+      "artifact_sha_text": "cd50dc7a39bf..."
+    }
+  },
+  "backend_assertions": {
+    "model": {
+      "model_run_id": 4,
+      "analysis_run_id": 3,
+      "selected_candidate": "BAGGING_PU",
+      "feature_count": 11,
+      "feature_contract_version": "1",
+      "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+      "model_role_policy_version": "2",
+      "evaluation_contract_version": "2",
+      "artifact_sha256": "cd50dc7a39bf1288478072f01d98216a4fb64187a8085c2752ad637fa82f01f6",
+      "train_customer_count": 95798,
+      "validation_customer_count": 23950,
+      "train_positive_count": 28333,
+      "validation_positive_count": 7083
+    },
+    "scoring": {
+      "scoring_run_id": 4,
+      "status": "COMPLETED",
+      "demographic_snapshot_count": 5000000,
+      "scored_person_count": 5000000,
+      "score_rows": 5000000,
+      "distinct_person_ids": 5000000,
+      "duplicates": 0,
+      "invalid_fk": 0,
+      "non_finite": 0,
+      "out_of_range": 0,
+      "score_min": 0.10968751145973774,
+      "score_mean": 0.28737821160381377,
+      "score_max": 0.9869217821832839,
+      "runtime_seconds": 1927.2771914000004,
+      "rows_per_second": 2594.33361340614,
+      "chunk_size": 25000,
+      "chunk_count": 200,
+      "largest_chunk_rows": 25000,
+      "artifact_sha256": "cd50dc7a39bf1288478072f01d98216a4fb64187a8085c2752ad637fa82f01f6",
+      "feature_contract_version": "1",
+      "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+      "selected_candidate": "BAGGING_PU",
+      "status_endpoint": {
+        "eligible": false,
+        "reason": "A completed prospect scoring run already exists for this model.",
+        "completed_scoring_run_id": 4
+      },
+      "provenance": {
+        "is_canonical": true,
+        "demographic_source_verified": true,
+        "historical_source_verified": true,
+        "issues": []
+      },
+      "deterministic_rescore": {
+        "sample_size": 256,
+        "max_abs_diff": 0.0,
+        "verified": true
+      }
+    }
+  },
+  "inventory_status_updates": {
+    "[data-view-target='model-training']": "PASS",
+    "#model-training-refresh": "PASS",
+    "#recent-model-runs-refresh": "PASS",
+    "#source-analysis-select": "PASS",
+    "#model-name-input": "PASS",
+    "#random-seed-input": "PASS",
+    "#validation-fraction-input": "PASS",
+    "#run-elkan-challenger-input": "PASS",
+    "#train-model-submit": "PASS",
+    "#model-job-status": "PASS",
+    "#model-job-stage": "PASS",
+    "#model-job-progress-percent": "PASS",
+    "#model-job-id": "PASS",
+    "#model-job-message": "PASS",
+    "#model-job-created": "PASS",
+    "#model-job-started": "PASS",
+    "#model-job-finished": "PASS",
+    "#model-job-elapsed": "PASS",
+    "#model-job-model-run": "PASS",
+    "#model-job-content": "PASS",
+    ".model-job-progress-track": "PASS",
+    "#model-job-progress-fill": "PASS",
+    "#model-summary-panel": "PASS",
+    "#summary-model-run-id": "PASS",
+    "#summary-selected-primary": "PASS",
+    "#summary-policy-version": "PASS",
+    "#summary-feature-count": "PASS",
+    "#summary-quality-flags": "PASS",
+    "#summary-artifact-verification": "PASS",
+    "#candidate-comparison-panel": "PASS",
+    "#source-analysis-name": "PASS",
+    "#source-analysis-id": "PASS",
+    "#source-selected-count": "PASS",
+    "#source-positive-count": "PASS",
+    "#source-unlabeled-count": "PASS",
+    ".recent-reopen": "PASS",
+    "#score-prospect-submit": "PASS",
+    "#prospect-scoring-panel": "PASS",
+    "#scoring-model-run-id": "PASS",
+    "#scoring-selected-primary": "PASS",
+    "#scoring-artifact-compatibility": "PASS",
+    "#scoring-demographic-count": "PASS",
+    "#scoring-availability": "PASS",
+    "#scoring-completed-run": "PASS",
+    "#scoring-completed-summary": "PASS",
+    "#scoring-summary-scored-count": "PASS",
+    "#scoring-summary-reconciliation": "PASS",
+    "#scoring-summary-min": "PASS",
+    "#scoring-summary-mean": "PASS",
+    "#scoring-summary-max": "PASS",
+    "#scoring-summary-runtime": "PASS",
+    "#scoring-summary-rows-per-second": "PASS",
+    "#scoring-summary-feature-contract": "PASS",
+    "#scoring-summary-artifact-sha": "PASS",
+    "#model-training-retry": "JUSTIFIED_EXCLUSIVE",
+    "#model-job-failure": "JUSTIFIED_EXCLUSIVE",
+    "#scoring-status-reason": "JUSTIFIED_EXCLUSIVE"
+  },
+  "overall_status": "PASS"
+}

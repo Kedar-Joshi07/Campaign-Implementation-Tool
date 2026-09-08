@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-09-07T19:15:33Z",
+  "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/05_STEP_05_SYSTEM_BROWSER_OVERVIEW_DATA_STATUS_HISTORICAL_ANALYSIS.md",
+  "server": {
+    "managed": true,
+    "started_by_script": true,
+    "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+  },
+  "browser": {
+    "name": "system_chrome",
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "product_version": "152.0.7977.82",
+    "execution_mode": "headless"
+  },
+  "overview": {
+    "customer_count": "125,000",
+    "campaign_sales_count": "570,000",
+    "demographic_count": "5,000,000"
+  },
+  "historical_runs": {
+    "broad": {
+      "run_id_text": "#8",
+      "selected": "119,748",
+      "positive": "35,416",
+      "unlabeled": "84,332",
+      "positive_rate": "29.58%",
+      "observations": "563,250",
+      "status": "Completed",
+      "run_id": 8,
+      "selected_count": 119748,
+      "positive_count": 35416,
+      "unlabeled_count": 84332
+    },
+    "narrow": {
+      "run_id_text": "#9",
+      "selected": "11,662",
+      "positive": "1,297",
+      "unlabeled": "10,365",
+      "positive_rate": "11.12%",
+      "observations": "11,662",
+      "status": "Completed",
+      "run_id": 9,
+      "selected_count": 11662,
+      "positive_count": 1297,
+      "unlabeled_count": 10365,
+      "selected_filters": {
+        "#campaign-filter": "CMP0001",
+        "#product-filter": "PRD008",
+        "#channel-filter": "Email"
+      }
+    },
+    "validation": {
+      "error_visible": true,
+      "error_text": "Contact date from must be on or before contact date to.",
+      "reset_cleared_error": true
+    },
+    "reopen": {
+      "reopen_available": true,
+      "reopen_target_run_id": 9,
+      "reopen_succeeded": true,
+      "reopened_run_id": 9
+    },
+    "profile_tabs": {
+      "profile_dimensions_exercised": [
+        "age_band",
+        "gender",
+        "state",
+        "individual_income_band",
+        "marital_status"
+      ],
+      "breakdown_tabs_exercised": 4,
+      "profile_tabs_exercised": 4
+    }
+  },
+  "ui_errors": {
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": []
+  },
+  "backend_assertions": {
+    "broad": {
+      "analysis_run_id": 8,
+      "status": "COMPLETED",
+      "selected": 119748,
+      "positive": 35416,
+      "unlabeled": 84332
+    },
+    "narrow": {
+      "analysis_run_id": 9,
+      "status": "COMPLETED",
+      "selected": 11662,
+      "positive": 1297,
+      "unlabeled": 10365
+    }
+  },
+  "inventory_status_updates": {
+    "global:[data-view-target='overview']": "PASS",
+    "global:#backend-status": "PASS",
+    "overview:#overview-refresh": "PASS",
+    "overview:#historical-analysis-cta": "PASS",
+    "global:[data-view-target='historical-analysis']": "PASS",
+    "historical-analysis:#historical-analysis-refresh": "PASS",
+    "historical-analysis:#historical-analysis-retry": "JUSTIFIED_EXCLUSIVE",
+    "historical-analysis:#analysis-name": "PASS",
+    "historical-analysis:#contact-date-from": "PASS",
+    "historical-analysis:#contact-date-to": "PASS",
+    "historical-analysis:#campaign-filter": "PASS",
+    "historical-analysis:#product-filter": "PASS",
+    "historical-analysis:#product-category-filter": "PASS",
+    "historical-analysis:#channel-filter": "PASS",
+    "historical-analysis:#campaign-type-filter": "PASS",
+    "historical-analysis:#contacted-only": "PASS",
+    "historical-analysis:input[name='conversion_definition']": "PASS",
+    "historical-analysis:#historical-analysis-reset": "PASS",
+    "historical-analysis:#analyze-population": "PASS",
+    "historical-analysis:#recent-analyses-refresh": "PASS",
+    "historical-analysis:#profile-dimension": "PASS",
+    "historical-analysis:[data-breakdown='channel_performance']": "PASS",
+    "historical-analysis:[data-breakdown='product_category_performance']": "PASS",
+    "historical-analysis:[data-breakdown='top_campaigns']": "PASS",
+    "historical-analysis:[data-breakdown='top_products']": "PASS",
+    "historical-analysis:[data-profile-group='selected']": "PASS",
+    "historical-analysis:[data-profile-group='positive']": "PASS",
+    "historical-analysis:[data-profile-group='unlabeled']": "PASS",
+    "historical-analysis:[data-profile-group='historical_baseline']": "PASS",
+    "historical-analysis:.recent-reopen": "PASS",
+    "global:[data-view-target='data-status']": "PASS",
+    "data-status:#data-status-refresh": "PASS",
+    "data-status:#data-status-retry": "JUSTIFIED_EXCLUSIVE",
+    "overview:#overview-retry": "JUSTIFIED_EXCLUSIVE"
+  },
+  "overall_status": "PASS"
+}

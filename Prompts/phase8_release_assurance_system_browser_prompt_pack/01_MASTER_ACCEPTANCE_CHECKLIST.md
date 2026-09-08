@@ -1,0 +1,30 @@
+# Phase 8 Master Acceptance Checklist
+
+- [ ] CI collection/dependency issue fixed
+- [ ] Normal pytest collects only intended tests
+- [ ] System Chrome or Edge used
+- [ ] No VS Code embedded browser used
+- [ ] Browser product/version recorded
+- [ ] Every reachable actionable control inventoried
+- [ ] No generic "reachable but not tested" exception remains
+- [ ] Historical Analysis actually submitted through browser
+- [ ] Model Training actually submitted through browser
+- [ ] Full 5M scoring actually submitted through browser
+- [ ] All Audience Explorer controls tested
+- [ ] All Campaign Builder controls tested
+- [ ] Email browser export tested
+- [ ] Direct Mail browser export tested
+- [ ] Zero unexplained console errors
+- [ ] Zero unexplained critical network failures
+- [ ] Accessibility smoke passes
+- [ ] Responsive layouts pass
+- [ ] Long-running jobs/exports remain trackable
+- [ ] GZIP reproducibility addressed
+- [ ] Absolute machine paths removed from canonical summaries
+- [ ] LFS/hash docs current
+- [ ] Final certification begins from clean HEAD
+- [ ] Full pytest passes
+- [ ] Clean-room passes
+- [ ] Required GitHub CI checks all green
+- [ ] Branch protection enabled or fully documented
+- [ ] Final Phase 8 decision GO

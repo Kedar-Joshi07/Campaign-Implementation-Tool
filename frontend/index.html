@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Campaign Implementation Intelligence data foundation dashboard">
     <title>Overview | Campaign Implementation Intelligence</title>
+    <link rel="icon" href="data:,">
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/components.css">
   </head>
@@ -1180,7 +1181,10 @@
               <h2 id="campaigns-title">Campaign Builder</h2>
               <p>Build deterministic campaign drafts from current saved audiences, review immutable context, and prepare target-list export workflow.</p>
             </div>
-            <button id="campaigns-refresh" class="button button-secondary" type="button">Refresh campaign workspace</button>
+            <div class="analysis-form-actions">
+              <button id="campaign-new-draft" class="button button-secondary" type="button">New Campaign</button>
+              <button id="campaigns-refresh" class="button button-secondary" type="button">Refresh campaign workspace</button>
+            </div>
           </section>
 
           <div class="notice" role="note">

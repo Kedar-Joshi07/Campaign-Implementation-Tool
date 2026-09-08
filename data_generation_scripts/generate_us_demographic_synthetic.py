@@ -3,6 +3,17 @@ from pathlib import Path
 import numpy as np
 from faker import Faker
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _portable_repo_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        relative = resolved.relative_to(REPO_ROOT)
+        return str(relative).replace('\\', '/')
+    except ValueError:
+        return resolved.name
+
 SEED = int(os.environ.get('SEED', '20260818'))
 ID_OFFSET = int(os.environ.get('ID_OFFSET', '0'))
 N_ROWS = int(os.environ.get('N_ROWS', '5000000'))
@@ -214,7 +225,8 @@ age_sum=0; income_sum=0; family_income_sum=0; employed=0; sample_lines=[]
 age_contract_adjusted_rows=0
 
 start=time.time()
-compressed_output=gzip.open(OUT,'wb',compresslevel=3)
+compressed_raw=open(OUT,'wb')
+compressed_output=gzip.GzipFile(fileobj=compressed_raw, mode='wb', compresslevel=3, mtime=0, filename='')
 compressed_output.write((','.join(headers)+'\n').encode('utf-8'))
 
 for base in range(0,N_ROWS,CHUNK):
@@ -398,9 +410,10 @@ for base in range(0,N_ROWS,CHUNK):
     print(f'PROGRESS {done}/{N_ROWS} rows ({done/N_ROWS:.1%}) elapsed={elapsed:.1f}s',flush=True)
 
 compressed_output.close()
+compressed_raw.close()
 
 summary={
- 'rows':N_ROWS,'columns':len(headers),'seed':SEED,'id_offset':ID_OFFSET,'id_start':ID_OFFSET+1,'id_end':ID_OFFSET+N_ROWS,'file':str(OUT),'file_size_bytes':OUT.stat().st_size,
+ 'rows':N_ROWS,'columns':len(headers),'seed':SEED,'id_offset':ID_OFFSET,'id_start':ID_OFFSET+1,'id_end':ID_OFFSET+N_ROWS,'file':_portable_repo_path(OUT),'file_size_bytes':OUT.stat().st_size,
  'mean_age':age_sum/N_ROWS,'mean_individual_yearly_income':income_sum/N_ROWS,'mean_family_yearly_income':family_income_sum/N_ROWS,
  'population_age_contract':'ADULT_18_100','age_contract_range':'18..100','age_contract_adjusted_rows':age_contract_adjusted_rows,'age_contract_mode':'GENERATED_VALID_FROM_SOURCE',
  'employed_share':employed/N_ROWS,'gender_distribution':{k:v/N_ROWS for k,v in gender_count.items()},

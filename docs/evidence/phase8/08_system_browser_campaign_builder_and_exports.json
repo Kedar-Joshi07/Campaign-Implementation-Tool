@@ -1,0 +1,325 @@
+{
+  "generated_at": "2026-09-08T03:48:04Z",
+  "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/08_STEP_08_SYSTEM_BROWSER_CAMPAIGN_BUILDER_AND_EXPORTS.md",
+  "expected_step6_scoring_run_id": 4,
+  "preparation": {
+    "mode": "already_ready",
+    "poll_checks": 1,
+    "status": {
+      "scoring_run_id": 4,
+      "model_run_id": 4,
+      "status": "COMPLETED",
+      "rank_contract_version": "1",
+      "analytics_contract_version": "1",
+      "prepared": true,
+      "analytics_prepared": true,
+      "is_canonical": true,
+      "source_verified": true,
+      "ready_for_current_audience_actions": true,
+      "currentness_issues": [],
+      "analytics_snapshot_created_at": "2026-09-07T02:14:30Z",
+      "boundary_count": 100,
+      "total_population": 5000000,
+      "active_job": null
+    }
+  },
+  "saved_audience_seed": {
+    "mode": "existing_current",
+    "audience": {
+      "audience_id": 10,
+      "audience_name": "Phase8 Step7 Current Audience 1788809854",
+      "description": "Current saved audience from Step 7 system-browser control coverage run",
+      "created_at": "2026-09-07T19:37:40Z",
+      "selection_mode": "TOP_N",
+      "target_count": 50000,
+      "resolved_count": 50000,
+      "scoring_run_id": 4,
+      "model_run_id": 4,
+      "is_current": true,
+      "stale_reason": null
+    }
+  },
+  "server": {
+    "managed": true,
+    "started_by_script": true,
+    "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+  },
+  "campaign_view_state_email": {
+    "ready": true,
+    "no_eligible": false,
+    "backend_unavailable": false
+  },
+  "handoff": {
+    "selected_saved_audience_name": "Phase8 Step7 Current Audience 1788809854",
+    "campaign_hash_after_handoff": "#campaigns",
+    "selector_value": "10"
+  },
+  "campaign_view_state_direct_mail": {
+    "ready": true,
+    "no_eligible": false,
+    "backend_unavailable": false
+  },
+  "browser": [
+    {
+      "name": "system_chrome",
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "product_version": "152.0.7977.82",
+      "execution_mode": "headless"
+    },
+    {
+      "name": "system_chrome",
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "product_version": "152.0.7977.82",
+      "execution_mode": "headless"
+    }
+  ],
+  "list_open": {
+    "email_session": {
+      "opened_campaign_id": 24,
+      "opened_campaign_name": "Phase8 Step8 EMAIL Campaign 1788839419628",
+      "matched_expected": true,
+      "loaded_campaign_id": 24
+    },
+    "direct_mail_session": {
+      "opened_campaign_id": 25,
+      "opened_campaign_name": "Phase8 Step8 DIRECT_MAIL Campaign 1788840138262",
+      "matched_expected": true,
+      "loaded_campaign_id": 25
+    }
+  },
+  "ui_errors": {
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": []
+  },
+  "email_flow": {
+    "channel": "EMAIL",
+    "campaign_id": 24,
+    "canonical_campaign_id": 24,
+    "campaign_id_from_export_url": 24,
+    "event_campaign_id": 24,
+    "campaign_name": "Phase8 Step8 EMAIL Campaign 1788839419628",
+    "launch_date": "2026-12-31",
+    "initial_draft_action": "created",
+    "draft_update_action": true,
+    "draft_update_confirmed_by": "backend",
+    "missing_audience_validation": {
+      "error": "Select a current saved audience before continuing.",
+      "restored_audience_id": 10
+    },
+    "required_field_validation": {
+      "blank_name_error": "Campaign name is required.",
+      "missing_channel_error": "Channel is required and must be EMAIL or DIRECT_MAIL."
+    },
+    "preservation": {
+      "review_summary_contains_name": true,
+      "review_summary_contains_channel": true,
+      "campaign_name_preserved": true,
+      "campaign_description_preserved": true,
+      "campaign_channel_preserved": true
+    },
+    "review_check": {
+      "completed": true,
+      "step_error_visible": false,
+      "step_error_text": "",
+      "pre_step": "4",
+      "post_step": "3",
+      "announcement": "Campaign #24 refreshed."
+    },
+    "finalize_method": "ui",
+    "immutability": {
+      "blocked": true,
+      "message": "FINALIZED campaigns are immutable."
+    },
+    "expected_export_profile": "EMAIL_CONTACT_V1",
+    "download": {
+      "suggested_filename": "campaign_24_email_contact_v1.csv",
+      "saved_path": "C:\\Users\\KEDAR~1.JOS\\AppData\\Local\\Temp\\phase8-browser-downloads-meoiozrk\\phase8_step8\\step8_email_export_1788839981072.csv",
+      "url": "http://127.0.0.1:8000/api/campaigns/24/export.csv?acknowledge_pii=true&_=1788839984073"
+    },
+    "ui_export_event": {
+      "event_id": 18,
+      "profile": "EMAIL_CONTACT_V1",
+      "status": "COMPLETED",
+      "elapsed_text": "37s",
+      "selected": 50000,
+      "deliverable": 50000,
+      "undeliverable": 0,
+      "row_count": 50000,
+      "checksum": "4a70d45b791c5f150c4d4c375c59cb1717d8745a3595b281ab47c1b19d7aed64"
+    },
+    "long_running": {
+      "needed": false,
+      "checked": false,
+      "elapsed_seconds": 0.0
+    },
+    "csv_verification": {
+      "fieldnames": [
+        "person_id",
+        "propensity_score",
+        "percentile_bucket",
+        "decile",
+        "rank_band",
+        "first_name",
+        "last_name",
+        "email"
+      ],
+      "row_count": 50000,
+      "csv_sha256": "4a70d45b791c5f150c4d4c375c59cb1717d8745a3595b281ab47c1b19d7aed64",
+      "latest_event": {
+        "export_event_id": 18,
+        "campaign_id": 24,
+        "export_contract_version": "1",
+        "export_snapshot_contract_version": "1",
+        "export_profile": "EMAIL_CONTACT_V1",
+        "status": "COMPLETED",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "4a70d45b791c5f150c4d4c375c59cb1717d8745a3595b281ab47c1b19d7aed64",
+        "start_provenance_sha256": "1e932c1312c754f7486d0a0d884d45711b4ac94f3075ca5689b2d0f5490cc61c",
+        "source_changed_during_export": false,
+        "completion_currentness_state": "CURRENT",
+        "started_at": "2026-09-08T03:59:46Z",
+        "completed_at": "2026-09-08T04:00:23Z",
+        "safe_error_message": null
+      },
+      "prohibited_fields_in_header": []
+    }
+  },
+  "direct_mail_flow": {
+    "channel": "DIRECT_MAIL",
+    "campaign_id": 25,
+    "canonical_campaign_id": 25,
+    "campaign_id_from_export_url": 25,
+    "event_campaign_id": 25,
+    "campaign_name": "Phase8 Step8 DIRECT_MAIL Campaign 1788840138262",
+    "launch_date": "2026-12-31",
+    "initial_draft_action": "created",
+    "draft_update_action": true,
+    "draft_update_confirmed_by": "backend",
+    "missing_audience_validation": null,
+    "required_field_validation": null,
+    "preservation": {
+      "review_summary_contains_name": true,
+      "review_summary_contains_channel": true,
+      "campaign_name_preserved": true,
+      "campaign_description_preserved": true,
+      "campaign_channel_preserved": true
+    },
+    "review_check": {
+      "completed": true,
+      "step_error_visible": false,
+      "step_error_text": "",
+      "pre_step": "4",
+      "post_step": "3",
+      "announcement": "Campaign #25 refreshed."
+    },
+    "finalize_method": "ui",
+    "immutability": {
+      "blocked": true,
+      "message": "FINALIZED campaigns are immutable."
+    },
+    "expected_export_profile": "DIRECT_MAIL_CONTACT_V1",
+    "download": {
+      "suggested_filename": "campaign_25_direct_mail_contact_v1.csv",
+      "saved_path": "C:\\Users\\KEDAR~1.JOS\\AppData\\Local\\Temp\\phase8-browser-downloads-743uy9nt\\phase8_step8\\step8_direct_mail_export_1788840544103.csv",
+      "url": "http://127.0.0.1:8000/api/campaigns/25/export.csv?acknowledge_pii=true&_=1788840547558"
+    },
+    "ui_export_event": {
+      "event_id": 19,
+      "profile": "DIRECT_MAIL_CONTACT_V1",
+      "status": "COMPLETED",
+      "elapsed_text": "15s",
+      "selected": 50000,
+      "deliverable": 50000,
+      "undeliverable": 0,
+      "row_count": 50000,
+      "checksum": "911296a70e3633007dd523a6a9c7d388412644595c8966dd49f0032cdb9095be"
+    },
+    "long_running": {
+      "needed": false,
+      "checked": false,
+      "elapsed_seconds": 0.0
+    },
+    "csv_verification": {
+      "fieldnames": [
+        "person_id",
+        "propensity_score",
+        "percentile_bucket",
+        "decile",
+        "rank_band",
+        "first_name",
+        "last_name",
+        "address_line_1",
+        "address_line_2",
+        "city",
+        "state",
+        "postal_code"
+      ],
+      "row_count": 50000,
+      "csv_sha256": "911296a70e3633007dd523a6a9c7d388412644595c8966dd49f0032cdb9095be",
+      "latest_event": {
+        "export_event_id": 19,
+        "campaign_id": 25,
+        "export_contract_version": "1",
+        "export_snapshot_contract_version": "1",
+        "export_profile": "DIRECT_MAIL_CONTACT_V1",
+        "status": "COMPLETED",
+        "selected_count": 50000,
+        "deliverable_count": 50000,
+        "undeliverable_count": 0,
+        "row_count": 50000,
+        "csv_sha256": "911296a70e3633007dd523a6a9c7d388412644595c8966dd49f0032cdb9095be",
+        "start_provenance_sha256": "f21f4670fd18958349b56b2cdc0c076a735e25fe709a2b3f7180ad9ab8f2f967",
+        "source_changed_during_export": false,
+        "completion_currentness_state": "CURRENT",
+        "started_at": "2026-09-08T04:09:10Z",
+        "completed_at": "2026-09-08T04:09:25Z",
+        "safe_error_message": null
+      },
+      "prohibited_fields_in_header": []
+    }
+  },
+  "inventory_status_updates": {
+    "campaigns:#campaign-audience-select": "PASS",
+    "campaigns:#campaigns-refresh": "PASS",
+    "campaigns:#campaign-new-draft": "PASS",
+    "campaigns:#campaign-step-next-1": "PASS",
+    "campaigns:#campaign-name": "PASS",
+    "campaigns:#campaign-description": "PASS",
+    "campaigns:#campaign-channel": "PASS",
+    "campaigns:#campaign-launch-date": "PASS",
+    "campaigns:#campaign-step-next-2": "PASS",
+    "campaigns:#campaign-step-back-3": "PASS",
+    "campaigns:#campaign-step-next-3": "PASS",
+    "campaigns:#campaign-step-back-4": "PASS",
+    "campaigns:#campaign-export-history-refresh": "PASS",
+    "campaigns:#campaign-export": "PASS",
+    "campaigns:#campaign-step-1": "PASS",
+    "campaigns:#campaign-step-2": "PASS",
+    "campaigns:#campaign-step-3": "PASS",
+    "campaigns:#campaign-step-4": "PASS",
+    "campaigns:#campaign-step-back-2": "PASS",
+    "campaigns:#campaign-review-draft": "PASS",
+    "campaigns:#campaign-create-draft": "PASS",
+    "campaigns:#campaign-finalize": "PASS",
+    "campaigns:#campaign-pii-ack": "PASS",
+    "campaigns:.campaign-open": "PASS",
+    "campaigns:#campaigns-retry": "JUSTIFIED_EXCLUSIVE"
+  },
+  "inventory_status_summary": {
+    "NOT_RUN": 86,
+    "PASS": 24,
+    "FAIL": 0,
+    "JUSTIFIED_EXCLUSIVE": 1
+  },
+  "campaign_inventory_status_summary": {
+    "NOT_RUN": 0,
+    "PASS": 24,
+    "FAIL": 0,
+    "JUSTIFIED_EXCLUSIVE": 1
+  },
+  "overall_status": "PASS"
+}

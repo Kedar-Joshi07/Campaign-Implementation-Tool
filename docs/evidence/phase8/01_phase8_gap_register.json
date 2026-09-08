@@ -1,0 +1,806 @@
+﻿{
+    "phase":  "8",
+    "step":  "1",
+    "generated_at_utc":  "2026-09-06T14:14:03Z",
+    "required_starting_sha":  "47a93d0a44c4df8ab12ff58157fbc204ec43a51d",
+    "baseline":  {
+                     "local_head":  "47a93d0a44c4df8ab12ff58157fbc204ec43a51d",
+                     "remote_main_head":  "47a93d0a44c4df8ab12ff58157fbc204ec43a51d",
+                     "branch":  "main",
+                     "git_status_short":  [
+                                              " M docs/evidence/CLEANROOM_PHASE1_TO_PHASE7_REPORT.md",
+                                              " M docs/evidence/cleanroom_phase1_to_phase7.json",
+                                              "?? Prompts/phase8_release_assurance_system_browser_prompt_pack/",
+                                              "?? docs/evidence/phase8/"
+                                          ],
+                     "python":  "3.12.0",
+                     "app_version":  "0.1.0",
+                     "schema_version":  12,
+                     "pytest_collect_summary":  "458 tests collected in 10.79s",
+                     "workflow_files":  [
+                                            "ci.yml",
+                                            "full-validation.yml"
+                                        ],
+                     "requirements_lock_sha256":  "350439D9ACB3AFC8ED9E1ADC48DFAA8455ED81C53D3DEAA5248E36CEEB2401F1",
+                     "system_browser":  {
+                                            "chrome_path":  "C:/Program Files/Google/Chrome/Application/chrome.exe",
+                                            "chrome_found":  true,
+                                            "edge_path":  "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+                                            "edge_found":  true
+                                        }
+                 },
+    "latest_ci":  {
+                      "run_id":  33886841019,
+                      "name":  "CI",
+                      "event":  "push",
+                      "status":  "completed",
+                      "conclusion":  "failure",
+                      "head_sha":  "47a93d0a44c4df8ab12ff58157fbc204ec43a51d",
+                      "html_url":  "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/33886841019",
+                      "jobs":  [
+                                   {
+                                       "name":  "Repository Hygiene",
+                                       "status":  "completed",
+                                       "conclusion":  "success",
+                                       "html_url":  "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/33886841019/job/101068597429"
+                                   },
+                                   {
+                                       "name":  "Python Validation",
+                                       "status":  "completed",
+                                       "conclusion":  "success",
+                                       "html_url":  "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/33886841019/job/101068794422"
+                                   },
+                                   {
+                                       "name":  "Tests",
+                                       "status":  "completed",
+                                       "conclusion":  "failure",
+                                       "html_url":  "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/33886841019/job/101069003476"
+                                   },
+                                   {
+                                       "name":  "Clean-Room Phase1-7",
+                                       "status":  "completed",
+                                       "conclusion":  "success",
+                                       "html_url":  "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/33886841019/job/101069003691"
+                                   },
+                                   {
+                                       "name":  "Frontend Contract",
+                                       "status":  "completed",
+                                       "conclusion":  "success",
+                                       "html_url":  "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/33886841019/job/101069003704"
+                                   }
+                               ],
+                      "tests_job_annotation":  "Process completed with exit code 2",
+                      "logs_download":  "403 Forbidden without auth token"
+                  },
+    "tests_job_failure_repro":  {
+                                    "command":  "python -m pytest -m \"not cleanroom and not full5m and not performance and not browser\" -q",
+                                    "reproduced":  true,
+                                    "failing_module":  "scripts/validation/system_chrome_campaign_test.py",
+                                    "error":  "ModuleNotFoundError: No module named playwright",
+                                    "exit_code":  2,
+                                    "why_collected":  "matches *_test.py and pytest.ini does not restrict testpaths",
+                                    "why_playwright_missing":  "requirements.lock does not include playwright"
+                                },
+    "control_reclassification":  {
+                                     "source":  "docs/evidence/full_fresh_e2e/UI_CONTROL_COVERAGE.md",
+                                     "prior_exception_count":  87,
+                                     "category_A_count":  10,
+                                     "category_B_count":  77,
+                                     "category_B_mandatory":  true,
+                                     "entries":  [
+                                                     {
+                                                         "selector":  "[data-view-target=\u0027overview\u0027]",
+                                                         "label":  "OV",
+                                                         "previous_status":  "EXCEPTION: not visible/reachable in current state",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Navigation control is reachable by design; prior classifier only considered id selectors.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "[data-view-target=\u0027data-status\u0027]",
+                                                         "label":  "DS",
+                                                         "previous_status":  "EXCEPTION: not visible/reachable in current state",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Navigation control is reachable by design; prior classifier only considered id selectors.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "[data-view-target=\u0027historical-analysis\u0027]",
+                                                         "label":  "HA",
+                                                         "previous_status":  "EXCEPTION: not visible/reachable in current state",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Navigation control is reachable by design; prior classifier only considered id selectors.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "[data-view-target=\u0027model-training\u0027]",
+                                                         "label":  "MT",
+                                                         "previous_status":  "EXCEPTION: not visible/reachable in current state",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Navigation control is reachable by design; prior classifier only considered id selectors.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "[data-view-target=\u0027audience-explorer\u0027]",
+                                                         "label":  "AE",
+                                                         "previous_status":  "EXCEPTION: not visible/reachable in current state",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Navigation control is reachable by design; prior classifier only considered id selectors.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "[data-view-target=\u0027campaigns\u0027]",
+                                                         "label":  "P7",
+                                                         "previous_status":  "EXCEPTION: not visible/reachable in current state",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Navigation control is reachable by design; prior classifier only considered id selectors.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#backend-status",
+                                                         "label":  "Check backend connection",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#overview-retry",
+                                                         "label":  "Try again",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#historical-analysis-cta",
+                                                         "label":  "Analyze historical campaigns",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#historical-analysis-retry",
+                                                         "label":  "Try again",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#historical-analysis-reset",
+                                                         "label":  "Reset to defaults",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#analysis-name",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#contact-date-from",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#contact-date-to",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-filter",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#product-filter",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#product-category-filter",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#channel-filter",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-type-filter",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#contacted-only",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#analyze-population",
+                                                         "label":  "Analyze Population",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#recent-analyses-refresh",
+                                                         "label":  "Refresh",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "button",
+                                                         "label":  "Channels",
+                                                         "previous_status":  "EXCEPTION: generic selector in inventory, covered via specific ID controls",
+                                                         "reclassified_category":  "A",
+                                                         "reclassification_reason":  "Generic selector inventory entry already represented by specific control selectors.",
+                                                         "phase8_action_required":  false
+                                                     },
+                                                     {
+                                                         "selector":  "button",
+                                                         "label":  "Categories",
+                                                         "previous_status":  "EXCEPTION: generic selector in inventory, covered via specific ID controls",
+                                                         "reclassified_category":  "A",
+                                                         "reclassification_reason":  "Generic selector inventory entry already represented by specific control selectors.",
+                                                         "phase8_action_required":  false
+                                                     },
+                                                     {
+                                                         "selector":  "button",
+                                                         "label":  "Campaigns",
+                                                         "previous_status":  "EXCEPTION: generic selector in inventory, covered via specific ID controls",
+                                                         "reclassified_category":  "A",
+                                                         "reclassification_reason":  "Generic selector inventory entry already represented by specific control selectors.",
+                                                         "phase8_action_required":  false
+                                                     },
+                                                     {
+                                                         "selector":  "button",
+                                                         "label":  "Products",
+                                                         "previous_status":  "EXCEPTION: generic selector in inventory, covered via specific ID controls",
+                                                         "reclassified_category":  "A",
+                                                         "reclassification_reason":  "Generic selector inventory entry already represented by specific control selectors.",
+                                                         "phase8_action_required":  false
+                                                     },
+                                                     {
+                                                         "selector":  "#profile-dimension",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "button",
+                                                         "label":  "Selected",
+                                                         "previous_status":  "EXCEPTION: generic selector in inventory, covered via specific ID controls",
+                                                         "reclassified_category":  "A",
+                                                         "reclassification_reason":  "Generic selector inventory entry already represented by specific control selectors.",
+                                                         "phase8_action_required":  false
+                                                     },
+                                                     {
+                                                         "selector":  "button",
+                                                         "label":  "Known positive",
+                                                         "previous_status":  "EXCEPTION: generic selector in inventory, covered via specific ID controls",
+                                                         "reclassified_category":  "A",
+                                                         "reclassification_reason":  "Generic selector inventory entry already represented by specific control selectors.",
+                                                         "phase8_action_required":  false
+                                                     },
+                                                     {
+                                                         "selector":  "button",
+                                                         "label":  "Unlabeled",
+                                                         "previous_status":  "EXCEPTION: generic selector in inventory, covered via specific ID controls",
+                                                         "reclassified_category":  "A",
+                                                         "reclassification_reason":  "Generic selector inventory entry already represented by specific control selectors.",
+                                                         "phase8_action_required":  false
+                                                     },
+                                                     {
+                                                         "selector":  "button",
+                                                         "label":  "Historical baseline",
+                                                         "previous_status":  "EXCEPTION: generic selector in inventory, covered via specific ID controls",
+                                                         "reclassified_category":  "A",
+                                                         "reclassification_reason":  "Generic selector inventory entry already represented by specific control selectors.",
+                                                         "phase8_action_required":  false
+                                                     },
+                                                     {
+                                                         "selector":  "#model-training-retry",
+                                                         "label":  "Try again",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#source-analysis-select",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#model-name-input",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#random-seed-input",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#validation-fraction-input",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#run-elkan-challenger-input",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#train-model-submit",
+                                                         "label":  "Train Look-alike Model",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#recent-model-runs-refresh",
+                                                         "label":  "Refresh",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#score-prospect-submit",
+                                                         "label":  "Score Prospect Universe",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-explorer-retry",
+                                                         "label":  "Try again",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-prepare-submit",
+                                                         "label":  "Prepare Audience Explorer",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-prepare-retry",
+                                                         "label":  "Retry preparation",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-score-min",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-score-max",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-top-percentile",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-deciles",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-rank-bands",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-age-min",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-age-max",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-income-min",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-income-max",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-family-min",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-family-max",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-gender",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-state",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-marital-status",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-education",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-employment-status",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-resident-status",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-resident-type",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-type-of-employment",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-selection-all",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-selection-topn",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-target-count",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-clear-filter-chips",
+                                                         "label":  "Clear active chips",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#saved-audiences-refresh",
+                                                         "label":  "Refresh",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-save-name",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-save-description",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#saved-audience-reopen",
+                                                         "label":  "Reopen definition",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-load-more",
+                                                         "label":  "Load more",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#audience-profile-dimension",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "button",
+                                                         "label":  "Selected vs Universe",
+                                                         "previous_status":  "EXCEPTION: generic selector in inventory, covered via specific ID controls",
+                                                         "reclassified_category":  "A",
+                                                         "reclassification_reason":  "Generic selector inventory entry already represented by specific control selectors.",
+                                                         "phase8_action_required":  false
+                                                     },
+                                                     {
+                                                         "selector":  "button",
+                                                         "label":  "Selected vs Historical Positives",
+                                                         "previous_status":  "EXCEPTION: generic selector in inventory, covered via specific ID controls",
+                                                         "reclassified_category":  "A",
+                                                         "reclassification_reason":  "Generic selector inventory entry already represented by specific control selectors.",
+                                                         "phase8_action_required":  false
+                                                     },
+                                                     {
+                                                         "selector":  "#data-status-retry",
+                                                         "label":  "Try again",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaigns-retry",
+                                                         "label":  "Try again",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaigns-refresh",
+                                                         "label":  "Refresh campaign workspace",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-step-1",
+                                                         "label":  "1",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-step-2",
+                                                         "label":  "2",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-step-3",
+                                                         "label":  "3",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-step-4",
+                                                         "label":  "4",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-audience-select",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-name",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-description",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-channel",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-launch-date",
+                                                         "label":  "",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     },
+                                                     {
+                                                         "selector":  "#campaign-review-draft",
+                                                         "label":  "Review",
+                                                         "previous_status":  "EXCEPTION: reachable but not explicitly exercised in this run",
+                                                         "reclassified_category":  "B",
+                                                         "reclassification_reason":  "Reachable but not explicitly exercised in prior run.",
+                                                         "phase8_action_required":  true
+                                                     }
+                                                 ]
+                                 },
+    "open_issues":  {
+                        "ci_red":  true,
+                        "browser_control_gap":  true,
+                        "historical_analysis_not_truly_browser_initiated":  true,
+                        "training_not_truly_browser_initiated":  true,
+                        "scoring_5m_not_truly_browser_initiated":  true,
+                        "unexplained_browser_404_or_error":  true,
+                        "stale_source_hash_docs":  true,
+                        "absolute_machine_paths_in_canonical_summaries":  true,
+                        "raw_gzip_hash_drift_with_stable_content":  true,
+                        "dirty_override_used_previously":  true,
+                        "branch_protection_unresolved_without_auth":  true
+                    },
+    "stop_gate":  {
+                      "status":  "COMPLETE",
+                      "functional_code_changes":  "none"
+                  }
+}

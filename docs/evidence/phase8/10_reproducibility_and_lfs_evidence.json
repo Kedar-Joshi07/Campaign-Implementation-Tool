@@ -1,0 +1,145 @@
+{
+  "generated_at": "2026-09-07T15:26:00Z",
+  "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/10_STEP_10_DETERMINISTIC_GENERATION_PATH_HASH_AND_LFS_CLEANUP.md",
+  "python_executable": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe",
+  "equivalence_checks": [
+    {
+      "dataset": "customers",
+      "canonical": {
+        "path": "data/customer_master_125000.csv.gz",
+        "size_bytes": 6145025,
+        "rows": 125000,
+        "compressed_sha256": "8a2c5601a96dc54708246a84cfd7715cf53e3d6f95e67472b1e2c2428bf0d18f",
+        "decompressed_sha256": "fa0e53b055e0340d0a7cfc6dfdd2fc8bcf18c606e7c8b2b13853ef9a561447bd"
+      },
+      "regenerated": {
+        "path": "artifacts/phase8_step10_regen_tmp/customer_master_125000.csv.gz",
+        "size_bytes": 6145025,
+        "rows": 125000,
+        "compressed_sha256": "8a2c5601a96dc54708246a84cfd7715cf53e3d6f95e67472b1e2c2428bf0d18f",
+        "decompressed_sha256": "fa0e53b055e0340d0a7cfc6dfdd2fc8bcf18c606e7c8b2b13853ef9a561447bd"
+      },
+      "decompressed_sha_equal": true,
+      "raw_gzip_sha_equal": true
+    },
+    {
+      "dataset": "campaign_sales",
+      "canonical": {
+        "path": "data/campaign_sales_570000.csv.gz",
+        "size_bytes": 6466267,
+        "rows": 570000,
+        "compressed_sha256": "89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116",
+        "decompressed_sha256": "f0a391bbd2ef8262644b1f5c879f3ba1d473476889db8b48e6fde222ea640e0d"
+      },
+      "regenerated": {
+        "path": "artifacts/phase8_step10_regen_tmp/campaign_sales_570000.csv.gz",
+        "size_bytes": 6466267,
+        "rows": 570000,
+        "compressed_sha256": "89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116",
+        "decompressed_sha256": "f0a391bbd2ef8262644b1f5c879f3ba1d473476889db8b48e6fde222ea640e0d"
+      },
+      "decompressed_sha_equal": true,
+      "raw_gzip_sha_equal": true
+    },
+    {
+      "dataset": "demographics",
+      "canonical": {
+        "path": "data/usa_demographic_synthetic_5000000_rows.csv.gz",
+        "size_bytes": 333670533,
+        "rows": 5000000,
+        "compressed_sha256": "adb33ce1daf92b547171960f69f893fec93296d3d514ac7e1bdffbf5c736ac71",
+        "decompressed_sha256": "a664b1a3904079a3c8b5c398de10009d52e8fd2ec6b4751a5caebb4512cb7dba"
+      },
+      "regenerated": {
+        "path": "artifacts/phase8_step10_regen_tmp/usa_demographic_synthetic_5000000_rows.csv.gz",
+        "size_bytes": 333670533,
+        "rows": 5000000,
+        "compressed_sha256": "adb33ce1daf92b547171960f69f893fec93296d3d514ac7e1bdffbf5c736ac71",
+        "decompressed_sha256": "a664b1a3904079a3c8b5c398de10009d52e8fd2ec6b4751a5caebb4512cb7dba"
+      },
+      "decompressed_sha_equal": true,
+      "raw_gzip_sha_equal": true
+    }
+  ],
+  "copied_files": [
+    "data/customer_master_125000.csv.gz",
+    "data/customer_master_sample_10000.csv",
+    "data/customer_master_summary.json",
+    "data/campaign_sales_570000.csv.gz",
+    "data/campaign_sales_sample_10000.csv",
+    "data/campaign_sales_summary.json",
+    "data/campaign_master.csv",
+    "data/product_master.csv",
+    "data/usa_demographic_synthetic_5000000_rows.csv.gz",
+    "data/usa_demographic_synthetic_summary.json",
+    "data/usa_demographic_synthetic_sample_10000.csv",
+    "data/usa_demographic_state_reference.csv"
+  ],
+  "final_canonical_hashes": [
+    {
+      "path": "data/customer_master_125000.csv.gz",
+      "size_bytes": 6145025,
+      "rows": 125000,
+      "compressed_sha256": "8a2c5601a96dc54708246a84cfd7715cf53e3d6f95e67472b1e2c2428bf0d18f",
+      "decompressed_sha256": "fa0e53b055e0340d0a7cfc6dfdd2fc8bcf18c606e7c8b2b13853ef9a561447bd"
+    },
+    {
+      "path": "data/campaign_sales_570000.csv.gz",
+      "size_bytes": 6466267,
+      "rows": 570000,
+      "compressed_sha256": "89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116",
+      "decompressed_sha256": "f0a391bbd2ef8262644b1f5c879f3ba1d473476889db8b48e6fde222ea640e0d"
+    },
+    {
+      "path": "data/usa_demographic_synthetic_5000000_rows.csv.gz",
+      "size_bytes": 333670533,
+      "rows": 5000000,
+      "compressed_sha256": "adb33ce1daf92b547171960f69f893fec93296d3d514ac7e1bdffbf5c736ac71",
+      "decompressed_sha256": "a664b1a3904079a3c8b5c398de10009d52e8fd2ec6b4751a5caebb4512cb7dba"
+    }
+  ],
+  "portability_checks": {
+    "campaign_sales_summary": {
+      "file": "data/campaign_sales_summary.json",
+      "path_fields": {
+        "main_output": "data/campaign_sales_570000.csv.gz",
+        "campaign_master": "data/campaign_master.csv",
+        "product_master": "data/product_master.csv",
+        "sample_output": "data/campaign_sales_sample_10000.csv"
+      },
+      "absolute_paths": {}
+    },
+    "customer_master_summary": {
+      "file": "data/customer_master_summary.json",
+      "path_fields": {
+        "output": "data/customer_master_125000.csv.gz",
+        "sample_output": "data/customer_master_sample_10000.csv"
+      },
+      "absolute_paths": {}
+    },
+    "usa_demographic_synthetic_summary": {
+      "file": "data/usa_demographic_synthetic_summary.json",
+      "path_fields": {
+        "file": "data/usa_demographic_synthetic_5000000_rows.csv.gz"
+      },
+      "absolute_paths": {}
+    }
+  },
+  "git_lfs": {
+    "status_output": "On branch main\nObjects to be pushed to origin/main:\n\n\nObjects to be committed:\n\n\nObjects not staged for commit:\n\n\tREADME.md (Git: 5349455 -> File: 8943801)\n\tapp/schemas/audience.py (Git: 9fb4061 -> File: b94f4da)\n\tdata/README.md (Git: 018f421 -> File: 8ccb0e7)\n\tdata/campaign_sales_570000.csv.gz (LFS: 6d84305 -> File: 89e6f84)\n\tdata/campaign_sales_summary.json (Git: f80735e -> File: 9d4d175)\n\tdata/customer_master_125000.csv.gz (LFS: 0cedbaa -> File: 8a2c560)\n\tdata/customer_master_summary.json (Git: eba370d -> File: 074b03b)\n\tdata/usa_demographic_synthetic_5000000_rows.csv.gz (LFS: abaf511 -> File: adb33ce)\n\tdata/usa_demographic_synthetic_summary.json (Git: 2a2c555 -> File: b957c5f)\n\tdata_generation_scripts/generate_campaign_sales.py (Git: 1cc12ee -> File: ae325ed)\n\tdata_generation_scripts/generate_us_customer_master.py (Git: 97c7258 -> File: 3dc827f)\n\tdata_generation_scripts/generate_us_demographic_synthetic.py (Git: 0807802 -> File: 4ac8524)\n\tdocs/evidence/CLEANROOM_PHASE1_TO_PHASE7_REPORT.md (Git: ff68619 -> File: 09de862)\n\tdocs/evidence/README.md (Git: f234ac4 -> File: acc04ec)\n\tdocs/evidence/cleanroom_phase1_to_phase7.json (Git: 08621c1 -> File: 5d3e95b)\n\tfrontend/index.html (Git: 0a48752 -> File: 33d03f4)\n\tpytest.ini (Git: 3b7b343 -> File: 8e68b92)\n\tscripts/validation/system_chrome_campaign_test.py (Git: 853797f -> File: deleted)\n\tscripts/validation/system_chrome_full_fresh_e2e.py (Git: 9aa78ff -> File: 9d23e1c)",
+    "ls_files_output": "6d84305c09 - data/campaign_sales_570000.csv.gz\n0cedbaa5d5 - data/customer_master_125000.csv.gz\nabaf51153c - data/usa_demographic_synthetic_5000000_rows.csv.gz"
+  },
+  "large_file_scan": {
+    "threshold_bytes": 52428800,
+    "large_files": [
+      {
+        "path": "data/usa_demographic_synthetic_5000000_rows.csv.gz",
+        "size_bytes": 333670533
+      }
+    ],
+    "non_lfs_large_files": [],
+    "duplicate_nested_full_datasets": []
+  },
+  "overall_status": "PASS",
+  "notes": "Decompressed canonical content remained equivalent across regenerated outputs. Canonical compressed assets were refreshed under deterministic gzip settings and validated against LFS and duplicate-file checks."
+}

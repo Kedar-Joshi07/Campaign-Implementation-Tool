@@ -392,6 +392,7 @@ def test_campaign_builder_shell_contains_required_regions_and_controls(
     assert 'data-view="campaigns"' in html
     assert 'data-view-target="campaigns"' in html
     for control_id in (
+        "campaign-new-draft",
         "campaigns-refresh",
         "campaigns-retry",
         "campaign-step-1",
@@ -451,5 +452,8 @@ def test_campaign_builder_script_uses_campaign_api_workflow_and_export_profiles(
     assert "campaign-prefill-audience" in script
     assert "triggerDownload(API_PATHS.campaignExportCsv(campaignId), filename)" in script
     assert "startExportHistoryPolling(campaignId)" in script
+    assert "function startNewCampaignDraft()" in script
+    assert 'setCampaignAnnouncement("New campaign draft form ready.")' in script
     assert '"Currentness", detail.currentness?.is_current ? "CURRENT" : "STALE"' in script
     assert "Campaign is current for immutable audience and source/model provenance." in script
+    assert script.index("await loadSelectedAudienceDetail({ force });") < script.index('setState("ready");')

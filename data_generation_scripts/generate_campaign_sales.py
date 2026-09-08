@@ -53,8 +53,10 @@ from __future__ import annotations
 import argparse
 import csv
 import gzip
+import io
 import json
 import math
+from contextlib import contextmanager
 from collections import Counter
 from dataclasses import dataclass, asdict
 from datetime import date, datetime, timedelta
@@ -62,6 +64,36 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _portable_repo_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        relative = resolved.relative_to(REPO_ROOT)
+        return str(relative).replace("\\", "/")
+    except ValueError:
+        return resolved.name
+
+
+@contextmanager
+def _open_output_csv(path: Path, *, compresslevel: int = 9):
+    if str(path).endswith(".gz"):
+        with open(path, "wb") as raw_out:
+            with gzip.GzipFile(
+                fileobj=raw_out,
+                mode="wb",
+                compresslevel=compresslevel,
+                mtime=0,
+                filename="",
+            ) as gz_out:
+                with io.TextIOWrapper(gz_out, encoding="utf-8", newline="") as text_out:
+                    yield text_out
+    else:
+        with open(path, "w", encoding="utf-8", newline="") as text_out:
+            yield text_out
 
 
 # -----------------------------------------------------------------------------
@@ -632,8 +664,7 @@ def generate(args: argparse.Namespace) -> None:
     underage_contact_count = 0
     minimum_age_at_contact: int | None = None
 
-    opener = gzip.open if str(out_file).endswith(".gz") else open
-    with opener(out_file, "wt", encoding="utf-8", newline="") as fh:
+    with _open_output_csv(out_file, compresslevel=9) as fh:
         writer = csv.writer(fh)
         writer.writerow(CAMPAIGN_SALES_HEADERS)
 
@@ -951,10 +982,10 @@ def generate(args: argparse.Namespace) -> None:
         "product_category_distribution": dict(product_category_counter),
         "label_semantics": "pu_label=1 is a confirmed campaign-attributed purchase. pu_label=0 is unlabeled and must NOT be treated as a confirmed negative.",
         "anti_leakage": "Prior behavior is used internally in chronological order to synthesize realistic outcomes but is not stored as precomputed raw features. Future feature engineering should rebuild prior features using only events before each observation date.",
-        "main_output": str(out_file),
-        "campaign_master": str(campaign_master_file),
-        "product_master": str(product_master_file),
-        "sample_output": str(sample_file),
+        "main_output": _portable_repo_path(out_file),
+        "campaign_master": _portable_repo_path(campaign_master_file),
+        "product_master": _portable_repo_path(product_master_file),
+        "sample_output": _portable_repo_path(sample_file),
     }
     with open(summary_file, "w", encoding="utf-8") as jf:
         json.dump(summary, jf, indent=2)

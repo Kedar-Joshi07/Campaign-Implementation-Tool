@@ -41,6 +41,7 @@ artifacts/*.db-shm
 artifacts/**/*.db
 artifacts/**/*.db-wal
 artifacts/**/*.db-shm
+artifacts/phase8_step*_latest_run.log
 
 # Temp/backup files
 *.tmp

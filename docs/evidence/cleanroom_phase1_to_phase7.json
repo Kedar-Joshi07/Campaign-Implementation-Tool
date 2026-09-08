@@ -1,8 +1,8 @@
 {
-  "completed_at": "2026-09-04T14:38:35Z",
-  "generated_at": "2026-09-04T14:36:56Z",
+  "completed_at": "2026-09-07T15:05:44Z",
+  "generated_at": "2026-09-07T14:59:45Z",
   "overall_status": "PASS",
-  "runtime_root": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv",
+  "runtime_root": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-wcy70ibc",
   "stages": {
     "cleanup": {
       "runtime_removed": true,
@@ -50,7 +50,7 @@
           "run_b": "082af8365afe0471d7d1781a1affc641a2b7c6d390d3556a1a04ee6b1c1f793f"
         }
       },
-      "duration_seconds": 36.091,
+      "duration_seconds": 47.952,
       "python": {
         "executable": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe",
         "version": "3.12.0"
@@ -61,14 +61,14 @@
         "demographics": 20260905
       },
       "selected_input_files": {
-        "campaign_sales": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\generated\\run_a\\campaign_sales.csv.gz",
-        "customers": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\generated\\run_a\\customers.csv.gz",
-        "demographics": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\generated\\run_a\\demographics.csv.gz"
+        "campaign_sales": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-wcy70ibc\\generated\\run_a\\campaign_sales.csv.gz",
+        "customers": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-wcy70ibc\\generated\\run_a\\customers.csv.gz",
+        "demographics": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-wcy70ibc\\generated\\run_a\\demographics.csv.gz"
       },
       "status": "PASS"
     },
     "step2": {
-      "duration_seconds": 3.962,
+      "duration_seconds": 9.686,
       "identity_isolation": {
         "customer_person_id_overlap_count": 0
       },
@@ -90,7 +90,7 @@
         }
       },
       "reconciliation": {
-        "database_path": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-67z3ucqv\\cleanroom.db",
+        "database_path": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-wcy70ibc\\cleanroom.db",
         "datasets": {
           "campaign_sales": {
             "acceptable_count": true,
@@ -116,7 +116,7 @@
               "total_rows": 9000,
               "underage_campaign_contact_count": 0
             },
-            "query_seconds": 0.11752,
+            "query_seconds": 0.183675,
             "status": "OK",
             "structural_error_count": 0,
             "structural_issues": {
@@ -142,7 +142,7 @@
               "null_or_blank_critical_identifiers": 0,
               "total_rows": 1200
             },
-            "query_seconds": 0.002003,
+            "query_seconds": 0.005278,
             "status": "OK",
             "structural_error_count": 0,
             "structural_issues": {
@@ -172,7 +172,7 @@
               "min_individual_yearly_income": 0.0,
               "total_rows": 12000
             },
-            "query_seconds": 0.041591,
+            "query_seconds": 0.057409,
             "status": "OK",
             "structural_error_count": 0,
             "structural_issues": {
@@ -185,15 +185,15 @@
             }
           }
         },
-        "generated_at": "2026-09-04T14:37:37Z",
+        "generated_at": "2026-09-07T15:00:43Z",
         "overall_status": "OK",
-        "total_query_seconds": 0.179943
+        "total_query_seconds": 0.322638
       },
       "status": "PASS"
     },
     "step3": {
       "analysis_run_id": 1,
-      "duration_seconds": 5.054,
+      "duration_seconds": 15.199,
       "model_contract": {
         "artifact_sha256": "382994c1343905326477465108264dcd60ff9471da97d95ea4e28a22ebdfadb7",
         "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
@@ -246,7 +246,7 @@
       "status": "PASS"
     },
     "step4": {
-      "duration_seconds": 19.352,
+      "duration_seconds": 102.751,
       "filter_family_checks": {
         "age": 12000,
         "band": 720,
@@ -277,7 +277,7 @@
         "active_job": null,
         "analytics_contract_version": "1",
         "analytics_prepared": true,
-        "analytics_snapshot_created_at": "2026-09-04T14:37:43Z",
+        "analytics_snapshot_created_at": "2026-09-07T15:01:05Z",
         "boundary_count": 100,
         "currentness_issues": [],
         "is_canonical": true,
@@ -373,7 +373,7 @@
           }
         }
       },
-      "duration_seconds": 33.296,
+      "duration_seconds": 182.147,
       "source_drift": {
         "blocked_export_detail": "saved audience: Saved scoring run provenance is stale or invalid.",
         "blocked_export_status": 409,

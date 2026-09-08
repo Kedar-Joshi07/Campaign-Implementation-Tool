@@ -104,11 +104,17 @@ python -m venv .venv
 
 These files are authoritative tracked inputs for reproducible local setup.
 
-| File | Expected rows | Bytes | SHA-256 |
-|---|---:|---:|---|
-| data/customer_master_125000.csv.gz | 125,000 | 6,145,052 | 5e80e1f25e433373f5f4b066e4d8d3a723cb4ae8d5af028895ea469d3c533a2e |
-| data/campaign_sales_570000.csv.gz | 570,000 | 6,466,293 | d3997bf8e4d235dd002af3f50b3875532c93954ac94571da5ad007118fd84c4f |
-| data/usa_demographic_synthetic_5000000_rows.csv.gz | 5,000,000 | 333,670,576 | 7f896e56e7d0b16149718111cabc53868ecd1584429a0f76e2480e4c6bfe9c35 |
+Checksum policy:
+
+- Raw GZIP SHA-256: byte-level identity for the tracked compressed artifact.
+- Decompressed content SHA-256: semantic/provenance checksum for drift detection.
+- LFS object ref: pointer identity from git lfs ls-files.
+
+| File | Expected rows | Bytes | Raw GZIP SHA-256 | Decompressed content SHA-256 | LFS object ref |
+|---|---:|---:|---|---|---|
+| data/customer_master_125000.csv.gz | 125,000 | 6,145,025 | 8a2c5601a96dc54708246a84cfd7715cf53e3d6f95e67472b1e2c2428bf0d18f | fa0e53b055e0340d0a7cfc6dfdd2fc8bcf18c606e7c8b2b13853ef9a561447bd | 0cedbaa5d5 |
+| data/campaign_sales_570000.csv.gz | 570,000 | 6,466,267 | 89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116 | f0a391bbd2ef8262644b1f5c879f3ba1d473476889db8b48e6fde222ea640e0d | 6d84305c09 |
+| data/usa_demographic_synthetic_5000000_rows.csv.gz | 5,000,000 | 333,670,533 | adb33ce1daf92b547171960f69f893fec93296d3d514ac7e1bdffbf5c736ac71 | a664b1a3904079a3c8b5c398de10009d52e8fd2ec6b4751a5caebb4512cb7dba | abaf51153c |
 
 If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs pull before imports.
 

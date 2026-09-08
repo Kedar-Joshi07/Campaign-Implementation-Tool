@@ -30,13 +30,16 @@ class AudiencePreparationStatusResponse(AudienceApiResponseModel):
     model_run_id: int = Field(gt=0)
     status: str
     rank_contract_version: str
+    analytics_contract_version: str | None = None
     prepared: bool
+    analytics_prepared: bool | None = None
     is_canonical: bool
     source_verified: bool
     ready_for_current_audience_actions: bool
     currentness_issues: list[str] = Field(default_factory=list, max_length=5)
     boundary_count: int = Field(ge=0, le=100)
     total_population: int = Field(ge=0)
+    analytics_snapshot_created_at: datetime | None = None
     active_job: JobSummaryResponse | None = None
 
 

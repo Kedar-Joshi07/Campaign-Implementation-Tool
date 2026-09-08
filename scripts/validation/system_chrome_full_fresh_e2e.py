@@ -9,7 +9,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
+from playwright.sync_api import Page, sync_playwright
+
+try:
+    from scripts.validation.browser.system_browser import (
+        capture_page_events,
+        launch_system_browser_session,
+        save_screenshot,
+    )
+except ModuleNotFoundError:
+    from browser.system_browser import (  # type: ignore[no-redef]
+        capture_page_events,
+        launch_system_browser_session,
+        save_screenshot,
+    )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EVIDENCE_DIR = PROJECT_ROOT / "docs" / "evidence" / "full_fresh_e2e"
@@ -17,7 +30,6 @@ SCREENSHOT_DIR = EVIDENCE_DIR / "screenshots"
 INVENTORY_PATH = EVIDENCE_DIR / "ui_control_inventory.json"
 COVERAGE_PATH = EVIDENCE_DIR / "UI_CONTROL_COVERAGE.md"
 RESULT_PATH = EVIDENCE_DIR / "system_chrome_full_fresh_e2e.json"
-CHROME_PATH = Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
 APP_URL = "http://127.0.0.1:8000/"
 DB_PATH = PROJECT_ROOT / "data" / "campaign_poc.db"
 
@@ -51,7 +63,7 @@ def _safe_int(value: str) -> int:
 def _capture(page: Page, state: RunState, name: str, full_page: bool = True) -> None:
     SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
     path = SCREENSHOT_DIR / f"{name}.png"
-    page.screenshot(path=str(path), full_page=full_page)
+    save_screenshot(page, path, full_page=full_page)
     state.screenshots.append(str(path.relative_to(PROJECT_ROOT)).replace("\\", "/"))
 
 
@@ -1123,74 +1135,61 @@ def _run_pytest_formula_fixture() -> dict[str, Any]:
 
 
 def run() -> dict[str, Any]:
-    if not CHROME_PATH.is_file():
-        raise FileNotFoundError(f"System Chrome not found at {CHROME_PATH}")
-
     state = RunState(console_errors=[], page_errors=[], request_failures=[], screenshots=[])
-    results: dict[str, Any] = {"generated_at": _now_iso(), "browser": "system_chrome"}
+    results: dict[str, Any] = {"generated_at": _now_iso()}
 
     with sync_playwright() as playwright:
-        browser: Browser = playwright.chromium.launch(
-            executable_path=str(CHROME_PATH),
-            headless=True,
-            args=["--disable-popup-blocking"],
-        )
-        context: BrowserContext = browser.new_context(ignore_https_errors=True, viewport={"width": 1440, "height": 900})
-        page: Page = context.new_page()
-
-        def on_console(msg):
-            if msg.type == "error":
-                state.console_errors.append(msg.text)
-
-        def on_page_error(err):
-            state.page_errors.append(str(err))
-
-        def on_request_failed(req):
-            state.request_failures.append(
-                {
-                    "method": req.method,
-                    "url": req.url,
-                    "failure": req.failure.error_text if req.failure else "unknown",
-                }
-            )
-
-        page.on("console", on_console)
-        page.on("pageerror", on_page_error)
-        page.on("requestfailed", on_request_failed)
-
         try:
-            page.goto(APP_URL, wait_until="domcontentloaded")
+            with launch_system_browser_session(
+                playwright,
+                app_url=APP_URL,
+                headless=True,
+                viewport={"width": 1440, "height": 900},
+            ) as session:
+                page = session.page
+                results["browser"] = session.metadata.to_dict()
+                with capture_page_events(page) as events:
+                    results["step5"] = _run_step5_overview_and_data(page, state)
+                    results["step6"] = _run_step6_historical(page, state)
+                    results["step7"] = _run_step7_model(page, state)
+                    results["step8_9"] = _run_step8_9_audience(page, state)
+                    results["step10_12"] = _run_step10_12_campaigns(page, state)
 
-            results["step5"] = _run_step5_overview_and_data(page, state)
-            results["step6"] = _run_step6_historical(page, state)
-            results["step7"] = _run_step7_model(page, state)
-            results["step8_9"] = _run_step8_9_audience(page, state)
-            results["step10_12"] = _run_step10_12_campaigns(page, state)
+                    # Step 13 accessibility/responsive/coverage evidence.
+                    results["step13"] = {
+                        "accessibility": _run_keyboard_accessibility_smoke(page),
+                        "responsive": _run_responsive_checks(page, state),
+                    }
 
-            # Step 13 accessibility/responsive/coverage evidence.
-            results["step13"] = {
-                "accessibility": _run_keyboard_accessibility_smoke(page),
-                "responsive": _run_responsive_checks(page, state),
-            }
+                    # Security fixture evidence hook.
+                    results["step12_security_fixture_pytest"] = _run_pytest_formula_fixture()
+                    results["step12_recent_export_events"] = _query_latest_formula_fixture_summary()
 
-            # Security fixture evidence hook.
-            results["step12_security_fixture_pytest"] = _run_pytest_formula_fixture()
-            results["step12_recent_export_events"] = _query_latest_formula_fixture_summary()
+                    controls = _load_inventory_controls()
+                    reachable = _collect_dom_actionable_selectors(page)
+                    coverage_md = _build_coverage_markdown(controls, reachable, results, state)
+                    COVERAGE_PATH.write_text(coverage_md, encoding="utf-8")
 
-            controls = _load_inventory_controls()
-            reachable = _collect_dom_actionable_selectors(page)
-            coverage_md = _build_coverage_markdown(controls, reachable, results, state)
-            COVERAGE_PATH.write_text(coverage_md, encoding="utf-8")
+                    state.console_errors = events.console_errors
+                    state.page_errors = events.page_errors
+                    state.request_failures = events.request_failures
 
-            results["ui_errors"] = {
-                "console_errors": state.console_errors,
-                "page_errors": state.page_errors,
-                "request_failures": state.request_failures,
-            }
-            results["screenshots"] = state.screenshots
-            results["ui_control_coverage_path"] = str(COVERAGE_PATH.relative_to(PROJECT_ROOT)).replace("\\", "/")
-            results["overall_status"] = "PASS"
+                results["ui_errors"] = {
+                    "console_errors": state.console_errors,
+                    "page_errors": state.page_errors,
+                    "request_failures": state.request_failures,
+                }
+                results["screenshots"] = state.screenshots
+                results["ui_control_coverage_path"] = str(COVERAGE_PATH.relative_to(PROJECT_ROOT)).replace("\\", "/")
+                results["overall_status"] = "PASS"
         except Exception as exc:
+            if "browser" not in results:
+                results["browser"] = {
+                    "name": "unresolved",
+                    "executable_path": "",
+                    "product_version": "unknown",
+                    "execution_mode": "headless",
+                }
             results["overall_status"] = "FAIL"
             results["error"] = str(exc)
             results["ui_errors"] = {
@@ -1199,9 +1198,6 @@ def run() -> dict[str, Any]:
                 "request_failures": state.request_failures,
             }
             results["screenshots"] = state.screenshots
-        finally:
-            context.close()
-            browser.close()
 
     RESULT_PATH.write_text(json.dumps(results, indent=2), encoding="utf-8")
     return results

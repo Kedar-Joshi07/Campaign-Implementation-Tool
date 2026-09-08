@@ -457,6 +457,12 @@ dd {
     padding: 28px 24px;
   }
 
+  .page-intro > .analysis-form-actions {
+    align-self: stretch;
+    width: 100%;
+    min-width: 0;
+  }
+
   .metric-grid,
   .overview-detail-grid {
     grid-template-columns: 1fr;

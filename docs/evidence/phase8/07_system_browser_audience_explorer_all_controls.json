@@ -1,0 +1,332 @@
+{
+  "generated_at": "2026-09-07T19:30:51Z",
+  "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/07_STEP_07_SYSTEM_BROWSER_AUDIENCE_EXPLORER_ALL_CONTROLS.md",
+  "expected_step6_scoring_run_id": 4,
+  "server": {
+    "managed": true,
+    "started_by_script": true,
+    "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+  },
+  "resolved_audience_run": {
+    "scoring_run_id": 4,
+    "model_run_id": 4,
+    "completed_at": "2026-09-06T17:18:40Z",
+    "scored_person_count": 5000000,
+    "prepared": true,
+    "is_canonical": true,
+    "source_verified": true,
+    "ready_for_current_audience_actions": true,
+    "currentness_issues": [],
+    "rank_contract_version": "1",
+    "boundary_count": 100,
+    "analytics_prepared": true,
+    "analytics_contract_version": "1",
+    "analytics_snapshot_created_at": "2026-09-07T02:14:30Z"
+  },
+  "preparation_precondition": {
+    "precondition_mode": "already_ready",
+    "job_statuses": [],
+    "poll_checks": 0,
+    "final_status": {
+      "scoring_run_id": 4,
+      "model_run_id": 4,
+      "status": "COMPLETED",
+      "rank_contract_version": "1",
+      "analytics_contract_version": "1",
+      "prepared": true,
+      "analytics_prepared": true,
+      "is_canonical": true,
+      "source_verified": true,
+      "ready_for_current_audience_actions": true,
+      "currentness_issues": [],
+      "analytics_snapshot_created_at": "2026-09-07T02:14:30Z",
+      "boundary_count": 100,
+      "total_population": 5000000,
+      "active_job": null
+    }
+  },
+  "browser": {
+    "name": "system_chrome",
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "product_version": "152.0.7977.82",
+    "execution_mode": "headless"
+  },
+  "preparation": {
+    "active_scoring_run_id": 4,
+    "source_verified_badge": "Current source verified",
+    "ui_observations": {
+      "states_seen": [
+        {
+          "state": "loading",
+          "observed_at": "2026-09-07T19:31:20Z"
+        },
+        {
+          "state": "loading",
+          "observed_at": "2026-09-07T19:31:20Z"
+        },
+        {
+          "state": "loading",
+          "observed_at": "2026-09-07T19:31:21Z"
+        },
+        {
+          "state": "workspace",
+          "observed_at": "2026-09-07T19:31:21Z"
+        }
+      ],
+      "messages": [],
+      "mismatch_runs": [],
+      "submit_clicked": false,
+      "retry_clicked": false
+    }
+  },
+  "disclaimers": {
+    "context_not_probability": [
+      "Percentile 1 = top 1%. Decile 1 = top 10%. Propensity score is a relative model affinity score, not a purchase probability.",
+      "Audience Explorer shows only approved model-compatible demographic attributes. Contact PII is excluded here and is only available through the explicit Phase 7 finalized-campaign export contract.",
+      "Rank bands: ELITE 1%; VERY HIGH 2-5%; HIGH 6-10%; MEDIUM 11-25%; LOW 26-50%; VERY LOW 51-100%.",
+      "Audience Explorer uses the Phase 6 comparison-band contract. Historical Analysis may use its original Phase 2 reporting bands."
+    ],
+    "profile_no_identity_linking": "Aggregate demographic comparison only. No prospect is matched to a historical customer."
+  },
+  "ui_pagination": {
+    "before_rows": 50,
+    "after_rows": 100,
+    "load_more_clicked": true,
+    "status_text": "More results are available."
+  },
+  "scenarios": {
+    "1_no_filters_all_matching": {
+      "estimate_matching": 5000000,
+      "estimate_selected": 5000000,
+      "estimate_score_range": "0.109688 - 0.986922",
+      "estimate_score_mean": "0.287378",
+      "search_rows_rendered": 50,
+      "search_has_more": true,
+      "profile_kpi_universe": 5000000,
+      "profile_kpi_matching": 5000000,
+      "profile_kpi_selected": 5000000,
+      "profile_kpi_historical_positives": 35416,
+      "profile_summary_text": "Selected vs universe by Age band"
+    },
+    "2_top_1_percent": {
+      "estimate_matching": 50000,
+      "estimate_selected": 50000,
+      "estimate_score_range": "0.487114 - 0.986922",
+      "estimate_score_mean": "0.522584",
+      "search_rows_rendered": 50,
+      "search_has_more": true,
+      "profile_kpi_universe": 5000000,
+      "profile_kpi_matching": 50000,
+      "profile_kpi_selected": 50000,
+      "profile_kpi_historical_positives": 35416,
+      "profile_summary_text": "Selected vs universe by Age band"
+    },
+    "3_top_decile": {
+      "estimate_matching": 500000,
+      "estimate_selected": 500000,
+      "estimate_score_range": "0.394674 - 0.986922",
+      "estimate_score_mean": "0.437382",
+      "search_rows_rendered": 50,
+      "search_has_more": true,
+      "profile_kpi_universe": 5000000,
+      "profile_kpi_matching": 500000,
+      "profile_kpi_selected": 500000,
+      "profile_kpi_historical_positives": 35416,
+      "profile_summary_text": "Selected vs universe by Age band"
+    },
+    "4_demographic_filter": {
+      "estimate_matching": 67943,
+      "estimate_selected": 67943,
+      "estimate_score_range": "0.123122 - 0.87688",
+      "estimate_score_mean": "0.279758",
+      "search_rows_rendered": 50,
+      "search_has_more": true,
+      "profile_kpi_universe": 5000000,
+      "profile_kpi_matching": 67943,
+      "profile_kpi_selected": 67943,
+      "profile_kpi_historical_positives": 35416,
+      "profile_summary_text": "Selected vs universe by Age band"
+    },
+    "5_rank_plus_demographic": {
+      "estimate_matching": 809,
+      "estimate_selected": 809,
+      "estimate_score_range": "0.487181 - 0.87688",
+      "estimate_score_mean": "0.517605",
+      "search_rows_rendered": 50,
+      "search_has_more": true,
+      "profile_kpi_universe": 5000000,
+      "profile_kpi_matching": 809,
+      "profile_kpi_selected": 809,
+      "profile_kpi_historical_positives": 35416,
+      "profile_summary_text": "Selected vs universe by Age band"
+    },
+    "6_top_n_50k": {
+      "estimate_matching": 5000000,
+      "estimate_selected": 50000,
+      "estimate_score_range": "0.109688 - 0.986922",
+      "estimate_score_mean": "0.287378",
+      "search_rows_rendered": 50,
+      "search_has_more": true,
+      "profile_kpi_universe": 5000000,
+      "profile_kpi_matching": 5000000,
+      "profile_kpi_selected": 50000,
+      "profile_kpi_historical_positives": 35416,
+      "profile_summary_text": "Selected vs universe by Age band"
+    },
+    "7_invalid_score_range": {
+      "scenario": "scenario_7_invalid_score_range",
+      "error": "Score min cannot exceed score max."
+    },
+    "8_invalid_age_range": {
+      "scenario": "scenario_8_invalid_age_range",
+      "error": "Age min cannot exceed age max."
+    },
+    "9_invalid_income_range": {
+      "scenario": "scenario_9_invalid_income_range",
+      "error": "Income min cannot exceed income max."
+    },
+    "10_invalid_family_range": {
+      "scenario": "scenario_10_invalid_family_range",
+      "error": "Family member count min cannot exceed max."
+    },
+    "11_invalid_top_n": {
+      "scenario": "scenario_11_invalid_top_n",
+      "error": "Top N target count must be a positive whole number."
+    },
+    "12_reset_after_error": {
+      "scenario": "scenario_12_reset_after_error",
+      "form_error_cleared": true,
+      "filter_summary": "No active filters. Selection: all matching prospects."
+    },
+    "extra_empty_result": {
+      "estimate_matching": 0,
+      "estimate_selected": 0,
+      "estimate_score_range": "\u2014 - \u2014",
+      "estimate_score_mean": "\u2014",
+      "search_rows_rendered": 0,
+      "search_has_more": false,
+      "profile_kpi_universe": 5000000,
+      "profile_kpi_matching": 0,
+      "profile_kpi_selected": 0,
+      "profile_kpi_historical_positives": 35416,
+      "profile_summary_text": "Selected vs universe by Age band"
+    },
+    "extra_categorical_exercise": {
+      "estimate_matching": 943,
+      "estimate_selected": 943,
+      "estimate_score_range": "0.227909 - 0.5636",
+      "estimate_score_mean": "0.359183",
+      "search_rows_rendered": 50,
+      "search_has_more": true,
+      "profile_kpi_universe": 5000000,
+      "profile_kpi_matching": 943,
+      "profile_kpi_selected": 943,
+      "profile_kpi_historical_positives": 35416,
+      "profile_summary_text": "Selected vs universe by Age band"
+    }
+  },
+  "profile_controls": {
+    "dimensions_exercised": [
+      "age_band",
+      "individual_yearly_income_band",
+      "family_member_count_band",
+      "gender",
+      "state"
+    ],
+    "comparison_tabs_exercised": [
+      "selected_vs_universe",
+      "selected_vs_historical_positives"
+    ]
+  },
+  "saved_audience_flow": {
+    "saved_audience_id": 10,
+    "saved_audience_name": "Phase8 Step7 Current Audience 1788809854",
+    "reopened_from_list": true,
+    "reopen_note": "Saved audience row reopened successfully from list.",
+    "currentness_badge": "CURRENT - usable in Campaign Builder",
+    "campaign_handoff_hash": "#campaigns",
+    "audience_return_hash": "#audience-explorer",
+    "stale_definition_exercised": false
+  },
+  "ui_table_check": {
+    "rendered_rows": 100,
+    "load_more_status": "More results are available."
+  },
+  "ui_errors": {
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": []
+  },
+  "backend_assertions": {
+    "boundaries_and_analytics": {
+      "boundary_count": 100,
+      "first_percentile_rank": 50000,
+      "tenth_percentile_rank": 500000,
+      "hundredth_percentile_rank": 5000000,
+      "total_population": 5000000,
+      "analytics_contract_version": "1",
+      "analytics_snapshot_created_at": "2026-09-07T02:14:30Z",
+      "analytics_prepared": true,
+      "is_canonical": true,
+      "source_verified": true,
+      "snapshot_population_count": 5000000
+    },
+    "search_contract": {
+      "checked_pages": 5,
+      "unique_person_ids": 200
+    }
+  },
+  "inventory_status_updates": {
+    "audience-explorer:#audience-explorer-refresh": "PASS",
+    "audience-explorer:#audience-prepare-submit": "JUSTIFIED_EXCLUSIVE",
+    "audience-explorer:#audience-prepare-retry": "JUSTIFIED_EXCLUSIVE",
+    "audience-explorer:#audience-selection-all": "PASS",
+    "audience-explorer:#audience-apply-filters": "PASS",
+    "audience-explorer:#audience-filter-reset": "PASS",
+    "audience-explorer:#audience-load-more": "PASS",
+    "audience-explorer:#audience-top-percentile": "PASS",
+    "audience-explorer:#audience-deciles": "PASS",
+    "audience-explorer:#audience-state": "PASS",
+    "audience-explorer:#audience-gender": "PASS",
+    "audience-explorer:#audience-rank-bands": "PASS",
+    "audience-explorer:#audience-employment-status": "PASS",
+    "audience-explorer:#audience-clear-filter-chips": "PASS",
+    "audience-explorer:#audience-selection-topn": "PASS",
+    "audience-explorer:#audience-target-count": "PASS",
+    "audience-explorer:#audience-marital-status": "PASS",
+    "audience-explorer:#audience-education": "PASS",
+    "audience-explorer:#audience-resident-status": "PASS",
+    "audience-explorer:#audience-resident-type": "PASS",
+    "audience-explorer:#audience-type-of-employment": "PASS",
+    "audience-explorer:#audience-score-min": "PASS",
+    "audience-explorer:#audience-score-max": "PASS",
+    "audience-explorer:#audience-age-min": "PASS",
+    "audience-explorer:#audience-age-max": "PASS",
+    "audience-explorer:#audience-income-min": "PASS",
+    "audience-explorer:#audience-income-max": "PASS",
+    "audience-explorer:#audience-family-min": "PASS",
+    "audience-explorer:#audience-family-max": "PASS",
+    "audience-explorer:#audience-profile-dimension": "PASS",
+    "audience-explorer:#audience-save-name": "PASS",
+    "audience-explorer:#audience-save-description": "PASS",
+    "audience-explorer:#audience-save-submit": "PASS",
+    "audience-explorer:#saved-audiences-refresh": "PASS",
+    "audience-explorer:#saved-audience-reopen": "PASS",
+    "audience-explorer:#saved-audience-use-campaign": "PASS",
+    "audience-explorer:.recent-reopen": "PASS",
+    "audience-explorer:#audience-explorer-retry": "JUSTIFIED_EXCLUSIVE"
+  },
+  "inventory_status_summary": {
+    "NOT_RUN": 38,
+    "PASS": 66,
+    "FAIL": 0,
+    "JUSTIFIED_EXCLUSIVE": 6
+  },
+  "audience_inventory_status_summary": {
+    "NOT_RUN": 0,
+    "PASS": 35,
+    "FAIL": 0,
+    "JUSTIFIED_EXCLUSIVE": 3
+  },
+  "overall_status": "PASS"
+}

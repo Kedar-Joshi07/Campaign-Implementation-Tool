@@ -1,0 +1,554 @@
+{
+  "generated_at": "2026-09-08T04:30:06Z",
+  "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/09_STEP_09_BROWSER_ERROR_ACCESSIBILITY_RESPONSIVE_AND_STATE_TESTS.md",
+  "server": {
+    "managed": true,
+    "started_by_script": true,
+    "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+  },
+  "browser": {
+    "name": "system_chrome",
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "product_version": "152.0.7977.82",
+    "execution_mode": "headless"
+  },
+  "accessibility": {
+    "visible_focus": {
+      "focus_visible": true,
+      "focused_after_tab": "data-status"
+    },
+    "tab_shift_tab_traversal": {
+      "tab_target": "data-status",
+      "shift_tab_target": "overview",
+      "changed": true
+    },
+    "enter_space_activation": {
+      "enter_activated": true,
+      "space_activated": true
+    },
+    "labels_for_controls": {
+      "missing": [],
+      "missing_count": 0
+    },
+    "campaign_state_for_accessibility": "ready",
+    "validation_focus_error_summary": {
+      "error_visible": true,
+      "error_focused": true,
+      "error_text": "Campaign name is required.",
+      "active_element_id": "campaign-step-error-summary",
+      "skipped": false
+    },
+    "disabled_action_explanation": {
+      "finalize_disabled": true,
+      "export_disabled": true,
+      "help_text": "Create or open a campaign to enable finalize and export checks.",
+      "help_present": true
+    },
+    "stepper_semantics": [
+      {
+        "id": "campaign-step-1",
+        "ariaCurrent": "false",
+        "ariaSelected": "false",
+        "tabIndex": -1
+      },
+      {
+        "id": "campaign-step-2",
+        "ariaCurrent": "step",
+        "ariaSelected": "true",
+        "tabIndex": 0
+      },
+      {
+        "id": "campaign-step-3",
+        "ariaCurrent": "false",
+        "ariaSelected": "false",
+        "tabIndex": -1
+      },
+      {
+        "id": "campaign-step-4",
+        "ariaCurrent": "false",
+        "ariaSelected": "false",
+        "tabIndex": -1
+      }
+    ],
+    "table_control_reachability": {
+      "open_button_focusable": true,
+      "open_button_activates": true
+    },
+    "no_color_only_status": {
+      "visible_badges": 23,
+      "badges_missing_text": 0
+    },
+    "aria_live_states": [
+      {
+        "selector": "#backend-status",
+        "exists": true,
+        "ariaLive": "polite",
+        "role": ""
+      },
+      {
+        "selector": "#analysis-run-announcement",
+        "exists": true,
+        "ariaLive": "polite",
+        "role": "status"
+      },
+      {
+        "selector": "#campaigns-status-announcement",
+        "exists": true,
+        "ariaLive": "polite",
+        "role": "status"
+      },
+      {
+        "selector": "#campaign-export-status-note",
+        "exists": true,
+        "ariaLive": "polite",
+        "role": "status"
+      },
+      {
+        "selector": "#audience-announcement",
+        "exists": true,
+        "ariaLive": "polite",
+        "role": "status"
+      },
+      {
+        "selector": "#audience-load-more-status",
+        "exists": true,
+        "ariaLive": "polite",
+        "role": "status"
+      },
+      {
+        "selector": "#audience-save-status",
+        "exists": true,
+        "ariaLive": "polite",
+        "role": "status"
+      }
+    ],
+    "reduced_motion": {
+      "reduce_media_query_matches": true,
+      "navigation_still_operational": true
+    }
+  },
+  "state_coverage": {
+    "campaign_initial_state": "ready",
+    "audience_terminal_state": "workspace",
+    "stale_read_only_state": {
+      "stale_candidate_found": true,
+      "source": "injected_response",
+      "stale_message_seen": true,
+      "use_in_campaign_disabled": true,
+      "stale_message": "Synthetic source/model lineage is stale for Step 9 state coverage."
+    },
+    "export_state_coverage": {
+      "started_seen": true,
+      "failed_and_aborted_seen": true,
+      "completed_seen": true
+    },
+    "loading_state": {
+      "campaigns_loading_seen": true,
+      "state_after_loading": "no_eligible"
+    },
+    "retryable_error_state": {
+      "campaigns_backend_unavailable_seen": true,
+      "state_after_retry": "no_eligible"
+    },
+    "empty_state": {
+      "campaigns_no_eligible_seen": true,
+      "state_after_empty": "no_eligible"
+    },
+    "job_state_coverage": {
+      "running_seen": true,
+      "failed_seen": true,
+      "restored_state": "workspace"
+    }
+  },
+  "events": {
+    "console_errors": [
+      {
+        "scenario": "injected_retryable_error_campaigns",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      }
+    ],
+    "page_errors": [],
+    "request_failures": [],
+    "http_errors": [
+      {
+        "scenario": "injected_retryable_error_campaigns",
+        "method": "GET",
+        "url": "http://127.0.0.1:8000/api/campaigns/options",
+        "status": 503
+      }
+    ]
+  },
+  "responsive": {
+    "viewports": [
+      {
+        "viewport": {
+          "name": "1920x1080",
+          "width": 1920,
+          "height": 1080
+        },
+        "browser": {
+          "name": "system_chrome",
+          "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "product_version": "152.0.7977.82",
+          "execution_mode": "headless"
+        },
+        "checks": [
+          {
+            "view": "overview",
+            "critical_control": "#overview-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 708
+          },
+          {
+            "view": "data-status",
+            "critical_control": "#data-status-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "historical-analysis",
+            "critical_control": "#historical-analysis-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "model-training",
+            "critical_control": "#model-training-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "audience-explorer",
+            "critical_control": "#audience-explorer-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "campaigns",
+            "critical_control": "#campaigns-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          }
+        ]
+      },
+      {
+        "viewport": {
+          "name": "1366x768",
+          "width": 1366,
+          "height": 768
+        },
+        "browser": {
+          "name": "system_chrome",
+          "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "product_version": "152.0.7977.82",
+          "execution_mode": "headless"
+        },
+        "checks": [
+          {
+            "view": "overview",
+            "critical_control": "#overview-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 1029
+          },
+          {
+            "view": "data-status",
+            "critical_control": "#data-status-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 281
+          },
+          {
+            "view": "historical-analysis",
+            "critical_control": "#historical-analysis-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "model-training",
+            "critical_control": "#model-training-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "audience-explorer",
+            "critical_control": "#audience-explorer-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "campaigns",
+            "critical_control": "#campaigns-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          }
+        ]
+      },
+      {
+        "viewport": {
+          "name": "1024x768",
+          "width": 1024,
+          "height": 768
+        },
+        "browser": {
+          "name": "system_chrome",
+          "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "product_version": "152.0.7977.82",
+          "execution_mode": "headless"
+        },
+        "checks": [
+          {
+            "view": "overview",
+            "critical_control": "#overview-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 1460
+          },
+          {
+            "view": "data-status",
+            "critical_control": "#data-status-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 846
+          },
+          {
+            "view": "historical-analysis",
+            "critical_control": "#historical-analysis-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "model-training",
+            "critical_control": "#model-training-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "audience-explorer",
+            "critical_control": "#audience-explorer-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "campaigns",
+            "critical_control": "#campaigns-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          }
+        ]
+      },
+      {
+        "viewport": {
+          "name": "768x1024",
+          "width": 768,
+          "height": 1024
+        },
+        "browser": {
+          "name": "system_chrome",
+          "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "product_version": "152.0.7977.82",
+          "execution_mode": "headless"
+        },
+        "checks": [
+          {
+            "view": "overview",
+            "critical_control": "#overview-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 2873
+          },
+          {
+            "view": "data-status",
+            "critical_control": "#data-status-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 1275
+          },
+          {
+            "view": "historical-analysis",
+            "critical_control": "#historical-analysis-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "model-training",
+            "critical_control": "#model-training-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "audience-explorer",
+            "critical_control": "#audience-explorer-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 0
+          },
+          {
+            "view": "campaigns",
+            "critical_control": "#campaigns-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 105
+          }
+        ]
+      },
+      {
+        "viewport": {
+          "name": "390x844",
+          "width": 390,
+          "height": 844
+        },
+        "browser": {
+          "name": "system_chrome",
+          "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "product_version": "152.0.7977.82",
+          "execution_mode": "headless"
+        },
+        "checks": [
+          {
+            "view": "overview",
+            "critical_control": "#overview-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 3210
+          },
+          {
+            "view": "data-status",
+            "critical_control": "#data-status-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 1562
+          },
+          {
+            "view": "historical-analysis",
+            "critical_control": "#historical-analysis-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 157
+          },
+          {
+            "view": "model-training",
+            "critical_control": "#model-training-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 173
+          },
+          {
+            "view": "audience-explorer",
+            "critical_control": "#audience-explorer-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 117
+          },
+          {
+            "view": "campaigns",
+            "critical_control": "#campaigns-refresh",
+            "control_exists": true,
+            "control_within_viewport": true,
+            "horizontal_overflow_px": 0,
+            "vertical_overflow_px": 398
+          }
+        ]
+      }
+    ]
+  },
+  "error_classification": {
+    "explained_events": [
+      {
+        "scenario": "injected_retryable_error_campaigns",
+        "method": "GET",
+        "url": "http://127.0.0.1:8000/api/campaigns/options",
+        "status": 503,
+        "reason": "intentional_state_injection"
+      },
+      {
+        "scenario": "injected_retryable_error_campaigns",
+        "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "reason": "intentional_state_injection"
+      }
+    ],
+    "unexplained_console_errors": [],
+    "unexplained_js_errors": [],
+    "unexplained_critical_network_failures": [],
+    "summary": {
+      "console_errors_total": 1,
+      "page_errors_total": 0,
+      "request_failures_total": 0,
+      "http_errors_total": 1,
+      "explained_total": 2,
+      "unexplained_console_total": 0,
+      "unexplained_js_total": 0,
+      "unexplained_critical_network_total": 0
+    }
+  },
+  "quality_gate": {
+    "status": "PASS",
+    "failures": {
+      "accessibility": [],
+      "responsive": [],
+      "state_coverage": []
+    }
+  },
+  "inventory": {
+    "applied": [
+      "#backend-status",
+      "[data-view-target='audience-explorer']",
+      "[data-view-target='campaigns']",
+      "[data-view-target='data-status']",
+      "[data-view-target='historical-analysis']",
+      "[data-view-target='model-training']",
+      "[data-view-target='overview']"
+    ],
+    "status_summary": {
+      "NOT_RUN": 79,
+      "PASS": 31,
+      "JUSTIFIED_EXCLUSIVE": 1
+    }
+  },
+  "overall_status": "PASS"
+}

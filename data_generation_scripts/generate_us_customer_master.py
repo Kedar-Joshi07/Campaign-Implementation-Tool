@@ -33,15 +33,47 @@ from __future__ import annotations
 import argparse
 import csv
 import gzip
+import io
 import json
 import math
 import random
+from contextlib import contextmanager
 from collections import Counter
 from datetime import date
 from pathlib import Path
 
 import numpy as np
 from faker import Faker
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _portable_repo_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        relative = resolved.relative_to(REPO_ROOT)
+        return str(relative).replace("\\", "/")
+    except ValueError:
+        return resolved.name
+
+
+@contextmanager
+def _open_output_csv(path: Path, *, compresslevel: int = 9):
+    if str(path).endswith(".gz"):
+        with open(path, "wb") as raw_out:
+            with gzip.GzipFile(
+                fileobj=raw_out,
+                mode="wb",
+                compresslevel=compresslevel,
+                mtime=0,
+                filename="",
+            ) as gz_out:
+                with io.TextIOWrapper(gz_out, encoding="utf-8", newline="") as text_out:
+                    yield text_out
+    else:
+        with open(path, "w", encoding="utf-8", newline="") as text_out:
+            yield text_out
 
 
 # -----------------------------------------------------------------------------
@@ -316,8 +348,7 @@ def generate(args: argparse.Namespace) -> None:
     sample_rows: list[list[object]] = []
     as_of = date(2025, 12, 31)
 
-    opener = gzip.open if str(out_file).endswith(".gz") else open
-    with opener(out_file, "wt", encoding="utf-8", newline="") as fh:
+    with _open_output_csv(out_file, compresslevel=9) as fh:
         writer = csv.writer(fh)
         writer.writerow(HEADERS)
 
@@ -459,8 +490,8 @@ def generate(args: argparse.Namespace) -> None:
         "rows": args.n_customers,
         "columns": len(HEADERS),
         "seed": args.seed,
-        "output": str(out_file),
-        "sample_output": str(sample_file),
+        "output": _portable_repo_path(out_file),
+        "sample_output": _portable_repo_path(sample_file),
         "customer_id_start": "CUS000000001",
         "customer_id_end": f"CUS{args.n_customers:09d}",
         "mean_individual_yearly_income": round(income_sum / args.n_customers, 2),

@@ -1,6 +1,6 @@
 # Evidence Registry
 
-This index classifies evidence artifacts for the Phase 1 to Phase 7 repository baseline.
+This index classifies evidence artifacts for the Phase 1 to Phase 8 repository baseline.
 
 Classification labels:
 
@@ -18,6 +18,10 @@ Classification labels:
 | phase7_final_ui_baseline.json | Current final UI exactness baseline after full suite regression. |
 | phase7_final_ui_browser_acceptance.json | Current browser acceptance across desktop/mobile breakpoints for Campaign workflows. |
 | DOCUMENTATION_FREEZE_REPORT.md | Documentation freeze audit and validation report for current master docs. |
+| phase8/09_browser_quality_evidence.json | Phase 8 Step 9 structured evidence: browser errors, accessibility smoke, responsive checks, and deterministic state coverage with PASS gates. |
+| phase8/09_BROWSER_QUALITY_REPORT.md | Human-readable Phase 8 Step 9 browser quality report aligned to system-browser validation gates. |
+| phase8/10_reproducibility_and_lfs_evidence.json | Phase 8 Step 10 structured evidence: deterministic regeneration, raw/decompressed SHA equivalence, portable paths, and LFS/duplicate-file checks. |
+| phase8/10_REPRODUCIBILITY_AND_LFS_REPORT.md | Human-readable Phase 8 Step 10 reproducibility and LFS closure report with final canonical hash manifest. |
 
 ## CURRENT SUPPORTING
 

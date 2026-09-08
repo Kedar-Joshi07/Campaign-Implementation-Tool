@@ -1,0 +1,93 @@
+{
+  "pack_name": "Phase 8 Release Assurance & System-Browser Certification Prompt Pack",
+  "version": "1.0",
+  "starting_sha": "47a93d0a44c4df8ab12ff58157fbc204ec43a51d",
+  "step_count": 12,
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 2190,
+      "sha256": "fd10eca8c671b013ea2bcd5f6957c2d44f265ceff68fe2f05f37e519b7e78f3d"
+    },
+    {
+      "file": "01_MASTER_ACCEPTANCE_CHECKLIST.md",
+      "bytes": 1242,
+      "sha256": "d746b40b05c9ac9e78cf8a008b056980bc6d7675c01aacf392289e0e63ccdfd6"
+    },
+    {
+      "file": "01_STEP_01_PHASE8_BASELINE_AND_FAILURE_RECONCILIATION.md",
+      "bytes": 1218,
+      "sha256": "4e6dc7a0aaec91c46a022c3ca9bcc21fecaac891a5bb43b1a3ebe2c12cb6da27"
+    },
+    {
+      "file": "02_PROGRESS_TRACKER.md",
+      "bytes": 3084,
+      "sha256": "031759c4a03931c1234e0814549666968a54dbb77f789f490726a4e915d8fa02"
+    },
+    {
+      "file": "02_STEP_02_CI_TEST_DISCOVERY_AND_DEPENDENCY_FIX.md",
+      "bytes": 825,
+      "sha256": "ccb4d422d48c1a18d4c052ecedf2f47e20a27883ab2f375b443e48a026b62e70"
+    },
+    {
+      "file": "03_MASTER_GUARDRAILS.md",
+      "bytes": 1500,
+      "sha256": "a9b192571aa33699db71c6282206429895814b5fab4ed8bdc8a35a021cf44739"
+    },
+    {
+      "file": "03_STEP_03_SYSTEM_CHROME_EDGE_BROWSER_HARNESS.md",
+      "bytes": 1421,
+      "sha256": "b3c9e7e75886de1513de35174a446ebab911d7b56279694c01600420c9b0e740"
+    },
+    {
+      "file": "04_SINGLE_MASTER_PHASE8_PROMPT.md",
+      "bytes": 1270,
+      "sha256": "d0a4fc70f4f78c7fca447bea359ce03ca8cb98f6be6ddf1d5f03ed85fd392596"
+    },
+    {
+      "file": "04_STEP_04_DYNAMIC_UI_CONTROL_INVENTORY_AND_COVERAGE_CONTRACT.md",
+      "bytes": 908,
+      "sha256": "0ab3e9c2c547ca6154ecc4ee52fb381a37b39f6d5406928c399b845deeadead7"
+    },
+    {
+      "file": "05_STEP_05_SYSTEM_BROWSER_OVERVIEW_DATA_STATUS_HISTORICAL_ANALYSIS.md",
+      "bytes": 1523,
+      "sha256": "25314bd525a3ca901db748d1b46bab445a1d2939781c37bded1ad337bac476d8"
+    },
+    {
+      "file": "06_STEP_06_SYSTEM_BROWSER_MODEL_TRAINING_AND_FULL_5M_SCORING.md",
+      "bytes": 1690,
+      "sha256": "7fa9c694fdf43bd6f7bab42a7cd0449c2014b0788c6bcc194f2ad44a4da30c99"
+    },
+    {
+      "file": "07_STEP_07_SYSTEM_BROWSER_AUDIENCE_EXPLORER_ALL_CONTROLS.md",
+      "bytes": 1561,
+      "sha256": "dd03568ca89f9efc96a2983a3afe6573cf7174743414037af19e6bcae48d38d6"
+    },
+    {
+      "file": "08_STEP_08_SYSTEM_BROWSER_CAMPAIGN_BUILDER_AND_EXPORTS.md",
+      "bytes": 1384,
+      "sha256": "6e9435f45780f52a425ca81f4a3f860b5e2101cf1473a180e4333bf3fa5a51ee"
+    },
+    {
+      "file": "09_STEP_09_BROWSER_ERROR_ACCESSIBILITY_RESPONSIVE_AND_STATE_TESTS.md",
+      "bytes": 1266,
+      "sha256": "d1c01f99185ae2a0616615dd4aa388c58880505088e9c854a7bebe58954f18f1"
+    },
+    {
+      "file": "10_STEP_10_DETERMINISTIC_GENERATION_PATH_HASH_AND_LFS_CLEANUP.md",
+      "bytes": 1403,
+      "sha256": "75facbd9d3bbcc60f04b3f571f59e1b164600a5f95fba7d0b58056d23f9bfc5b"
+    },
+    {
+      "file": "11_STEP_11_CLEAN_HEAD_TRUE_BROWSER_PHASE1_TO_PHASE7_CERTIFICATION.md",
+      "bytes": 2631,
+      "sha256": "d434aa0d5cbb3ecd9bb44241b2ba3d11f09471d60cb9b8c37cfe21d5655f9e87"
+    },
+    {
+      "file": "12_STEP_12_CI_GREEN_BRANCH_PROTECTION_AND_PHASE8_FREEZE.md",
+      "bytes": 1929,
+      "sha256": "4dca309888516bb2d2a1929d93d0a9b4c360d90ee9c62dc7c1bf32e3b32f71bb"
+    }
+  ]
+}

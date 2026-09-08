@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-09-06T14:05:00Z",
+  "source_checklist": "Prompts/phase8_release_assurance_system_browser_prompt_pack/01_MASTER_ACCEPTANCE_CHECKLIST.md",
+  "decision": "NO_GO",
+  "totals": {
+    "pass": 11,
+    "fail": 16,
+    "pending": 1
+  },
+  "items": [
+    {"id": 1, "item": "CI collection/dependency issue fixed", "status": "FAIL", "evidence": "docs/evidence/phase8/01_phase8_gap_register.json", "reason": "pytest still collects scripts/validation/system_chrome_campaign_test.py and fails without Playwright"},
+    {"id": 2, "item": "Normal pytest collects only intended tests", "status": "FAIL", "evidence": "docs/evidence/phase8/01_phase8_gap_register.json", "reason": "discovery is not restricted to tests path"},
+    {"id": 3, "item": "System Chrome or Edge used", "status": "PASS", "evidence": "docs/evidence/full_fresh_e2e/system_chrome_campaign_test.json"},
+    {"id": 4, "item": "No VS Code embedded browser used", "status": "PASS", "evidence": "docs/evidence/full_fresh_e2e/UI_CONTROL_COVERAGE.md"},
+    {"id": 5, "item": "Browser product/version recorded", "status": "FAIL", "evidence": "docs/evidence/full_fresh_e2e/system_chrome_campaign_test.json", "reason": "product/path recorded, version missing"},
+    {"id": 6, "item": "Every reachable actionable control inventoried", "status": "PASS", "evidence": "docs/evidence/full_fresh_e2e/ui_control_inventory.json"},
+    {"id": 7, "item": "No generic reachable but not tested exception remains", "status": "FAIL", "evidence": "docs/evidence/full_fresh_e2e/UI_CONTROL_COVERAGE.md", "reason": "87 exceptions remain"},
+    {"id": 8, "item": "Historical Analysis actually submitted through browser", "status": "FAIL", "evidence": "docs/evidence/phase8/01_phase8_gap_register.json"},
+    {"id": 9, "item": "Model Training actually submitted through browser", "status": "FAIL", "evidence": "docs/evidence/phase8/01_phase8_gap_register.json"},
+    {"id": 10, "item": "Full 5M scoring actually submitted through browser", "status": "FAIL", "evidence": "docs/evidence/phase8/01_phase8_gap_register.json"},
+    {"id": 11, "item": "All Audience Explorer controls tested", "status": "FAIL", "evidence": "docs/evidence/full_fresh_e2e/UI_CONTROL_COVERAGE.md"},
+    {"id": 12, "item": "All Campaign Builder controls tested", "status": "FAIL", "evidence": "docs/evidence/full_fresh_e2e/UI_CONTROL_COVERAGE.md"},
+    {"id": 13, "item": "Email browser export tested", "status": "PASS", "evidence": "docs/evidence/full_fresh_e2e/system_chrome_campaign_test.json"},
+    {"id": 14, "item": "Direct Mail browser export tested", "status": "PASS", "evidence": "docs/evidence/full_fresh_e2e/system_chrome_full_fresh_e2e.json"},
+    {"id": 15, "item": "Zero unexplained console errors", "status": "FAIL", "evidence": "docs/evidence/full_fresh_e2e/UI_CONTROL_COVERAGE.md"},
+    {"id": 16, "item": "Zero unexplained critical network failures", "status": "PASS", "evidence": "docs/evidence/full_fresh_e2e/UI_CONTROL_COVERAGE.md"},
+    {"id": 17, "item": "Accessibility smoke passes", "status": "PASS", "evidence": "docs/evidence/full_fresh_e2e/UI_CONTROL_COVERAGE.md"},
+    {"id": 18, "item": "Responsive layouts pass", "status": "PASS", "evidence": "docs/evidence/full_fresh_e2e/UI_CONTROL_COVERAGE.md"},
+    {"id": 19, "item": "Long-running jobs/exports remain trackable", "status": "PENDING", "evidence": "docs/evidence/full_fresh_e2e/system_chrome_full_fresh_e2e.json", "reason": "missing explicit phase8 long-running trackability acceptance artifact"},
+    {"id": 20, "item": "GZIP reproducibility addressed", "status": "FAIL", "evidence": "docs/evidence/phase8/01_phase8_gap_register.json"},
+    {"id": 21, "item": "Absolute machine paths removed from canonical summaries", "status": "FAIL", "evidence": "docs/evidence/phase8/01_phase8_gap_register.json"},
+    {"id": 22, "item": "LFS/hash docs current", "status": "FAIL", "evidence": "docs/evidence/phase8/01_phase8_gap_register.json"},
+    {"id": 23, "item": "Final certification begins from clean HEAD", "status": "FAIL", "evidence": "docs/evidence/phase8/final_system_browser/phase8_certification_manifest.json", "reason": "final manifest missing and worktree not clean"},
+    {"id": 24, "item": "Full pytest passes", "status": "PASS", "evidence": "session-run: 458 passed in 1313.85s"},
+    {"id": 25, "item": "Clean-room passes", "status": "PASS", "evidence": "docs/evidence/cleanroom_phase1_to_phase7.json"},
+    {"id": 26, "item": "Required GitHub CI checks all green", "status": "FAIL", "evidence": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/33886841019"},
+    {"id": 27, "item": "Branch protection enabled or fully documented", "status": "FAIL", "evidence": "docs/evidence/phase8/01_phase8_gap_register.json"},
+    {"id": 28, "item": "Final Phase 8 decision GO", "status": "FAIL", "reason": "multiple required gates are not met"}
+  ]
+}

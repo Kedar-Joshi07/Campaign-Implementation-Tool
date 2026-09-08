@@ -466,7 +466,7 @@ function renderRecentCampaigns() {
     const actionCell = document.createElement("td");
     const openButton = document.createElement("button");
     openButton.type = "button";
-    openButton.className = "button button-secondary";
+    openButton.className = "button button-secondary campaign-open";
     openButton.textContent = "Open";
     openButton.addEventListener("click", () => {
       openCampaign(item.campaign_id).catch((error) => {
@@ -597,6 +597,21 @@ function clearCampaignDetail() {
   renderCurrentnessSummary(null);
   renderExportHistory([]);
   updateShellStatus();
+}
+
+function startNewCampaignDraft() {
+  stopExportHistoryPolling();
+  clearStepError();
+  hideError(document.querySelector("#campaigns-error"));
+  clearCampaignDetail();
+  document.querySelector("#campaign-details-form").reset();
+  document.querySelector("#campaign-pii-ack").checked = false;
+  renderAudienceSummary(selectedAudienceDetail);
+  renderExportProfile("");
+  renderReviewSummary();
+  setStep("1");
+  synchronizeActionState();
+  setCampaignAnnouncement("New campaign draft form ready.");
 }
 
 function stopExportHistoryPolling() {
@@ -1138,6 +1153,10 @@ function bindStepperKeyboard() {
 }
 
 function bindActions() {
+  document.querySelector("#campaign-new-draft").addEventListener("click", () => {
+    startNewCampaignDraft();
+  });
+
   document.querySelector("#campaign-audience-select").addEventListener("change", onAudienceSelectionChanged);
 
   document.querySelector("#campaign-step-next-1").addEventListener("click", () => {
@@ -1274,8 +1293,6 @@ export async function loadCampaigns(force = false) {
       return;
     }
 
-    setState("ready");
-
     await loadSelectedAudienceDetail({ force });
 
     if (hasCampaigns) {
@@ -1287,6 +1304,7 @@ export async function loadCampaigns(force = false) {
       synchronizeActionState();
     }
 
+    setState("ready");
     setStep("1");
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {
