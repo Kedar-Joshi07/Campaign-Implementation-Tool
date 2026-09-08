@@ -1,0 +1,282 @@
+{
+  "generated_at": "2026-09-08T15:28:18Z",
+  "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/11_STEP_11_CLEAN_HEAD_TRUE_BROWSER_PHASE1_TO_PHASE7_CERTIFICATION.md",
+  "candidate": {
+    "branch": "main",
+    "sha": "7b712bcecd9a8de20dd851bef457135c327dc5bf"
+  },
+  "clean_start_gate": {
+    "passed": true,
+    "git_status_short": [],
+    "dirty_override": false,
+    "browser_name": "chrome",
+    "browser_executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+  },
+  "step_runs": {
+    "step5_historical": {
+      "script": "scripts/validation/browser/run_phase8_step5_historical_analysis.py",
+      "evidence": "docs/evidence/phase8/05_system_browser_historical_analysis.json",
+      "duration_seconds": null,
+      "overall_status": "PASS",
+      "execution": "reused_completed_checkpoint"
+    },
+    "step6_training_scoring": {
+      "script": "scripts/validation/browser/run_phase8_step6_model_training_and_5m_scoring.py",
+      "evidence": "docs/evidence/phase8/06_system_browser_training_and_5m_scoring.json",
+      "duration_seconds": null,
+      "overall_status": "PASS",
+      "execution": "reused_completed_checkpoint"
+    },
+    "step7_audience": {
+      "script": "scripts/validation/browser/run_phase8_step7_audience_explorer_all_controls.py",
+      "evidence": "docs/evidence/phase8/07_system_browser_audience_explorer_all_controls.json",
+      "duration_seconds": null,
+      "overall_status": "PASS",
+      "execution": "reused_completed_checkpoint"
+    },
+    "step8_campaigns": {
+      "script": "scripts/validation/browser/run_phase8_step8_campaign_builder_and_exports.py",
+      "evidence": "docs/evidence/phase8/08_system_browser_campaign_builder_and_exports.json",
+      "duration_seconds": null,
+      "overall_status": "PASS",
+      "execution": "reused_completed_checkpoint"
+    },
+    "step9_browser_quality": {
+      "script": "scripts/validation/browser/run_phase8_step9_browser_quality.py",
+      "evidence": "docs/evidence/phase8/09_browser_quality_evidence.json",
+      "duration_seconds": null,
+      "overall_status": "PASS",
+      "execution": "reused_completed_checkpoint"
+    }
+  },
+  "coverage": {
+    "generated_at": "2026-09-08T15:28:23Z",
+    "inventory_path": "docs/evidence/phase8/ui_control_inventory.json",
+    "counts": {
+      "NOT_RUN": 0,
+      "PASS": 103,
+      "FAIL": 0,
+      "JUSTIFIED_EXCLUSIVE": 8,
+      "UNJUSTIFIED_EXCLUSIVE": 0,
+      "INVALID_STATUS": 0
+    },
+    "ok": true,
+    "errors": [],
+    "generic_exception_count": 0,
+    "justified_exclusive_controls": [
+      {
+        "page": "audience-explorer",
+        "selector": "#audience-explorer-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is visible only when the Audience Explorer backend-error banner is shown."
+      },
+      {
+        "page": "audience-explorer",
+        "selector": "#audience-prepare-retry",
+        "label": "Retry preparation",
+        "mutually_exclusive_group": "prep-failed-only",
+        "justification": "Preparation retry control is shown only when preparation has failed."
+      },
+      {
+        "page": "audience-explorer",
+        "selector": "#audience-prepare-submit",
+        "label": "Prepare Audience Explorer",
+        "mutually_exclusive_group": "prep-needed-only",
+        "justification": "Preparation submit control is shown only when rank preparation is required."
+      },
+      {
+        "page": "campaigns",
+        "selector": "#campaigns-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is visible only when the campaigns backend-unavailable error banner is shown."
+      },
+      {
+        "page": "data-status",
+        "selector": "#data-status-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is shown only when data-status backend-error banner is visible."
+      },
+      {
+        "page": "historical-analysis",
+        "selector": "#historical-analysis-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is shown only when historical-analysis backend-error banner is visible."
+      },
+      {
+        "page": "model-training",
+        "selector": "#model-training-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is shown only when model-training backend error banner is visible."
+      },
+      {
+        "page": "overview",
+        "selector": "#overview-retry",
+        "label": "Try again",
+        "mutually_exclusive_group": "error-state-only",
+        "justification": "Retry control is shown only when overview backend-error banner is visible."
+      }
+    ]
+  },
+  "integrity": {
+    "checks": {
+      "customers_125k": true,
+      "campaign_sales_570k": true,
+      "prospects_5m": true,
+      "current_imports_completed": true,
+      "completed_analysis_present": true,
+      "governed_model_present": true,
+      "scores_5m_completed": true,
+      "deterministic_rescore_sample": true,
+      "rank_boundaries_100": true,
+      "analytics_current": true,
+      "saved_audience_present": true,
+      "finalized_email_campaign": true,
+      "finalized_direct_mail_campaign": true,
+      "completed_exports_present": true,
+      "no_stale_active_jobs": true,
+      "no_started_exports": true,
+      "pragma_integrity_ok": true
+    },
+    "details": {
+      "row_counts": {
+        "customers": 125000,
+        "campaign_sales": 570000,
+        "demographics": 5000000
+      },
+      "imports_latest": [
+        {
+          "dataset_name": "campaign_sales",
+          "import_id": 2,
+          "status": "COMPLETED",
+          "rows_inserted": 570000,
+          "source_checksum": "2fdb11c576a180b7349e50e0bf9d3b0a66d0d354ba8d42062756c8cd840965c4",
+          "completed_at": "2026-09-08T11:41:36Z"
+        },
+        {
+          "dataset_name": "customers",
+          "import_id": 1,
+          "status": "COMPLETED",
+          "rows_inserted": 125000,
+          "source_checksum": "99a09d2f0db06980afe290cf74a4db1df76cf8c340534fb2088879fb093d9ea9",
+          "completed_at": "2026-09-08T11:40:52Z"
+        },
+        {
+          "dataset_name": "demographics",
+          "import_id": 3,
+          "status": "COMPLETED",
+          "rows_inserted": 5000000,
+          "source_checksum": "e12fa5f54606aee0e6704db418f2054df29f4e1b8827d82ed2ce7897b7693e75",
+          "completed_at": "2026-09-08T11:45:19Z"
+        }
+      ],
+      "completed_analysis_count": 2,
+      "latest_model": {
+        "model_run_id": 1,
+        "status": "COMPLETED",
+        "selected_candidate": "BAGGING_PU",
+        "feature_contract_version": "1",
+        "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+        "model_role_policy_version": "2",
+        "artifact_sha256": "3c5a8e083acaaf86aab03cc44000f0247789ff837d4efdac8cc6c1f7b1ff0a19"
+      },
+      "latest_scoring": {
+        "scoring_run_id": 1,
+        "model_run_id": 1,
+        "status": "COMPLETED",
+        "scored_person_count": 5000000,
+        "demographic_snapshot_count": 5000000,
+        "feature_contract_version": "1",
+        "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+        "artifact_sha256": "3c5a8e083acaaf86aab03cc44000f0247789ff837d4efdac8cc6c1f7b1ff0a19",
+        "completed_at": "2026-09-08T12:11:26Z",
+        "deterministic_rescore": {
+          "sample_size": 256,
+          "max_abs_diff": 0.0,
+          "verified": true
+        }
+      },
+      "rank_boundary_count": 100,
+      "analytics_snapshot_count": 1,
+      "saved_audience_count": 1,
+      "finalized_email_campaigns": 1,
+      "finalized_direct_mail_campaigns": 1,
+      "completed_exports": 2,
+      "active_jobs": 0,
+      "started_exports": 0,
+      "integrity_check": "ok"
+    }
+  },
+  "browser_quality": {
+    "unexplained_console_total": 0,
+    "unexplained_js_total": 0,
+    "unexplained_critical_network_total": 0,
+    "ok": true
+  },
+  "run_ids": {
+    "historical_analysis_run_ids": {
+      "broad": 1,
+      "narrow": 2
+    },
+    "model_run_id": 1,
+    "scoring_run_id": 1,
+    "saved_audience_id": 1,
+    "campaign_ids": {
+      "email": 1,
+      "direct_mail": 2
+    },
+    "export_event_ids": {
+      "email": 1,
+      "direct_mail": 2
+    },
+    "export_checksums": {
+      "email": "14dcdcb8734483310d20ba539409f141de20aedfd14e68890a97d4fd980157a0",
+      "direct_mail": "9aee8cb3d70e80fe8b9f18e7b372bb4da8b00b1591af58fd3820ff4301822bed"
+    }
+  },
+  "artifact_sha256": {
+    "docs/evidence/phase8/05_system_browser_historical_analysis.json": "5946c5c994302e8a7524c49403f3d3d4cf0e872bd1292bd4cb38dbcd5ccb8821",
+    "docs/evidence/phase8/05_SYSTEM_BROWSER_HISTORICAL_ANALYSIS_REPORT.md": "1157e5c5a0cf4bbd30f93ed2c0cc1ae6a1544dd7ffe447c5778080508ad11a37",
+    "docs/evidence/phase8/06_system_browser_training_and_5m_scoring.json": "f3591aab0016c3042d29f482417a4c560bbb1f68c428855acb85e292ed4cac33",
+    "docs/evidence/phase8/06_SYSTEM_BROWSER_TRAINING_AND_5M_SCORING_REPORT.md": "4e9ad6cdcb8dc1c35fd423ca45a7c79ed15ec64fbccddc6ed770c6f3618387aa",
+    "docs/evidence/phase8/07_system_browser_audience_explorer_all_controls.json": "1e321822688c993e091450ae27d7bbbfd0a271d3eb94a35b6d0fef081668a45c",
+    "docs/evidence/phase8/07_SYSTEM_BROWSER_AUDIENCE_REPORT.md": "da90a9e0ded52b9d6f0220050d29e1cb8b7d00ef91884bfdcaf329a439388913",
+    "docs/evidence/phase8/08_system_browser_campaign_builder_and_exports.json": "302cc39649cc75a057edb961b85429442f4385422377314f8c26821a15fe8a66",
+    "docs/evidence/phase8/08_SYSTEM_BROWSER_CAMPAIGN_EXPORT_REPORT.md": "d083e8d687316fba95ffa1bb7881ed95b4294d9f094891483b0ae77802885351",
+    "docs/evidence/phase8/09_browser_quality_evidence.json": "550998fa5b8f1fb842be70859e78c7f32ae05c0d5ab7c3891106098ba54f124f",
+    "docs/evidence/phase8/09_BROWSER_QUALITY_REPORT.md": "22d3b8e17d8272915791fb5e4c1e0dd6b4f5ad7b3d8799f0ff3dc9d92aa71c90",
+    "docs/evidence/phase8/ui_control_inventory.json": "c2c7110d85bdef4c8e810beb8fb6322f83dc01bcefc8d7e914a7ef8faae7a9f1",
+    "docs/evidence/phase8/final_system_browser/ui_control_coverage.json": "646e0ca23d3a96f523fb877dbb4688b0b5050532207147b7d07a0416214cc46b",
+    "docs/evidence/phase8/final_system_browser/PHASE8_SYSTEM_BROWSER_CERTIFICATION_REPORT.md": "19799849dc2f4de32f148876bb5012b765431d59b2c97f58cab430bbc400b437"
+  },
+  "overall_status": "PASS",
+  "local_decision": "PASS_PENDING_STEP12_CI",
+  "execution_mode": "user_directed_resume_existing",
+  "resume_checkpoint": {
+    "enabled": true,
+    "environment_variable": "PHASE8_STEP11_RESUME_EXISTING",
+    "user_directed_no_scoring_rerun": true,
+    "database_path": "data/campaign_poc.db",
+    "evidence_reused": [
+      "docs/evidence/phase8/05_system_browser_historical_analysis.json",
+      "docs/evidence/phase8/06_system_browser_training_and_5m_scoring.json",
+      "docs/evidence/phase8/07_system_browser_audience_explorer_all_controls.json",
+      "docs/evidence/phase8/08_system_browser_campaign_builder_and_exports.json",
+      "docs/evidence/phase8/09_browser_quality_evidence.json"
+    ]
+  },
+  "fresh_init_and_import": {
+    "mode": "reused_existing_fresh_runtime_checkpoint",
+    "rerun": false
+  },
+  "browser": {
+    "name": "system_chrome",
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "product_version": "152.0.7977.82",
+    "execution_mode": "headless"
+  }
+}

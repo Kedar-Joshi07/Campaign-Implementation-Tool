@@ -1,0 +1,73 @@
+{
+  "generated_at": "2026-09-08T15:28:23Z",
+  "inventory_path": "docs/evidence/phase8/ui_control_inventory.json",
+  "counts": {
+    "NOT_RUN": 0,
+    "PASS": 103,
+    "FAIL": 0,
+    "JUSTIFIED_EXCLUSIVE": 8,
+    "UNJUSTIFIED_EXCLUSIVE": 0,
+    "INVALID_STATUS": 0
+  },
+  "ok": true,
+  "errors": [],
+  "generic_exception_count": 0,
+  "justified_exclusive_controls": [
+    {
+      "page": "audience-explorer",
+      "selector": "#audience-explorer-retry",
+      "label": "Try again",
+      "mutually_exclusive_group": "error-state-only",
+      "justification": "Retry control is visible only when the Audience Explorer backend-error banner is shown."
+    },
+    {
+      "page": "audience-explorer",
+      "selector": "#audience-prepare-retry",
+      "label": "Retry preparation",
+      "mutually_exclusive_group": "prep-failed-only",
+      "justification": "Preparation retry control is shown only when preparation has failed."
+    },
+    {
+      "page": "audience-explorer",
+      "selector": "#audience-prepare-submit",
+      "label": "Prepare Audience Explorer",
+      "mutually_exclusive_group": "prep-needed-only",
+      "justification": "Preparation submit control is shown only when rank preparation is required."
+    },
+    {
+      "page": "campaigns",
+      "selector": "#campaigns-retry",
+      "label": "Try again",
+      "mutually_exclusive_group": "error-state-only",
+      "justification": "Retry control is visible only when the campaigns backend-unavailable error banner is shown."
+    },
+    {
+      "page": "data-status",
+      "selector": "#data-status-retry",
+      "label": "Try again",
+      "mutually_exclusive_group": "error-state-only",
+      "justification": "Retry control is shown only when data-status backend-error banner is visible."
+    },
+    {
+      "page": "historical-analysis",
+      "selector": "#historical-analysis-retry",
+      "label": "Try again",
+      "mutually_exclusive_group": "error-state-only",
+      "justification": "Retry control is shown only when historical-analysis backend-error banner is visible."
+    },
+    {
+      "page": "model-training",
+      "selector": "#model-training-retry",
+      "label": "Try again",
+      "mutually_exclusive_group": "error-state-only",
+      "justification": "Retry control is shown only when model-training backend error banner is visible."
+    },
+    {
+      "page": "overview",
+      "selector": "#overview-retry",
+      "label": "Try again",
+      "mutually_exclusive_group": "error-state-only",
+      "justification": "Retry control is shown only when overview backend-error banner is visible."
+    }
+  ]
+}
