@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,12 @@ from scripts.validation.browser.system_browser import (
     DEFAULT_EDGE_PATH,
     SystemBrowserResolutionError,
     resolve_system_browser,
+)
+from scripts.validation.browser.run_phase8_step12_ci_green_branch_protection_and_freeze import (
+    _build_checklist_items,
+    _collect_control_summary,
+    _collect_phase8_references,
+    _evaluate_branch_protection,
 )
 
 
@@ -135,3 +142,65 @@ def test_step11_tears_down_the_complete_managed_server_tree_on_windows() -> None
     assert "model_feature_contract_sha256 == latest_scoring[6]" in runner
     assert 'deterministic_max_abs_diff is not None' in runner
     assert 'deterministic_rescore.get("max_abs_diff") or 1.0' not in runner
+
+
+def _step12_checklist_payload() -> dict:
+    return {
+        "local_regression": {
+            "checks": [
+                {"key": "full_pytest", "passed": True},
+                {"key": "clean_room_phase1_to_phase7", "passed": True},
+                {"key": "deterministic_generation_hash_checks", "passed": True},
+            ]
+        },
+        "phase8_references": _collect_phase8_references(),
+        "control_coverage": _collect_control_summary(),
+        "github_ci": {"required_all_green": True, "candidate_matches": True},
+        "branch_protection": {"evaluation": {"acceptable": True}},
+    }
+
+
+def test_step12_checklist_uses_precise_phase8_evidence_gates() -> None:
+    items = {item["id"]: item for item in _build_checklist_items(_step12_checklist_payload())}
+
+    for item_id in range(3, 26):
+        assert items[item_id]["status"] == "PASS", items[item_id]
+    assert items[26]["status"] == "PASS"
+    assert items[27]["status"] == "PASS"
+    assert items[28]["status"] == "PASS"
+
+
+def test_step12_missing_browser_error_metrics_fail_closed() -> None:
+    payload = _step12_checklist_payload()
+    payload["phase8_references"] = deepcopy(payload["phase8_references"])
+    browser_quality = payload["phase8_references"]["step9_browser_quality"]
+    browser_quality["unexplained_console_total"] = None
+    browser_quality["unexplained_critical_network_total"] = None
+
+    items = {item["id"]: item for item in _build_checklist_items(payload)}
+
+    assert items[15]["status"] == "FAIL"
+    assert items[16]["status"] == "FAIL"
+
+
+def test_step12_branch_protection_fallback_requires_complete_documentation() -> None:
+    evaluation = _evaluate_branch_protection({"available": False})
+
+    assert evaluation["api_settings_complete"] is False
+    assert evaluation["documented_complete"] is True
+    assert evaluation["acceptable"] is True
+
+
+def test_step12_does_not_invoke_the_full_5m_scoring_runner() -> None:
+    runner_path = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "validation"
+        / "browser"
+        / "run_phase8_step12_ci_green_branch_protection_and_freeze.py"
+    )
+    runner = runner_path.read_text(encoding="utf-8")
+
+    assert "run_phase8_step6_model_training_and_5m_scoring.py" not in runner
+    assert '"full_5m_scoring_rerun": False' in runner
+    assert "_query_ci_status(sha_now, required_ci_checks)" in runner

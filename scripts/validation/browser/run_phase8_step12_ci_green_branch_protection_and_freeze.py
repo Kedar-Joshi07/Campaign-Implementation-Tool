@@ -46,6 +46,12 @@ STEP8_EVIDENCE = PHASE8_DIR / "08_system_browser_campaign_builder_and_exports.js
 STEP9_EVIDENCE = PHASE8_DIR / "09_browser_quality_evidence.json"
 INVENTORY_PATH = PHASE8_DIR / "ui_control_inventory.json"
 BRANCH_PROTECTION_DOC = PROJECT_ROOT / "docs" / "BRANCH_PROTECTION.md"
+PROGRESS_TRACKER = (
+    PROJECT_ROOT
+    / "Prompts"
+    / "phase8_release_assurance_system_browser_prompt_pack"
+    / "02_PROGRESS_TRACKER.md"
+)
 
 DB_PATH = PROJECT_ROOT / "data" / "campaign_poc.db"
 
@@ -106,6 +112,19 @@ def _git(args: list[str], *, strict: bool = True) -> str:
             f"git {' '.join(args)} failed. stderr={(completed.stderr or '').strip()}"
         )
     return output
+
+
+def _git_last_commit_for_path(path: Path) -> str | None:
+    value = _git(["log", "-1", "--format=%H", "--", _portable(path)], strict=False)
+    return value or None
+
+
+def _phase8_starting_sha() -> str | None:
+    if not PROGRESS_TRACKER.is_file():
+        return None
+    tracker = PROGRESS_TRACKER.read_text(encoding="utf-8")
+    match = re.search(r"Starting SHA:\s*`([0-9a-f]{40})`", tracker, flags=re.IGNORECASE)
+    return match.group(1).lower() if match else None
 
 
 def _run_command(command: list[str]) -> dict[str, Any]:
@@ -187,10 +206,10 @@ def _try_get_json(url: str) -> dict[str, Any] | None:
     return _run_with_hard_timeout(_fetch, timeout_seconds=25.0, fallback=None)
 
 
-def _query_ci_status() -> dict[str, Any]:
+def _query_ci_status(candidate_sha: str, required_checks: list[str]) -> dict[str, Any]:
     workflow_runs_url = (
         f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/actions/workflows/ci.yml/runs"
-        f"?branch={GITHUB_BRANCH}&per_page=1"
+        f"?branch={GITHUB_BRANCH}&per_page=20"
     )
     runs_payload = _try_get_json(workflow_runs_url)
     if not runs_payload:
@@ -208,11 +227,29 @@ def _query_ci_status() -> dict[str, Any]:
             "required_checks": {},
         }
 
-    latest = runs[0]
+    matching_runs = [run for run in runs if str(run.get("head_sha") or "").lower() == candidate_sha.lower()]
+    if not matching_runs:
+        return {
+            "available": True,
+            "reason": "No CI workflow run found for the exact candidate SHA.",
+            "candidate_sha": candidate_sha,
+            "observed_head_shas": [run.get("head_sha") for run in runs],
+            "required_checks": {
+                name: {"found": False, "status": "UNKNOWN", "green": False}
+                for name in required_checks
+            },
+            "required_all_green": False,
+            "candidate_matches": False,
+        }
+
+    latest = matching_runs[0]
     run_id = latest.get("id")
     jobs_url = latest.get("jobs_url")
 
-    checks: dict[str, Any] = {name: {"found": False, "status": "UNKNOWN", "green": False} for name in REQUIRED_CHECKS}
+    checks: dict[str, Any] = {
+        name: {"found": False, "status": "UNKNOWN", "green": False}
+        for name in required_checks
+    }
 
     jobs: list[dict[str, Any]] = []
     if isinstance(jobs_url, str) and jobs_url:
@@ -235,7 +272,13 @@ def _query_ci_status() -> dict[str, Any]:
             "html_url": job.get("html_url"),
         }
 
-    required_all_green = all(bool(info.get("green")) for info in checks.values())
+    candidate_matches = str(latest.get("head_sha") or "").lower() == candidate_sha.lower()
+    required_all_green = (
+        candidate_matches
+        and str(latest.get("status") or "").upper() == "COMPLETED"
+        and str(latest.get("conclusion") or "").upper() == "SUCCESS"
+        and all(bool(info.get("green")) for info in checks.values())
+    )
 
     return {
         "available": True,
@@ -246,9 +289,60 @@ def _query_ci_status() -> dict[str, Any]:
         "status": latest.get("status"),
         "conclusion": latest.get("conclusion"),
         "head_sha": latest.get("head_sha"),
+        "candidate_sha": candidate_sha,
+        "candidate_matches": candidate_matches,
         "html_url": latest.get("html_url"),
         "required_checks": checks,
         "required_all_green": required_all_green,
+    }
+
+
+def _branch_protection_doc_complete() -> bool:
+    if not BRANCH_PROTECTION_DOC.is_file():
+        return False
+    content = BRANCH_PROTECTION_DOC.read_text(encoding="utf-8")
+    required_phrases = [
+        "Require a pull request before merging",
+        "Require status checks to pass before merging",
+        "Require branches to be up to date before merging",
+        "Do not allow bypassing the above settings",
+        *REQUIRED_CHECKS,
+    ]
+    return all(phrase.casefold() in content.casefold() for phrase in required_phrases)
+
+
+def _evaluate_branch_protection(payload: dict[str, Any]) -> dict[str, Any]:
+    response = payload.get("response") if isinstance(payload.get("response"), dict) else {}
+    required_status = (
+        response.get("required_status_checks")
+        if isinstance(response.get("required_status_checks"), dict)
+        else {}
+    )
+    contexts = required_status.get("contexts") if isinstance(required_status.get("contexts"), list) else []
+    checks = required_status.get("checks") if isinstance(required_status.get("checks"), list) else []
+    configured_checks = {str(value) for value in contexts}
+    configured_checks.update(
+        str(value.get("context"))
+        for value in checks
+        if isinstance(value, dict) and value.get("context")
+    )
+    reviews = response.get("required_pull_request_reviews")
+    enforce_admins = response.get("enforce_admins") if isinstance(response.get("enforce_admins"), dict) else {}
+    api_settings_complete = bool(payload.get("available")) and all(
+        (
+            required_status,
+            required_status.get("strict") is True,
+            set(REQUIRED_CHECKS).issubset(configured_checks),
+            isinstance(reviews, dict),
+            enforce_admins.get("enabled") is True,
+        )
+    )
+    documented_complete = _branch_protection_doc_complete()
+    return {
+        "api_settings_complete": api_settings_complete,
+        "documented_complete": documented_complete,
+        "acceptable": api_settings_complete or documented_complete,
+        "configured_required_checks": sorted(configured_checks),
     }
 
 
@@ -385,6 +479,25 @@ def _collect_db_integrity() -> dict[str, Any]:
     }
 
 
+def _status_summary_complete(summary: Any) -> bool:
+    if not isinstance(summary, dict):
+        return False
+    return (
+        int(summary.get("FAIL", -1)) == 0
+        and int(summary.get("NOT_RUN", -1)) == 0
+        and int(summary.get("PASS", 0)) + int(summary.get("JUSTIFIED_EXCLUSIVE", 0)) > 0
+    )
+
+
+def _optional_int(value: Any) -> int | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _collect_phase8_references() -> dict[str, Any]:
     step5 = _read_json(STEP5_EVIDENCE) if STEP5_EVIDENCE.is_file() else {}
     step6 = _read_json(STEP6_EVIDENCE) if STEP6_EVIDENCE.is_file() else {}
@@ -395,6 +508,32 @@ def _collect_phase8_references() -> dict[str, Any]:
     step11 = _read_json(STEP11_MANIFEST) if STEP11_MANIFEST.is_file() else {}
 
     quality_summary = step9.get("error_classification", {}).get("summary", {})
+    quality_gate = step9.get("quality_gate", {})
+    quality_failures = quality_gate.get("failures", {}) if isinstance(quality_gate, dict) else {}
+    state_coverage = step9.get("state_coverage", {})
+    export_states = state_coverage.get("export_state_coverage", {})
+    job_states = state_coverage.get("job_state_coverage", {})
+    scoring_lifecycle = step6.get("scoring", {}).get("lifecycle", {})
+
+    audience_summary = step7.get("audience_inventory_status_summary", {})
+    campaign_summary = step8.get("campaign_inventory_status_summary", {})
+    accessibility_pass = (
+        str(quality_gate.get("status") or "").upper() == "PASS"
+        and quality_failures.get("accessibility") == []
+    )
+    responsive_pass = (
+        str(quality_gate.get("status") or "").upper() == "PASS"
+        and quality_failures.get("responsive") == []
+        and bool(step9.get("responsive", {}).get("viewports"))
+    )
+    trackability_pass = (
+        quality_failures.get("state_coverage") == []
+        and all(bool(export_states.get(key)) for key in ("started_seen", "failed_and_aborted_seen", "completed_seen"))
+        and all(bool(job_states.get(key)) for key in ("running_seen", "failed_seen"))
+        and "RUNNING" in scoring_lifecycle.get("seen_statuses", [])
+        and "COMPLETED" in scoring_lifecycle.get("seen_statuses", [])
+        and float(scoring_lifecycle.get("elapsed_seconds") or 0.0) > 120.0
+    )
 
     return {
         "step5_historical": {
@@ -414,6 +553,8 @@ def _collect_phase8_references() -> dict[str, Any]:
             "saved_audience_id": step7.get("saved_audience_flow", {}).get("saved_audience_id"),
             "saved_audience_name": step7.get("saved_audience_flow", {}).get("saved_audience_name"),
             "status": step7.get("overall_status"),
+            "inventory_status_summary": audience_summary,
+            "all_controls_complete": _status_summary_complete(audience_summary),
         },
         "step8_exports": {
             "email_checksum": step8.get("email_flow", {}).get("ui_export_event", {}).get("checksum"),
@@ -421,11 +562,20 @@ def _collect_phase8_references() -> dict[str, Any]:
             "email_campaign_id": step8.get("email_flow", {}).get("campaign_id"),
             "direct_mail_campaign_id": step8.get("direct_mail_flow", {}).get("campaign_id"),
             "status": step8.get("overall_status"),
+            "inventory_status_summary": campaign_summary,
+            "all_controls_complete": _status_summary_complete(campaign_summary),
         },
         "step9_browser_quality": {
             "browser": step9.get("browser", {}),
-            "unexplained_console_total": int(quality_summary.get("unexplained_console_total") or 0),
-            "unexplained_critical_network_total": int(quality_summary.get("unexplained_critical_network_total") or 0),
+            "unexplained_console_total": _optional_int(quality_summary.get("unexplained_console_total")),
+            "unexplained_critical_network_total": _optional_int(
+                quality_summary.get("unexplained_critical_network_total")
+            ),
+            "quality_gate": quality_gate,
+            "accessibility_pass": accessibility_pass,
+            "responsive_pass": responsive_pass,
+            "trackability_pass": trackability_pass,
+            "state_coverage": state_coverage,
             "status": step9.get("overall_status"),
         },
         "step10_deterministic": {
@@ -452,6 +602,11 @@ def _build_checklist_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
     branch = payload.get("branch_protection", {})
 
     command_status = {item.get("key"): bool(item.get("passed")) for item in local.get("checks", [])}
+    browser = step_refs.get("step9_browser_quality", {}).get("browser", {})
+    browser_name = str(browser.get("name") or "").casefold()
+    browser_executable = str(browser.get("executable_path") or "").casefold()
+    is_system_browser = browser_name in {"chrome", "edge", "system_chrome", "system_edge"}
+    is_not_embedded = is_system_browser and "code.exe" not in browser_executable and "vscode" not in browser_executable
 
     items: list[dict[str, Any]] = []
 
@@ -474,13 +629,13 @@ def _build_checklist_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
     add(
         3,
         "System Chrome or Edge used",
-        pass_fail(bool(step_refs.get("step9_browser_quality", {}).get("browser"))),
+        pass_fail(is_system_browser),
         _portable(STEP9_EVIDENCE),
     )
     add(
         4,
         "No VS Code embedded browser used",
-        pass_fail(bool(step_refs.get("step9_browser_quality", {}).get("browser"))),
+        pass_fail(is_not_embedded),
         _portable(STEP9_EVIDENCE),
     )
     add(
@@ -489,11 +644,22 @@ def _build_checklist_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
         pass_fail(bool(step_refs.get("step9_browser_quality", {}).get("browser", {}).get("product_version"))),
         _portable(STEP9_EVIDENCE),
     )
-    add(6, "Every reachable actionable control inventoried", pass_fail(control.get("controls_discovered", 0) > 0), _portable(INVENTORY_PATH))
+    add(
+        6,
+        "Every reachable actionable control inventoried",
+        pass_fail(bool(control.get("coverage_ok")) and control.get("controls_discovered", 0) > 0),
+        _portable(INVENTORY_PATH),
+    )
     add(
         7,
         "No generic reachable but not tested exception remains",
-        pass_fail(control.get("status_counts", {}).get("NOT_RUN", 0) == 0),
+        pass_fail(
+            bool(control.get("coverage_ok"))
+            and control.get("status_counts", {}).get("NOT_RUN", -1) == 0
+            and control.get("status_counts", {}).get("FAIL", -1) == 0
+            and control.get("status_counts", {}).get("OTHER", -1) == 0
+            and not control.get("coverage_errors")
+        ),
         _portable(INVENTORY_PATH),
     )
     add(
@@ -517,15 +683,33 @@ def _build_checklist_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
         ),
         _portable(STEP6_EVIDENCE),
     )
-    add(11, "All Audience Explorer controls tested", pass_fail(str(step_refs.get("step7_saved_audience", {}).get("status") or "").upper() == "PASS"), _portable(STEP7_EVIDENCE))
-    add(12, "All Campaign Builder controls tested", pass_fail(str(step_refs.get("step8_exports", {}).get("status") or "").upper() == "PASS"), _portable(STEP8_EVIDENCE))
+    add(
+        11,
+        "All Audience Explorer controls tested",
+        pass_fail(
+            str(step_refs.get("step7_saved_audience", {}).get("status") or "").upper() == "PASS"
+            and bool(step_refs.get("step7_saved_audience", {}).get("all_controls_complete"))
+        ),
+        _portable(STEP7_EVIDENCE),
+    )
+    add(
+        12,
+        "All Campaign Builder controls tested",
+        pass_fail(
+            str(step_refs.get("step8_exports", {}).get("status") or "").upper() == "PASS"
+            and bool(step_refs.get("step8_exports", {}).get("all_controls_complete"))
+        ),
+        _portable(STEP8_EVIDENCE),
+    )
     add(13, "Email browser export tested", pass_fail(bool(step_refs.get("step8_exports", {}).get("email_checksum"))), _portable(STEP8_EVIDENCE))
     add(14, "Direct Mail browser export tested", pass_fail(bool(step_refs.get("step8_exports", {}).get("direct_mail_checksum"))), _portable(STEP8_EVIDENCE))
-    add(15, "Zero unexplained console errors", pass_fail(int(step_refs.get("step9_browser_quality", {}).get("unexplained_console_total") or 1) == 0), _portable(STEP9_EVIDENCE))
-    add(16, "Zero unexplained critical network failures", pass_fail(int(step_refs.get("step9_browser_quality", {}).get("unexplained_critical_network_total") or 1) == 0), _portable(STEP9_EVIDENCE))
-    add(17, "Accessibility smoke passes", pass_fail(str(step_refs.get("step9_browser_quality", {}).get("status") or "").upper() == "PASS"), _portable(STEP9_EVIDENCE))
-    add(18, "Responsive layouts pass", pass_fail(str(step_refs.get("step9_browser_quality", {}).get("status") or "").upper() == "PASS"), _portable(STEP9_EVIDENCE))
-    add(19, "Long-running jobs/exports remain trackable", pass_fail(str(step_refs.get("step9_browser_quality", {}).get("status") or "").upper() == "PASS"), _portable(STEP9_EVIDENCE))
+    console_total = step_refs.get("step9_browser_quality", {}).get("unexplained_console_total")
+    network_total = step_refs.get("step9_browser_quality", {}).get("unexplained_critical_network_total")
+    add(15, "Zero unexplained console errors", pass_fail(console_total is not None and console_total == 0), _portable(STEP9_EVIDENCE))
+    add(16, "Zero unexplained critical network failures", pass_fail(network_total is not None and network_total == 0), _portable(STEP9_EVIDENCE))
+    add(17, "Accessibility smoke passes", pass_fail(bool(step_refs.get("step9_browser_quality", {}).get("accessibility_pass"))), _portable(STEP9_EVIDENCE))
+    add(18, "Responsive layouts pass", pass_fail(bool(step_refs.get("step9_browser_quality", {}).get("responsive_pass"))), _portable(STEP9_EVIDENCE))
+    add(19, "Long-running jobs/exports remain trackable", pass_fail(bool(step_refs.get("step9_browser_quality", {}).get("trackability_pass"))), _portable(STEP9_EVIDENCE))
     add(20, "GZIP reproducibility addressed", pass_fail(str(step_refs.get("step10_deterministic", {}).get("status") or "").upper() == "PASS"), _portable(STEP10_EVIDENCE))
     add(21, "Absolute machine paths removed from canonical summaries", pass_fail(str(step_refs.get("step10_deterministic", {}).get("status") or "").upper() == "PASS"), _portable(STEP10_EVIDENCE))
     add(22, "LFS/hash docs current", pass_fail(command_status.get("deterministic_generation_hash_checks", False)), _portable(OUTPUT_JSON))
@@ -542,7 +726,7 @@ def _build_checklist_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
         None if ci_green else str(ci.get("reason") or "Required checks are not all green."),
     )
 
-    branch_ok = bool(branch.get("available")) or BRANCH_PROTECTION_DOC.is_file()
+    branch_ok = bool(branch.get("evaluation", {}).get("acceptable"))
     add(
         27,
         "Branch protection enabled or fully documented",
@@ -695,9 +879,9 @@ def run_step12() -> dict[str, Any]:
     git_status = _git(["status", "--short"]).splitlines()
 
     sha_chain = {
-        "starting_sha": sha_now,
-        "ci_fix_sha": sha_now,
-        "browser_harness_sha": sha_now,
+        "starting_sha": _phase8_starting_sha(),
+        "ci_fix_sha": _git_last_commit_for_path(PHASE8_DIR / "02_CI_DISCOVERY_FIX_REPORT.md"),
+        "browser_harness_sha": _git_last_commit_for_path(PHASE8_DIR / "03_SYSTEM_BROWSER_HARNESS_REPORT.md"),
         "certification_candidate_sha": None,
         "final_implementation_sha": sha_now,
         "optional_closure_sha": None,
@@ -759,16 +943,21 @@ def run_step12() -> dict[str, Any]:
     control_summary = _collect_control_summary()
     _log("Collecting database integrity summary.")
     db_integrity = _collect_db_integrity()
-    _log("Querying GitHub CI status.")
-    ci_status = _query_ci_status()
     _log("Querying branch protection status.")
     branch_protection = _query_branch_protection_status()
+    branch_protection["evaluation"] = _evaluate_branch_protection(branch_protection)
+    required_ci_checks = sorted(
+        set(REQUIRED_CHECKS)
+        | set(branch_protection["evaluation"].get("configured_required_checks", []))
+    )
+    _log("Querying GitHub CI status for the exact candidate SHA.")
+    ci_status = _query_ci_status(sha_now, required_ci_checks)
     _log("Collecting Phase 8 step reference evidence.")
     phase8_refs = _collect_phase8_references()
 
     required_local_pass = all(bool(item.get("passed")) for item in checks if item.get("required_for_go"))
     step11_pass = str(phase8_refs.get("step11_certification", {}).get("status") or "").upper() == "PASS"
-    ci_green = bool(ci_status.get("required_all_green"))
+    ci_green = bool(ci_status.get("required_all_green")) and bool(ci_status.get("candidate_matches"))
     coverage_good = bool(control_summary.get("coverage_ok"))
 
     final_go = required_local_pass and step11_pass and ci_green and coverage_good
@@ -782,6 +971,11 @@ def run_step12() -> dict[str, Any]:
             "head_sha": sha_now,
             "status_short": git_status,
             "clean_head": len(git_status) == 0,
+        },
+        "execution_policy": {
+            "full_5m_scoring_rerun": False,
+            "step6_runner_invoked": False,
+            "note": "Step 12 consumes the completed Step 6/11 evidence and does not rerun full 5M scoring.",
         },
         "local_regression": {
             "checks": checks,
@@ -817,8 +1011,6 @@ def run_step12() -> dict[str, Any]:
         _portable(CHECKLIST_MD): _sha256_file(CHECKLIST_MD),
     }
 
-    OUTPUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    payload["artifact_sha256"][_portable(OUTPUT_JSON)] = _sha256_file(OUTPUT_JSON)
     OUTPUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     return payload
