@@ -54,6 +54,7 @@ PROGRESS_TRACKER = (
 )
 
 DB_PATH = PROJECT_ROOT / "data" / "campaign_poc.db"
+LOCAL_RUNTIME_DIR = PROJECT_ROOT / "artifacts" / "phase8_step12_checks"
 
 GITHUB_OWNER = "Kedar-Joshi07"
 GITHUB_REPO = "Campaign-Implementation-Tool"
@@ -896,7 +897,17 @@ def run_step12() -> dict[str, Any]:
 
     commands = [
         CommandSpec("full_pytest", [str(python_exe), "-m", "pytest", "-vv"]),
-        CommandSpec("clean_room_phase1_to_phase7", [str(python_exe), str(PROJECT_ROOT / "scripts" / "validation" / "run_cleanroom_phase1_to_phase7.py")]),
+        CommandSpec(
+            "clean_room_phase1_to_phase7",
+            [
+                str(python_exe),
+                str(PROJECT_ROOT / "scripts" / "validation" / "run_cleanroom_phase1_to_phase7.py"),
+                "--report-path",
+                str(LOCAL_RUNTIME_DIR / "CLEANROOM_PHASE1_TO_PHASE7_REPORT.md"),
+                "--json-path",
+                str(LOCAL_RUNTIME_DIR / "cleanroom_phase1_to_phase7.json"),
+            ],
+        ),
         CommandSpec(
             "system_browser_harness_unit_tests",
             [

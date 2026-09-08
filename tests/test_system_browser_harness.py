@@ -204,3 +204,4 @@ def test_step12_does_not_invoke_the_full_5m_scoring_runner() -> None:
     assert "run_phase8_step6_model_training_and_5m_scoring.py" not in runner
     assert '"full_5m_scoring_rerun": False' in runner
     assert "_query_ci_status(sha_now, required_ci_checks)" in runner
+    assert 'str(LOCAL_RUNTIME_DIR / "cleanroom_phase1_to_phase7.json")' in runner
