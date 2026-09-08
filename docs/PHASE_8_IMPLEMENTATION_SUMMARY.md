@@ -16,6 +16,7 @@ Phase 8 closes release assurance for the Phase 1 to Phase 7 application using in
 ## Final evidence
 
 - Final implementation SHA: `0b0e2559fc4b98498bbc3bd34671ae342d7067e5`
+- Evidence/documentation closure SHA: `2cee2dfd8a0c1dc9cb153d7a38e3a7c22587ed5b`
 - System browser: Chrome `152.0.7977.82`
 - UI coverage: 111 controls; 103 `PASS`; 8 individually documented `JUSTIFIED_EXCLUSIVE`; 0 `FAIL`; 0 `NOT_RUN`
 - Full scoring evidence: 5,000,000 prospects on scoring run 1, originally submitted through the UI
