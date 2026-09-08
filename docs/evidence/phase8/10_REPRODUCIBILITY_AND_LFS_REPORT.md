@@ -1,6 +1,6 @@
 # Step 10 Reproducibility and LFS Report
 
-Generated at: 2026-09-08T19:14:22Z
+Generated at: 2026-09-08T20:28:18Z
 Prompt: Prompts/phase8_release_assurance_system_browser_prompt_pack/10_STEP_10_DETERMINISTIC_GENERATION_PATH_HASH_AND_LFS_CLEANUP.md
 
 ## Deterministic GZIP Controls
@@ -43,10 +43,8 @@ On branch main
 Objects to be pushed to origin/main:
 
 
-Objects to be committed:
-
-
-Objects not staged for commit:
+Failed to run `git update-index`: error running C:\Users\Kedar.Joshi\AppData\Local\Programs\Git\mingw64\libexec\git-core\git.exe 'update-index' '-q' '--refresh': '0 [main] sh (14500) C:\Users\Kedar.Joshi\AppData\Local\Programs\Git\usr\bin\sh.exe: *** fatal error - couldn't create signal pipe, Win32 error 5
+fatal: the remote end hung up unexpectedly' 'exit status 128'
 ```
 ### git lfs ls-files
 ```text
