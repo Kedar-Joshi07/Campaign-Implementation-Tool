@@ -7,7 +7,7 @@
     "browser_harness_sha": "da1d9ab42dc6152659533bc6b03e528644448cf7",
     "certification_candidate_sha": "969de70560fe086296c643ad47609678fc9e3e40",
     "final_implementation_sha": "f5d6f9ed047146f04ecdabca38e6d18793ac4eba",
-    "optional_closure_sha": null
+    "optional_closure_sha": "ae8e872dc5382a12a88d9d9f1eb46b3582a231f1"
   },
   "git": {
     "branch": "main",
@@ -563,7 +563,7 @@
     "checklist_md": "docs/evidence/phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md"
   },
   "artifact_sha256": {
-    "docs/evidence/phase8/PHASE8_FINAL_ACCEPTANCE.md": "1784b039ad7d1f97280229d2505ee9d1950ff372a1a4f7fbb56f3e108aeef6c8",
+    "docs/evidence/phase8/PHASE8_FINAL_ACCEPTANCE.md": "1d4cce57ede26a3e9b568d9d7220123a8c39098c39530e0c24d1e479b9adbd31",
     "docs/evidence/phase8/12_master_acceptance_checklist_run.json": "c282461e700525d44c181181c5806fd4a5f55d7f803efc02dd97875a9913f6e2",
     "docs/evidence/phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md": "428366d15d817bafd6b19301ea0bbf1585cf17506ddb136f046648dc9904cad0"
   }
