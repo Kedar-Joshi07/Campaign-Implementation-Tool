@@ -1,6 +1,6 @@
 # Phase 8 Step 5 System Browser Historical Analysis Report
 
-Generated at: 2026-09-08T11:46:11Z
+Generated at: 2026-09-08T20:40:40Z
 
 ## Scope
 - Prompt executed: Prompts/phase8_release_assurance_system_browser_prompt_pack/05_STEP_05_SYSTEM_BROWSER_OVERVIEW_DATA_STATUS_HISTORICAL_ANALYSIS.md
@@ -9,7 +9,7 @@ Generated at: 2026-09-08T11:46:11Z
 ## Browser
 - name: system_chrome
 - executable: C:\Program Files\Google\Chrome\Application\chrome.exe
-- version: 152.0.7977.82
+- version: 152.0.7977.83
 - mode: headless
 
 ## Historical Analyses Submitted Through UI

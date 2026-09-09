@@ -1,11 +1,10 @@
 # Phase 8 System Browser Certification Report
 
-Generated at: 2026-09-08T15:28:18Z
+Generated at: 2026-09-08T20:30:21Z
 Prompt: Prompts/phase8_release_assurance_system_browser_prompt_pack/11_STEP_11_CLEAN_HEAD_TRUE_BROWSER_PHASE1_TO_PHASE7_CERTIFICATION.md
-Candidate SHA: 7b712bcecd9a8de20dd851bef457135c327dc5bf
+Candidate SHA: 969de70560fe086296c643ad47609678fc9e3e40
 Branch: main
-Execution mode: user_directed_resume_existing
-Resume disclosure: user-directed reuse of existing completed scoring; no import, training, or scoring rerun was performed by this aggregation.
+Execution mode: strict_fresh_single_run
 
 ## Clean-start gate
 - Passed: True
@@ -13,17 +12,17 @@ Resume disclosure: user-directed reuse of existing completed scoring; no import,
 - Browser resolved: chrome @ C:\Program Files\Google\Chrome\Application\chrome.exe
 
 ## Browser-driven stages
-- step5_historical: PASS (Nones)
-- step6_training_scoring: PASS (Nones)
-- step7_audience: PASS (Nones)
-- step8_campaigns: PASS (Nones)
-- step9_browser_quality: PASS (Nones)
+- step5_historical: PASS (195.158s)
+- step6_training_scoring: PASS (2269.531s)
+- step7_audience: PASS (2619.677s)
+- step8_campaigns: PASS (272.982s)
+- step9_browser_quality: PASS (85.867s)
 
 ## Coverage acceptance
-- PASS: 103
+- PASS: 104
 - FAIL: 0
 - NOT_RUN: 0
-- JUSTIFIED_EXCLUSIVE (with individual docs): 8
+- JUSTIFIED_EXCLUSIVE (with individual docs): 7
 - Generic EXCEPTION: 0
 - Coverage gate status: True
 
@@ -54,17 +53,17 @@ Resume disclosure: user-directed reuse of existing completed scoring; no import,
 - IDs: {'historical_analysis_run_ids': {'broad': 1, 'narrow': 2}, 'model_run_id': 1, 'scoring_run_id': 1, 'saved_audience_id': 1, 'campaign_ids': {'email': 1, 'direct_mail': 2}, 'export_event_ids': {'email': 1, 'direct_mail': 2}, 'export_checksums': {'email': '14dcdcb8734483310d20ba539409f141de20aedfd14e68890a97d4fd980157a0', 'direct_mail': '9aee8cb3d70e80fe8b9f18e7b372bb4da8b00b1591af58fd3820ff4301822bed'}}
 
 ## Artifact SHA-256
-- docs/evidence/phase8/05_system_browser_historical_analysis.json: 5946c5c994302e8a7524c49403f3d3d4cf0e872bd1292bd4cb38dbcd5ccb8821
-- docs/evidence/phase8/05_SYSTEM_BROWSER_HISTORICAL_ANALYSIS_REPORT.md: 1157e5c5a0cf4bbd30f93ed2c0cc1ae6a1544dd7ffe447c5778080508ad11a37
-- docs/evidence/phase8/06_system_browser_training_and_5m_scoring.json: f3591aab0016c3042d29f482417a4c560bbb1f68c428855acb85e292ed4cac33
-- docs/evidence/phase8/06_SYSTEM_BROWSER_TRAINING_AND_5M_SCORING_REPORT.md: 4e9ad6cdcb8dc1c35fd423ca45a7c79ed15ec64fbccddc6ed770c6f3618387aa
-- docs/evidence/phase8/07_system_browser_audience_explorer_all_controls.json: 1e321822688c993e091450ae27d7bbbfd0a271d3eb94a35b6d0fef081668a45c
-- docs/evidence/phase8/07_SYSTEM_BROWSER_AUDIENCE_REPORT.md: da90a9e0ded52b9d6f0220050d29e1cb8b7d00ef91884bfdcaf329a439388913
-- docs/evidence/phase8/08_system_browser_campaign_builder_and_exports.json: 302cc39649cc75a057edb961b85429442f4385422377314f8c26821a15fe8a66
-- docs/evidence/phase8/08_SYSTEM_BROWSER_CAMPAIGN_EXPORT_REPORT.md: d083e8d687316fba95ffa1bb7881ed95b4294d9f094891483b0ae77802885351
-- docs/evidence/phase8/09_browser_quality_evidence.json: 550998fa5b8f1fb842be70859e78c7f32ae05c0d5ab7c3891106098ba54f124f
-- docs/evidence/phase8/09_BROWSER_QUALITY_REPORT.md: 22d3b8e17d8272915791fb5e4c1e0dd6b4f5ad7b3d8799f0ff3dc9d92aa71c90
-- docs/evidence/phase8/ui_control_inventory.json: c2c7110d85bdef4c8e810beb8fb6322f83dc01bcefc8d7e914a7ef8faae7a9f1
+- docs/evidence/phase8/05_system_browser_historical_analysis.json: c4c2931b70a4f8b749e71424d294ecd732f1d7fc9ab76e7c622a0fce59fcb171
+- docs/evidence/phase8/05_SYSTEM_BROWSER_HISTORICAL_ANALYSIS_REPORT.md: aa6c2b4ae8326a40b5f6ea57d6537475dcf011054d08324da2651c11ea1766f2
+- docs/evidence/phase8/06_system_browser_training_and_5m_scoring.json: 64820fe1e0fc2a715100c5041dea2cab412530656beae9b98b00a7e1d50342bd
+- docs/evidence/phase8/06_SYSTEM_BROWSER_TRAINING_AND_5M_SCORING_REPORT.md: f91e7aec4788ca86443f3adc5daf92ec6d6576c122a57caf0f261952e5c54bcb
+- docs/evidence/phase8/07_system_browser_audience_explorer_all_controls.json: f8c4b713216ce329408924ee8dccb7342a121b066e78290e3e1533690370d656
+- docs/evidence/phase8/07_SYSTEM_BROWSER_AUDIENCE_REPORT.md: e6b36797ab621db4dc1b026d4c79a3fa3ca7a24005ffd9befd7e866ed5e328c1
+- docs/evidence/phase8/08_system_browser_campaign_builder_and_exports.json: 827ce951cc38e8f2d1c316337fddd9cca2903bbadd0d509fdb937b87d009a316
+- docs/evidence/phase8/08_SYSTEM_BROWSER_CAMPAIGN_EXPORT_REPORT.md: b79b7e87bbaff577a152ccf7d41e5b52009e07154c9bd842e8be93532dc821c9
+- docs/evidence/phase8/09_browser_quality_evidence.json: 6e2cb0caed158f0dfa91adbb7ca988358cabc3b8db1ce8e495854f11c43e82bb
+- docs/evidence/phase8/09_BROWSER_QUALITY_REPORT.md: 2024e009191eb3f4b402915838b360a79a2274f07b64b054d5d4cc0236718053
+- docs/evidence/phase8/ui_control_inventory.json: 3236b1dd110b4270d1b4a136547a926aebe03e1b43c66925c5a18c041549b9e4
 
 ## Decision
 - Overall status: PASS

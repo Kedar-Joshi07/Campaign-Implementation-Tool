@@ -1,6 +1,6 @@
 # Phase 8 Step 8 System Browser Campaign Export Report
 
-Generated at: 2026-09-08T14:58:16Z
+Generated at: 2026-09-08T22:05:42Z
 
 ## Scope
 - Prompt executed: Prompts/phase8_release_assurance_system_browser_prompt_pack/08_STEP_08_SYSTEM_BROWSER_CAMPAIGN_BUILDER_AND_EXPORTS.md
@@ -10,13 +10,13 @@ Generated at: 2026-09-08T14:58:16Z
 - sessions: 2
 - name: system_chrome
 - executable: C:\Program Files\Google\Chrome\Application\chrome.exe
-- version: 152.0.7977.82
+- version: 152.0.7977.83
 - mode: headless
 
 ## Navigation and Handoff
 - Campaign view entered via normal navigation: yes
 - Audience Explorer handoff hash: #campaigns
-- Handoff selected audience name: Phase8 Step7 Current Audience 1788879374
+- Handoff selected audience name: Phase8 Step7 Current Audience 1788905089
 
 ## Validation Scenarios
 - Missing audience: Select a current saved audience before continuing.
@@ -28,7 +28,7 @@ Generated at: 2026-09-08T14:58:16Z
 ## EMAIL
 - Campaign id: 1
 - Export profile: EMAIL_CONTACT_V1
-- Download path: C:\Users\KEDAR~1.JOS\AppData\Local\Temp\phase8-browser-downloads-4eq9gqlf\phase8_step8\step8_email_export_1788879697088.csv
+- Download path: C:\Users\KEDAR~1.JOS\AppData\Local\Temp\phase8-browser-downloads-4v7r1r80\phase8_step8\step8_email_export_1788905231626.csv
 - Columns: ['person_id', 'propensity_score', 'percentile_bucket', 'decile', 'rank_band', 'first_name', 'last_name', 'email']
 - Reconciliation: selected=50000, deliverable=50000, undeliverable=0, rows=50000
 - CSV SHA256: 14dcdcb8734483310d20ba539409f141de20aedfd14e68890a97d4fd980157a0
@@ -39,7 +39,7 @@ Generated at: 2026-09-08T14:58:16Z
 ## DIRECT_MAIL
 - Campaign id: 2
 - Export profile: DIRECT_MAIL_CONTACT_V1
-- Download path: C:\Users\KEDAR~1.JOS\AppData\Local\Temp\phase8-browser-downloads-r8sx29g4\phase8_step8\step8_direct_mail_export_1788880011861.csv
+- Download path: C:\Users\KEDAR~1.JOS\AppData\Local\Temp\phase8-browser-downloads-___ik5_p\phase8_step8\step8_direct_mail_export_1788905360366.csv
 - Columns: ['person_id', 'propensity_score', 'percentile_bucket', 'decile', 'rank_band', 'first_name', 'last_name', 'address_line_1', 'address_line_2', 'city', 'state', 'postal_code']
 - Reconciliation: selected=50000, deliverable=50000, undeliverable=0, rows=50000
 - CSV SHA256: 9aee8cb3d70e80fe8b9f18e7b372bb4da8b00b1591af58fd3820ff4301822bed

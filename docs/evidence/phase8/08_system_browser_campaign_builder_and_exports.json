@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T14:58:16Z",
+  "generated_at": "2026-09-08T22:05:42Z",
   "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/08_STEP_08_SYSTEM_BROWSER_CAMPAIGN_BUILDER_AND_EXPORTS.md",
   "expected_step6_scoring_run_id": 1,
   "preparation": {
@@ -18,7 +18,7 @@
       "source_verified": true,
       "ready_for_current_audience_actions": true,
       "currentness_issues": [],
-      "analytics_snapshot_created_at": "2026-09-08T12:57:24Z",
+      "analytics_snapshot_created_at": "2026-09-08T21:47:38Z",
       "boundary_count": 100,
       "total_population": 5000000,
       "active_job": null
@@ -28,9 +28,9 @@
     "mode": "existing_current",
     "audience": {
       "audience_id": 1,
-      "audience_name": "Phase8 Step7 Current Audience 1788879374",
+      "audience_name": "Phase8 Step7 Current Audience 1788905089",
       "description": "Current saved audience from Step 7 system-browser control coverage run",
-      "created_at": "2026-09-08T14:56:24Z",
+      "created_at": "2026-09-08T22:04:58Z",
       "selection_mode": "TOP_N",
       "target_count": 50000,
       "resolved_count": 50000,
@@ -41,9 +41,8 @@
     }
   },
   "server": {
-    "managed": true,
-    "started_by_script": true,
-    "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+    "managed": false,
+    "started_by_script": false
   },
   "campaign_view_state_email": {
     "ready": true,
@@ -51,7 +50,7 @@
     "backend_unavailable": false
   },
   "handoff": {
-    "selected_saved_audience_name": "Phase8 Step7 Current Audience 1788879374",
+    "selected_saved_audience_name": "Phase8 Step7 Current Audience 1788905089",
     "campaign_hash_after_handoff": "#campaigns",
     "selector_value": "1"
   },
@@ -64,26 +63,26 @@
     {
       "name": "system_chrome",
       "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-      "product_version": "152.0.7977.82",
+      "product_version": "152.0.7977.83",
       "execution_mode": "headless"
     },
     {
       "name": "system_chrome",
       "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-      "product_version": "152.0.7977.82",
+      "product_version": "152.0.7977.83",
       "execution_mode": "headless"
     }
   ],
   "list_open": {
     "email_session": {
       "opened_campaign_id": 1,
-      "opened_campaign_name": "Phase8 Step8 EMAIL Campaign 1788879553339",
+      "opened_campaign_name": "Phase8 Step8 EMAIL Campaign 1788905154737",
       "matched_expected": true,
       "loaded_campaign_id": 1
     },
     "direct_mail_session": {
       "opened_campaign_id": 2,
-      "opened_campaign_name": "Phase8 Step8 DIRECT_MAIL Campaign 1788879823082",
+      "opened_campaign_name": "Phase8 Step8 DIRECT_MAIL Campaign 1788905272372",
       "matched_expected": true,
       "loaded_campaign_id": 2
     }
@@ -99,7 +98,7 @@
     "canonical_campaign_id": 1,
     "campaign_id_from_export_url": 1,
     "event_campaign_id": 1,
-    "campaign_name": "Phase8 Step8 EMAIL Campaign 1788879553339",
+    "campaign_name": "Phase8 Step8 EMAIL Campaign 1788905154737",
     "launch_date": "2026-12-31",
     "initial_draft_action": "created",
     "draft_update_action": true,
@@ -143,14 +142,14 @@
     "expected_export_profile": "EMAIL_CONTACT_V1",
     "download": {
       "suggested_filename": "campaign_1_email_contact_v1.csv",
-      "saved_path": "C:\\Users\\KEDAR~1.JOS\\AppData\\Local\\Temp\\phase8-browser-downloads-4eq9gqlf\\phase8_step8\\step8_email_export_1788879697088.csv",
-      "url": "http://127.0.0.1:8000/api/campaigns/1/export.csv?acknowledge_pii=true&_=1788879704159"
+      "saved_path": "C:\\Users\\KEDAR~1.JOS\\AppData\\Local\\Temp\\phase8-browser-downloads-4v7r1r80\\phase8_step8\\step8_email_export_1788905231626.csv",
+      "url": "http://127.0.0.1:8000/api/campaigns/1/export.csv?acknowledge_pii=true&_=1788905234526"
     },
     "ui_export_event": {
       "event_id": 1,
       "profile": "EMAIL_CONTACT_V1",
       "status": "COMPLETED",
-      "elapsed_text": "27s",
+      "elapsed_text": "8s",
       "selected": 50000,
       "deliverable": 50000,
       "undeliverable": 0,
@@ -190,8 +189,8 @@
         "start_provenance_sha256": "fe6ba8f37915d32cea5f6534fc97478b8218995165f4737100ec6e7a832fe80d",
         "source_changed_during_export": false,
         "completion_currentness_state": "CURRENT",
-        "started_at": "2026-09-08T15:01:50Z",
-        "completed_at": "2026-09-08T15:02:17Z",
+        "started_at": "2026-09-08T22:07:16Z",
+        "completed_at": "2026-09-08T22:07:24Z",
         "safe_error_message": null
       },
       "prohibited_fields_in_header": []
@@ -203,7 +202,7 @@
     "canonical_campaign_id": 2,
     "campaign_id_from_export_url": 2,
     "event_campaign_id": 2,
-    "campaign_name": "Phase8 Step8 DIRECT_MAIL Campaign 1788879823082",
+    "campaign_name": "Phase8 Step8 DIRECT_MAIL Campaign 1788905272372",
     "launch_date": "2026-12-31",
     "initial_draft_action": "created",
     "draft_update_action": true,
@@ -241,14 +240,14 @@
     "expected_export_profile": "DIRECT_MAIL_CONTACT_V1",
     "download": {
       "suggested_filename": "campaign_2_direct_mail_contact_v1.csv",
-      "saved_path": "C:\\Users\\KEDAR~1.JOS\\AppData\\Local\\Temp\\phase8-browser-downloads-r8sx29g4\\phase8_step8\\step8_direct_mail_export_1788880011861.csv",
-      "url": "http://127.0.0.1:8000/api/campaigns/2/export.csv?acknowledge_pii=true&_=1788880020408"
+      "saved_path": "C:\\Users\\KEDAR~1.JOS\\AppData\\Local\\Temp\\phase8-browser-downloads-___ik5_p\\phase8_step8\\step8_direct_mail_export_1788905360366.csv",
+      "url": "http://127.0.0.1:8000/api/campaigns/2/export.csv?acknowledge_pii=true&_=1788905363502"
     },
     "ui_export_event": {
       "event_id": 2,
       "profile": "DIRECT_MAIL_CONTACT_V1",
       "status": "COMPLETED",
-      "elapsed_text": "34s",
+      "elapsed_text": "9s",
       "selected": 50000,
       "deliverable": 50000,
       "undeliverable": 0,
@@ -292,8 +291,8 @@
         "start_provenance_sha256": "872085d389c1e7fc6f360a6be4537054de6baa343ac055e597222171aea42e81",
         "source_changed_during_export": false,
         "completion_currentness_state": "CURRENT",
-        "started_at": "2026-09-08T15:07:06Z",
-        "completed_at": "2026-09-08T15:07:40Z",
+        "started_at": "2026-09-08T22:09:26Z",
+        "completed_at": "2026-09-08T22:09:35Z",
         "safe_error_message": null
       },
       "prohibited_fields_in_header": []
@@ -328,9 +327,9 @@
   },
   "inventory_status_summary": {
     "NOT_RUN": 2,
-    "PASS": 101,
+    "PASS": 102,
     "FAIL": 0,
-    "JUSTIFIED_EXCLUSIVE": 8
+    "JUSTIFIED_EXCLUSIVE": 7
   },
   "campaign_inventory_status_summary": {
     "NOT_RUN": 0,

@@ -1,15 +1,14 @@
 {
-  "generated_at": "2026-09-08T15:09:30Z",
+  "generated_at": "2026-09-08T22:09:55Z",
   "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/09_STEP_09_BROWSER_ERROR_ACCESSIBILITY_RESPONSIVE_AND_STATE_TESTS.md",
   "server": {
-    "managed": true,
-    "started_by_script": true,
-    "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+    "managed": false,
+    "started_by_script": false
   },
   "browser": {
     "name": "system_chrome",
     "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "product_version": "152.0.7977.82",
+    "product_version": "152.0.7977.83",
     "execution_mode": "headless"
   },
   "accessibility": {
@@ -189,7 +188,7 @@
         "browser": {
           "name": "system_chrome",
           "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-          "product_version": "152.0.7977.82",
+          "product_version": "152.0.7977.83",
           "execution_mode": "headless"
         },
         "checks": [
@@ -252,7 +251,7 @@
         "browser": {
           "name": "system_chrome",
           "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-          "product_version": "152.0.7977.82",
+          "product_version": "152.0.7977.83",
           "execution_mode": "headless"
         },
         "checks": [
@@ -315,7 +314,7 @@
         "browser": {
           "name": "system_chrome",
           "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-          "product_version": "152.0.7977.82",
+          "product_version": "152.0.7977.83",
           "execution_mode": "headless"
         },
         "checks": [
@@ -378,7 +377,7 @@
         "browser": {
           "name": "system_chrome",
           "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-          "product_version": "152.0.7977.82",
+          "product_version": "152.0.7977.83",
           "execution_mode": "headless"
         },
         "checks": [
@@ -441,7 +440,7 @@
         "browser": {
           "name": "system_chrome",
           "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-          "product_version": "152.0.7977.82",
+          "product_version": "152.0.7977.83",
           "execution_mode": "headless"
         },
         "checks": [
@@ -545,8 +544,8 @@
       "[data-view-target='overview']"
     ],
     "status_summary": {
-      "PASS": 103,
-      "JUSTIFIED_EXCLUSIVE": 8
+      "PASS": 104,
+      "JUSTIFIED_EXCLUSIVE": 7
     }
   },
   "overall_status": "PASS"

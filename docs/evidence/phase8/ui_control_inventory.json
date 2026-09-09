@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T15:09:07Z",
+  "generated_at": "2026-09-08T22:09:52Z",
   "source": {
     "frontend_index": "frontend/index.html",
     "frontend_js_glob": "frontend/js/*.js"
@@ -245,11 +245,11 @@
       "label": "Prepare Audience Explorer",
       "type": "button",
       "enable_conditions": "Visible in active view and enabled by currentness/job-state guards.",
-      "mutually_exclusive_group": "prep-needed-only",
+      "mutually_exclusive_group": "",
       "expected_behavior": "Control is reachable and performs its documented action without unexplained errors.",
       "required_scenario": "Exercise audience-explorer control in system browser and assert observable UI/API state transition.",
-      "status": "JUSTIFIED_EXCLUSIVE",
-      "justification": "Preparation submit control is shown only when rank preparation is required.",
+      "status": "PASS",
+      "justification": "",
       "source": "dom"
     },
     {
@@ -1450,7 +1450,7 @@
     }
   ],
   "status_summary": {
-    "PASS": 103,
-    "JUSTIFIED_EXCLUSIVE": 8
+    "PASS": 104,
+    "JUSTIFIED_EXCLUSIVE": 7
   }
 }

@@ -1,6 +1,6 @@
 # Phase 8 Step 7 System Browser Audience Explorer Report
 
-Generated at: 2026-09-08T14:31:15Z
+Generated at: 2026-09-08T21:22:01Z
 
 ## Scope
 - Prompt executed: Prompts/phase8_release_assurance_system_browser_prompt_pack/07_STEP_07_SYSTEM_BROWSER_AUDIENCE_EXPLORER_ALL_CONTROLS.md
@@ -9,15 +9,15 @@ Generated at: 2026-09-08T14:31:15Z
 ## Browser
 - name: system_chrome
 - executable: C:\Program Files\Google\Chrome\Application\chrome.exe
-- version: 152.0.7977.82
+- version: 152.0.7977.83
 - mode: headless
 
 ## Preparation
 - Active scoring run: 1
 - Source badge: Current source verified
-- Prep submit clicked: False
+- Prep submit clicked: True
 - Prep retry clicked: False
-- Prep running messages observed: 0
+- Prep running messages observed: 2
 
 ## Required Scenarios
 - 1_no_filters_all_matching: matching=5000000, selected=5000000, rows_rendered=50
@@ -36,11 +36,11 @@ Generated at: 2026-09-08T14:31:15Z
 ## Backend Assertions
 - Search determinism/no-duplicates: checked_pages=5, unique_person_ids=200
 - Boundaries: count=100, p1_rank=50000, p10_rank=500000, p100_rank=5000000, population=5000000
-- Analytics snapshot: prepared=True, is_canonical=True, source_verified=True, created_at=2026-09-08T12:57:24Z
+- Analytics snapshot: prepared=True, is_canonical=True, source_verified=True, created_at=2026-09-08T21:47:38Z
 
 ## Saved Audience and Handoff
 - Saved audience id: 1
-- Saved audience name: Phase8 Step7 Current Audience 1788879374
+- Saved audience name: Phase8 Step7 Current Audience 1788905089
 - Currentness badge: CURRENT - usable in Campaign Builder
 - Campaign handoff hash after click: #campaigns
 - Stale saved definition exercised: False
@@ -55,9 +55,9 @@ Generated at: 2026-09-08T14:31:15Z
 - Request failures: 0
 
 ## Audience Control Inventory
-- Audience controls PASS: 35
+- Audience controls PASS: 36
 - Audience controls FAIL: 0
-- Audience controls JUSTIFIED_EXCLUSIVE: 3
+- Audience controls JUSTIFIED_EXCLUSIVE: 2
 - Audience controls NOT_RUN: 0
 - Controls updated this step: 38
 

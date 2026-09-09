@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-09-08T15:28:23Z",
+  "generated_at": "2026-09-08T22:11:19Z",
   "inventory_path": "docs/evidence/phase8/ui_control_inventory.json",
   "counts": {
     "NOT_RUN": 0,
-    "PASS": 103,
+    "PASS": 104,
     "FAIL": 0,
-    "JUSTIFIED_EXCLUSIVE": 8,
+    "JUSTIFIED_EXCLUSIVE": 7,
     "UNJUSTIFIED_EXCLUSIVE": 0,
     "INVALID_STATUS": 0
   },
@@ -26,13 +26,6 @@
       "label": "Retry preparation",
       "mutually_exclusive_group": "prep-failed-only",
       "justification": "Preparation retry control is shown only when preparation has failed."
-    },
-    {
-      "page": "audience-explorer",
-      "selector": "#audience-prepare-submit",
-      "label": "Prepare Audience Explorer",
-      "mutually_exclusive_group": "prep-needed-only",
-      "justification": "Preparation submit control is shown only when rank preparation is required."
     },
     {
       "page": "campaigns",

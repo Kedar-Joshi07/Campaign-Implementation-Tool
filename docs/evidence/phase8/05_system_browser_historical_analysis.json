@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T11:46:11Z",
+  "generated_at": "2026-09-08T20:40:40Z",
   "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/05_STEP_05_SYSTEM_BROWSER_OVERVIEW_DATA_STATUS_HISTORICAL_ANALYSIS.md",
   "server": {
     "managed": false,
@@ -8,7 +8,7 @@
   "browser": {
     "name": "system_chrome",
     "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "product_version": "152.0.7977.82",
+    "product_version": "152.0.7977.83",
     "execution_mode": "headless"
   },
   "overview": {

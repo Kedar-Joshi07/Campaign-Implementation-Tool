@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-09-08T15:28:18Z",
+  "generated_at": "2026-09-08T20:30:21Z",
   "prompt": "Prompts/phase8_release_assurance_system_browser_prompt_pack/11_STEP_11_CLEAN_HEAD_TRUE_BROWSER_PHASE1_TO_PHASE7_CERTIFICATION.md",
   "candidate": {
     "branch": "main",
-    "sha": "7b712bcecd9a8de20dd851bef457135c327dc5bf"
+    "sha": "969de70560fe086296c643ad47609678fc9e3e40"
   },
   "clean_start_gate": {
     "passed": true,
@@ -16,47 +16,42 @@
     "step5_historical": {
       "script": "scripts/validation/browser/run_phase8_step5_historical_analysis.py",
       "evidence": "docs/evidence/phase8/05_system_browser_historical_analysis.json",
-      "duration_seconds": null,
-      "overall_status": "PASS",
-      "execution": "reused_completed_checkpoint"
+      "duration_seconds": 195.158,
+      "overall_status": "PASS"
     },
     "step6_training_scoring": {
       "script": "scripts/validation/browser/run_phase8_step6_model_training_and_5m_scoring.py",
       "evidence": "docs/evidence/phase8/06_system_browser_training_and_5m_scoring.json",
-      "duration_seconds": null,
-      "overall_status": "PASS",
-      "execution": "reused_completed_checkpoint"
+      "duration_seconds": 2269.531,
+      "overall_status": "PASS"
     },
     "step7_audience": {
       "script": "scripts/validation/browser/run_phase8_step7_audience_explorer_all_controls.py",
       "evidence": "docs/evidence/phase8/07_system_browser_audience_explorer_all_controls.json",
-      "duration_seconds": null,
-      "overall_status": "PASS",
-      "execution": "reused_completed_checkpoint"
+      "duration_seconds": 2619.677,
+      "overall_status": "PASS"
     },
     "step8_campaigns": {
       "script": "scripts/validation/browser/run_phase8_step8_campaign_builder_and_exports.py",
       "evidence": "docs/evidence/phase8/08_system_browser_campaign_builder_and_exports.json",
-      "duration_seconds": null,
-      "overall_status": "PASS",
-      "execution": "reused_completed_checkpoint"
+      "duration_seconds": 272.982,
+      "overall_status": "PASS"
     },
     "step9_browser_quality": {
       "script": "scripts/validation/browser/run_phase8_step9_browser_quality.py",
       "evidence": "docs/evidence/phase8/09_browser_quality_evidence.json",
-      "duration_seconds": null,
-      "overall_status": "PASS",
-      "execution": "reused_completed_checkpoint"
+      "duration_seconds": 85.867,
+      "overall_status": "PASS"
     }
   },
   "coverage": {
-    "generated_at": "2026-09-08T15:28:23Z",
+    "generated_at": "2026-09-08T22:11:19Z",
     "inventory_path": "docs/evidence/phase8/ui_control_inventory.json",
     "counts": {
       "NOT_RUN": 0,
-      "PASS": 103,
+      "PASS": 104,
       "FAIL": 0,
-      "JUSTIFIED_EXCLUSIVE": 8,
+      "JUSTIFIED_EXCLUSIVE": 7,
       "UNJUSTIFIED_EXCLUSIVE": 0,
       "INVALID_STATUS": 0
     },
@@ -77,13 +72,6 @@
         "label": "Retry preparation",
         "mutually_exclusive_group": "prep-failed-only",
         "justification": "Preparation retry control is shown only when preparation has failed."
-      },
-      {
-        "page": "audience-explorer",
-        "selector": "#audience-prepare-submit",
-        "label": "Prepare Audience Explorer",
-        "mutually_exclusive_group": "prep-needed-only",
-        "justification": "Preparation submit control is shown only when rank preparation is required."
       },
       {
         "page": "campaigns",
@@ -155,7 +143,7 @@
           "status": "COMPLETED",
           "rows_inserted": 570000,
           "source_checksum": "2fdb11c576a180b7349e50e0bf9d3b0a66d0d354ba8d42062756c8cd840965c4",
-          "completed_at": "2026-09-08T11:41:36Z"
+          "completed_at": "2026-09-08T20:33:01Z"
         },
         {
           "dataset_name": "customers",
@@ -163,7 +151,7 @@
           "status": "COMPLETED",
           "rows_inserted": 125000,
           "source_checksum": "99a09d2f0db06980afe290cf74a4db1df76cf8c340534fb2088879fb093d9ea9",
-          "completed_at": "2026-09-08T11:40:52Z"
+          "completed_at": "2026-09-08T20:31:12Z"
         },
         {
           "dataset_name": "demographics",
@@ -171,7 +159,7 @@
           "status": "COMPLETED",
           "rows_inserted": 5000000,
           "source_checksum": "e12fa5f54606aee0e6704db418f2054df29f4e1b8827d82ed2ce7897b7693e75",
-          "completed_at": "2026-09-08T11:45:19Z"
+          "completed_at": "2026-09-08T20:38:55Z"
         }
       ],
       "completed_analysis_count": 2,
@@ -193,7 +181,7 @@
         "feature_contract_version": "1",
         "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
         "artifact_sha256": "3c5a8e083acaaf86aab03cc44000f0247789ff837d4efdac8cc6c1f7b1ff0a19",
-        "completed_at": "2026-09-08T12:11:26Z",
+        "completed_at": "2026-09-08T21:13:28Z",
         "deterministic_rescore": {
           "sample_size": 256,
           "max_abs_diff": 0.0,
@@ -239,44 +227,103 @@
     }
   },
   "artifact_sha256": {
-    "docs/evidence/phase8/05_system_browser_historical_analysis.json": "5946c5c994302e8a7524c49403f3d3d4cf0e872bd1292bd4cb38dbcd5ccb8821",
-    "docs/evidence/phase8/05_SYSTEM_BROWSER_HISTORICAL_ANALYSIS_REPORT.md": "1157e5c5a0cf4bbd30f93ed2c0cc1ae6a1544dd7ffe447c5778080508ad11a37",
-    "docs/evidence/phase8/06_system_browser_training_and_5m_scoring.json": "f3591aab0016c3042d29f482417a4c560bbb1f68c428855acb85e292ed4cac33",
-    "docs/evidence/phase8/06_SYSTEM_BROWSER_TRAINING_AND_5M_SCORING_REPORT.md": "4e9ad6cdcb8dc1c35fd423ca45a7c79ed15ec64fbccddc6ed770c6f3618387aa",
-    "docs/evidence/phase8/07_system_browser_audience_explorer_all_controls.json": "1e321822688c993e091450ae27d7bbbfd0a271d3eb94a35b6d0fef081668a45c",
-    "docs/evidence/phase8/07_SYSTEM_BROWSER_AUDIENCE_REPORT.md": "da90a9e0ded52b9d6f0220050d29e1cb8b7d00ef91884bfdcaf329a439388913",
-    "docs/evidence/phase8/08_system_browser_campaign_builder_and_exports.json": "302cc39649cc75a057edb961b85429442f4385422377314f8c26821a15fe8a66",
-    "docs/evidence/phase8/08_SYSTEM_BROWSER_CAMPAIGN_EXPORT_REPORT.md": "d083e8d687316fba95ffa1bb7881ed95b4294d9f094891483b0ae77802885351",
-    "docs/evidence/phase8/09_browser_quality_evidence.json": "550998fa5b8f1fb842be70859e78c7f32ae05c0d5ab7c3891106098ba54f124f",
-    "docs/evidence/phase8/09_BROWSER_QUALITY_REPORT.md": "22d3b8e17d8272915791fb5e4c1e0dd6b4f5ad7b3d8799f0ff3dc9d92aa71c90",
-    "docs/evidence/phase8/ui_control_inventory.json": "c2c7110d85bdef4c8e810beb8fb6322f83dc01bcefc8d7e914a7ef8faae7a9f1",
-    "docs/evidence/phase8/final_system_browser/ui_control_coverage.json": "646e0ca23d3a96f523fb877dbb4688b0b5050532207147b7d07a0416214cc46b",
-    "docs/evidence/phase8/final_system_browser/PHASE8_SYSTEM_BROWSER_CERTIFICATION_REPORT.md": "19799849dc2f4de32f148876bb5012b765431d59b2c97f58cab430bbc400b437"
+    "docs/evidence/phase8/05_system_browser_historical_analysis.json": "c4c2931b70a4f8b749e71424d294ecd732f1d7fc9ab76e7c622a0fce59fcb171",
+    "docs/evidence/phase8/05_SYSTEM_BROWSER_HISTORICAL_ANALYSIS_REPORT.md": "aa6c2b4ae8326a40b5f6ea57d6537475dcf011054d08324da2651c11ea1766f2",
+    "docs/evidence/phase8/06_system_browser_training_and_5m_scoring.json": "64820fe1e0fc2a715100c5041dea2cab412530656beae9b98b00a7e1d50342bd",
+    "docs/evidence/phase8/06_SYSTEM_BROWSER_TRAINING_AND_5M_SCORING_REPORT.md": "f91e7aec4788ca86443f3adc5daf92ec6d6576c122a57caf0f261952e5c54bcb",
+    "docs/evidence/phase8/07_system_browser_audience_explorer_all_controls.json": "f8c4b713216ce329408924ee8dccb7342a121b066e78290e3e1533690370d656",
+    "docs/evidence/phase8/07_SYSTEM_BROWSER_AUDIENCE_REPORT.md": "e6b36797ab621db4dc1b026d4c79a3fa3ca7a24005ffd9befd7e866ed5e328c1",
+    "docs/evidence/phase8/08_system_browser_campaign_builder_and_exports.json": "827ce951cc38e8f2d1c316337fddd9cca2903bbadd0d509fdb937b87d009a316",
+    "docs/evidence/phase8/08_SYSTEM_BROWSER_CAMPAIGN_EXPORT_REPORT.md": "b79b7e87bbaff577a152ccf7d41e5b52009e07154c9bd842e8be93532dc821c9",
+    "docs/evidence/phase8/09_browser_quality_evidence.json": "6e2cb0caed158f0dfa91adbb7ca988358cabc3b8db1ce8e495854f11c43e82bb",
+    "docs/evidence/phase8/09_BROWSER_QUALITY_REPORT.md": "2024e009191eb3f4b402915838b360a79a2274f07b64b054d5d4cc0236718053",
+    "docs/evidence/phase8/ui_control_inventory.json": "3236b1dd110b4270d1b4a136547a926aebe03e1b43c66925c5a18c041549b9e4",
+    "docs/evidence/phase8/final_system_browser/ui_control_coverage.json": "ca9bec860b2bbf04d8943c9d44fe50ee6eb8c2a3bf03fbcf4b1ee30833025f7b",
+    "docs/evidence/phase8/final_system_browser/PHASE8_SYSTEM_BROWSER_CERTIFICATION_REPORT.md": "561b23da1124fa9484472b1e129f0e802f6459680b45e741ae3f0d5348197209"
   },
   "overall_status": "PASS",
   "local_decision": "PASS_PENDING_STEP12_CI",
-  "execution_mode": "user_directed_resume_existing",
-  "resume_checkpoint": {
-    "enabled": true,
-    "environment_variable": "PHASE8_STEP11_RESUME_EXISTING",
-    "user_directed_no_scoring_rerun": true,
-    "database_path": "data/campaign_poc.db",
-    "evidence_reused": [
-      "docs/evidence/phase8/05_system_browser_historical_analysis.json",
-      "docs/evidence/phase8/06_system_browser_training_and_5m_scoring.json",
-      "docs/evidence/phase8/07_system_browser_audience_explorer_all_controls.json",
-      "docs/evidence/phase8/08_system_browser_campaign_builder_and_exports.json",
-      "docs/evidence/phase8/09_browser_quality_evidence.json"
+  "execution_mode": "strict_fresh_single_run",
+  "runtime_cleanup": {
+    "removed_items": [
+      "artifacts/models/model_run_000001",
+      "data/campaign_poc.db",
+      "docs/evidence/phase8/final_system_browser/PHASE8_SYSTEM_BROWSER_CERTIFICATION_REPORT.md",
+      "docs/evidence/phase8/final_system_browser/phase8_certification_manifest.json",
+      "docs/evidence/phase8/final_system_browser/ui_control_coverage.json",
+      "logs/phase8_step11_uvicorn.log"
     ]
   },
   "fresh_init_and_import": {
-    "mode": "reused_existing_fresh_runtime_checkpoint",
-    "rerun": false
+    "commands": [
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\init_db.py",
+        "duration_seconds": 3.613,
+        "output_tail": [
+          "2026-09-09 02:00:27,416 | INFO | app.database.schema | SQLite schema initialized or verified | path=data\\campaign_poc.db version=12",
+          "SQLite schema created/verified: data\\campaign_poc.db",
+          "Tables: app_metadata, audience_analytics_snapshots, audience_rank_boundaries, campaign_export_events, campaign_sales, campaigns, customers, data_import_runs, demographics, historical_analysis_runs, jobs, model_runs, propensity_scores, saved_audiences, scoring_runs"
+        ]
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\import_customers.py --file C:\\POCs\\Campaign Implementation Tool\\data\\customer_master_125000.csv.gz",
+        "duration_seconds": 45.971,
+        "output_tail": [
+          "2026-09-09 02:01:02,116 | INFO | app.database.schema | SQLite schema initialized or verified | path=data\\campaign_poc.db version=12",
+          "2026-09-09 02:01:02,215 | INFO | app.services.data_import_service | Import started | import_id=1 dataset=customers replace=False",
+          "2026-09-09 02:01:02,241 | INFO | app.services.data_import_service | Source preflight started | dataset=customers path=C:\\POCs\\Campaign Implementation Tool\\data\\customer_master_125000.csv.gz full_read=False",
+          "2026-09-09 02:01:02,267 | INFO | app.services.data_import_service | Source preflight completed | dataset=customers path=C:\\POCs\\Campaign Implementation Tool\\data\\customer_master_125000.csv.gz",
+          "2026-09-09 02:01:02,525 | INFO | app.services.data_import_service | Reading import source | dataset=customers path=C:\\POCs\\Campaign Implementation Tool\\data\\customer_master_125000.csv.gz",
+          "2026-09-09 02:01:05,890 | INFO | app.services.data_import_service | Import progress | dataset=customers rows_read=50,000 rows_inserted=50,000",
+          "2026-09-09 02:01:09,079 | INFO | app.services.data_import_service | Import progress | dataset=customers rows_read=100,000 rows_inserted=100,000",
+          "2026-09-09 02:01:13,008 | INFO | app.services.data_import_service | Import completed | import_id=1 dataset=customers rows=125,000 duration_seconds=10.79",
+          "Customer import completed | import_id=1 rows=125,000 rejected=0 seconds=10.79"
+        ]
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\import_campaign_sales.py --file C:\\POCs\\Campaign Implementation Tool\\data\\campaign_sales_570000.csv.gz",
+        "duration_seconds": 111.999,
+        "output_tail": [
+          "2026-09-09 02:02:13,345 | INFO | app.services.data_import_service | Import progress | dataset=campaign_sales rows_read=200,000 rows_inserted=200,000",
+          "2026-09-09 02:02:17,245 | INFO | app.services.data_import_service | Import progress | dataset=campaign_sales rows_read=250,000 rows_inserted=250,000",
+          "2026-09-09 02:02:21,342 | INFO | app.services.data_import_service | Import progress | dataset=campaign_sales rows_read=300,000 rows_inserted=300,000",
+          "2026-09-09 02:02:25,493 | INFO | app.services.data_import_service | Import progress | dataset=campaign_sales rows_read=350,000 rows_inserted=350,000",
+          "2026-09-09 02:02:29,792 | INFO | app.services.data_import_service | Import progress | dataset=campaign_sales rows_read=400,000 rows_inserted=400,000",
+          "2026-09-09 02:02:34,481 | INFO | app.services.data_import_service | Import progress | dataset=campaign_sales rows_read=450,000 rows_inserted=450,000",
+          "2026-09-09 02:02:38,623 | INFO | app.services.data_import_service | Import progress | dataset=campaign_sales rows_read=500,000 rows_inserted=500,000",
+          "2026-09-09 02:02:42,032 | INFO | app.services.data_import_service | Import progress | dataset=campaign_sales rows_read=550,000 rows_inserted=550,000",
+          "2026-09-09 02:03:05,164 | INFO | app.services.data_import_service | Import completed | import_id=2 dataset=campaign_sales rows=570,000 duration_seconds=92.64",
+          "Campaign-sales import completed | import_id=2 rows=570,000 rejected=0 seconds=92.64"
+        ]
+      },
+      {
+        "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe C:\\POCs\\Campaign Implementation Tool\\scripts\\import_demographics.py --file C:\\POCs\\Campaign Implementation Tool\\data\\usa_demographic_synthetic_5000000_rows.csv.gz",
+        "duration_seconds": 418.886,
+        "output_tail": [
+          "2026-09-09 02:07:27,209 | INFO | app.services.data_import_service | Import progress | dataset=demographics rows_read=4,650,000 rows_inserted=4,650,000",
+          "2026-09-09 02:07:29,426 | INFO | app.services.data_import_service | Import progress | dataset=demographics rows_read=4,700,000 rows_inserted=4,700,000",
+          "2026-09-09 02:07:31,504 | INFO | app.services.data_import_service | Import progress | dataset=demographics rows_read=4,750,000 rows_inserted=4,750,000",
+          "2026-09-09 02:07:34,113 | INFO | app.services.data_import_service | Import progress | dataset=demographics rows_read=4,800,000 rows_inserted=4,800,000",
+          "2026-09-09 02:07:36,235 | INFO | app.services.data_import_service | Import progress | dataset=demographics rows_read=4,850,000 rows_inserted=4,850,000",
+          "2026-09-09 02:07:37,785 | INFO | app.services.data_import_service | Import progress | dataset=demographics rows_read=4,900,000 rows_inserted=4,900,000",
+          "2026-09-09 02:07:40,413 | INFO | app.services.data_import_service | Import progress | dataset=demographics rows_read=4,950,000 rows_inserted=4,950,000",
+          "2026-09-09 02:07:42,322 | INFO | app.services.data_import_service | Import progress | dataset=demographics rows_read=5,000,000 rows_inserted=5,000,000",
+          "2026-09-09 02:10:02,750 | INFO | app.services.data_import_service | Import completed | import_id=3 dataset=demographics rows=5,000,000 duration_seconds=401.96",
+          "Demographic import completed | import_id=3 files=1 rows=5,000,000 rejected=0 seconds=401.96"
+        ]
+      }
+    ]
+  },
+  "server": {
+    "managed": true,
+    "command": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000",
+    "log_path": "logs/phase8_step11_uvicorn.log",
+    "pid": 10484
   },
   "browser": {
     "name": "system_chrome",
     "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "product_version": "152.0.7977.82",
+    "product_version": "152.0.7977.83",
     "execution_mode": "headless"
   }
 }
