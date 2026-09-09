@@ -30,5 +30,5 @@ Saved audience: Step 7 current audience id=1
 Email export: PASS (campaign id=1; export event id=1; 50,000 rows; checksum reconciled)
 Direct Mail export: PASS (campaign id=2; export event id=2; 50,000 rows; checksum reconciled)
 Final implementation SHA: `f5d6f9ed047146f04ecdabca38e6d18793ac4eba`
-Closure SHA: `ae8e872dc5382a12a88d9d9f1eb46b3582a231f1`
+Closure SHA: `ebdb0881c70d440cd89d91e8780c27c5f091f106`
 FINAL DECISION: GO (Step 12 master acceptance checklist: pass=28, fail=0, pending=0)

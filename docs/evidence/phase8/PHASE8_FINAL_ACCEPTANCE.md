@@ -10,7 +10,7 @@ Prompt: Prompts/phase8_release_assurance_system_browser_prompt_pack/12_STEP_12_C
 3. browser-harness SHA: da1d9ab42dc6152659533bc6b03e528644448cf7
 4. certification candidate SHA: 969de70560fe086296c643ad47609678fc9e3e40
 5. final implementation SHA: f5d6f9ed047146f04ecdabca38e6d18793ac4eba
-6. optional closure SHA: ae8e872dc5382a12a88d9d9f1eb46b3582a231f1
+6. optional closure SHA: ebdb0881c70d440cd89d91e8780c27c5f091f106
 7. browser product/version: system_chrome / 152.0.7977.83
 8. controls discovered: 111
 9. PASS: 104
