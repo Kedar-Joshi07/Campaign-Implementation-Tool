@@ -1,6 +1,6 @@
 # Phase 8 Master Acceptance Checklist Run (Step 12)
 
-Generated at: 2026-09-08T19:17:15Z
+Generated at: 2026-09-09T04:51:07Z
 Decision: GO
 
 ## Item Results
@@ -81,7 +81,7 @@ Evidence: docs/evidence/phase8/12_ci_green_branch_protection_and_phase8_freeze.j
 Evidence: docs/evidence/phase8/12_ci_green_branch_protection_and_phase8_freeze.json
 
 26. Required GitHub CI checks all green: PASS
-Evidence: https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34264871003
+Evidence: https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34306807259
 
 27. Branch protection enabled or fully documented: PASS
 Evidence: docs/BRANCH_PROTECTION.md

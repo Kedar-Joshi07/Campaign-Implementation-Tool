@@ -26,7 +26,7 @@ Classification labels:
 | phase8/06_system_browser_training_and_5m_scoring.json | Browser-submitted governed training and completed 5M scoring evidence. |
 | phase8/07_system_browser_audience_explorer_all_controls.json | Complete Audience Explorer scenarios, control coverage, saved-audience lineage, and UI-only state transition evidence. |
 | phase8/08_system_browser_campaign_builder_and_exports.json | Complete Campaign Builder, finalized immutability, Email/Direct Mail export, and audit evidence. |
-| phase8/final_system_browser/phase8_certification_manifest.json | Step 11 clean-HEAD checkpoint aggregation, integrity gates, artifact hashes, execution mode, and local certification decision. |
+| phase8/final_system_browser/phase8_certification_manifest.json | Step 11 strict-fresh clean-HEAD certification, official imports, browser-driven training and 5M scoring, integrity gates, artifact hashes, execution mode, and local certification decision. |
 | phase8/final_system_browser/PHASE8_SYSTEM_BROWSER_CERTIFICATION_REPORT.md | Human-readable Step 11 system-browser certification report. |
 | phase8/12_ci_green_branch_protection_and_phase8_freeze.json | Final Step 12 local regression, exact-SHA CI, branch-protection documentation, SHA chain, and GO decision. |
 | phase8/12_master_acceptance_checklist_run.json | Machine-readable 28-item final acceptance checklist; 28 PASS, 0 FAIL, 0 PENDING. |

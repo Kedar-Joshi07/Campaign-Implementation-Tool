@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T19:17:15Z",
+  "generated_at": "2026-09-09T04:51:07Z",
   "source_checklist": "Prompts/phase8_release_assurance_system_browser_prompt_pack/01_MASTER_ACCEPTANCE_CHECKLIST.md",
   "decision": "GO",
   "totals": {
@@ -162,7 +162,7 @@
       "id": 26,
       "item": "Required GitHub CI checks all green",
       "status": "PASS",
-      "evidence": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34264871003"
+      "evidence": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34306807259"
     },
     {
       "id": 27,

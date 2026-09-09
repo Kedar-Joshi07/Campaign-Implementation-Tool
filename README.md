@@ -255,13 +255,14 @@ Campaign Builder and export:
 
 ## Phase 8 release assurance
 
-The final Phase 8 acceptance is `GO` for implementation SHA `0b0e2559fc4b98498bbc3bd34671ae342d7067e5`.
+The final Phase 8 acceptance is `GO` for implementation SHA `f5d6f9ed047146f04ecdabca38e6d18793ac4eba`.
 
-- System Chrome 152.0.7977.82 was used for browser assurance.
-- All 111 actionable controls are accounted for: 103 PASS and 8 individually justified exclusive controls.
+- System Chrome 152.0.7977.83 was used for browser assurance.
+- All 111 actionable controls are accounted for: 104 PASS and 7 individually justified exclusive controls.
 - Browser quality has zero unexplained console errors and zero unexplained critical network failures.
 - Local regression completed with 477 passing tests and a bounded clean-room Phase 1 to 7 pass.
-- GitHub Actions run 34264871003 passed all five required checks for the exact implementation SHA.
+- Step 11 rebuilt the runtime, imported all canonical data, and completed browser-driven training and full 5M scoring in strict-fresh mode.
+- GitHub Actions run 34306807259 passed all five required checks for the exact implementation SHA.
 - Full details: `docs/PHASE_8_IMPLEMENTATION_SUMMARY.md` and `docs/evidence/phase8/PHASE8_FINAL_ACCEPTANCE.md`.
 
 ## PU model methodology

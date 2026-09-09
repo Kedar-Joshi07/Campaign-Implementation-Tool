@@ -10,23 +10,23 @@ Phase 8 closes release assurance for the Phase 1 to Phase 7 application using in
 4. Exercised Overview, Data Status, Historical Analysis, model training, full 5M scoring, Audience Explorer, Campaign Builder, Email export, and Direct Mail export through browser workflows.
 5. Verified accessibility, responsive layouts, loading/empty/error/stale states, long-running job visibility, and zero unexplained console or critical network failures.
 6. Reproduced all three canonical synthetic sources byte-for-byte and reconciled Git LFS/hash documentation.
-7. Aggregated the completed browser checkpoints from a clean HEAD and verified database integrity, lineage, campaign/export state, and control coverage.
+7. Rebuilt the runtime from a clean HEAD, imported all three canonical datasets through the official importers, and reran the complete browser path through training, full 5M scoring, audience preparation, campaigns, and exports.
 8. Ran the final local regression and bound all required GitHub CI checks to the exact implementation SHA.
 
 ## Final evidence
 
-- Final implementation SHA: `0b0e2559fc4b98498bbc3bd34671ae342d7067e5`
-- Evidence/documentation closure SHA: `2cee2dfd8a0c1dc9cb153d7a38e3a7c22587ed5b`
-- System browser: Chrome `152.0.7977.82`
-- UI coverage: 111 controls; 103 `PASS`; 8 individually documented `JUSTIFIED_EXCLUSIVE`; 0 `FAIL`; 0 `NOT_RUN`
-- Full scoring evidence: 5,000,000 prospects on scoring run 1, originally submitted through the UI
+- Final implementation SHA: `f5d6f9ed047146f04ecdabca38e6d18793ac4eba`
+- Evidence/documentation closure SHA: pending the freeze-evidence commit
+- System browser: Chrome `152.0.7977.83`
+- UI coverage: 111 controls; 104 `PASS`; 7 individually documented `JUSTIFIED_EXCLUSIVE`; 0 `FAIL`; 0 `NOT_RUN`
+- Full scoring evidence: 5,000,000 prospects on scoring run 1, freshly submitted through the UI during strict Step 11 certification
 - Local pytest: 477 passed, 0 failed
 - Clean-room Phase 1 to 7: PASS on bounded isolated synthetic data
-- GitHub Actions run: `34264871003`, all five required checks green for the exact final implementation SHA
+- GitHub Actions run: `34306807259`, all five required checks green for the exact final implementation SHA
 - Master acceptance checklist: 28 passed, 0 failed, 0 pending
 - Final decision: `GO`
 
-The user-directed Step 11 continuation reused the already completed Step 5 to Step 9 browser checkpoints. It did not rerun import, training, or full 5M scoring; that execution mode is explicitly recorded in the Step 11 manifest and report. Step 12 likewise consumed the completed 5M scoring evidence and did not invoke the Phase 8 scoring runner.
+The latest Step 11 certification used `strict_fresh_single_run` mode. It removed prior runtime state, initialized schema version 12, imported 125,000 customers, 570,000 campaign rows, and 5,000,000 demographics through the official importers, then performed browser-driven training and full 5M scoring before completing the audience and campaign/export flows. This strict-fresh manifest supersedes the earlier resumed-checkpoint certification. Step 12 consumed that completed Step 11 scoring evidence and did not invoke a second 5M scoring run.
 
 ## Integrity and lineage
 
