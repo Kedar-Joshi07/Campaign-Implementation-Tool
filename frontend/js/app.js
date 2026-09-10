@@ -5,9 +5,11 @@ import { initializeHistoricalAnalysis, loadHistoricalAnalysis } from "./historic
 import { initializeModelTraining, loadModelTraining } from "./model-training.js";
 import { initializeOverview, loadOverview } from "./overview.js";
 import { initializeCampaigns, loadCampaigns } from "./campaigns.js";
+import { initializeCampaignPlanner, loadCampaignPlanner } from "./campaign-planner-form.js";
 
 const viewTitles = {
   overview: "Overview",
+  "campaign-planner": "Create Campaign",
   "data-status": "Data Status",
   "historical-analysis": "Historical Analysis",
   "model-training": "Model Training & Prospect Scoring",
@@ -56,6 +58,7 @@ function showView(viewName) {
   document.querySelector("#page-title").textContent = title;
   document.title = `${title} | Campaign Implementation Intelligence`;
   if (safeView === "overview") loadOverview();
+  else if (safeView === "campaign-planner") loadCampaignPlanner();
   else if (safeView === "data-status") loadDataStatus();
   else if (safeView === "historical-analysis") loadHistoricalAnalysis();
   else if (safeView === "model-training") loadModelTraining();
@@ -80,6 +83,7 @@ function initializeNavigation() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initializeOverview();
+  initializeCampaignPlanner();
   initializeDataStatus();
   initializeHistoricalAnalysis();
   initializeModelTraining();

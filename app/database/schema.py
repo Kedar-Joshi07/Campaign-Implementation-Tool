@@ -16,7 +16,7 @@ from app.database.connection import get_connection
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 12
+CURRENT_SCHEMA_VERSION = 14
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -35,6 +35,8 @@ EXPECTED_TABLES = (
     "audience_analytics_snapshots",
     "campaigns",
     "campaign_export_events",
+    "campaign_targeting_contexts",
+    "phase9_saved_target_groups",
 )
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
@@ -244,6 +246,40 @@ CAMPAIGN_EXPORT_EVENT_COLUMNS = (
     "start_provenance_sha256",
     "source_changed_during_export",
     "completion_currentness_state",
+)
+
+CAMPAIGN_TARGETING_CONTEXT_COLUMNS = (
+    "targeting_context_id",
+    "campaign_id",
+    "campaign_targeting_context_contract_version",
+    "targeting_segment_contract_version",
+    "business_match_strength_contract_version",
+    "campaign_context_json",
+    "campaign_context_sha256",
+    "targeting_criteria_json",
+    "targeting_criteria_sha256",
+    "source_scoring_run_id",
+    "created_at",
+    "updated_at",
+)
+
+PHASE9_SAVED_TARGET_GROUP_COLUMNS = (
+    "audience_id",
+    "targeting_context_id",
+    "target_group_contract_version",
+    "filter_branches_json",
+    "filter_branches_sha256",
+    "campaign_context_contract_version",
+    "campaign_context_json",
+    "campaign_context_sha256",
+    "targeting_segment_contract_version",
+    "business_match_strength_contract_version",
+    "targeting_criteria_json",
+    "targeting_criteria_sha256",
+    "source_scoring_run_id",
+    "source_status",
+    "resolved_count",
+    "created_at",
 )
 
 CUSTOMER_COLUMNS = (
@@ -641,6 +677,26 @@ PHASE_SEVEN_REQUIRED_INDEX_STATEMENTS = {
     ),
 }
 
+PHASE_NINE_CONTEXT_REQUIRED_INDEX_STATEMENTS = {
+    "idx_campaign_targeting_contexts_updated": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_targeting_contexts_updated "
+        "ON campaign_targeting_contexts (updated_at DESC, targeting_context_id DESC)"
+    ),
+    "idx_campaign_targeting_contexts_source_scoring": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_targeting_contexts_source_scoring "
+        "ON campaign_targeting_contexts (source_scoring_run_id, updated_at DESC) "
+        "WHERE source_scoring_run_id IS NOT NULL"
+    ),
+}
+
+PHASE_NINE_REQUIRED_INDEX_STATEMENTS = {
+    **PHASE_NINE_CONTEXT_REQUIRED_INDEX_STATEMENTS,
+    "idx_phase9_saved_target_groups_context": (
+        "CREATE INDEX IF NOT EXISTS idx_phase9_saved_target_groups_context "
+        "ON phase9_saved_target_groups (targeting_context_id, created_at DESC, audience_id DESC)"
+    ),
+}
+
 REQUIRED_INDEX_STATEMENTS = {
     **PHASE_ONE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_TWO_REQUIRED_INDEX_STATEMENTS,
@@ -649,6 +705,7 @@ REQUIRED_INDEX_STATEMENTS = {
     **PHASE_FIVE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_SIX_REQUIRED_INDEX_STATEMENTS,
     **PHASE_SEVEN_REQUIRED_INDEX_STATEMENTS,
+    **PHASE_NINE_REQUIRED_INDEX_STATEMENTS,
 }
 
 
@@ -2016,6 +2073,115 @@ def _migrate_to_version_12(connection: sqlite3.Connection) -> None:
     )
 
 
+def _migrate_to_version_13(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS campaign_targeting_contexts (
+            targeting_context_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            campaign_id INTEGER UNIQUE,
+            campaign_targeting_context_contract_version TEXT NOT NULL
+                CHECK (
+                    length(trim(campaign_targeting_context_contract_version))
+                    BETWEEN 1 AND 24
+                ),
+            targeting_segment_contract_version TEXT NOT NULL
+                CHECK (length(trim(targeting_segment_contract_version)) BETWEEN 1 AND 24),
+            business_match_strength_contract_version TEXT NOT NULL
+                CHECK (
+                    length(trim(business_match_strength_contract_version))
+                    BETWEEN 1 AND 24
+                ),
+            campaign_context_json TEXT NOT NULL
+                CHECK (
+                    length(trim(campaign_context_json)) BETWEEN 2 AND 65536
+                    AND json_valid(campaign_context_json)
+                ),
+            campaign_context_sha256 TEXT NOT NULL
+                CHECK (length(trim(campaign_context_sha256)) = 64),
+            targeting_criteria_json TEXT NOT NULL
+                CHECK (
+                    length(trim(targeting_criteria_json)) BETWEEN 2 AND 65536
+                    AND json_valid(targeting_criteria_json)
+                ),
+            targeting_criteria_sha256 TEXT NOT NULL
+                CHECK (length(trim(targeting_criteria_sha256)) = 64),
+            source_scoring_run_id INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (campaign_id)
+                REFERENCES campaigns (campaign_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (source_scoring_run_id)
+                REFERENCES scoring_runs (scoring_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            CHECK (campaign_id IS NULL OR campaign_id > 0),
+            CHECK (source_scoring_run_id IS NULL OR source_scoring_run_id > 0)
+        )
+        """
+    )
+
+    for statement in PHASE_NINE_CONTEXT_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+
+
+def _migrate_to_version_14(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS phase9_saved_target_groups (
+            audience_id INTEGER PRIMARY KEY,
+            targeting_context_id INTEGER NOT NULL,
+            target_group_contract_version TEXT NOT NULL
+                CHECK (length(trim(target_group_contract_version)) BETWEEN 1 AND 24),
+            filter_branches_json TEXT NOT NULL
+                CHECK (
+                    length(trim(filter_branches_json)) BETWEEN 2 AND 262144
+                    AND json_valid(filter_branches_json)
+                ),
+            filter_branches_sha256 TEXT NOT NULL
+                CHECK (length(trim(filter_branches_sha256)) = 64),
+            campaign_context_contract_version TEXT NOT NULL
+                CHECK (length(trim(campaign_context_contract_version)) BETWEEN 1 AND 24),
+            campaign_context_json TEXT NOT NULL
+                CHECK (
+                    length(trim(campaign_context_json)) BETWEEN 2 AND 65536
+                    AND json_valid(campaign_context_json)
+                ),
+            campaign_context_sha256 TEXT NOT NULL
+                CHECK (length(trim(campaign_context_sha256)) = 64),
+            targeting_segment_contract_version TEXT NOT NULL
+                CHECK (length(trim(targeting_segment_contract_version)) BETWEEN 1 AND 24),
+            business_match_strength_contract_version TEXT NOT NULL
+                CHECK (
+                    length(trim(business_match_strength_contract_version))
+                    BETWEEN 1 AND 24
+                ),
+            targeting_criteria_json TEXT NOT NULL
+                CHECK (
+                    length(trim(targeting_criteria_json)) BETWEEN 2 AND 65536
+                    AND json_valid(targeting_criteria_json)
+                ),
+            targeting_criteria_sha256 TEXT NOT NULL
+                CHECK (length(trim(targeting_criteria_sha256)) = 64),
+            source_scoring_run_id INTEGER NOT NULL,
+            source_status TEXT NOT NULL CHECK (source_status = 'READY'),
+            resolved_count INTEGER NOT NULL CHECK (resolved_count >= 1),
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (audience_id)
+                REFERENCES saved_audiences (audience_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (targeting_context_id)
+                REFERENCES campaign_targeting_contexts (targeting_context_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (source_scoring_run_id)
+                REFERENCES scoring_runs (scoring_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT
+        )
+        """
+    )
+    for statement in PHASE_NINE_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -2028,6 +2194,8 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     10: _migrate_to_version_10,
     11: _migrate_to_version_11,
     12: _migrate_to_version_12,
+    13: _migrate_to_version_13,
+    14: _migrate_to_version_14,
 }
 
 

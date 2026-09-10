@@ -19,6 +19,28 @@ def _percentage_from_env(name: str, default: str) -> float:
     return value
 
 
+def _positive_integer_from_env(name: str, default: str) -> int:
+    raw_value = os.getenv(name, default)
+    try:
+        value = int(raw_value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a positive integer") from exc
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
+def _positive_number_from_env(name: str, default: str) -> float:
+    raw_value = os.getenv(name, default)
+    try:
+        value = float(raw_value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a positive finite number") from exc
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError(f"{name} must be a positive finite number")
+    return value
+
+
 APP_NAME = os.getenv("APP_NAME", "Campaign Implementation Intelligence")
 APP_VERSION = os.getenv("APP_VERSION", "0.1.0")
 APP_ENV = os.getenv("APP_ENV", "development")
@@ -42,3 +64,9 @@ DEMOGRAPHIC_COUNT_EXACT_REQUIRED = os.getenv(
     "DEMOGRAPHIC_COUNT_EXACT_REQUIRED", "true"
 ).lower() in {"1", "true", "yes", "on"}
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+MATCH_STRENGTH_RECOMMENDATION_MINIMUM_COUNT = _positive_integer_from_env(
+    "MATCH_STRENGTH_RECOMMENDATION_MINIMUM_COUNT", "1000"
+)
+MATCH_STRENGTH_VERY_STRONG_MINIMUM_MULTIPLIER = _positive_number_from_env(
+    "MATCH_STRENGTH_VERY_STRONG_MINIMUM_MULTIPLIER", "2.0"
+)

@@ -370,6 +370,121 @@ def validate_saved_audience_currentness(
     return _evaluate_saved_audience_currentness(path, row, cache={})
 
 
+def _persist_saved_audience(
+    *,
+    path: Path,
+    scoring_row: dict[str, Any],
+    audience_name: str,
+    description: str | None,
+    normalized_filters: Any,
+    normalized_selection: Any,
+    resolved_count: int,
+    profile_snapshot: dict[str, Any] | None,
+) -> dict[str, Any]:
+    score_summary = _decode_json_object(
+        scoring_row.get("score_summary_json"),
+        field_name="scoring_run.score_summary_json",
+    )
+    created_at = _utc_timestamp()
+    try:
+        audience_id = SavedAudienceRepository(path).create_saved_audience(
+            audience_name=audience_name,
+            description=description,
+            created_at=created_at,
+            scoring_run_id=int(scoring_row["scoring_run_id"]),
+            model_run_id=int(scoring_row["model_run_id"]),
+            analysis_run_id=_require_positive_int(
+                score_summary.get("analysis_run_id"), field_name="analysis_run_id"
+            ),
+            selection_mode=str(normalized_selection.payload["mode"]),
+            target_count=normalized_selection.payload.get("target_count"),
+            resolved_count=resolved_count,
+            filter_contract_version=AUDIENCE_FILTER_CONTRACT_VERSION,
+            rank_contract_version=AUDIENCE_RANK_CONTRACT_VERSION,
+            selection_contract_version=AUDIENCE_SELECTION_CONTRACT_VERSION,
+            filters_payload=normalized_filters.payload,
+            selection_payload=normalized_selection.payload,
+            profile_summary_payload=profile_snapshot,
+            customer_import_id=_require_positive_int(
+                score_summary.get("customer_import_id"), field_name="customer_import_id"
+            ),
+            customer_source_checksum=str(
+                score_summary.get("customer_source_checksum", "")
+            ),
+            campaign_sales_import_id=_require_positive_int(
+                score_summary.get("campaign_sales_import_id"),
+                field_name="campaign_sales_import_id",
+            ),
+            campaign_sales_source_checksum=str(
+                score_summary.get("campaign_sales_source_checksum", "")
+            ),
+            demographic_import_id=_require_positive_int(
+                score_summary.get("demographic_import_id"),
+                field_name="demographic_import_id",
+            ),
+            demographic_source_checksum=str(
+                score_summary.get("demographic_source_checksum", "")
+            ),
+            feature_contract_version=str(scoring_row["feature_contract_version"]),
+            feature_contract_sha256=str(scoring_row["feature_contract_sha256"]),
+            artifact_sha256=str(scoring_row["artifact_sha256"]),
+        )
+    except SavedAudienceValidationError as exc:
+        raise SavedAudienceServiceValidationError(str(exc)) from exc
+    return get_saved_audience_detail(path, audience_id=audience_id)
+
+
+def save_resolved_audience_definition(
+    database_path: str | Path,
+    *,
+    audience_name: str,
+    description: str | None,
+    scoring_run_id: int,
+    filters: dict[str, Any],
+    selection: dict[str, Any],
+    resolved_count: int,
+) -> dict[str, Any]:
+    """Persist a trusted exact materialization through the Phase 6 contract.
+
+    This is intended for adapters that have already resolved an exact, current member
+    set. The stored filter remains a valid Audience Filter Contract definition while
+    an adapter-owned immutable extension may retain additional union branches.
+    """
+
+    normalized_name = _require_non_empty_text(
+        audience_name, field_name="audience_name", maximum=120
+    )
+    normalized_description = _optional_bounded_text(
+        description, field_name="description", maximum=500
+    )
+    normalized_scoring_run_id = _require_positive_int(
+        scoring_run_id, field_name="scoring_run_id"
+    )
+    normalized_resolved_count = _require_positive_int(
+        resolved_count, field_name="resolved_count"
+    )
+    normalized_filters = normalize_audience_filters(filters)
+    normalized_selection = normalize_selection(selection)
+    try:
+        context = _require_prepared_canonical_context(
+            database_path, scoring_run_id=normalized_scoring_run_id
+        )
+    except AudienceQueryConflictError as exc:
+        raise SavedAudienceServiceConflictError(str(exc)) from exc
+    except AudienceQueryValidationError as exc:
+        raise SavedAudienceServiceValidationError(str(exc)) from exc
+    return _persist_saved_audience(
+        path=context.path,
+        scoring_row=context.scoring_row,
+        audience_name=normalized_name,
+        description=normalized_description,
+        normalized_filters=normalized_filters,
+        normalized_selection=normalized_selection,
+        resolved_count=normalized_resolved_count,
+        profile_snapshot=None,
+    )
+
+
 def save_audience(
     database_path: str | Path,
     request_payload: dict[str, Any],
@@ -452,49 +567,16 @@ def save_audience(
     if resolved_count is None or resolved_count < 1:
         raise SavedAudienceServiceValidationError(SAVED_AUDIENCE_EMPTY_MESSAGE)
 
-    score_summary = _decode_json_object(
-        scoring_row.get("score_summary_json"),
-        field_name="scoring_run.score_summary_json",
+    return _persist_saved_audience(
+        path=path,
+        scoring_row=scoring_row,
+        audience_name=audience_name,
+        description=description,
+        normalized_filters=normalized_filters,
+        normalized_selection=normalized_selection,
+        resolved_count=resolved_count,
+        profile_snapshot=profile_snapshot,
     )
-    created_at = _utc_timestamp()
-
-    try:
-        audience_id = SavedAudienceRepository(path).create_saved_audience(
-            audience_name=audience_name,
-            description=description,
-            created_at=created_at,
-            scoring_run_id=int(scoring_row["scoring_run_id"]),
-            model_run_id=int(scoring_row["model_run_id"]),
-            analysis_run_id=_require_positive_int(score_summary.get("analysis_run_id"), field_name="analysis_run_id"),
-            selection_mode=str(normalized_selection.payload["mode"]),
-            target_count=normalized_selection.payload.get("target_count"),
-            resolved_count=resolved_count,
-            filter_contract_version=AUDIENCE_FILTER_CONTRACT_VERSION,
-            rank_contract_version=AUDIENCE_RANK_CONTRACT_VERSION,
-            selection_contract_version=AUDIENCE_SELECTION_CONTRACT_VERSION,
-            filters_payload=normalized_filters.payload,
-            selection_payload=normalized_selection.payload,
-            profile_summary_payload=profile_snapshot,
-            customer_import_id=_require_positive_int(score_summary.get("customer_import_id"), field_name="customer_import_id"),
-            customer_source_checksum=str(score_summary.get("customer_source_checksum", "")),
-            campaign_sales_import_id=_require_positive_int(
-                score_summary.get("campaign_sales_import_id"),
-                field_name="campaign_sales_import_id",
-            ),
-            campaign_sales_source_checksum=str(score_summary.get("campaign_sales_source_checksum", "")),
-            demographic_import_id=_require_positive_int(
-                score_summary.get("demographic_import_id"),
-                field_name="demographic_import_id",
-            ),
-            demographic_source_checksum=str(score_summary.get("demographic_source_checksum", "")),
-            feature_contract_version=str(scoring_row["feature_contract_version"]),
-            feature_contract_sha256=str(scoring_row["feature_contract_sha256"]),
-            artifact_sha256=str(scoring_row["artifact_sha256"]),
-        )
-    except SavedAudienceValidationError as exc:
-        raise SavedAudienceServiceValidationError(str(exc)) from exc
-
-    return get_saved_audience_detail(path, audience_id=audience_id)
 
 
 def list_saved_audiences(
@@ -616,5 +698,6 @@ __all__ = (
     "list_saved_audiences",
     "replay_saved_audience_definition",
     "save_audience",
+    "save_resolved_audience_definition",
     "validate_saved_audience_currentness",
 )

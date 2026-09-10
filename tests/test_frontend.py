@@ -47,6 +47,13 @@ def test_frontend_contains_functional_phase_one_views(client: TestClient) -> Non
         "/static/js/model-training.js",
         "/static/js/audience-explorer.js",
         "/static/js/campaigns.js",
+        "/static/js/campaign-planner-state.js",
+        "/static/js/campaign-context.js",
+        "/static/js/business-targeting.js",
+        "/static/js/targeting-intelligence.js",
+        "/static/js/target-group-preview.js",
+        "/static/js/campaign-review.js",
+        "/static/js/campaign-planner-form.js",
         "/static/js/data-status.js",
         "/static/js/app.js",
     ),
@@ -61,9 +68,9 @@ def test_frontend_assets_are_served(client: TestClient, asset_path: str) -> None
 def test_navigation_groups_and_phase7_shell_labels_are_visible(client: TestClient) -> None:
     html = client.get("/").text
 
-    assert "Data Foundation" in html
-    assert "Audience Intelligence" in html
-    assert "Campaign Execution" in html
+    assert "Business Workspace" in html
+    assert "Home / Overview" in html
+    assert "Advanced" in html
     assert html.count('class="navigation-item is-disabled"') == 0
     assert "Later phase</small>" not in html
     assert 'data-view-target="model-training"' in html
@@ -73,10 +80,131 @@ def test_navigation_groups_and_phase7_shell_labels_are_visible(client: TestClien
     assert "Phases 4-5</small>" not in html
     assert "Phase 6</small>" not in html
     assert "Phase 7 shell</small>" not in html
-    assert "Current workflow</small>" in html
-    assert "Model Training &amp; Prospect Scoring" in html
+    assert "Legacy tools</small>" in html
+    assert "Targeting Intelligence / Model Management" in html
+    assert "Scoring / Targeting Results" in html
     assert "Audience Explorer" in html
     assert "Campaigns" in html
+
+
+def test_business_campaign_planner_shell_has_five_steps_and_details_fields(
+    client: TestClient,
+) -> None:
+    html = client.get("/").text
+
+    assert 'data-view-target="campaign-planner"' in html
+    assert 'data-view="campaign-planner"' in html
+    for control_id in (
+        "campaign-planner-view",
+        "campaign-planner-title",
+        "planner-save-draft",
+        "planner-progress-label",
+        "planner-current-step-name",
+        "planner-draft-status",
+        "planner-campaign-details-form",
+        "planner-campaign-name",
+        "planner-campaign-description",
+        "planner-planned-launch-date",
+        "planner-status-announcement",
+    ):
+        assert f'id="{control_id}"' in html
+    for step in range(1, 6):
+        assert f'id="planner-step-{step}"' in html
+        assert f'id="planner-step-panel-{step}"' in html
+    for step in range(1, 5):
+        assert f'id="planner-next-{step}"' in html
+    for step in range(2, 6):
+        assert f'id="planner-back-{step}"' in html
+
+    for label in (
+        "Campaign Details",
+        "Campaign Context",
+        "Targeting Preferences",
+        "Target Group Preview",
+        "Review &amp; Save",
+        "Campaign Name",
+        "Description",
+        "Planned Launch Date",
+    ):
+        assert label in html
+    assert "Your entries are retained in this browser session" in html
+    assert "Server-side campaign creation is connected only after the target group" in html
+
+
+def test_campaign_planner_uses_dedicated_session_state_and_navigation_modules(
+    client: TestClient,
+) -> None:
+    app_script = client.get("/static/js/app.js").text
+    state_script = client.get("/static/js/campaign-planner-state.js").text
+    form_script = client.get("/static/js/campaign-planner-form.js").text
+
+    assert 'from "./campaign-planner-form.js"' in app_script
+    assert '"campaign-planner": "Create Campaign"' in app_script
+    assert "initializeCampaignPlanner();" in app_script
+    assert "loadCampaignPlanner();" in app_script
+    assert 'STORAGE_KEY = "phase9-campaign-planner-draft-v1"' in state_script
+    assert "window.sessionStorage.getItem(STORAGE_KEY)" in state_script
+    assert "window.sessionStorage.setItem(STORAGE_KEY" in state_script
+    assert "export function updateCampaignDetails" in state_script
+    assert "export function completePlannerStep" in state_script
+    assert "export function setCampaignPlannerStep" in state_script
+    assert "subscribeCampaignPlanner(renderPlanner)" in form_script
+    assert 'input.addEventListener("input", captureCampaignDetails)' in form_script
+    assert 'input.addEventListener("change", captureCampaignDetails)' in form_script
+    assert "form.reportValidity()" in form_script
+    assert "completePlannerStep(step)" in form_script
+    assert "setCampaignPlannerStep(target)" in form_script
+    assert "markCampaignPlannerDraftSaved()" in form_script
+    assert "Campaign planner" not in client.get("/static/js/campaigns.js").text
+
+
+def test_campaign_planner_review_saves_and_reopens_immutable_target_group(
+    client: TestClient,
+) -> None:
+    html = client.get("/").text
+    form_script = client.get("/static/js/campaign-planner-form.js").text
+    preview_script = client.get("/static/js/target-group-preview.js").text
+    review_script = client.get("/static/js/campaign-review.js").text
+
+    for control_id in (
+        "planner-review-campaign",
+        "planner-review-targeting",
+        "planner-review-group",
+        "planner-save-target-group-form",
+        "planner-target-group-name",
+        "planner-target-group-description",
+        "planner-save-target-group",
+        "planner-save-success",
+        "planner-save-result",
+        "planner-saved-currentness",
+    ):
+        assert f'id="{control_id}"' in html
+    assert "immutable, privacy-safe Target Group" in html
+    assert "does not expose contact PII" in html
+    assert "does not" in html and "finalize" in html and "send" in html
+    assert 'from "./campaign-review.js"' in form_script
+    assert "initializeCampaignReview(announce)" in form_script
+    assert "loadCampaignDraftReview()" in form_script
+    assert 'new CustomEvent("target-group-preview-loaded"' in preview_script
+    assert "save-target-group-and-create-draft" in review_script
+    assert "/campaign-draft" in review_script
+    assert "textContent" in review_script
+    assert "document.createElement" in review_script
+    assert "innerHTML" not in review_script
+    assert "Saved Target Group" in review_script
+    assert "remains a draft" in review_script
+
+
+def test_default_overview_uses_business_language_without_identity_linkage(
+    client: TestClient,
+) -> None:
+    html = client.get("/").text
+
+    assert "population of Potential Customers" in html
+    assert "Independent people available for targeting" in html
+    assert "Customers with a successful outcome" in html
+    assert '<p>PU-positive observations</p><span class="metric-index"' not in html
+    assert '<p>Prospect universe</p><span class="metric-index"' not in html
 
 
 def test_historical_analysis_navigation_and_workspace_are_enabled(

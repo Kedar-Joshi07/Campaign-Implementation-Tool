@@ -125,7 +125,7 @@ If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs
 .\.venv\Scripts\python.exe scripts\init_db.py --inspect
 ```
 
-Initialization is idempotent and creates/verifies schema version 12.
+Initialization is idempotent and creates/verifies schema version 13.
 
 ## Import data (enforced order)
 
@@ -374,6 +374,8 @@ See .env.example for supported variables:
 - EXPECTED_CUSTOMER_ROWS, EXPECTED_CAMPAIGN_SALES_ROWS, EXPECTED_DEMOGRAPHIC_ROWS
 - CUSTOMER_COUNT_EXACT_REQUIRED, CUSTOMER_COUNT_TOLERANCE_PERCENT
 - CAMPAIGN_SALES_COUNT_EXACT_REQUIRED, DEMOGRAPHIC_COUNT_EXACT_REQUIRED
+- MATCH_STRENGTH_RECOMMENDATION_MINIMUM_COUNT
+- MATCH_STRENGTH_VERY_STRONG_MINIMUM_MULTIPLIER
 - LOG_LEVEL
 
 ## POC limitations

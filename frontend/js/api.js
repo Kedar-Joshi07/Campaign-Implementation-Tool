@@ -9,23 +9,25 @@ export async function getJSON(url, options = {}) {
         ...(options.headers || {}),
       },
     });
-  } catch (error) {
-    throw new Error(`Unable to reach the backend: ${error.message}`);
+  } catch {
+    throw new Error(
+      "The application service could not be reached. Check your connection and try again.",
+    );
   }
 
   let payload;
   try {
     payload = await response.json();
   } catch {
-    throw new Error(`Backend returned an invalid response (${response.status}).`);
+    throw new Error("The application returned an unreadable response. Try again.");
   }
 
   if (!response.ok) {
     const detail = payload.detail || payload.message;
     const message = Array.isArray(detail)
-      ? detail.map((item) => item.msg || "Invalid request value").join("; ")
+      ? "Review the information you entered and correct the highlighted values."
       : (detail || response.statusText);
-    const error = new Error(`Request failed (${response.status}): ${message}`);
+    const error = new Error(message);
     error.status = response.status;
     throw error;
   }

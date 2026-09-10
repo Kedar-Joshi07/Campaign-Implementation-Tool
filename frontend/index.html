@@ -6,8 +6,8 @@
     <meta name="description" content="Campaign Implementation Intelligence data foundation dashboard">
     <title>Overview | Campaign Implementation Intelligence</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/static/css/main.css">
-    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/main.css?v=phase9-13c">
+    <link rel="stylesheet" href="/static/css/components.css?v=phase9-13c">
   </head>
   <body>
     <div class="app-shell">
@@ -21,29 +21,30 @@
         </a>
 
         <nav class="navigation" aria-label="Application sections">
-          <p class="navigation-label">Data Foundation</p>
+          <p class="navigation-label">Business Workspace</p>
           <button class="navigation-item is-active" type="button" data-view-target="overview" aria-current="page">
-            <span class="nav-icon" aria-hidden="true">OV</span><span>Overview</span>
+            <span class="nav-icon" aria-hidden="true">HM</span><span>Home / Overview</span>
           </button>
+          <button class="navigation-item" type="button" data-view-target="campaign-planner">
+            <span class="nav-icon" aria-hidden="true">+</span><span>Create Campaign</span>
+          </button>
+          <button class="navigation-item" type="button" data-view-target="campaigns">
+            <span class="nav-icon" aria-hidden="true">CP</span><span>Campaigns</span><small>Legacy tools</small>
+          </button>
+
+          <p class="navigation-label">Advanced / Analyst Tools</p>
           <button class="navigation-item" type="button" data-view-target="data-status">
             <span class="nav-icon" aria-hidden="true">DS</span><span>Data Status</span>
           </button>
-
-          <p class="navigation-label">Audience Intelligence</p>
           <button class="navigation-item" type="button" data-view-target="historical-analysis">
             <span class="nav-icon" aria-hidden="true">HA</span><span>Historical Analysis</span>
           </button>
 
           <button class="navigation-item" type="button" data-view-target="model-training">
-            <span class="nav-icon" aria-hidden="true">MT</span><span>Model Training &amp; Prospect Scoring</span>
+            <span class="nav-icon" aria-hidden="true">TI</span><span>Targeting Intelligence / Model Management</span><small>Scoring / Targeting Results</small>
           </button>
           <button class="navigation-item" type="button" data-view-target="audience-explorer">
             <span class="nav-icon" aria-hidden="true">AE</span><span>Audience Explorer</span>
-          </button>
-
-          <p class="navigation-label">Campaign Execution</p>
-          <button class="navigation-item" type="button" data-view-target="campaigns">
-            <span class="nav-icon" aria-hidden="true">P7</span><span>Campaigns</span><small>Current workflow</small>
           </button>
         </nav>
 
@@ -83,7 +84,7 @@
               <h2 id="overview-title">Campaign readiness, grounded in real data.</h2>
               <p class="hero-copy">
                 A concise view of the historical campaign foundation and the independent
-                prospect universe prepared for later-phase intelligence.
+                population of Potential Customers prepared for targeting intelligence.
               </p>
             </div>
             <button id="overview-refresh" class="button button-secondary" type="button">Refresh data</button>
@@ -101,9 +102,9 @@
               <span>Historical observations</span>
             </article>
             <article class="metric-card">
-              <div class="metric-label-row"><p>Prospect universe</p><span class="metric-index" aria-hidden="true">03</span></div>
+              <div class="metric-label-row"><p>Potential Customers</p><span class="metric-index" aria-hidden="true">03</span></div>
               <strong id="demographic-count" class="metric-value is-loading">—</strong>
-              <span>Independent demographic records</span>
+              <span>Independent people available for targeting</span>
             </article>
             <article class="metric-card">
               <div class="metric-label-row"><p>Distinct campaigns</p><span class="metric-index" aria-hidden="true">04</span></div>
@@ -116,7 +117,7 @@
               <span>Products present in history</span>
             </article>
             <article class="metric-card metric-card-positive">
-              <div class="metric-label-row"><p>PU-positive observations</p><span class="metric-index" aria-hidden="true">PU</span></div>
+              <div class="metric-label-row"><p>Customers with a successful outcome</p><span class="metric-index" aria-hidden="true">06</span></div>
               <strong id="known-positive-count" class="metric-value is-loading">—</strong>
               <span>Campaign observations with a confirmed attributed purchase</span>
             </article>
@@ -1164,6 +1165,409 @@
               </table>
             </div>
           </section>
+        </section>
+
+        <section id="campaign-planner-view" class="view" data-view="campaign-planner" aria-labelledby="campaign-planner-title" hidden>
+          <section class="page-intro campaign-planner-shell">
+            <div>
+              <p class="eyebrow">Business Campaign Planner</p>
+              <h2 id="campaign-planner-title">Create Campaign</h2>
+              <p>Describe your campaign first, then move through context, targeting preferences, preview, and review in one guided flow.</p>
+            </div>
+            <button id="planner-save-draft" class="button button-secondary" type="button">Save draft</button>
+          </section>
+
+          <div class="notice" role="note">
+            <span class="notice-icon" aria-hidden="true">i</span>
+            <p>Your entries are retained in this browser session while you move between steps. Server-side campaign creation is connected only after the target group is reviewed and saved.</p>
+          </div>
+
+          <div class="planner-progress" aria-live="polite" aria-atomic="true">
+            <div>
+              <span id="planner-progress-label">Step 1 of 5</span>
+              <strong id="planner-current-step-name">Campaign Details</strong>
+            </div>
+            <span id="planner-draft-status" class="status-badge is-neutral">Draft not saved</span>
+          </div>
+
+          <div class="planner-workspace">
+            <p id="planner-stepper-help" class="visually-hidden">Use Tab to move through available steps. Steps become available after the preceding step is completed.</p>
+            <nav class="planner-stepper" aria-label="Create Campaign steps" aria-describedby="planner-stepper-help">
+              <button id="planner-step-1" class="planner-step is-active" type="button" data-planner-step="1" aria-current="step" aria-controls="planner-step-panel-1">
+                <span class="planner-step-number" aria-hidden="true">1</span>
+                <span class="planner-step-copy"><strong>Campaign Details</strong><small data-planner-step-status>Current</small></span>
+              </button>
+              <button id="planner-step-2" class="planner-step" type="button" data-planner-step="2" aria-controls="planner-step-panel-2" disabled>
+                <span class="planner-step-number" aria-hidden="true">2</span>
+                <span class="planner-step-copy"><strong>Campaign Context</strong><small data-planner-step-status>Not started</small></span>
+              </button>
+              <button id="planner-step-3" class="planner-step" type="button" data-planner-step="3" aria-controls="planner-step-panel-3" disabled>
+                <span class="planner-step-number" aria-hidden="true">3</span>
+                <span class="planner-step-copy"><strong>Targeting Preferences</strong><small data-planner-step-status>Not started</small></span>
+              </button>
+              <button id="planner-step-4" class="planner-step" type="button" data-planner-step="4" aria-controls="planner-step-panel-4" disabled>
+                <span class="planner-step-number" aria-hidden="true">4</span>
+                <span class="planner-step-copy"><strong>Target Group Preview</strong><small data-planner-step-status>Not started</small></span>
+              </button>
+              <button id="planner-step-5" class="planner-step" type="button" data-planner-step="5" aria-controls="planner-step-panel-5" disabled>
+                <span class="planner-step-number" aria-hidden="true">5</span>
+                <span class="planner-step-copy"><strong>Review &amp; Save</strong><small data-planner-step-status>Not started</small></span>
+              </button>
+            </nav>
+
+            <div class="planner-panels">
+              <section id="planner-step-panel-1" class="panel planner-panel" data-planner-panel="1" aria-labelledby="planner-step-1-title">
+                <div class="panel-heading">
+                  <div><p class="eyebrow">Step 1</p><h3 id="planner-step-1-title" tabindex="-1">Campaign Details</h3></div>
+                  <span class="status-badge is-ready">Current step</span>
+                </div>
+                <p class="panel-note">Start with the basic details people will use to recognize and schedule this campaign.</p>
+                <form id="planner-campaign-details-form">
+                  <div class="analysis-form-grid">
+                    <div class="form-field form-field-wide">
+                      <label for="planner-campaign-name">Campaign Name</label>
+                      <input id="planner-campaign-name" name="campaign_name" type="text" maxlength="120" required aria-describedby="planner-campaign-name-help">
+                      <small id="planner-campaign-name-help">Use a short, recognizable name for this campaign.</small>
+                    </div>
+                    <div class="form-field form-field-wide">
+                      <label for="planner-campaign-description">Description <span>Optional</span></label>
+                      <textarea id="planner-campaign-description" name="description" maxlength="500" rows="4" aria-describedby="planner-campaign-description-help"></textarea>
+                      <small id="planner-campaign-description-help">Add the purpose or outcome this campaign is intended to support.</small>
+                    </div>
+                    <div class="form-field">
+                      <label for="planner-planned-launch-date">Planned Launch Date <span>Optional</span></label>
+                      <input id="planner-planned-launch-date" name="planned_launch_date" type="date" aria-describedby="planner-planned-launch-date-help">
+                      <small id="planner-planned-launch-date-help">Choose the expected launch date if it is known.</small>
+                    </div>
+                  </div>
+                </form>
+                <div class="analysis-form-actions planner-actions">
+                  <button id="planner-next-1" class="button button-primary" type="button">Next: Campaign Context</button>
+                </div>
+              </section>
+
+              <section id="planner-step-panel-2" class="panel planner-panel" data-planner-panel="2" aria-labelledby="planner-step-2-title" hidden>
+                <div class="panel-heading"><div><p class="eyebrow">Step 2</p><h3 id="planner-step-2-title" tabindex="-1">Campaign Context</h3></div></div>
+                <p class="panel-note">Describe the campaign using current business choices. Within a question, selecting more than one answer means “or”; answers across questions work together as “and”.</p>
+                <div id="planner-context-loading" class="empty-state compact-empty" role="status">Loading current campaign choices…</div>
+                <div id="planner-context-error" class="error-state" role="alert" tabindex="-1" hidden>
+                  <p>Campaign choices could not be loaded.</p>
+                  <button id="planner-context-retry" class="button button-secondary" type="button">Try again</button>
+                </div>
+                <div id="planner-context-empty" class="empty-state compact-empty" role="status" aria-live="polite" aria-atomic="true" hidden>
+                  No products are currently available. Refresh the campaign choices after product data is available.
+                </div>
+                <p id="planner-multiselect-help" class="panel-note planner-keyboard-help">Keyboard: hold Ctrl (or Command) while selecting to choose more than one option.</p>
+                <form id="planner-context-form" hidden>
+                  <div class="analysis-form-grid planner-context-grid">
+                    <div class="form-field form-field-wide">
+                      <label for="planner-context-products">What are you promoting?</label>
+                      <select id="planner-context-products" name="product_ids" multiple size="6" required aria-describedby="planner-context-products-help planner-multiselect-help"></select>
+                      <small id="planner-context-products-help">Choose one or more products. Multiple products are one campaign request; targeting intelligence is resolved in a later step.</small>
+                    </div>
+                    <div class="form-field">
+                      <label for="planner-context-types">What type of campaign is this? <span>Optional</span></label>
+                      <select id="planner-context-types" name="campaign_types" multiple size="5" aria-describedby="planner-context-types-help planner-multiselect-help"></select>
+                      <small id="planner-context-types-help">Choose all campaign types that describe this request.</small>
+                    </div>
+                    <div class="form-field">
+                      <label for="planner-context-categories">What is this campaign about? <span>Optional</span></label>
+                      <select id="planner-context-categories" name="campaign_categories" multiple size="5" aria-describedby="planner-context-categories-help planner-multiselect-help"></select>
+                      <small id="planner-context-categories-help">Choose the relevant campaign categories.</small>
+                    </div>
+                    <div class="form-field">
+                      <label for="planner-context-offers">What kind of offer are you planning? <span>Optional</span></label>
+                      <select id="planner-context-offers" name="offer_types" multiple size="5" aria-describedby="planner-context-offers-help planner-multiselect-help"></select>
+                      <small id="planner-context-offers-help">Choose one or more offer types, if applicable.</small>
+                    </div>
+                    <div class="form-field">
+                      <label for="planner-context-delivery-channel">How will this campaign reach people?</label>
+                      <select id="planner-context-delivery-channel" name="campaign_channel" required aria-describedby="planner-context-delivery-channel-help">
+                        <option value="">Choose a delivery channel</option>
+                      </select>
+                      <small id="planner-context-delivery-channel-help">This is the final campaign delivery channel.</small>
+                    </div>
+                    <div class="form-field form-field-wide">
+                      <label for="planner-context-historical-channels">Which past campaign channels provide useful context? <span>Optional</span></label>
+                      <select id="planner-context-historical-channels" name="historical_campaign_channels" multiple size="5" aria-describedby="planner-context-historical-channels-help planner-multiselect-help"></select>
+                      <small id="planner-context-historical-channels-help">This is historical context only. It is not automatically treated as the delivery channel.</small>
+                    </div>
+                  </div>
+                </form>
+                <p id="planner-context-summary" class="planner-context-summary" role="status" hidden></p>
+                <div class="analysis-form-actions planner-actions">
+                  <button id="planner-back-2" class="button button-secondary" type="button">Back</button>
+                  <button id="planner-context-save" class="button button-secondary" type="button" disabled>Save Campaign Context</button>
+                  <button id="planner-next-2" class="button button-primary" type="button">Next: Targeting Preferences</button>
+                </div>
+              </section>
+
+              <section id="planner-step-panel-3" class="panel planner-panel" data-planner-panel="3" aria-labelledby="planner-step-3-title" hidden>
+                <div class="panel-heading"><div><p class="eyebrow">Step 3</p><h3 id="planner-step-3-title" tabindex="-1">Targeting Preferences</h3></div></div>
+                <p class="panel-note">Describe the people you would like to reach. Every active preference is shown below; no filters are applied silently.</p>
+                <div id="planner-targeting-loading" class="empty-state compact-empty" role="status">Loading current targeting choices…</div>
+                <div id="planner-targeting-error" class="error-state" role="alert" tabindex="-1" hidden>
+                  <p>Targeting choices could not be loaded.</p>
+                  <button id="planner-targeting-retry" class="button button-secondary" type="button">Try again</button>
+                </div>
+                <form id="planner-targeting-form" hidden>
+                  <div class="planner-targeting-primary">
+                    <fieldset class="planner-strength-fieldset">
+                      <legend>How selective should targeting be?</legend>
+                      <p class="field-help">The backend-recommended starting point is marked below. You can choose a different strength.</p>
+                      <div id="planner-targeting-strength-options" class="planner-strength-options"></div>
+                    </fieldset>
+                    <div class="analysis-form-grid planner-targeting-grid">
+                      <div class="form-field">
+                        <label for="planner-targeting-genders">Gender <span id="planner-targeting-genders-count">0 selected</span></label>
+                        <select id="planner-targeting-genders" name="genders" multiple size="5" aria-describedby="planner-multiselect-help"></select>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-age-groups">Age Groups <span id="planner-targeting-age-groups-count">0 selected</span></label>
+                        <select id="planner-targeting-age-groups" name="age_groups" multiple size="7" aria-describedby="planner-multiselect-help"></select>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-states">Location — State <span id="planner-targeting-states-count">0 selected</span></label>
+                        <select id="planner-targeting-states" name="states" multiple size="7" aria-describedby="planner-targeting-states-help planner-multiselect-help"></select>
+                        <small id="planner-targeting-states-help">Phase 9 does not use street, ZIP, or city-level targeting.</small>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-income-groups">Income Groups <span id="planner-targeting-income-groups-count">0 selected</span></label>
+                        <select id="planner-targeting-income-groups" name="income_groups" multiple size="7" aria-describedby="planner-multiselect-help"></select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <details id="planner-targeting-more" class="planner-targeting-more">
+                    <summary>More targeting options</summary>
+                    <div class="analysis-form-grid planner-targeting-grid">
+                      <div class="form-field">
+                        <label for="planner-targeting-marital-statuses">Marital Status <span id="planner-targeting-marital-statuses-count">0 selected</span></label>
+                        <select id="planner-targeting-marital-statuses" name="marital_statuses" multiple size="5" aria-describedby="planner-multiselect-help"></select>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-education-levels">Education <span id="planner-targeting-education-levels-count">0 selected</span></label>
+                        <select id="planner-targeting-education-levels" name="education_levels" multiple size="5" aria-describedby="planner-multiselect-help"></select>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-employment-statuses">Employment Status <span id="planner-targeting-employment-statuses-count">0 selected</span></label>
+                        <select id="planner-targeting-employment-statuses" name="employment_statuses" multiple size="5" aria-describedby="planner-multiselect-help"></select>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-resident-statuses">Resident Status <span id="planner-targeting-resident-statuses-count">0 selected</span></label>
+                        <select id="planner-targeting-resident-statuses" name="resident_statuses" multiple size="5" aria-describedby="planner-multiselect-help"></select>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-resident-types">Resident Type <span id="planner-targeting-resident-types-count">0 selected</span></label>
+                        <select id="planner-targeting-resident-types" name="resident_types" multiple size="5" aria-describedby="planner-multiselect-help"></select>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-employment-types">Type of Employment <span id="planner-targeting-employment-types-count">0 selected</span></label>
+                        <select id="planner-targeting-employment-types" name="employment_types" multiple size="5" aria-describedby="planner-multiselect-help"></select>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-family-min">Family Size <span>Optional range</span></label>
+                        <div class="planner-number-range">
+                          <input id="planner-targeting-family-min" name="family_member_count_min" type="number" min="1" inputmode="numeric" placeholder="Minimum" aria-label="Minimum family size">
+                          <span aria-hidden="true">to</span>
+                          <input id="planner-targeting-family-max" name="family_member_count_max" type="number" min="1" inputmode="numeric" placeholder="Maximum" aria-label="Maximum family size">
+                        </div>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-top-percent">Top Matching Percentage <span>Optional</span></label>
+                        <input id="planner-targeting-top-percent" name="top_matching_percent" type="number" min="1" max="100" inputmode="numeric" placeholder="1–100" aria-describedby="planner-targeting-top-percent-help">
+                        <small id="planner-targeting-top-percent-help">Keep only people within this top percentage after other preferences match.</small>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-selection-mode">How many matching people should be selected?</label>
+                        <select id="planner-targeting-selection-mode" name="selection_mode">
+                          <option value="ALL_MATCHING">All matching people</option>
+                          <option value="TOP_N">A specific number of top matches</option>
+                        </select>
+                      </div>
+                      <div id="planner-targeting-target-count-field" class="form-field" hidden>
+                        <label for="planner-targeting-target-count">Number of People</label>
+                        <input id="planner-targeting-target-count" name="target_count" type="number" min="1" inputmode="numeric">
+                      </div>
+                    </div>
+                  </details>
+                </form>
+
+                <section id="planner-targeting-active" class="planner-targeting-active" aria-labelledby="planner-targeting-active-title" hidden>
+                  <div class="panel-heading compact-heading">
+                    <div><p class="eyebrow">Visible criteria</p><h4 id="planner-targeting-active-title">Your targeting choices</h4></div>
+                    <button id="planner-targeting-clear-all" class="button button-secondary" type="button">Clear all</button>
+                  </div>
+                  <p id="planner-targeting-active-summary" class="panel-note">No optional preferences selected.</p>
+                  <p id="planner-targeting-chip-help" class="panel-note planner-keyboard-help">Each selected choice has a remove button that can be reached with Tab and activated with Enter or Space.</p>
+                  <div id="planner-targeting-chips" class="planner-targeting-chips" role="list" aria-live="polite" aria-describedby="planner-targeting-chip-help"></div>
+                </section>
+                <p id="planner-targeting-save-summary" class="planner-context-summary" role="status" hidden></p>
+                <div class="analysis-form-actions planner-actions">
+                  <button id="planner-back-3" class="button button-secondary" type="button">Back</button>
+                  <button id="planner-targeting-save" class="button button-secondary" type="button" disabled>Save Targeting Preferences</button>
+                  <button id="planner-next-3" class="button button-primary" type="button">Next: Target Group Preview</button>
+                </div>
+              </section>
+
+              <section id="planner-step-panel-4" class="panel planner-panel" data-planner-panel="4" aria-labelledby="planner-step-4-title" hidden>
+                <div class="panel-heading"><div><p class="eyebrow">Step 4</p><h3 id="planner-step-4-title" tabindex="-1">Target Group Preview</h3></div></div>
+                <div id="planner-intelligence-loading" class="empty-state compact-empty" role="status">Checking targeting intelligence…</div>
+                <div id="planner-intelligence-state" class="planner-intelligence-state" role="status" aria-live="polite" aria-atomic="true" hidden>
+                  <div class="planner-intelligence-heading">
+                    <span id="planner-intelligence-status" class="status-badge is-neutral">Not checked</span>
+                    <h4 id="planner-intelligence-message">Targeting is not yet available for this campaign</h4>
+                  </div>
+                  <p id="planner-intelligence-explanation">Campaign context and targeting preferences remain saved while targeting intelligence is prepared.</p>
+                  <p id="planner-preview-block-note" class="panel-note">Exact target counts and target-group saving are blocked. No estimated or fabricated count is shown.</p>
+                  <button id="planner-intelligence-retry" class="button button-secondary" type="button">Check again</button>
+                  <details id="planner-intelligence-advanced" class="planner-targeting-more">
+                    <summary>View technical details</summary>
+                    <p class="panel-note">Advanced technical details are provided for audit review. An analyst or administrator must explicitly link a verified source. Campaign context never silently changes or retrains that source.</p>
+                    <dl id="planner-intelligence-details" class="normalized-filter-list"></dl>
+                  </details>
+                </div>
+                <div id="planner-target-preview-loading" class="empty-state compact-empty" role="status" hidden>Building exact target-group preview…</div>
+                <div id="planner-target-preview-error" class="error-state" role="alert" tabindex="-1" hidden>
+                  <p>Target-group preview could not be completed.</p>
+                  <button id="planner-target-preview-retry" class="button button-secondary" type="button">Try preview again</button>
+                </div>
+                <div id="planner-target-preview" class="planner-target-preview" hidden>
+                  <div class="panel-heading">
+                    <div><p class="eyebrow">Exact preview</p><h4 id="planner-target-preview-title" tabindex="-1">Recommended Target Group</h4></div>
+                    <span id="planner-target-preview-currentness" class="status-badge is-ready">Up to date</span>
+                  </div>
+                  <div id="planner-target-preview-empty" class="empty-state compact-empty" role="status" aria-live="polite" aria-atomic="true" hidden>
+                    <strong>No people match these targeting preferences.</strong>
+                    <p>The exact result is zero. Go back and broaden one or more preferences, then preview again.</p>
+                  </div>
+                  <div class="analysis-metric-grid planner-preview-kpis" aria-label="Target group summary">
+                    <article><span>Potential Customers Available</span><strong id="planner-preview-available">—</strong></article>
+                    <article><span>Matching Your Preferences</span><strong id="planner-preview-matching">—</strong></article>
+                    <article><span>Selected for Target Group</span><strong id="planner-preview-selected">—</strong></article>
+                    <article><span>% of Available People</span><strong id="planner-preview-percent">—</strong></article>
+                    <article><span>Average Targeting Match Score</span><strong id="planner-preview-average-score">—</strong></article>
+                    <article><span>Strongest Match</span><strong id="planner-preview-strongest">—</strong></article>
+                    <article><span>Lowest Selected Match</span><strong id="planner-preview-lowest">—</strong></article>
+                  </div>
+
+                  <section class="planner-preview-explanation" aria-labelledby="planner-preview-why-title">
+                    <h4 id="planner-preview-why-title">Why these people?</h4>
+                    <p id="planner-preview-why"></p>
+                  </section>
+
+                  <section id="planner-match-strength-panel" class="panel planner-match-strength-panel" aria-labelledby="planner-match-strength-title">
+                    <div class="panel-heading">
+                      <div><p class="eyebrow">Choose targeting strictness</p><h4 id="planner-match-strength-title">Match Strength Comparison</h4></div>
+                      <span id="planner-match-recommendation-status" class="status-badge is-neutral">Reviewing</span>
+                    </div>
+                    <div class="planner-recommendation-copy">
+                      <strong id="planner-match-recommendation-heading"></strong>
+                      <p id="planner-match-recommendation-explanation"></p>
+                      <small id="planner-match-recommendation-rule"></small>
+                    </div>
+                    <div id="planner-match-strength-comparisons" class="planner-match-strength-comparisons" aria-label="Exact match-strength comparison"></div>
+                    <p id="planner-match-strength-disclaimer" class="planner-match-strength-disclaimer"></p>
+                  </section>
+
+                  <div class="planner-preview-grid">
+                    <section class="panel" aria-labelledby="planner-preview-score-title">
+                      <div class="panel-heading"><div><p class="eyebrow">Distribution</p><h4 id="planner-preview-score-title">Targeting Match Score</h4></div></div>
+                      <div id="planner-preview-score-bands" class="planner-preview-bars"></div>
+                    </section>
+                    <section class="panel" aria-labelledby="planner-preview-demographic-title">
+                      <div class="panel-heading"><div><p class="eyebrow">Selected group</p><h4 id="planner-preview-demographic-title">Demographic Mix</h4></div></div>
+                      <div id="planner-preview-demographic-mix" class="planner-demographic-mix"></div>
+                    </section>
+                  </div>
+
+                  <section class="panel planner-preview-table-panel" aria-labelledby="planner-preview-table-title">
+                    <div class="panel-heading">
+                      <div><p class="eyebrow">Privacy-safe preview</p><h4 id="planner-preview-table-title">Potential Customers</h4></div>
+                      <span id="planner-preview-page-status" class="panel-note" role="status" aria-live="polite">First page</span>
+                    </div>
+                    <div class="table-scroll">
+                      <table>
+                        <caption class="visually-hidden">Potential customers in the exact Target Group preview</caption>
+                        <thead><tr><th scope="col">Potential Customer ID</th><th scope="col">Targeting Match Score</th><th scope="col">Top Matching %</th><th scope="col">Match Strength</th><th scope="col">Age</th><th scope="col">Gender</th><th scope="col">State</th><th scope="col">Individual Yearly Income</th></tr></thead>
+                        <tbody id="planner-preview-table-body"></tbody>
+                      </table>
+                    </div>
+                    <p id="planner-preview-table-empty" class="panel-note" hidden>No potential customers match the selected preferences.</p>
+                    <div class="analysis-form-actions planner-actions">
+                      <button id="planner-preview-load-more" class="button button-secondary" type="button" hidden>Load more potential customers</button>
+                    </div>
+                  </section>
+                </div>
+                <div class="analysis-form-actions planner-actions">
+                  <button id="planner-back-4" class="button button-secondary" type="button">Back</button>
+                  <button id="planner-next-4" class="button button-primary" type="button" disabled>Next: Review &amp; Save</button>
+                </div>
+              </section>
+
+              <section id="planner-step-panel-5" class="panel planner-panel" data-planner-panel="5" aria-labelledby="planner-step-5-title" hidden>
+                <div class="panel-heading"><div><p class="eyebrow">Step 5</p><h3 id="planner-step-5-title" tabindex="-1">Review &amp; Save</h3></div></div>
+                <div id="planner-review-error" class="error-state" role="alert" tabindex="-1" hidden>
+                  <strong id="planner-review-error-title">Target Group could not be saved</strong>
+                  <p>Review the campaign and targeting source, then try again.</p>
+                </div>
+                <div class="planner-review-grid">
+                  <section class="planner-review-card" aria-labelledby="planner-review-campaign-title">
+                    <p class="eyebrow">Campaign</p>
+                    <h4 id="planner-review-campaign-title">Campaign summary</h4>
+                    <dl id="planner-review-campaign" class="planner-review-list"></dl>
+                  </section>
+                  <section class="planner-review-card" aria-labelledby="planner-review-targeting-title">
+                    <p class="eyebrow">Targeting</p>
+                    <h4 id="planner-review-targeting-title">Targeting preferences</h4>
+                    <dl id="planner-review-targeting" class="planner-review-list"></dl>
+                  </section>
+                  <section class="planner-review-card" aria-labelledby="planner-review-group-title">
+                    <p class="eyebrow">Target Group</p>
+                    <h4 id="planner-review-group-title">Selection summary</h4>
+                    <dl id="planner-review-group" class="planner-review-list"></dl>
+                  </section>
+                </div>
+                <form id="planner-save-target-group-form" class="planner-save-target-group-form">
+                  <div class="analysis-form-grid">
+                    <div class="form-field form-field-wide">
+                      <label for="planner-target-group-name">Saved Target Group name</label>
+                      <input id="planner-target-group-name" name="target_group_name" type="text" maxlength="120" required aria-describedby="planner-target-group-name-help">
+                      <small id="planner-target-group-name-help">A suggested name is provided from your campaign name. You can edit it before saving.</small>
+                    </div>
+                    <div class="form-field form-field-wide">
+                      <label for="planner-target-group-description">Target Group description <span>Optional</span></label>
+                      <textarea id="planner-target-group-description" name="target_group_description" maxlength="500" rows="3" aria-describedby="planner-target-group-description-help"></textarea>
+                      <small id="planner-target-group-description-help">Optional: add a short purpose that helps colleagues recognize this Target Group.</small>
+                    </div>
+                  </div>
+                  <div class="notice planner-review-notice" role="note">
+                    <span class="notice-icon" aria-hidden="true">i</span>
+                    <p>This saves an immutable, privacy-safe Target Group and creates a Campaign in Draft status. It does not expose contact PII, finalize, export, activate, or send the campaign.</p>
+                  </div>
+                  <div class="analysis-form-actions planner-actions">
+                    <button id="planner-back-5" class="button button-secondary" type="button">Back</button>
+                    <button id="planner-save-target-group" class="button button-primary" type="submit">Save Target Group &amp; Create Campaign Draft</button>
+                  </div>
+                </form>
+                <section id="planner-save-success" class="planner-save-success" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" aria-labelledby="planner-save-success-title" hidden>
+                  <div class="planner-save-success-heading">
+                    <div><p class="eyebrow">Saved Target Group</p><h4 id="planner-save-success-title">Campaign draft created</h4></div>
+                    <span id="planner-saved-currentness" class="status-badge is-ready">Up to date</span>
+                  </div>
+                  <dl id="planner-save-result" class="planner-review-list"></dl>
+                  <p class="panel-note">The Campaign remains a draft. Changing targeting preferences and saving again creates a new immutable Target Group; the previous one is never changed.</p>
+                </section>
+                <details id="planner-review-technical" class="planner-targeting-more planner-review-technical">
+                  <summary>View technical details</summary>
+                  <p class="panel-note">Audit identifiers and provenance are shown here for analysts. This is UX separation only and does not represent an authentication or authorization boundary.</p>
+                  <dl id="planner-review-technical-details" class="normalized-filter-list"></dl>
+                </details>
+              </section>
+            </div>
+          </div>
+
+          <div id="planner-status-announcement" class="visually-hidden" role="status" aria-live="polite"></div>
         </section>
 
         <section id="campaigns-view" class="view" data-view="campaigns" aria-labelledby="campaigns-title" hidden>

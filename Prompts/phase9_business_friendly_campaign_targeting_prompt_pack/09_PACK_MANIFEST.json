@@ -1,0 +1,129 @@
+{
+  "pack_name": "Phase 9 Campaign Planning & Business-Friendly Targeting Experience",
+  "version": "1.0",
+  "phase1_to_phase8_frozen_baseline": "d6a9f9b963622a334bf3e5c3220e5d0a73e528fe",
+  "step_count": 15,
+  "file_count_before_manifest": 24,
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 2978,
+      "sha256": "68db1037206c7b375b332ccaff0fa5612fe5ec24605935ff45c9612ffe01c24a"
+    },
+    {
+      "file": "01_MASTER_GUARDRAILS.md",
+      "bytes": 2594,
+      "sha256": "75361ff856809b21a547fe4d7992edc6c1a0bfb051e7330c4c4584591b80301e"
+    },
+    {
+      "file": "01_STEP_01_BASELINE_AND_PHASE9_GAP_ANALYSIS.md",
+      "bytes": 1819,
+      "sha256": "7499523b02ec33ebd62cbca0e90a87553fce35102cc41cbaab7e47a5cb95fcd3"
+    },
+    {
+      "file": "02_MASTER_ACCEPTANCE_CHECKLIST.md",
+      "bytes": 2361,
+      "sha256": "d9039b275a69e0ed052aa73c2e33275f7afd001552151e7bae3fc13ab7ffecae"
+    },
+    {
+      "file": "02_STEP_02_BUSINESS_TERMINOLOGY_AND_INFORMATION_ARCHITECTURE.md",
+      "bytes": 1555,
+      "sha256": "7d7de1db154d5ddb94bc35c19ad65a1862ef87862c34986f09d6e9be76aacfd2"
+    },
+    {
+      "file": "03_PROGRESS_TRACKER.md",
+      "bytes": 730,
+      "sha256": "616e00b8f326202085d644d8620f0d8a3fb06b1a9b263ea0c62e6024e519d7ce"
+    },
+    {
+      "file": "03_STEP_03_PHASE9_TARGETING_CONTRACTS_AND_SCHEMA.md",
+      "bytes": 1993,
+      "sha256": "76d6291e15dc4a8155873be6fb463966cf67310450d25cf19b9c2d22352bc566"
+    },
+    {
+      "file": "04_BUSINESS_TERMINOLOGY_CONTRACT.md",
+      "bytes": 1276,
+      "sha256": "cf6878db67365797ace17487cec843c2cc0120bdbcd9662f34c3233463b12b0b"
+    },
+    {
+      "file": "04_STEP_04_BUSINESS_CAMPAIGN_WIZARD_SHELL.md",
+      "bytes": 1216,
+      "sha256": "c8e0321d3c9825fe03a30516cfadb831e1cfdb195f2b7429f66ad744ee784cbe"
+    },
+    {
+      "file": "05_PHASE10_HANDOFF_CONTRACT.md",
+      "bytes": 861,
+      "sha256": "08c6ff89671e579dcccdc2f360c9a274c3fc43e94b75418ea3ef56acf1db8c7d"
+    },
+    {
+      "file": "05_STEP_05_CAMPAIGN_CONTEXT_CAPTURE.md",
+      "bytes": 1503,
+      "sha256": "70f87ffd8ae140e1a4699723e20bdb963b41ea4397bcdc2195636b3a506c66de"
+    },
+    {
+      "file": "06_PHASE9_REFERENCE_ARCHITECTURE.md",
+      "bytes": 1157,
+      "sha256": "83562f72c867dedb2b8539635413b88e4d63f85eae51c77ab979e21ccfb3504f"
+    },
+    {
+      "file": "06_STEP_06_BUSINESS_TARGETING_CRITERIA_CONTROLS.md",
+      "bytes": 1548,
+      "sha256": "1207d55017159f812ed6212b36b87afe0f8e3936edd87e567b4ac0688b3f70a8"
+    },
+    {
+      "file": "07_PHASE9_END_TO_END_TEST_MATRIX.md",
+      "bytes": 1292,
+      "sha256": "fe776f83db5ee3c2df2db07a618dab4a69baf408121911d3e430e86f93c9a628"
+    },
+    {
+      "file": "07_STEP_07_TARGETING_INTELLIGENCE_SOURCE_BOUNDARY.md",
+      "bytes": 2086,
+      "sha256": "184d9377d2a33e41a904544e9ccb56ec0a52ffad8793c62b12267e8168dc172a"
+    },
+    {
+      "file": "08_SINGLE_MASTER_PHASE9_PROMPT.md",
+      "bytes": 1828,
+      "sha256": "c793f14c862c2f6f0c479ffbebdf23d7203482a23ef5c65029db20a3b482f74e"
+    },
+    {
+      "file": "08_STEP_08_TARGET_GROUP_ESTIMATE_SEARCH_PROFILE_AND_EXPLANATION.md",
+      "bytes": 1899,
+      "sha256": "0a868114eb83568847acf8038808fff788e7722e67af55159741d14ca7788495"
+    },
+    {
+      "file": "09_STEP_09_RECOMMENDATIONS_AND_MATCH_STRENGTH_COMPARISON.md",
+      "bytes": 1640,
+      "sha256": "75b78a98a593ede0cc4ac3bb60b63dea5a26c4989c75bcd2445aabd7fbd6eff7"
+    },
+    {
+      "file": "10_STEP_10_SAVE_TARGET_GROUP_AND_CREATE_CAMPAIGN_DRAFT.md",
+      "bytes": 1903,
+      "sha256": "ecb78942c24c900e0b9463cfc23fbcb55362c053ba8c3f4b0f8a5dc58b7877e9"
+    },
+    {
+      "file": "11_STEP_11_ADVANCED_TECHNICAL_DETAILS_AND_PROGRESSIVE_DISCLOSURE.md",
+      "bytes": 1286,
+      "sha256": "97c983149c59049d293b624a28e321fd2b6267799613d9dab8179f0cfd1a2b11"
+    },
+    {
+      "file": "12_STEP_12_VALIDATION_ERROR_EMPTY_LOADING_AND_CURRENTNESS_STATES.md",
+      "bytes": 1343,
+      "sha256": "87dab9a0eee071c0639ec93f0b35095a22aa4ba582dbf2aa9c96aeee3dcfb44e"
+    },
+    {
+      "file": "13_STEP_13_ACCESSIBILITY_RESPONSIVE_AND_BUSINESS_USABILITY.md",
+      "bytes": 1379,
+      "sha256": "41780b78bcc2ef6666643a3ab31ae9800204d237992d2fa79fd6ec024bea61be"
+    },
+    {
+      "file": "14_STEP_14_SYSTEM_BROWSER_END_TO_END_PHASE9_CERTIFICATION.md",
+      "bytes": 3524,
+      "sha256": "31af064b1ee3fb14b93ce441eca40b06ff4709fa3c75c6897404fe768f5726ec"
+    },
+    {
+      "file": "15_STEP_15_REGRESSION_CI_DOCUMENTATION_AND_PHASE9_FREEZE.md",
+      "bytes": 2861,
+      "sha256": "28e1686fbfa51e9cd85ef12b3228bdb3bc82bec77587f7e85873bf92497ba9c8"
+    }
+  ]
+}

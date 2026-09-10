@@ -285,6 +285,62 @@ def _filter_hash_from_payload(filters_payload: dict[str, Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+def _filter_branches_hash_from_payloads(payloads: list[dict[str, Any]]) -> str:
+    canonical = json.dumps(
+        payloads,
+        ensure_ascii=True,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _saved_filter_definition(
+    connection: sqlite3.Connection,
+    *,
+    audience_id: int,
+    saved_filters: dict[str, Any],
+    saved_resolved_count: int,
+) -> tuple[list[Any], str]:
+    normalized_filter = normalize_audience_filters(saved_filters)
+    metadata = connection.execute(
+        "SELECT * FROM phase9_saved_target_groups WHERE audience_id = ?",
+        (audience_id,),
+    ).fetchone()
+    if metadata is None:
+        return [normalized_filter], _filter_hash_from_payload(normalized_filter.payload)
+
+    metadata_row = dict(metadata)
+    try:
+        decoded = json.loads(str(metadata_row["filter_branches_json"]))
+    except (TypeError, ValueError) as exc:
+        raise CampaignServiceConflictError(
+            "Saved Target Group filter branches are not readable."
+        ) from exc
+    if not isinstance(decoded, list) or not decoded:
+        raise CampaignServiceConflictError(
+            "Saved Target Group filter branches are not readable."
+        )
+    try:
+        normalized_branches = [normalize_audience_filters(branch) for branch in decoded]
+    except AudienceQueryValidationError as exc:
+        raise CampaignServiceConflictError(
+            "Saved Target Group filter branches are invalid."
+        ) from exc
+    payloads = [branch.payload for branch in normalized_branches]
+    digest = _filter_branches_hash_from_payloads(payloads)
+    if digest != str(metadata_row["filter_branches_sha256"]).strip().lower():
+        raise CampaignServiceConflictError(
+            "Saved Target Group filter hash failed integrity validation."
+        )
+    if int(metadata_row["resolved_count"]) != saved_resolved_count:
+        raise CampaignServiceConflictError(
+            "Saved Target Group count no longer matches its immutable Saved Audience."
+        )
+    return normalized_branches, digest
+
+
 def _provenance_sha256(payload: dict[str, Any]) -> str:
     encoded = json.dumps(
         payload,
@@ -323,6 +379,13 @@ def _extract_saved_audience_snapshot(
 
     normalized_filters = normalize_audience_filters(filters_payload)
     normalized_selection = normalize_selection(selection_payload)
+    with get_connection(database_path) as connection:
+        normalized_filter_branches, filter_hash = _saved_filter_definition(
+            connection,
+            audience_id=saved_audience_id,
+            saved_filters=filters_payload,
+            saved_resolved_count=int(detail["definition"]["resolved_count"]),
+        )
 
     if int(detail["definition"]["resolved_count"]) <= 0:
         raise CampaignServiceConflictError("Saved audience resolved_count must be positive.")
@@ -386,6 +449,8 @@ def _extract_saved_audience_snapshot(
     return {
         "detail": detail,
         "normalized_filters": normalized_filters,
+        "normalized_filter_branches": normalized_filter_branches,
+        "filter_hash": filter_hash,
         "normalized_selection": normalized_selection,
         "saved_audience_current": bool(currentness["is_current"]),
         "scoring_current": bool(scoring_currentness["is_canonical"]),
@@ -443,7 +508,7 @@ def _campaign_currentness_from_row(path: Path, row: dict[str, Any]) -> dict[str,
         if int(detail["provenance"]["analysis_run_id"]) != int(row["analysis_run_id"]):
             issues.append("campaign analysis_run_id does not match immutable saved audience provenance")
 
-        expected_filter_hash = _filter_hash_from_payload(snapshot["normalized_filters"].payload)
+        expected_filter_hash = str(snapshot["filter_hash"])
         if str(row["saved_audience_filter_hash"]).strip().lower() != expected_filter_hash:
             issues.append("campaign filter hash does not match immutable saved audience filters")
 
@@ -619,7 +684,7 @@ def create_campaign(database_path: str | Path, request_payload: dict[str, Any]) 
             scoring_run_id=int(detail["definition"]["scoring_run_id"]),
             model_run_id=int(detail["provenance"]["model_run_id"]),
             analysis_run_id=int(detail["provenance"]["analysis_run_id"]),
-            saved_audience_filter_hash=_filter_hash_from_payload(snapshot["normalized_filters"].payload),
+            saved_audience_filter_hash=str(snapshot["filter_hash"]),
             saved_audience_selection_payload=snapshot["normalized_selection"].payload,
             saved_audience_resolved_count=int(detail["definition"]["resolved_count"]),
             filter_contract_version=AUDIENCE_FILTER_CONTRACT_VERSION,
@@ -726,7 +791,7 @@ def update_campaign(
             scoring_run_id=int(detail["definition"]["scoring_run_id"]),
             model_run_id=int(detail["provenance"]["model_run_id"]),
             analysis_run_id=int(detail["provenance"]["analysis_run_id"]),
-            saved_audience_filter_hash=_filter_hash_from_payload(snapshot["normalized_filters"].payload),
+            saved_audience_filter_hash=str(snapshot["filter_hash"]),
             saved_audience_selection_payload=snapshot["normalized_selection"].payload,
             saved_audience_resolved_count=int(detail["definition"]["resolved_count"]),
             filter_contract_version=AUDIENCE_FILTER_CONTRACT_VERSION,
@@ -889,10 +954,13 @@ def _resolve_campaign_member_query_context_on_connection(
         field_name="saved_audience.selection_json",
     )
 
-    normalized_filters = normalize_audience_filters(saved_filters)
     normalized_selection = normalize_selection(saved_selection)
-
-    saved_filter_hash = _filter_hash_from_payload(normalized_filters.payload)
+    normalized_filter_branches, saved_filter_hash = _saved_filter_definition(
+        connection,
+        audience_id=saved_audience_id,
+        saved_filters=saved_filters,
+        saved_resolved_count=int(saved_row_dict["resolved_count"]),
+    )
     if saved_filter_hash != str(campaign_row["saved_audience_filter_hash"]).strip().lower():
         raise CampaignServiceConflictError("Campaign filter hash no longer matches immutable saved audience filters.")
 
@@ -945,16 +1013,26 @@ def _resolve_campaign_member_query_context_on_connection(
         categorical_vocabularies = _categorical_vocabularies_from_snapshot(analytics_snapshot)
     except Exception as exc:
         raise CampaignServiceConflictError("Audience analytics snapshot is not prepared for this scoring run.") from exc
-    (
-        score_predicates,
-        score_parameters,
-        demographic_predicates,
-        demographic_parameters,
-    ) = _build_filter_predicates_split(
-        normalized_filters=normalized_filters,
-        boundaries=boundaries,
-        categorical_vocabularies=categorical_vocabularies,
-    )
+    predicate_branches = []
+    for normalized_filter in normalized_filter_branches:
+        (
+            score_predicates,
+            score_parameters,
+            demographic_predicates,
+            demographic_parameters,
+        ) = _build_filter_predicates_split(
+            normalized_filters=normalized_filter,
+            boundaries=boundaries,
+            categorical_vocabularies=categorical_vocabularies,
+        )
+        predicate_branches.append(
+            {
+                "score_predicates": score_predicates,
+                "score_parameters": score_parameters,
+                "demographic_predicates": demographic_predicates,
+                "demographic_parameters": demographic_parameters,
+            }
+        )
 
     export_provenance_payload = {
         "campaign_id": int(campaign_row["campaign_id"]),
@@ -984,10 +1062,7 @@ def _resolve_campaign_member_query_context_on_connection(
         "normalized_selection": normalized_selection,
         "boundaries": boundaries,
         "scoring_run_id": scoring_run_id,
-        "score_predicates": score_predicates,
-        "score_parameters": score_parameters,
-        "demographic_predicates": demographic_predicates,
-        "demographic_parameters": demographic_parameters,
+        "predicate_branches": predicate_branches,
         "start_provenance_sha256": _provenance_sha256(export_provenance_payload),
     }
 
@@ -1061,10 +1136,7 @@ def _iter_selected_member_chunks(
 ) -> Iterator[list[dict[str, Any]]]:
     scoring_run_id = int(query_context["scoring_run_id"])
     boundaries = query_context["boundaries"]
-    score_predicates = list(query_context["score_predicates"])
-    score_parameters = list(query_context["score_parameters"])
-    demographic_predicates = list(query_context["demographic_predicates"])
-    demographic_parameters = list(query_context["demographic_parameters"])
+    predicate_branches = list(query_context["predicate_branches"])
     selection_payload = dict(query_context["normalized_selection"].payload)
 
     boundary_lookup, binary_safe = _compile_boundary_lookup(boundaries)
@@ -1091,14 +1163,22 @@ def _iter_selected_member_chunks(
     join_clause = "INNER JOIN demographics d ON d.person_id = p.person_id"
     where_predicates = ["p.scoring_run_id = ?"]
     base_params: list[Any] = [scoring_run_id]
-
-    if score_predicates:
-        where_predicates.extend(score_predicates)
-        base_params.extend(score_parameters)
-
-    if demographic_predicates:
-        where_predicates.extend(demographic_predicates)
-        base_params.extend(demographic_parameters)
+    union_clauses: list[str] = []
+    for branch in predicate_branches:
+        predicates = [
+            *branch["score_predicates"],
+            *branch["demographic_predicates"],
+        ]
+        union_clauses.append(
+            "(" + (" AND ".join(predicates) if predicates else "1 = 1") + ")"
+        )
+        base_params.extend(branch["score_parameters"])
+        base_params.extend(branch["demographic_parameters"])
+    if not union_clauses:
+        raise CampaignServiceConflictError(
+            "Saved audience does not contain a usable filter definition."
+        )
+    where_predicates.append("(" + " OR ".join(union_clauses) + ")")
 
     top_n_limit: int | None = None
     if selection_payload["mode"] == "TOP_N":

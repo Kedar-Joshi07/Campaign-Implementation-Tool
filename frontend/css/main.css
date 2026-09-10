@@ -45,7 +45,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -88,6 +90,7 @@ dd {
   flex-direction: column;
   height: 100vh;
   padding: 28px 18px 22px;
+  overflow-x: hidden;
   overflow-y: auto;
   background:
     linear-gradient(165deg, rgb(255 255 255 / 4%), transparent 35%),
@@ -194,9 +197,16 @@ dd {
 }
 
 .navigation-item small {
+  min-width: 0;
   margin-left: auto;
   font-size: 0.61rem;
-  white-space: nowrap;
+  text-align: right;
+  white-space: normal;
+}
+
+.navigation-item > span:not(.nav-icon) {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .nav-icon {
@@ -419,6 +429,10 @@ dd {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .navigation-item small {
+    display: none;
+  }
 }
 
 @media (max-width: 780px) {
@@ -433,7 +447,7 @@ dd {
   }
 
   .navigation {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     margin-top: 18px;
   }
 
@@ -488,6 +502,10 @@ dd {
   }
 
   .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .navigation {
     grid-template-columns: 1fr;
   }
 }
