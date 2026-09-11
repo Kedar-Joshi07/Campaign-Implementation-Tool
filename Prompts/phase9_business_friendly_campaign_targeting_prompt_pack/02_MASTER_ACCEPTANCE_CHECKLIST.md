@@ -1,76 +1,76 @@
 # Phase 9 Master Acceptance Checklist
 
 ## Business experience
-- [ ] Normal user can start from Create Campaign
-- [ ] No ML/PU jargon required in default path
-- [ ] Plain-language terminology is consistent
-- [ ] Technical detail is progressively disclosed
-- [ ] Existing technical pages remain available under Advanced/Insights
+- [x] Normal user can start from Create Campaign
+- [x] No ML/PU jargon required in default path
+- [x] Plain-language terminology is consistent
+- [x] Technical detail is progressively disclosed
+- [x] Existing technical pages remain available under Advanced/Insights
 
 ## Campaign context
-- [ ] Campaign name
-- [ ] Description
-- [ ] Planned launch date
-- [ ] Product multi-select
-- [ ] Campaign Type multi-select
-- [ ] Campaign Category multi-select
-- [ ] Offer Type multi-select
-- [ ] Campaign Channel
-- [ ] Context normalized and persisted
-- [ ] Context does not falsely alter prospect filters
+- [x] Campaign name
+- [x] Description
+- [x] Planned launch date
+- [x] Product multi-select
+- [x] Campaign Type multi-select
+- [x] Campaign Category multi-select
+- [x] Offer Type multi-select
+- [x] Campaign Channel
+- [x] Context normalized and persisted
+- [x] Context does not falsely alter prospect filters
 
 ## Targeting criteria
-- [ ] Match Strength / minimum score
-- [ ] True 0.10 score-band distribution
-- [ ] Gender multi-select
-- [ ] Age bucket multi-select
-- [ ] State multi-select
-- [ ] Optional coarse Region
-- [ ] Income-group multi-select
-- [ ] Advanced demographic criteria
-- [ ] Optional TOP_N / target count
-- [ ] Criteria versioned and backend-owned
+- [x] Match Strength / minimum score
+- [x] True 0.10 score-band distribution
+- [x] Gender multi-select
+- [x] Age bucket multi-select
+- [x] State multi-select
+- [x] Optional coarse Region
+- [x] Income-group multi-select
+- [x] Advanced demographic criteria
+- [x] Optional TOP_N / target count
+- [x] Criteria versioned and backend-owned
 
 ## Output
-- [ ] Exact matching count
-- [ ] Exact selected count
-- [ ] % of universe
-- [ ] avg/min/max match score
-- [ ] score distribution
-- [ ] age/gender/state/income mix
-- [ ] non-PII preview table
-- [ ] deterministic ordering
-- [ ] business-friendly “Why these people?” explanation
-- [ ] source/currentness status
+- [x] Exact matching count
+- [x] Exact selected count
+- [x] % of universe
+- [x] avg/min/max match score
+- [x] score distribution
+- [x] age/gender/state/income mix
+- [x] non-PII preview table
+- [x] deterministic ordering
+- [x] business-friendly “Why these people?” explanation
+- [x] source/currentness status
 
 ## Recommendations
-- [ ] Very Strong / Strong / Good / Broad match choices
-- [ ] exact counts per choice
-- [ ] recommended option is explainable
-- [ ] no claim of purchase probability
+- [x] Very Strong / Strong / Good / Broad match choices
+- [x] exact counts per choice
+- [x] recommended option is explainable
+- [x] no claim of purchase probability
 
 ## Saved Target Group / Campaign
-- [ ] business-facing saved target group
-- [ ] immutable underlying Saved Audience
-- [ ] exact filter hash/provenance retained
-- [ ] campaign draft created from saved target group
-- [ ] business context stored with campaign/draft
-- [ ] PII remains export-only
+- [x] business-facing saved target group
+- [x] immutable underlying Saved Audience
+- [x] exact filter hash/provenance retained
+- [x] campaign draft created from saved target group
+- [x] business context stored with campaign/draft
+- [x] PII remains export-only
 
 ## UX quality
-- [ ] validation messages use plain language
-- [ ] empty/loading/error/currentness states
-- [ ] keyboard accessibility
-- [ ] responsive layouts
-- [ ] zero unexplained console errors
-- [ ] zero unexplained critical network failures
-- [ ] all Phase 9 controls accounted
+- [x] validation messages use plain language
+- [x] empty/loading/error/currentness states
+- [x] keyboard accessibility
+- [x] responsive layouts
+- [x] zero unexplained console errors
+- [x] zero unexplained critical network failures
+- [x] all Phase 9 controls accounted
 
 ## Regression
-- [ ] Phase 1–8 tests still pass
-- [ ] clean-room still passes
-- [ ] existing Audience Explorer still works
-- [ ] existing Campaign Builder still works
-- [ ] CI green
-- [ ] Phase 9 docs/evidence complete
-- [ ] Phase 10 handoff contract documented
+- [x] Phase 1–8 tests still pass
+- [x] clean-room still passes
+- [x] existing Audience Explorer still works
+- [x] existing Campaign Builder still works
+- [x] CI green
+- [x] Phase 9 docs/evidence complete
+- [x] Phase 10 handoff contract documented

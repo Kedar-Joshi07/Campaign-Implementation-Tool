@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-09-11T04:15:00Z",
+  "generated_at": "2026-09-11T15:06:50Z",
   "prompt": "Prompts/phase9_business_friendly_campaign_targeting_prompt_pack/14_STEP_14_SYSTEM_BROWSER_END_TO_END_PHASE9_CERTIFICATION.md",
   "candidate": {
     "branch": "main",
-    "sha": "d78ad1fb8347060d033b8b7a49902610ca676a53"
+    "sha": "00e8588b08b15abb1ad7db200d2bc9b88871fd18"
   },
   "clean_start_gate": {
     "passed": true,
@@ -123,9 +123,19 @@
     "audience_explorer": "PASS",
     "campaigns": "PASS"
   },
+  "final_candidate_browser_delta": {
+    "candidate_sha": "00e8588b08b15abb1ad7db200d2bc9b88871fd18",
+    "saved_target_groups_navigation_and_list": "PASS",
+    "insights_navigation": "PASS",
+    "past_campaign_insights_route": "PASS",
+    "target_group_insights_route": "PASS",
+    "west_region_to_six_available_states": "PASS",
+    "keyboard_accessible_state_chip_removal": "PASS",
+    "visible_application_errors": 0
+  },
   "backend_assertions": {
     "script": "scripts/validation/phase9_step14_backend_assertions.py",
-    "duration_seconds": 8.602,
+    "duration_seconds": 1.068,
     "context_normalization": "PASS",
     "criteria_normalization": "PASS",
     "explicit_current_source": "PASS",
@@ -149,14 +159,19 @@
       "passed": 1,
       "duration_seconds": 84.96,
       "status": "PASS"
+    },
+    "final_candidate_phase9": {
+      "passed": 67,
+      "duration_seconds": 69.22,
+      "status": "PASS"
     }
   },
   "coverage": {
     "inventory": "docs/evidence/phase9/final_system_browser/ui_control_coverage.json",
     "counts": {
-      "PASS": 61,
+      "PASS": 68,
       "FAIL": 0,
-      "JUSTIFIED_EXCLUSIVE": 3,
+      "JUSTIFIED_EXCLUSIVE": 4,
       "NOT_RUN": 0,
       "UNJUSTIFIED_EXCLUSIVE": 0,
       "INVALID_STATUS": 0
@@ -176,13 +191,13 @@
     "scoring_5m": 835.4099372,
     "audience_preparation": 490.0,
     "browser_workflow_approximate": 2320.0,
-    "backend_assertions": 8.602,
+    "backend_assertions": 1.068,
     "immutability_regression": 84.96
   },
   "artifact_sha256": {
-    "docs/evidence/phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md": "25a6bdef757694d6f4e74e76bfb51e1b4fbcbc80ea453f634b7ec8ec6d47eb7a",
-    "docs/evidence/phase9/final_system_browser/ui_control_coverage.json": "dbecc9f1d7353035a119d9bf974fbdf6191bb76b3fb435d99989733c8a9a0fb0",
-    "scripts/validation/phase9_step14_backend_assertions.py": "186835cbe407c12c20d2524c0fdade06b4ba7133b49e170a28c1bb88d525ea92"
+    "docs/evidence/phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md": "a1211bb9a08ce71bc0b7737544b5b00097f8f17b462a23fc9db5989e327cdad1",
+    "docs/evidence/phase9/final_system_browser/ui_control_coverage.json": "54bae2897983bf8db99b20af30480ab4de4b0020a243183750b85c3b25f43f66",
+    "scripts/validation/phase9_step14_backend_assertions.py": "ce6475a1a9b9acfc4eccdd8d631ddcad7bff1a315648c6e68985c94f239488a6"
   },
   "overall_status": "PASS",
   "local_decision": "PASS_STEP14_COMPLETE",

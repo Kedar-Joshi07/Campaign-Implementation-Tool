@@ -126,9 +126,9 @@ def main() -> None:
             in recorded_selectors
         )
     assert inventory["counts"] == {
-        "PASS": 61,
+        "PASS": 68,
         "FAIL": 0,
-        "JUSTIFIED_EXCLUSIVE": 3,
+        "JUSTIFIED_EXCLUSIVE": 4,
         "NOT_RUN": 0,
         "UNJUSTIFIED_EXCLUSIVE": 0,
         "INVALID_STATUS": 0,

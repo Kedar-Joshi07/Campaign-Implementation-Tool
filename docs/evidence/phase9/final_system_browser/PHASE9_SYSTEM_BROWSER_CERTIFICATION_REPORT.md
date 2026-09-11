@@ -1,16 +1,16 @@
 # Phase 9 System-Browser Certification Report
 
-Generated at: 2026-09-11T04:15:00Z
+Generated at: 2026-09-11T15:06:50Z
 
 Prompt: `Prompts/phase9_business_friendly_campaign_targeting_prompt_pack/14_STEP_14_SYSTEM_BROWSER_END_TO_END_PHASE9_CERTIFICATION.md`
 
-Candidate SHA: `d78ad1fb8347060d033b8b7a49902610ca676a53`
+Candidate SHA: `00e8588b08b15abb1ad7db200d2bc9b88871fd18`
 
 Branch: `main`
 
 ## Decision
 
-**PASS — Step 14 is complete locally.** The Phase 9 business workflow passed in the installed Google Chrome browser, all required alternate states were exercised, independent backend assertions passed, and the actionable-control gate has `NOT_RUN=0`, `FAIL=0`, and no unjustified exclusions. This report does not execute or claim Step 15.
+**PASS — Step 14 is complete locally.** The Phase 9 business workflow passed in the installed Google Chrome browser, all required alternate states were exercised, independent backend assertions passed, and the actionable-control gate has `NOT_RUN=0`, `FAIL=0`, and no unjustified exclusions. The final implementation delta was recertified before Step 15 closure.
 
 ## Clean-start gate
 
@@ -45,6 +45,23 @@ The 27 required actions passed in Chrome:
 10. Opened View technical details and verified the explicitly linked analysis/model/scoring identifiers and hashes.
 11. Saved immutable Target Group `#2`, created Campaign Draft `#3`, reopened it from Campaigns, and refreshed the page successfully.
 12. Navigated to Overview, Data Status, Historical Analysis, Model Training & Prospect Scoring, Audience Explorer, and Campaigns; each existing Phase 1–8 page rendered its functional ready/loading workspace without an application error.
+
+## Final-candidate browser delta
+
+The final candidate added business-facing navigation and an optional coarse
+Region shortcut after the original 27-action certification. Those additions
+were exercised sequentially in the same installed Chrome browser on
+`00e8588b08b15abb1ad7db200d2bc9b88871fd18`:
+
+- Saved Target Groups opened, loaded all three governed saved groups, displayed
+  `Up to date`, exact people counts, save dates, and no contact PII.
+- Insights opened; Past Campaign Insights routed to Historical Analysis and
+  Target Group Insights routed to Audience Explorer.
+- West selected Arizona, California, Colorado, Oregon, Utah, and Washington in
+  the exact State criterion. Removing the Arizona chip removed that state and
+  cleared the derived Region selection, leaving the other five explicit states.
+- The new navigation and targeting controls rendered with accessible names and
+  keyboard-operable semantics. No visible application error occurred.
 
 ### Certified campaign context
 
@@ -99,7 +116,7 @@ The stale simulation modified only the current import checksum long enough to ob
 
 ## Independent backend assertions
 
-`python scripts/validation/phase9_step14_backend_assertions.py` passed in 8.602 seconds on the final run.
+`python scripts/validation/phase9_step14_backend_assertions.py` passed in 1.068 seconds on the final-candidate rerun.
 
 - Context JSON and criteria JSON independently canonicalized to their recorded SHA-256 values.
 - Both sources resolved `READY`, explicitly linked, previewable, and pinned to scoring run `#2`.
@@ -113,14 +130,14 @@ The stale simulation modified only the current import checksum long enough to ob
 
 ## Actionable-control gate
 
-- PASS: 61
-- JUSTIFIED_EXCLUSIVE: 3
+- PASS: 68
+- JUSTIFIED_EXCLUSIVE: 4
 - FAIL: 0
 - NOT_RUN: 0
 - UNJUSTIFIED_EXCLUSIVE: 0
 - INVALID_STATUS: 0
 
-The three justified exclusions are controls that exist only in mutually exclusive campaign-context-load, targeting-options-load, or preview-error states. Every exclusion has an individual reason in `ui_control_coverage.json`; there is no generic exception bucket.
+The four justified exclusions are controls that exist only in mutually exclusive campaign-context-load, targeting-options-load, preview-error, or Saved Target Groups load-error states. Every exclusion has an individual reason in `ui_control_coverage.json`; there is no generic exception bucket.
 
 ## Browser telemetry
 
@@ -136,7 +153,7 @@ The three justified exclusions are controls that exist only in mutually exclusiv
 - Full 5M scoring: 835.410 seconds
 - Audience-rank preparation: 490 seconds
 - Main/alternate browser workflow window: approximately 2,320 seconds from first captured planner action to final advanced-page navigation
-- Independent focused backend assertions: 8.602 seconds
+- Independent focused backend assertions (final candidate): 1.068 seconds
 - Same-context immutability regression: 84.96 seconds
 
 ## Evidence files
@@ -150,4 +167,4 @@ The three justified exclusions are controls that exist only in mutually exclusiv
 
 `PASS_STEP14_COMPLETE`
 
-Stop after Step 14. Step 15 has not been started.
+Step 14 is frozen for use by the Step 15 regression and release gates.
