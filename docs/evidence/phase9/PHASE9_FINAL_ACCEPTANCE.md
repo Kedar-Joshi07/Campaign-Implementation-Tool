@@ -19,7 +19,7 @@ GitHub Actions is green on the exact implementation SHA, so Phase 9 is `GO`.
 - Phase 9 UI implementation: `00e8588b08b15abb1ad7db200d2bc9b88871fd18`
 - Phase 9 browser-certification candidate: `00e8588b08b15abb1ad7db200d2bc9b88871fd18`
 - Final Phase 9 implementation: `00e8588b08b15abb1ad7db200d2bc9b88871fd18`
-- Evidence-closure commit: pending
+- Evidence-closure commit: `f1fc86b7c25b83a82b530876f675cc9ad530a916`
 
 ## Certified business workflow
 
