@@ -76,7 +76,7 @@ def test_keyboard_stepper_validation_multiselect_and_chip_contracts() -> None:
 
     assert "planner-multiselect-help" in planner_html
     assert "hold Ctrl (or Command)" in planner_html
-    assert planner_html.count('multiple size="') == 15
+    assert planner_html.count('multiple size="') == 16
     assert planner_html.count("planner-multiselect-help") >= 16
     assert 'id="planner-targeting-chips"' in planner_html
     assert 'role="list"' in planner_html

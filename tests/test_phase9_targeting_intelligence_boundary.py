@@ -300,3 +300,15 @@ def test_normal_business_ui_has_no_raw_source_picker_and_blocks_preview() -> Non
     assert 'name="scoring_run_id"' not in html
     assert "latest" not in script.lower()
     assert "resolution.can_preview" in script
+    for status in (
+        "READY",
+        "NEEDS_REFRESH",
+        "STALE",
+        "NOT_AVAILABLE",
+        "INCOMPATIBLE_CONTEXT",
+    ):
+        assert f'{status}:' in script
+    assert 'READY: "Up to date"' in script
+    assert 'NEEDS_REFRESH: "Needs refresh"' in script
+    assert 'INCOMPATIBLE_CONTEXT: "Not available"' in script
+    assert 'document.querySelector("#planner-next-4").disabled = !resolution.can_preview' in script

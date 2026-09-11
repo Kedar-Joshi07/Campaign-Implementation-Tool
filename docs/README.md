@@ -1,6 +1,6 @@
 # Documentation Index
 
-This folder contains implementation summaries and evidence indexes for the Phase 1 to Phase 8 delivery history.
+This folder contains implementation summaries and evidence indexes for the Phase 1 to Phase 9 delivery history.
 
 ## Current implementation summaries
 
@@ -12,6 +12,7 @@ This folder contains implementation summaries and evidence indexes for the Phase
 - PHASE_6_IMPLEMENTATION_SUMMARY.md
 - PHASE_7_IMPLEMENTATION_SUMMARY.md
 - PHASE_8_IMPLEMENTATION_SUMMARY.md
+- PHASE_9_IMPLEMENTATION_SUMMARY.md
 
 ## Current authoritative references
 
@@ -25,6 +26,12 @@ This folder contains implementation summaries and evidence indexes for the Phase
   - Final Phase 8 system-browser, local-regression, CI, and repository-freeze decision.
 - evidence/phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md
   - Completed 28-item Phase 8 acceptance checklist with evidence references.
+- evidence/phase9/README.md
+  - Phase 9 evidence index and authority classification.
+- evidence/phase9/PHASE9_FINAL_ACCEPTANCE.md
+  - Final Phase 9 business workflow, exact targeting, regression, CI, and freeze decision.
+- evidence/phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md
+  - Installed-Chrome certification for the business Campaign Planner and required alternate states.
 
 ## Historical phase records
 

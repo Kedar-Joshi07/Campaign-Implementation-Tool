@@ -133,6 +133,8 @@ def test_frontend_exposes_loading_empty_retry_currentness_and_safe_save_states()
     assert "saveInFlight" in review
     assert "Save is already in progress" in review
     assert "idempotent_replay" in review
+    assert '"Campaign draft could not be created"' in review
+    assert '"Target Group could not be saved"' in review
     assert "showSaveError" in context
     assert "showSaveError" in targeting
 

@@ -6,10 +6,13 @@ import { initializeModelTraining, loadModelTraining } from "./model-training.js"
 import { initializeOverview, loadOverview } from "./overview.js";
 import { initializeCampaigns, loadCampaigns } from "./campaigns.js";
 import { initializeCampaignPlanner, loadCampaignPlanner } from "./campaign-planner-form.js";
+import { initializeSavedTargetGroups, loadSavedTargetGroups } from "./saved-target-groups.js";
 
 const viewTitles = {
   overview: "Overview",
   "campaign-planner": "Create Campaign",
+  "saved-target-groups": "Saved Target Groups",
+  insights: "Insights",
   "data-status": "Data Status",
   "historical-analysis": "Historical Analysis",
   "model-training": "Model Training & Prospect Scoring",
@@ -59,6 +62,7 @@ function showView(viewName) {
   document.title = `${title} | Campaign Implementation Intelligence`;
   if (safeView === "overview") loadOverview();
   else if (safeView === "campaign-planner") loadCampaignPlanner();
+  else if (safeView === "saved-target-groups") loadSavedTargetGroups();
   else if (safeView === "data-status") loadDataStatus();
   else if (safeView === "historical-analysis") loadHistoricalAnalysis();
   else if (safeView === "model-training") loadModelTraining();
@@ -84,6 +88,7 @@ function initializeNavigation() {
 document.addEventListener("DOMContentLoaded", () => {
   initializeOverview();
   initializeCampaignPlanner();
+  initializeSavedTargetGroups();
   initializeDataStatus();
   initializeHistoricalAnalysis();
   initializeModelTraining();

@@ -1,0 +1,190 @@
+{
+  "generated_at": "2026-09-11T04:15:00Z",
+  "prompt": "Prompts/phase9_business_friendly_campaign_targeting_prompt_pack/14_STEP_14_SYSTEM_BROWSER_END_TO_END_PHASE9_CERTIFICATION.md",
+  "candidate": {
+    "branch": "main",
+    "sha": "d78ad1fb8347060d033b8b7a49902610ca676a53"
+  },
+  "clean_start_gate": {
+    "passed": true,
+    "git_status_short": [],
+    "browser": "Google Chrome",
+    "browser_version": "152.0.7977.83",
+    "browser_executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "database": "data/campaign_poc.db",
+    "schema_version": 14
+  },
+  "source": {
+    "status": "READY",
+    "explicitly_linked": true,
+    "context_specific": false,
+    "analysis_run_id": 1,
+    "model_run_id": 2,
+    "scoring_run_id": 2,
+    "selected_candidate": "BAGGING_PU",
+    "model_role_policy_version": "2",
+    "feature_contract_version": "1",
+    "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+    "artifact_sha256": "cd50dc7a39bf1288478072f01d98216a4fb64187a8085c2752ad637fa82f01f6",
+    "customer_source_checksum": "99a09d2f0db06980afe290cf74a4db1df76cf8c340534fb2088879fb093d9ea9",
+    "campaign_sales_source_checksum": "2fdb11c576a180b7349e50e0bf9d3b0a66d0d354ba8d42062756c8cd840965c4",
+    "demographic_source_checksum": "e12fa5f54606aee0e6704db418f2054df29f4e1b8827d82ed2ce7897b7693e75",
+    "scored_person_count": 5000000,
+    "score_min": 0.10968751145973774,
+    "score_mean": 0.28737821160381377,
+    "score_max": 0.9869217821832839,
+    "scoring_completed_at": "2026-09-11T03:13:27Z",
+    "rank_boundary_count": 100,
+    "analytics_snapshot_count": 1
+  },
+  "main_scenario": {
+    "targeting_context_id": 1,
+    "campaign_context": {
+      "campaign_name": "Phase 9 Business Certification 2026-09-11",
+      "description": "Multi-product retention and growth campaign for priority markets.",
+      "planned_launch_date": "2026-10-15",
+      "product_ids": ["PRD001", "PRD002"],
+      "campaign_types": ["Cross-sell", "Retention"],
+      "campaign_categories": ["Cross-sell Promotion", "Retention Offer"],
+      "offer_types": ["Bundle Offer", "Percent Discount"],
+      "campaign_channel": "EMAIL",
+      "historical_campaign_channels": ["Email", "Paid Social"]
+    },
+    "campaign_context_sha256": "ce7a3c7e36af62099d6af723444ada72b0eedc0fda1712631fbde5e91001446a",
+    "criteria": {
+      "match_strength": "BROAD",
+      "genders": ["Female", "Male", "Non-binary/Other"],
+      "age_groups": ["18-24", "25-34", "35-44", "45-54", "55-64", "65-74", "75+"],
+      "state_count": 27,
+      "income_groups": ["<25K", "25K-49,999", "50K-74,999", "75K-99,999", "100K-149,999", "150K-249,999", "250K+"],
+      "education_level_count": 8,
+      "selection_mode": "ALL_MATCHING",
+      "target_count": null
+    },
+    "targeting_criteria_sha256": "a687aea89b5b1df9705bbbc2c4a0037d3b76cccabf30deaa0f6b4d842bef46fe",
+    "filter_branches_sha256": "3afb1b093844366ad07b8db39b62410269dcdf27a231fc5e300fd5e43956c9bd",
+    "exact": {
+      "available": 5000000,
+      "matching": 2248,
+      "selected": 2248,
+      "percent_of_available": 0.04,
+      "average_score": 0.662,
+      "strongest_score": 0.987,
+      "lowest_selected_score": 0.600,
+      "strength_comparison": {
+        "VERY_STRONG": 30,
+        "STRONG": 130,
+        "GOOD": 457,
+        "BROAD": 2248
+      }
+    },
+    "preview": {
+      "initial_rows": 25,
+      "rows_after_pagination": 50,
+      "duplicate_ids": 0,
+      "contact_pii_present": false
+    },
+    "saved_target_group_id": 2,
+    "campaign_draft_id": 3,
+    "campaign_status": "DRAFT",
+    "reopen_passed": true,
+    "refresh_passed": true
+  },
+  "changed_criteria_scenario": {
+    "targeting_context_id": 2,
+    "match_strength": "GOOD",
+    "targeting_criteria_sha256": "10d6e04c5be2ce04b51a8d75359f871c2713fc2dfec91afdb0899b60bbe8db39",
+    "filter_branches_sha256": "975a663567ee71d1609c75f30ce8ccc0ce7fe84877668ef680e2c0716ab3fbc3",
+    "available": 5000000,
+    "matching": 457,
+    "selected": 457,
+    "saved_target_group_id": 3,
+    "campaign_draft_id": 4,
+    "previous_target_group_id": 2,
+    "previous_target_group_count_after_second_save": 2248,
+    "immutable": true
+  },
+  "alternate_scenarios": {
+    "no_targeting_intelligence": "PASS",
+    "stale_targeting_intelligence": "PASS",
+    "zero_matching_people": "PASS",
+    "invalid_target_count": "PASS",
+    "conflicting_targeting_preferences": "PASS",
+    "backend_retryable_error": "PASS",
+    "back_next_state_preservation": "PASS",
+    "refresh_reopen": "PASS",
+    "changed_criteria_new_immutable_target_group": "PASS"
+  },
+  "phase1_to_phase8_pages": {
+    "overview": "PASS",
+    "data_status": "PASS",
+    "historical_analysis": "PASS",
+    "model_training_and_scoring": "PASS",
+    "audience_explorer": "PASS",
+    "campaigns": "PASS"
+  },
+  "backend_assertions": {
+    "script": "scripts/validation/phase9_step14_backend_assertions.py",
+    "duration_seconds": 8.602,
+    "context_normalization": "PASS",
+    "criteria_normalization": "PASS",
+    "explicit_current_source": "PASS",
+    "exact_counts": "PASS",
+    "immutable_saved_audiences": "PASS",
+    "filter_hash_and_provenance": "PASS",
+    "campaign_links": "PASS",
+    "preview_has_no_contact_pii": "PASS",
+    "phase7_export_contract_unchanged": "PASS",
+    "overall_status": "PASS"
+  },
+  "tests": {
+    "pre_candidate_phase9": {
+      "passed": 58,
+      "deselected": 488,
+      "duration_seconds": 288.46,
+      "status": "PASS"
+    },
+    "same_context_immutability": {
+      "node_id": "tests/test_phase9_save_target_group_campaign.py::test_changed_criteria_creates_new_group_without_mutating_previous_group",
+      "passed": 1,
+      "duration_seconds": 84.96,
+      "status": "PASS"
+    }
+  },
+  "coverage": {
+    "inventory": "docs/evidence/phase9/final_system_browser/ui_control_coverage.json",
+    "counts": {
+      "PASS": 61,
+      "FAIL": 0,
+      "JUSTIFIED_EXCLUSIVE": 3,
+      "NOT_RUN": 0,
+      "UNJUSTIFIED_EXCLUSIVE": 0,
+      "INVALID_STATUS": 0
+    },
+    "generic_exception_count": 0,
+    "ok": true
+  },
+  "browser_telemetry": {
+    "unexplained_console_errors": 0,
+    "unexplained_javascript_exceptions": 0,
+    "unexplained_critical_network_failures": 0,
+    "explained_browser_extension_message_channel_closures": 6,
+    "ok": true
+  },
+  "timings_seconds": {
+    "model_training": 78.0,
+    "scoring_5m": 835.4099372,
+    "audience_preparation": 490.0,
+    "browser_workflow_approximate": 2320.0,
+    "backend_assertions": 8.602,
+    "immutability_regression": 84.96
+  },
+  "artifact_sha256": {
+    "docs/evidence/phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md": "25a6bdef757694d6f4e74e76bfb51e1b4fbcbc80ea453f634b7ec8ec6d47eb7a",
+    "docs/evidence/phase9/final_system_browser/ui_control_coverage.json": "dbecc9f1d7353035a119d9bf974fbdf6191bb76b3fb435d99989733c8a9a0fb0",
+    "scripts/validation/phase9_step14_backend_assertions.py": "186835cbe407c12c20d2524c0fdade06b4ba7133b49e170a28c1bb88d525ea92"
+  },
+  "overall_status": "PASS",
+  "local_decision": "PASS_STEP14_COMPLETE",
+  "next_step_started": false
+}

@@ -88,6 +88,34 @@ _MATCH_STRENGTH_LABELS = {
     "BROAD": "Broad Match — 0.60+",
 }
 
+_STATE_REGIONS = {
+    "NORTHEAST": (
+        "Connecticut", "Maine", "Massachusetts", "New Hampshire", "Rhode Island",
+        "Vermont", "New Jersey", "New York", "Pennsylvania",
+    ),
+    "MIDWEST": (
+        "Indiana", "Illinois", "Michigan", "Ohio", "Wisconsin", "Iowa", "Kansas",
+        "Minnesota", "Missouri", "Nebraska", "North Dakota", "South Dakota",
+    ),
+    "SOUTH": (
+        "Delaware", "District of Columbia", "Florida", "Georgia", "Maryland",
+        "North Carolina", "South Carolina", "Virginia", "West Virginia", "Alabama",
+        "Kentucky", "Mississippi", "Tennessee", "Arkansas", "Louisiana", "Oklahoma",
+        "Texas",
+    ),
+    "WEST": (
+        "Arizona", "Colorado", "Idaho", "Montana", "Nevada", "New Mexico", "Utah",
+        "Wyoming", "Alaska", "California", "Hawaii", "Oregon", "Washington",
+    ),
+}
+
+_REGION_LABELS = {
+    "NORTHEAST": "Northeast",
+    "MIDWEST": "Midwest",
+    "SOUTH": "South",
+    "WEST": "West",
+}
+
 
 def _band_payload(band) -> dict[str, Any]:
     return {
@@ -103,6 +131,7 @@ def _load_targeting_options(
     repository: CampaignTargetingContextRepository,
 ) -> dict[str, Any]:
     values = repository.fetch_targeting_options()
+    current_states = set(values["states"])
     values.update(
         {
             "targeting_segment_contract_version": TARGETING_SEGMENT_CONTRACT_VERSION,
@@ -123,6 +152,15 @@ def _load_targeting_options(
             ],
             "age_groups": [_band_payload(band) for band in AGE_BUCKETS],
             "income_groups": [_band_payload(band) for band in INCOME_GROUPS],
+            "regions": [
+                {
+                    "value": value,
+                    "label": _REGION_LABELS[value],
+                    "states": [state for state in states if state in current_states],
+                }
+                for value, states in _STATE_REGIONS.items()
+                if any(state in current_states for state in states)
+            ],
         }
     )
     return values

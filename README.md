@@ -1,6 +1,6 @@
 # Campaign Implementation Intelligence
 
-Campaign Implementation Intelligence is a local FastAPI + SQLite proof of concept that implements a full Phase 1 to Phase 7 synthetic marketing workflow:
+Campaign Implementation Intelligence is a local FastAPI + SQLite proof of concept that implements the frozen Phase 1 to Phase 9 synthetic marketing workflow:
 
 1. Synthetic source data generation and ingestion.
 2. Phase 1 data foundation and reconciliation.
@@ -9,6 +9,7 @@ Campaign Implementation Intelligence is a local FastAPI + SQLite proof of concep
 5. Phase 5 asynchronous 5M demographic prospect scoring.
 6. Phase 6 Audience Explorer filtering, search, profile, and saved audiences.
 7. Phase 7 Campaign Builder draft/finalize/currentness and deterministic target-list export.
+8. Phase 9 business-friendly campaign context, targeting, exact Target Group preview, and draft creation.
 
 All source data in this repository is synthetic. The historical customer universe and the demographic prospect universe are intentionally independent.
 
@@ -16,7 +17,7 @@ All source data in this repository is synthetic. The historical customer univers
 - Prospect scoring and campaign export use person_id.
 - The application does not create or infer a customer_id to person_id linkage.
 
-## Product flow (Phase 1 to 7)
+## Product flow (Phase 1 to 9)
 
 1. Load synthetic customer, campaign-sales, and demographic source files.
 2. Import data into SQLite with strict schema/header validation.
@@ -27,6 +28,7 @@ All source data in this repository is synthetic. The historical customer univers
 7. Prepare audience rank boundaries and analytics snapshots.
 8. Explore audiences, estimate/select cohorts, and save immutable audience definitions.
 9. Build campaigns from current saved audiences, finalize, and export EMAIL or DIRECT_MAIL target lists.
+10. Use Create Campaign for a guided business workflow that captures campaign context, applies explicit business targeting, compares exact match-strength counts, saves an immutable Target Group, and creates a Campaign Draft.
 
 ## Technology stack
 
@@ -49,7 +51,7 @@ The runtime follows Router -> Schema -> Service -> Repository -> SQLite layering
 ## Current versions and frozen contracts
 
 - Application version default: 0.1.0
-- Current SQLite schema version: 12
+- Current SQLite schema version: 14
 - Feature contract version: 1
 - Feature contract SHA-256: a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535
 - Model role policy version: 2
@@ -62,6 +64,12 @@ The runtime follows Router -> Schema -> Service -> Repository -> SQLite layering
 - Campaign export contract version: 1
 - Campaign member resolution contract version: 1
 - Campaign export snapshot contract version: 1
+- Campaign targeting-context contract version: 1
+- Targeting-segment contract version: 1
+- Business match-strength contract version: 1
+- Age-bucket and income-group contract versions: 1
+- Targeting-intelligence resolution contract version: 1
+- Target Group preview, saved Target Group, and Target Group campaign contract versions: 1
 - Export profiles:
   - EMAIL -> EMAIL_CONTACT_V1
   - DIRECT_MAIL -> DIRECT_MAIL_CONTACT_V1
@@ -125,7 +133,7 @@ If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs
 .\.venv\Scripts\python.exe scripts\init_db.py --inspect
 ```
 
-Initialization is idempotent and creates/verifies schema version 13.
+Initialization is idempotent and creates/verifies schema version 14.
 
 ## Import data (enforced order)
 
@@ -177,6 +185,9 @@ Default configured expected counts:
 Current UI sections in frontend/index.html:
 
 - Overview
+- Create Campaign
+- Saved Target Groups
+- Insights
 - Data Status
 - Historical Analysis
 - Model Training & Prospect Scoring
@@ -242,6 +253,24 @@ Campaign Builder and export:
 - GET /api/campaigns/{campaign_id}/exports
 - GET /api/campaigns/{campaign_id}/export.csv?acknowledge_pii=true
 
+Business Campaign Planner and Target Groups:
+
+- GET /api/campaign-planner/context-options
+- POST /api/campaign-planner/contexts
+- GET /api/campaign-planner/contexts/{targeting_context_id}
+- PUT /api/campaign-planner/contexts/{targeting_context_id}
+- GET /api/campaign-planner/targeting-options
+- GET /api/campaign-planner/contexts/{targeting_context_id}/targeting-criteria
+- PUT /api/campaign-planner/contexts/{targeting_context_id}/targeting-criteria
+- GET /api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence
+- PUT /api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence
+- DELETE /api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence
+- GET /api/campaign-planner/contexts/{targeting_context_id}/target-group-preview
+- GET /api/campaign-planner/contexts/{targeting_context_id}/match-strength-recommendation
+- POST /api/campaign-planner/contexts/{targeting_context_id}/target-group-search
+- POST /api/campaign-planner/contexts/{targeting_context_id}/save-target-group-and-create-draft
+- GET /api/campaign-planner/contexts/{targeting_context_id}/campaign-draft
+
 ## Phase summary
 
 - Phase 1: import, reconciliation, aggregate data/reference APIs.
@@ -252,6 +281,15 @@ Campaign Builder and export:
 - Phase 6: audience rank boundaries, filters/search/profile, immutable saved audiences.
 - Phase 7: campaign draft/finalize/currentness and deterministic export with audit events.
 - Phase 8: system-browser release assurance, exhaustive control coverage, reproducibility, CI, and repository freeze.
+- Phase 9: business-friendly campaign planning, deterministic targeting criteria, explicit intelligence-source gating, exact Target Group preview/recommendations, immutable Target Group save, and Campaign Draft creation.
+
+## Phase 9 business targeting
+
+The default Create Campaign path uses business language and keeps model/scoring identifiers behind explicit technical-detail disclosures. Campaign context describes the request; it does not silently change prospect filters, retrain a model, or select a “latest” scoring run. Exact preview and save remain blocked until an analyst or administrator explicitly links a compatible, current targeting-intelligence source. Saved Target Groups provides a business-facing list over immutable Saved Audiences, while Insights routes users to existing governed analysis capabilities.
+
+Match Strength is an exact minimum-score rule: Very Strong `0.90+`, Strong `0.80+`, Good `0.70+`, and Broad `0.60+`. Recommendations compare exact counts and never claim purchase probability. The optional Region shortcut is backend-owned and expands only to currently available State values; immutable criteria remain exact, state-based, and auditable. Planning and preview exclude contact PII; contact fields remain available only through the governed, acknowledged Phase 7 finalized-campaign export profiles.
+
+Phase 10 owns automatic analysis/model/scoring compatibility, reuse/build/refresh orchestration, long-running progress, context-specific provenance, and scoring lifecycle/retention. Phase 9 intentionally contains no “latest run wins” fallback.
 
 ## Phase 8 release assurance
 

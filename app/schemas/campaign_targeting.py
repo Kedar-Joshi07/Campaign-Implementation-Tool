@@ -309,6 +309,16 @@ class TargetingNumericBucketOption(BaseModel):
     maximum_inclusive: bool
 
 
+class TargetingRegionOption(BaseModel):
+    """Backend-owned coarse region that expands to current State values."""
+
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+    value: str
+    label: str
+    states: list[str] = Field(min_length=1, max_length=100)
+
+
 class BusinessTargetingOptionsResponse(BaseModel):
     """Backend-owned business controls and current categorical values."""
 
@@ -328,6 +338,7 @@ class BusinessTargetingOptionsResponse(BaseModel):
     )
     genders: list[str] = Field(max_length=100)
     states: list[str] = Field(max_length=100)
+    regions: list[TargetingRegionOption] = Field(max_length=10)
     marital_statuses: list[str] = Field(max_length=100)
     education_levels: list[str] = Field(max_length=100)
     employment_statuses: list[str] = Field(max_length=100)
@@ -622,6 +633,7 @@ __all__ = (
     "NumericBand",
     "TARGETING_SEGMENT_CONTRACT_VERSION",
     "TargetingNumericBucketOption",
+    "TargetingRegionOption",
     "TargetingIntelligenceLinkRequest",
     "TargetingIntelligenceResolutionResponse",
     "TargetingIntelligenceStatus",

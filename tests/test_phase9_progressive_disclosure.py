@@ -276,3 +276,23 @@ def test_default_business_path_hides_jargon_and_keeps_accessible_analyst_tools()
     assert "renderPhase9TechnicalDetails" in review_script
     assert "innerHTML" not in targeting_script
     assert "innerHTML" not in review_script
+
+
+def test_business_navigation_exposes_saved_target_groups_and_insights() -> None:
+    root = Path(__file__).resolve().parents[1]
+    html = (root / "frontend" / "index.html").read_text(encoding="utf-8")
+    app_script = (root / "frontend" / "js" / "app.js").read_text(encoding="utf-8")
+    saved_groups_script = (
+        root / "frontend" / "js" / "saved-target-groups.js"
+    ).read_text(encoding="utf-8")
+
+    assert 'data-view-target="saved-target-groups"' in html
+    assert 'data-view-target="insights"' in html
+    assert 'data-view="saved-target-groups"' in html
+    assert 'data-view="insights"' in html
+    assert '"saved-target-groups": "Saved Target Groups"' in app_script
+    assert 'insights: "Insights"' in app_script
+    assert "/api/audiences?limit=100&offset=0" in saved_groups_script
+    assert 'group.is_current ? "Up to date" : "Needs refresh"' in saved_groups_script
+    for forbidden in ("email", "phone", "street", "customer_id"):
+        assert forbidden not in saved_groups_script.lower()

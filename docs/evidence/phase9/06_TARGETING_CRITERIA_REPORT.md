@@ -35,7 +35,7 @@ The progressively disclosed “More targeting options” section contains:
 - top matching percentage; and
 - all-matching or TOP_N selection with a required target count for TOP_N.
 
-No street, ZIP/postal-code, or city targeting control is present. Coarse Region was optional in the prompt and was not introduced; State remains the only Phase 9 location control.
+No street, ZIP/postal-code, or city targeting control is present. The optional coarse Region control is a backend-owned shortcut over the four Census-style regions. Each available Region expands only to State values present in the current targeting vocabulary; persisted criteria remain exact State selections, so existing v1 hashes and immutable Saved Target Groups remain valid.
 
 ## Backend flow
 

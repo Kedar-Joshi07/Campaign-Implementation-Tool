@@ -28,8 +28,14 @@
           <button class="navigation-item" type="button" data-view-target="campaign-planner">
             <span class="nav-icon" aria-hidden="true">+</span><span>Create Campaign</span>
           </button>
+          <button class="navigation-item" type="button" data-view-target="saved-target-groups">
+            <span class="nav-icon" aria-hidden="true">TG</span><span>Saved Target Groups</span>
+          </button>
           <button class="navigation-item" type="button" data-view-target="campaigns">
             <span class="nav-icon" aria-hidden="true">CP</span><span>Campaigns</span><small>Legacy tools</small>
+          </button>
+          <button class="navigation-item" type="button" data-view-target="insights">
+            <span class="nav-icon" aria-hidden="true">IN</span><span>Insights</span>
           </button>
 
           <p class="navigation-label">Advanced / Analyst Tools</p>
@@ -1167,6 +1173,55 @@
           </section>
         </section>
 
+        <section id="saved-target-groups-view" class="view" data-view="saved-target-groups" aria-labelledby="saved-target-groups-title" hidden>
+          <section class="page-intro">
+            <div>
+              <p class="eyebrow">Business Workspace</p>
+              <h2 id="saved-target-groups-title">Saved Target Groups</h2>
+              <p>Review immutable groups created for campaign planning. Contact details remain available only through governed campaign export.</p>
+            </div>
+            <div class="analysis-form-actions">
+              <button id="business-target-groups-refresh" class="button button-secondary" type="button">Refresh</button>
+              <button class="button button-primary" type="button" data-view-target="campaign-planner">Create Campaign</button>
+            </div>
+          </section>
+          <div id="business-target-groups-loading" class="empty-state" role="status">Loading Saved Target Groups…</div>
+          <div id="business-target-groups-error" class="error-state" role="alert" tabindex="-1" hidden>
+            <h3>Saved Target Groups are unavailable</h3>
+            <p>Please try again.</p>
+            <button id="business-target-groups-retry" class="button button-secondary" type="button">Try again</button>
+          </div>
+          <div id="business-target-groups-empty" class="empty-state" role="status" hidden>
+            <h3>No Saved Target Groups yet</h3>
+            <p>Create a campaign and save its Target Group to see it here.</p>
+          </div>
+          <div id="business-target-groups-list" class="saved-audience-list" aria-live="polite"></div>
+        </section>
+
+        <section id="insights-view" class="view" data-view="insights" aria-labelledby="insights-title" hidden>
+          <section class="page-intro">
+            <div>
+              <p class="eyebrow">Business Workspace</p>
+              <h2 id="insights-title">Insights</h2>
+              <p>Use campaign history and targeting results to understand available audiences. Detailed model controls remain in Advanced / Analyst Tools.</p>
+            </div>
+          </section>
+          <section class="overview-detail-grid" aria-label="Insight destinations">
+            <article class="panel">
+              <p class="eyebrow">Past performance</p>
+              <h3>Past Campaign Insights</h3>
+              <p>Review historical campaign outcomes, products, channels, and trends.</p>
+              <button class="button button-secondary" type="button" data-view-target="historical-analysis">Open Past Campaign Insights</button>
+            </article>
+            <article class="panel">
+              <p class="eyebrow">Potential customers</p>
+              <h3>Target Group Insights</h3>
+              <p>Explore exact audience size, profile, and current targeting results.</p>
+              <button class="button button-secondary" type="button" data-view-target="audience-explorer">Open Target Group Insights</button>
+            </article>
+          </section>
+        </section>
+
         <section id="campaign-planner-view" class="view" data-view="campaign-planner" aria-labelledby="campaign-planner-title" hidden>
           <section class="page-intro campaign-planner-shell">
             <div>
@@ -1329,7 +1384,12 @@
                       <div class="form-field">
                         <label for="planner-targeting-states">Location — State <span id="planner-targeting-states-count">0 selected</span></label>
                         <select id="planner-targeting-states" name="states" multiple size="7" aria-describedby="planner-targeting-states-help planner-multiselect-help"></select>
-                        <small id="planner-targeting-states-help">Phase 9 does not use street, ZIP, or city-level targeting.</small>
+                        <small id="planner-targeting-states-help">Choose exact states, or use the coarse Region shortcut. Phase 9 does not use street, ZIP, or city-level targeting.</small>
+                      </div>
+                      <div class="form-field">
+                        <label for="planner-targeting-regions">Region shortcut <span id="planner-targeting-regions-count">0 selected</span></label>
+                        <select id="planner-targeting-regions" name="regions" multiple size="4" aria-describedby="planner-targeting-regions-help planner-multiselect-help"></select>
+                        <small id="planner-targeting-regions-help">Selecting a region adds its currently available states to the exact State criterion. Saved targeting remains state-based and auditable.</small>
                       </div>
                       <div class="form-field">
                         <label for="planner-targeting-income-groups">Income Groups <span id="planner-targeting-income-groups-count">0 selected</span></label>

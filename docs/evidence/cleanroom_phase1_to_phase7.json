@@ -1,8 +1,8 @@
 {
-  "completed_at": "2026-09-07T15:05:44Z",
-  "generated_at": "2026-09-07T14:59:45Z",
+  "completed_at": "2026-09-11T11:10:18Z",
+  "generated_at": "2026-09-11T11:06:58Z",
   "overall_status": "PASS",
-  "runtime_root": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-wcy70ibc",
+  "runtime_root": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-bctsmsh2",
   "stages": {
     "cleanup": {
       "runtime_removed": true,
@@ -15,13 +15,13 @@
         "demographics": 12000
       },
       "dependency_versions": {
-        "fastapi": "0.141.1",
-        "joblib": "1.5.3",
-        "numpy": "2.4.6",
-        "pandas": "3.0.5",
+        "fastapi": "0.117.1",
+        "joblib": "1.5.2",
+        "numpy": "2.3.3",
+        "pandas": "2.3.3",
         "pulearn": "0.0.12",
-        "pytest": "8.4.2",
-        "scikit-learn": "1.7.2"
+        "pytest": "8.4.1",
+        "scikit-learn": "1.7.1"
       },
       "deterministic_hashes": {
         "campaign_master": {
@@ -50,9 +50,9 @@
           "run_b": "082af8365afe0471d7d1781a1affc641a2b7c6d390d3556a1a04ee6b1c1f793f"
         }
       },
-      "duration_seconds": 47.952,
+      "duration_seconds": 28.298,
       "python": {
-        "executable": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe",
+        "executable": "C:\\Users\\Kedar.Joshi\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
         "version": "3.12.0"
       },
       "seeds": {
@@ -61,14 +61,14 @@
         "demographics": 20260905
       },
       "selected_input_files": {
-        "campaign_sales": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-wcy70ibc\\generated\\run_a\\campaign_sales.csv.gz",
-        "customers": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-wcy70ibc\\generated\\run_a\\customers.csv.gz",
-        "demographics": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-wcy70ibc\\generated\\run_a\\demographics.csv.gz"
+        "campaign_sales": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-bctsmsh2\\generated\\run_a\\campaign_sales.csv.gz",
+        "customers": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-bctsmsh2\\generated\\run_a\\customers.csv.gz",
+        "demographics": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-bctsmsh2\\generated\\run_a\\demographics.csv.gz"
       },
       "status": "PASS"
     },
     "step2": {
-      "duration_seconds": 9.686,
+      "duration_seconds": 5.009,
       "identity_isolation": {
         "customer_person_id_overlap_count": 0
       },
@@ -90,7 +90,7 @@
         }
       },
       "reconciliation": {
-        "database_path": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-wcy70ibc\\cleanroom.db",
+        "database_path": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-bctsmsh2\\cleanroom.db",
         "datasets": {
           "campaign_sales": {
             "acceptable_count": true,
@@ -116,7 +116,7 @@
               "total_rows": 9000,
               "underage_campaign_contact_count": 0
             },
-            "query_seconds": 0.183675,
+            "query_seconds": 0.052371,
             "status": "OK",
             "structural_error_count": 0,
             "structural_issues": {
@@ -142,7 +142,7 @@
               "null_or_blank_critical_identifiers": 0,
               "total_rows": 1200
             },
-            "query_seconds": 0.005278,
+            "query_seconds": 0.001172,
             "status": "OK",
             "structural_error_count": 0,
             "structural_issues": {
@@ -172,7 +172,7 @@
               "min_individual_yearly_income": 0.0,
               "total_rows": 12000
             },
-            "query_seconds": 0.057409,
+            "query_seconds": 0.018315,
             "status": "OK",
             "structural_error_count": 0,
             "structural_issues": {
@@ -185,17 +185,17 @@
             }
           }
         },
-        "generated_at": "2026-09-07T15:00:43Z",
+        "generated_at": "2026-09-11T11:07:31Z",
         "overall_status": "OK",
-        "total_query_seconds": 0.322638
+        "total_query_seconds": 0.122476
       },
       "status": "PASS"
     },
     "step3": {
       "analysis_run_id": 1,
-      "duration_seconds": 15.199,
+      "duration_seconds": 7.527,
       "model_contract": {
-        "artifact_sha256": "382994c1343905326477465108264dcd60ff9471da97d95ea4e28a22ebdfadb7",
+        "artifact_sha256": "3002be204111cce9063d19d8e685e8d8d70129d5b0ce8fe3169c4b99ca998b4e",
         "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
         "feature_contract_version": "1",
         "selected_candidate": "BAGGING_PU"
@@ -246,7 +246,7 @@
       "status": "PASS"
     },
     "step4": {
-      "duration_seconds": 102.751,
+      "duration_seconds": 56.696,
       "filter_family_checks": {
         "age": 12000,
         "band": 720,
@@ -277,7 +277,7 @@
         "active_job": null,
         "analytics_contract_version": "1",
         "analytics_prepared": true,
-        "analytics_snapshot_created_at": "2026-09-07T15:01:05Z",
+        "analytics_snapshot_created_at": "2026-09-11T11:07:41Z",
         "boundary_count": 100,
         "currentness_issues": [],
         "is_canonical": true,
@@ -310,7 +310,7 @@
           },
           "runs": [
             {
-              "csv_sha256": "af5a730879f99c109a2f19ee0dbadb0ff471046474afff1746873649cb3e4c96",
+              "csv_sha256": "cf609b067b76d30c7e513b09ab294a7eb2d5bbb17e04ef79d4f9b41ab2f4c844",
               "deliverable_count": 57,
               "order_hash": "3b95218b7b31c8013233529b3c0c53327110fd3c8a0c0bb5843464c8d6cb3fab",
               "row_count": 57,
@@ -319,7 +319,7 @@
               "undeliverable_count": 3
             },
             {
-              "csv_sha256": "af5a730879f99c109a2f19ee0dbadb0ff471046474afff1746873649cb3e4c96",
+              "csv_sha256": "cf609b067b76d30c7e513b09ab294a7eb2d5bbb17e04ef79d4f9b41ab2f4c844",
               "deliverable_count": 57,
               "order_hash": "3b95218b7b31c8013233529b3c0c53327110fd3c8a0c0bb5843464c8d6cb3fab",
               "row_count": 57,
@@ -346,7 +346,7 @@
           },
           "runs": [
             {
-              "csv_sha256": "9584ec56eb166371b70367b1e0a928765f5d46b9c9aa2d0fb5375c918f297368",
+              "csv_sha256": "436da33a33963277113cd0d169654bd6bfc36958c1d3acdad71a93efe4be5af8",
               "deliverable_count": 58,
               "order_hash": "8a1373e100ead5abb01d109ad97f94a58112caba35627221ba7d03f32333b67d",
               "row_count": 58,
@@ -355,7 +355,7 @@
               "undeliverable_count": 2
             },
             {
-              "csv_sha256": "9584ec56eb166371b70367b1e0a928765f5d46b9c9aa2d0fb5375c918f297368",
+              "csv_sha256": "436da33a33963277113cd0d169654bd6bfc36958c1d3acdad71a93efe4be5af8",
               "deliverable_count": 58,
               "order_hash": "8a1373e100ead5abb01d109ad97f94a58112caba35627221ba7d03f32333b67d",
               "row_count": 58,
@@ -373,7 +373,7 @@
           }
         }
       },
-      "duration_seconds": 182.147,
+      "duration_seconds": 102.082,
       "source_drift": {
         "blocked_export_detail": "saved audience: Saved scoring run provenance is stale or invalid.",
         "blocked_export_status": 409,

@@ -436,3 +436,35 @@ def test_repeat_save_is_idempotent_and_draft_failure_retry_reuses_group(
     with get_connection(database_path) as connection:
         assert connection.execute("SELECT COUNT(*) FROM saved_audiences").fetchone()[0] == 2
         assert connection.execute("SELECT COUNT(*) FROM campaigns").fetchone()[0] == 2
+
+
+def test_target_group_save_failure_is_distinct_and_leaves_no_partial_records(
+    ready_campaign_context: tuple[Path, int, int],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    database_path, targeting_context_id, _scoring_run_id = ready_campaign_context
+
+    def fail_target_group_save(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        raise target_group_campaign_service.SavedAudienceServiceValidationError(
+            "Injected invalid target-group save"
+        )
+
+    monkeypatch.setattr(
+        target_group_campaign_service,
+        "save_resolved_audience_definition",
+        fail_target_group_save,
+    )
+    with pytest.raises(
+        target_group_campaign_service.CampaignContextValidationError,
+        match="Target Group could not be saved",
+    ):
+        save_target_group_and_create_campaign_draft(
+            database_path,
+            targeting_context_id=targeting_context_id,
+            request_payload=_request(),
+        )
+
+    with get_connection(database_path) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM saved_audiences").fetchone()[0] == 0
+        assert connection.execute("SELECT COUNT(*) FROM phase9_saved_target_groups").fetchone()[0] == 0
+        assert connection.execute("SELECT COUNT(*) FROM campaigns").fetchone()[0] == 0

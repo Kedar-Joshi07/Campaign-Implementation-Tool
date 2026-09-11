@@ -118,6 +118,40 @@ def test_exact_preview_reconciles_disjoint_business_filters(
     assert "predict a purchase outcome" in explanation
 
 
+@pytest.mark.parametrize(
+    ("age_group", "expected_count"),
+    [
+        ("18-24", 0),
+        ("25-34", 2),
+        ("35-44", 2),
+        ("45-54", 1),
+        ("55-64", 0),
+        ("65-74", 0),
+        ("75+", 0),
+    ],
+)
+def test_every_age_bucket_runs_through_exact_preview(
+    ready_target_group: tuple[Path, int], age_group: str, expected_count: int
+) -> None:
+    database_path, targeting_context_id = ready_target_group
+    save_business_targeting_criteria(
+        database_path,
+        {
+            "match_strength": "BROAD",
+            "age_groups": [age_group],
+            "selection_mode": "ALL_MATCHING",
+        },
+        targeting_context_id=targeting_context_id,
+    )
+
+    preview = get_target_group_preview(
+        database_path, targeting_context_id=targeting_context_id
+    )
+
+    assert preview["kpis"]["matching_your_preferences"] == expected_count
+    assert preview["kpis"]["selected_for_target_group"] == expected_count
+
+
 def test_search_uses_stable_keyset_without_duplicate_ids(
     ready_target_group: tuple[Path, int],
 ) -> None:

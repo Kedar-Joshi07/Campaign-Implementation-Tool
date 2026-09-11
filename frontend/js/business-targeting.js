@@ -22,6 +22,7 @@ let initialized = false;
 let loadPromise = null;
 let targetingOptions = null;
 let announce = () => {};
+let selectedRegions = [];
 
 function selectedValues(selector) {
   return [...document.querySelector(selector).selectedOptions].map((option) => option.value);
@@ -69,6 +70,12 @@ function populateOptions(options) {
     }
   }
 
+  const regionSelect = document.querySelector("#planner-targeting-regions");
+  regionSelect.replaceChildren();
+  for (const region of options.regions || []) {
+    appendOption(regionSelect, region.value, region.label);
+  }
+
   for (const selector of ["#planner-targeting-family-min", "#planner-targeting-family-max"]) {
     const input = document.querySelector(selector);
     input.min = options.family_size_minimum || 1;
@@ -77,7 +84,23 @@ function populateOptions(options) {
   }
 }
 
+function applySelectedRegions() {
+  selectedRegions = selectedValues("#planner-targeting-regions");
+  const regionStateValues = new Set(
+    (targetingOptions?.regions || [])
+      .filter((region) => selectedRegions.includes(region.value))
+      .flatMap((region) => region.states),
+  );
+  const stateSelect = document.querySelector("#planner-targeting-states");
+  for (const option of stateSelect.options) {
+    if (regionStateValues.has(option.value)) option.selected = true;
+  }
+  document.querySelector("#planner-targeting-regions-count").textContent =
+    `${selectedRegions.length} selected`;
+}
+
 function captureCriteria() {
+  applySelectedRegions();
   const strength = document.querySelector('input[name="match_strength"]:checked');
   const criteria = {
     match_strength: strength?.value || targetingOptions?.default_match_strength || "",
@@ -105,6 +128,11 @@ function applyCriteria(criteria) {
       option.selected = selected.has(option.value);
     }
   }
+  selectedRegions = [];
+  for (const option of document.querySelector("#planner-targeting-regions").options) {
+    option.selected = false;
+  }
+  document.querySelector("#planner-targeting-regions-count").textContent = "0 selected";
   const scalarFields = {
     "#planner-targeting-family-min": criteria.family_member_count_min,
     "#planner-targeting-family-max": criteria.family_member_count_max,
@@ -143,6 +171,7 @@ function addChip(container, { field, value, text, removable = true }) {
   if (removable) {
     const button = document.createElement("button");
     button.type = "button";
+    button.className = "planner-targeting-chip-remove";
     button.textContent = "×";
     button.setAttribute("aria-label", `Remove ${text}`);
     button.dataset.targetingField = field;
@@ -238,6 +267,7 @@ function clearAllCriteria() {
     target_count: null,
   };
   for (const field of Object.keys(MULTI_FIELDS)) cleared[field] = [];
+  selectedRegions = [];
   updateTargetingCriteria(cleared);
   applyCriteria(getCampaignPlannerState().targetingCriteria);
   announce("All optional targeting choices cleared. Recommended defaults remain visible.");

@@ -1,6 +1,6 @@
 # Evidence Registry
 
-This index classifies evidence artifacts for the Phase 1 to Phase 8 repository baseline.
+This index classifies evidence artifacts for the Phase 1 to Phase 9 repository baseline.
 
 Classification labels:
 
@@ -32,6 +32,10 @@ Classification labels:
 | phase8/12_master_acceptance_checklist_run.json | Machine-readable 28-item final acceptance checklist; 28 PASS, 0 FAIL, 0 PENDING. |
 | phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md | Human-readable final acceptance checklist and evidence map. |
 | phase8/PHASE8_FINAL_ACCEPTANCE.md | Authoritative Phase 8 final report and GO decision. |
+| phase9/PHASE9_FINAL_ACCEPTANCE.md | Authoritative Phase 9 regression, exact-SHA CI, documentation, handoff, and freeze decision. |
+| phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md | Installed-Chrome business Campaign Planner end-to-end and alternate-state certification. |
+| phase9/final_system_browser/phase9_certification_manifest.json | Structured Phase 9 source, context, criteria, exact count, saved Target Group, Campaign Draft, telemetry, and decision evidence. |
+| phase9/final_system_browser/ui_control_coverage.json | Phase 9 actionable-control inventory with terminal status for every control. |
 
 ## CURRENT SUPPORTING
 
@@ -43,6 +47,18 @@ Classification labels:
 | phase6_step8_query_plan_and_timing.json | Query-plan and timing context for audience/search hardening decisions. |
 | repository_housekeeping_inventory.json | Tracked inventory artifact for repository-freeze housekeeping traceability. |
 | REPOSITORY_HOUSEKEEPING_REPORT.md | Human-readable completion report for repository housekeeping execution. |
+| phase9/01_PHASE9_BASELINE_AND_GAP_REPORT.md | Phase 9 baseline and gap analysis against the frozen Phase 1–8 implementation. |
+| phase9/02_BUSINESS_UX_AND_TERMINOLOGY_REPORT.md | Business terminology and information-architecture rationale. |
+| phase9/03_TARGETING_CONTRACT_AND_SCHEMA_REPORT.md | Schema 13/14 and targeting-contract evidence. |
+| phase9/05_CAMPAIGN_CONTEXT_REPORT.md | Campaign-context normalization and persistence evidence. |
+| phase9/06_TARGETING_CRITERIA_REPORT.md | Business targeting criteria and exact filter mapping. |
+| phase9/07_TARGETING_INTELLIGENCE_BOUNDARY_REPORT.md | Explicit-source and no-latest-fallback evidence. |
+| phase9/08_TARGET_GROUP_PREVIEW_REPORT.md | Exact preview, demographics, pagination, explanation, and privacy evidence. |
+| phase9/09_MATCH_STRENGTH_RECOMMENDATION_REPORT.md | Deterministic exact-count recommendation evidence. |
+| phase9/10_SAVE_TARGET_GROUP_CAMPAIGN_REPORT.md | Immutable Target Group and Campaign Draft evidence. |
+| phase9/11_PROGRESSIVE_DISCLOSURE_REPORT.md | Business-default and technical-detail separation evidence. |
+| phase9/12_STATE_AND_VALIDATION_REPORT.md | Validation and state-model evidence. |
+| phase9/13_ACCESSIBILITY_RESPONSIVE_USABILITY_REPORT.md | Accessibility, keyboard, responsive, and usability evidence. |
 
 ## HISTORICAL BASELINE
 
@@ -70,7 +86,7 @@ Classification labels:
 | phase8/01_master_acceptance_checklist_run.json | phase8/12_master_acceptance_checklist_run.json |
 | phase8/01_MASTER_ACCEPTANCE_CHECKLIST_RUN.md | phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md |
 
-## Diagram 1: End-to-end Phase 1 to 7 flow
+## Diagram 1: End-to-end Phase 1 to 9 flow
 
 ```mermaid
 flowchart LR
@@ -81,6 +97,10 @@ flowchart LR
   E --> F[Immutable Saved Audience]
   F --> G[Phase 7 Campaign Builder\nDraft -> Finalized]
   G --> H[Deterministic Export\nEMAIL_CONTACT_V1 / DIRECT_MAIL_CONTACT_V1]
+  E --> I[Phase 9 Create Campaign\nBusiness context + targeting]
+  I --> J[Exact Target Group preview\nExplicit current source]
+  J --> K[Immutable Target Group\nCampaign Draft]
+  K --> G
 ```
 
 ## Diagram 2: Historical customer vs prospect identity separation
@@ -117,6 +137,9 @@ flowchart LR
   A6 --> SA6
   SA6 --> C7[campaigns]
   C7 --> E7[campaign_export_events]
+  S5 --> CT9[campaign_targeting_contexts\nexplicit source reference]
+  CT9 --> TG9[phase9_saved_target_groups\ncontext + criteria + filter hashes]
+  TG9 --> C7
 ```
 
 ## Diagram 4: Saved audience to campaign to export

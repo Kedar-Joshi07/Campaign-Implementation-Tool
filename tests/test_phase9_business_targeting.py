@@ -139,6 +139,10 @@ def test_targeting_options_are_backend_owned_current_and_explicit(
     ]
     assert options["genders"] == ["Female", "Male", "Unknown/Other"]
     assert options["states"] == ["Ohio", "Texas"]
+    assert options["regions"] == [
+        {"value": "MIDWEST", "label": "Midwest", "states": ["Ohio"]},
+        {"value": "SOUTH", "label": "South", "states": ["Texas"]},
+    ]
     assert options["family_size_minimum"] == 1
     assert options["family_size_maximum"] == 5
     assert "city" not in options and "postal_code" not in options and "street" not in options
@@ -221,8 +225,13 @@ def test_targeting_ui_has_progressive_disclosure_visible_chips_and_clear_control
     assert "More targeting options" in html
     assert 'id="planner-targeting-chips"' in html
     assert 'id="planner-targeting-clear-all"' in html
+    assert 'id="planner-targeting-regions"' in html
+    assert "Region shortcut" in html
     assert "street, ZIP, or city-level targeting" in html
     assert "/api/campaign-planner/targeting-options" in script
     assert "options.match_strengths" in script
+    assert "applySelectedRegions" in script
+    assert ".flatMap((region) => region.states)" in script
     assert "Remove ${text}" in script
+    assert 'button.className = "planner-targeting-chip-remove"' in script
     assert "selected" in script

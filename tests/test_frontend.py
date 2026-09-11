@@ -212,7 +212,7 @@ def test_historical_analysis_navigation_and_workspace_are_enabled(
 ) -> None:
     html = client.get("/").text
 
-    assert html.count('data-view-target="historical-analysis"') == 2
+    assert html.count('data-view-target="historical-analysis"') == 3
     assert 'id="historical-analysis-cta"' in html
     assert "Analyze historical campaigns" in html
     assert 'data-view="historical-analysis"' in html
