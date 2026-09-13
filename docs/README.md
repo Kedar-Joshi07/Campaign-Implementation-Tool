@@ -31,9 +31,11 @@ This folder contains implementation summaries and evidence indexes for the Phase
 - evidence/phase9_closure/README.md
   - Current Phase 9 closure/interoperability evidence index and reading order.
 - evidence/phase9_closure/PHASE9_CLOSURE_ACCEPTANCE.md
-  - Current closure acceptance status; local regression is green and final GO awaits Step 7 exact-SHA CI/freeze.
+  - Current Phase 9 closure acceptance and final GO status.
 - evidence/phase9_closure/06_REGRESSION_REPORT.md
   - Step 6 full regression, compatibility, repository/LFS, and no-heavy-work evidence.
+- evidence/phase9_closure/PHASE9_FINAL_FREEZE_REPORT.md
+  - Final closure SHA chain, exact-SHA CI results, Phase 10 readiness, and Phase 9 freeze decision.
 - evidence/phase9/PHASE9_FINAL_ACCEPTANCE.md
   - Historical original Phase 9 business workflow, regression, CI, and freeze decision.
 - evidence/phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md

@@ -79,7 +79,8 @@ Audience Explorer can represent one conjunctive filter definition, while a Phase
 - Original final implementation and browser-candidate SHA: `00e8588b08b15abb1ad7db200d2bc9b88871fd18`
 - Original evidence-freeze SHA: `f1fc86b7c25b83a82b530876f675cc9ad530a916`
 - Corrected Phase 9 documentation/freeze baseline SHA: `6934c586780b5f8f5bd57d533b5597ea63dec8cc`
-- Closure correction final implementation/freeze SHA: pending exact-SHA CI in closure Step 07
+- Closure correction final implementation SHA: `111a9205df79ea160f5929dc25cc84f4e7a1fd19`
+- Closure exact-SHA CI: PASS - workflow `CI` run `#10`, ID `34740649936`
 - Original certification browser: Google Chrome `152.0.7977.83` (historical Step 14 run)
 - Closure recertification browser: installed Google Chrome `153.0.8010.36`
 - Current control inventory: 75 controls; 71 `PASS`; 4 individually justified exclusive error-state controls; 0 `FAIL`; 0 `NOT_RUN`; 0 unjustified exclusions

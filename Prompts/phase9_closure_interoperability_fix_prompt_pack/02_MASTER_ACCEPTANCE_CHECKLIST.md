@@ -52,5 +52,5 @@
 - [x] pip check green
 - [x] git diff --check green
 - [x] repo/LFS hygiene green
-- [ ] exact-SHA CI green
-- [ ] FINAL DECISION = GO
+- [x] exact-SHA CI green
+- [x] FINAL DECISION = GO

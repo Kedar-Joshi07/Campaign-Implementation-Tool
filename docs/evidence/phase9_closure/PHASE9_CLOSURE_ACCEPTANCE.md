@@ -3,14 +3,14 @@
 Generated: 2026-09-13
 
 Prompt status: completed through
-`06_STEP_06_FULL_REGRESSION_AND_NO_HEAVY_WORK_GATE.md`
+`07_STEP_07_EXACT_SHA_CI_AND_PHASE9_FREEZE.md`
 
 ## Current decision
 
-LOCAL REGRESSION PASS - closure Steps 1-6 are complete.
+`GO` - closure Steps 1-7 are complete and Phase 9 is frozen.
 
-Final GO is not yet declared. Step 06 full regression and no-heavy-work
-verification passed; Step 07 exact-SHA CI and freeze remain required.
+Full regression, no-heavy-work verification, real-browser recertification, and
+exact-SHA GitHub Actions all passed.
 
 ## Correct SHA chain
 
@@ -21,8 +21,8 @@ verification passed; Step 07 exact-SHA CI and freeze remain required.
 | Original final Phase 9 implementation and browser candidate | `00e8588b08b15abb1ad7db200d2bc9b88871fd18` | Historical original certification candidate |
 | Original Phase 9 evidence freeze | `f1fc86b7c25b83a82b530876f675cc9ad530a916` | Historical original freeze evidence |
 | Corrected Phase 9 documentation/freeze baseline | `6934c586780b5f8f5bd57d533b5597ea63dec8cc` | Closure pre-fix baseline |
-| Closure interoperability implementation | Pending commit | Not invented before commit |
-| Closure browser recertification/final freeze | Pending Step 07 | Exact SHA and CI not yet run |
+| Closure interoperability/final implementation | `111a9205df79ea160f5929dc25cc84f4e7a1fd19` | Exact tested implementation SHA |
+| Closure exact-SHA CI/final freeze | `111a9205df79ea160f5929dc25cc84f4e7a1fd19` | CI run #10, ID 34740649936, SUCCESS |
 
 ## Interoperability acceptance
 
@@ -69,7 +69,7 @@ detection, branch count, legacy-reopen capability, and guidance. An API-level
 multi-branch regression protects the complete response path. The repeated live
 Chrome action returned successfully.
 
-## Completed verification through Step 6
+## Completed verification through Step 7
 
 | Gate | Result |
 |---|---|
@@ -94,6 +94,7 @@ Chrome action returned successfully.
 | git diff --check | PASS - no whitespace errors |
 | Repository/LFS pointer hygiene | PASS |
 | Git LFS object integrity | PASS |
+| Exact implementation-SHA CI | PASS - run #10, ID 34740649936, 5/5 required jobs successful |
 
 ## Documentation authority
 
@@ -106,19 +107,21 @@ facts were not rewritten.
 `docs/PHASE_9_IMPLEMENTATION_SUMMARY.md` now records:
 
 - the correct original candidate and freeze chain;
-- the pending closure exact SHA without guessing;
+- the exact closure implementation SHA and successful CI run;
 - current 75/71/4/0/0 control totals;
 - Saved Target Groups, Insights, and Region additions;
 - safe-block multi-branch interoperability behavior; and
 - unchanged Phase 10 boundaries.
 
-## Pending release gates
+## Final release gates
 
-- exact committed SHA CI: pending Step 07.
-- final freeze and GO decision: pending Step 07.
+- Exact committed-SHA CI: PASS - run #10, ID 34740649936.
+- Required CI jobs: 5/5 SUCCESS.
+- Final freeze decision: GO.
+- Phase 10 handoff readiness: READY.
 
 ## Step result
 
-STEP_06_COMPLETE_STOP
+PHASE_9_CLOSURE_FROZEN_GO
 
-Step 07 was not started.
+All closure prompts are complete. Phase 9 is frozen for Phase 10 handoff.
