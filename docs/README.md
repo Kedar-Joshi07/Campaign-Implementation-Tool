@@ -27,9 +27,15 @@ This folder contains implementation summaries and evidence indexes for the Phase
 - evidence/phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md
   - Completed 28-item Phase 8 acceptance checklist with evidence references.
 - evidence/phase9/README.md
-  - Phase 9 evidence index and authority classification.
+  - Historical original Phase 9 evidence index and authority classification.
+- evidence/phase9_closure/README.md
+  - Current Phase 9 closure/interoperability evidence index and reading order.
+- evidence/phase9_closure/PHASE9_CLOSURE_ACCEPTANCE.md
+  - Current closure acceptance status; local regression is green and final GO awaits Step 7 exact-SHA CI/freeze.
+- evidence/phase9_closure/06_REGRESSION_REPORT.md
+  - Step 6 full regression, compatibility, repository/LFS, and no-heavy-work evidence.
 - evidence/phase9/PHASE9_FINAL_ACCEPTANCE.md
-  - Final Phase 9 business workflow, exact targeting, regression, CI, and freeze decision.
+  - Historical original Phase 9 business workflow, regression, CI, and freeze decision.
 - evidence/phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md
   - Installed-Chrome certification for the business Campaign Planner and required alternate states.
 

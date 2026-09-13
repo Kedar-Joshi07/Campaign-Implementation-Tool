@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.repositories.audience_rank_repository import AudienceRankRepository
 from app.repositories.historical_repository import HistoricalRepository
@@ -49,6 +50,16 @@ SAVED_AUDIENCE_EXPORT_POLICY = {
     "export_supported": False,
     "reason": "Phase 6 does not expose saved-audience export APIs.",
 }
+PHASE9_MULTI_BRANCH_REOPEN_GUIDANCE = (
+    "This Target Group was created in Campaign Planner and contains multiple "
+    "targeting branches. Reopen it from Saved Target Groups / Campaign Planner "
+    "to preserve the exact definition."
+)
+PHASE9_UNREADABLE_BRANCH_REOPEN_GUIDANCE = (
+    "This Target Group was created in Campaign Planner, but its exact targeting "
+    "definition could not be verified here. Reopen it from Saved Target Groups / "
+    "Campaign Planner."
+)
 
 
 class SavedAudienceServiceError(RuntimeError):
@@ -146,6 +157,48 @@ def _normalized_saved_row_json(row: dict[str, Any]) -> tuple[dict[str, Any], dic
             field_name="saved_audience.profile_summary_json",
         )
     return filters, selection, profile_snapshot
+
+
+def _phase9_legacy_reopen_metadata(path: Path, *, audience_id: int) -> dict[str, Any]:
+    with get_connection(path) as connection:
+        row = connection.execute(
+            """
+            SELECT filter_branches_json
+            FROM phase9_saved_target_groups
+            WHERE audience_id = ?
+            """,
+            (audience_id,),
+        ).fetchone()
+
+    if row is None:
+        return {
+            "is_phase9_target_group": False,
+            "filter_branch_count": 1,
+            "can_reopen_in_legacy_audience_explorer": True,
+            "reopen_guidance": None,
+        }
+
+    try:
+        branches = json.loads(str(row["filter_branches_json"]))
+    except (TypeError, ValueError):
+        branches = None
+
+    if not isinstance(branches, list) or not branches:
+        return {
+            "is_phase9_target_group": True,
+            "filter_branch_count": None,
+            "can_reopen_in_legacy_audience_explorer": False,
+            "reopen_guidance": PHASE9_UNREADABLE_BRANCH_REOPEN_GUIDANCE,
+        }
+
+    branch_count = len(branches)
+    can_reopen = branch_count == 1
+    return {
+        "is_phase9_target_group": True,
+        "filter_branch_count": branch_count,
+        "can_reopen_in_legacy_audience_explorer": can_reopen,
+        "reopen_guidance": None if can_reopen else PHASE9_MULTI_BRANCH_REOPEN_GUIDANCE,
+    }
 
 
 def _deduplicate_issues(issues: list[str]) -> list[str]:
@@ -640,6 +693,10 @@ def get_saved_audience_detail(
     filters_payload, selection_payload, profile_snapshot = _normalized_saved_row_json(row)
     currentness = _evaluate_saved_audience_currentness(path, row, cache={})
     replay_payload = replay_saved_audience_definition(path, audience_id=normalized_audience_id)
+    reopen_metadata = _phase9_legacy_reopen_metadata(
+        path,
+        audience_id=normalized_audience_id,
+    )
 
     return {
         "audience_id": int(row["audience_id"]),
@@ -681,6 +738,7 @@ def get_saved_audience_detail(
         "pii_policy": _PII_POLICY,
         "export_policy": SAVED_AUDIENCE_EXPORT_POLICY,
         "replay_request": replay_payload,
+        **reopen_metadata,
     }
 
 

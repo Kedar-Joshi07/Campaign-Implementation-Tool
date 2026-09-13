@@ -578,7 +578,9 @@ def _seed_fixture(database_path: Path) -> int:
     return scoring_run_id
 
 
-def test_save_and_replay_and_detail(database_path: Path) -> None:
+def test_legacy_audience_reopen_preserves_detail_filters_and_selection_exactly(
+    database_path: Path,
+) -> None:
     scoring_run_id = _seed_fixture(database_path)
     run_audience_rank_preparation(database_path, scoring_run_id=scoring_run_id)
 
@@ -614,7 +616,13 @@ def test_save_and_replay_and_detail(database_path: Path) -> None:
 
     detail = get_saved_audience_detail(database_path, audience_id=saved["audience_id"])
     assert detail["replay_request"] == replay
+    assert detail["definition"]["filters"] == replay["filters"]
+    assert detail["definition"]["selection"] == replay["selection"]
     assert detail["currentness"]["is_current"] is True
+    assert detail["is_phase9_target_group"] is False
+    assert detail["filter_branch_count"] == 1
+    assert detail["can_reopen_in_legacy_audience_explorer"] is True
+    assert detail["reopen_guidance"] is None
 
 
 def test_save_rejects_empty_selected_count(database_path: Path) -> None:

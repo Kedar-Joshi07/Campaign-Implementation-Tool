@@ -1157,6 +1157,20 @@ function renderSavedAudienceDetail(detail) {
     : "All matching";
   document.querySelector("#saved-audience-detail-meta").textContent = `${formatDate(detail.created_at, true)} · ${formatExactInteger(detail.definition.resolved_count)} selected · ${mode}`;
 
+  const reopenButton = document.querySelector("#saved-audience-reopen");
+  const reopenGuidance = document.querySelector("#saved-audience-phase9-reopen-guidance");
+  const canReopenInLegacy = detail.can_reopen_in_legacy_audience_explorer !== false;
+  reopenButton.disabled = !canReopenInLegacy;
+  reopenGuidance.hidden = canReopenInLegacy;
+  if (canReopenInLegacy) {
+    reopenButton.removeAttribute("aria-describedby");
+  } else {
+    const guidanceMessage = document.querySelector("#saved-audience-phase9-reopen-message");
+    guidanceMessage.textContent = detail.reopen_guidance
+      || "This Target Group was created in Campaign Planner and contains multiple targeting branches. Reopen it from Saved Target Groups / Campaign Planner to preserve the exact definition.";
+    reopenButton.setAttribute("aria-describedby", "saved-audience-phase9-reopen-message");
+  }
+
   const currentness = document.querySelector("#saved-audience-currentness");
   setStatusBadge(currentness, detail.currentness?.is_current ? "COMPLETED" : "WARNING");
   currentness.textContent = detail.currentness?.is_current
@@ -1231,6 +1245,13 @@ async function reopenSavedAudience() {
   }
 
   const detail = selectedSavedAudienceDetail;
+  if (detail.can_reopen_in_legacy_audience_explorer === false) {
+    const guidance = detail.reopen_guidance
+      || "This Target Group was created in Campaign Planner and contains multiple targeting branches. Reopen it from Saved Target Groups / Campaign Planner to preserve the exact definition.";
+    showFormError(guidance);
+    setAudienceAnnouncement("Use Saved Target Groups or Campaign Planner to reopen this exact Target Group.");
+    return;
+  }
   const filters = detail.definition?.filters || {};
   const selection = detail.definition?.selection || { mode: "ALL_MATCHING", target_count: null };
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,10 @@ from app.services.campaign_targeting_context_service import (
 from app.services.target_group_campaign_service import (
     reopen_phase9_campaign_draft,
     save_target_group_and_create_campaign_draft,
+)
+from app.services.saved_audience_service import (
+    PHASE9_MULTI_BRANCH_REOPEN_GUIDANCE,
+    get_saved_audience_detail,
 )
 from app.services.targeting_intelligence_service import link_targeting_intelligence
 from tests.test_saved_audience_service import _seed_fixture
@@ -162,7 +167,7 @@ def test_api_saves_immutable_group_and_creates_linked_draft(
     assert json.loads(metadata["campaign_context_json"])["campaign_channel"] == "EMAIL"
 
 
-def test_reopen_restores_immutable_business_context_and_exact_union_members(
+def test_phase9_multi_branch_saved_target_group_interoperability_preserves_exact_union(
     ready_campaign_context: tuple[Path, int, int],
 ) -> None:
     database_path, targeting_context_id, _ = ready_campaign_context
@@ -181,6 +186,26 @@ def test_reopen_restores_immutable_business_context_and_exact_union_members(
     assert reopened["saved_target_group"] == created["saved_target_group"]
     assert reopened["saved_target_group"]["currentness_label"] == "Up to date"
 
+    audience_id = created["saved_target_group"]["saved_target_group_id"]
+    detail = get_saved_audience_detail(database_path, audience_id=audience_id)
+    _assert_no_pii_keys(detail)
+    assert detail["is_phase9_target_group"] is True
+    assert detail["filter_branch_count"] > 1
+    assert detail["can_reopen_in_legacy_audience_explorer"] is False
+    assert detail["reopen_guidance"] == PHASE9_MULTI_BRANCH_REOPEN_GUIDANCE
+
+    app.dependency_overrides[get_database_path] = lambda: database_path
+    try:
+        with TestClient(app) as client:
+            api_response = client.get(f"/api/audiences/{audience_id}")
+    finally:
+        app.dependency_overrides.clear()
+    assert api_response.status_code == 200
+    assert api_response.json()["filter_branch_count"] == detail["filter_branch_count"]
+    assert api_response.json()["can_reopen_in_legacy_audience_explorer"] is False
+    assert api_response.json()["reopen_guidance"] == PHASE9_MULTI_BRANCH_REOPEN_GUIDANCE
+    _assert_no_pii_keys(api_response.json())
+
     with get_connection(database_path) as connection:
         campaign_row = dict(
             connection.execute(
@@ -188,6 +213,24 @@ def test_reopen_restores_immutable_business_context_and_exact_union_members(
                 (created["campaign"]["campaign_id"],),
             ).fetchone()
         )
+        metadata = dict(
+            connection.execute(
+                "SELECT * FROM phase9_saved_target_groups WHERE audience_id = ?",
+                (audience_id,),
+            ).fetchone()
+        )
+    branches = json.loads(metadata["filter_branches_json"])
+    canonical_branches = json.dumps(
+        branches,
+        ensure_ascii=True,
+        allow_nan=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    assert len(branches) == detail["filter_branch_count"]
+    assert hashlib.sha256(canonical_branches.encode("utf-8")).hexdigest() == metadata[
+        "filter_branches_sha256"
+    ]
     query_context = _resolve_campaign_member_query_context(database_path, campaign_row)
     with get_connection(database_path) as connection:
         chunks = list(
@@ -203,6 +246,49 @@ def test_reopen_restores_immutable_business_context_and_exact_union_members(
     assert len(members) == len(set(members)) == created["saved_target_group"][
         "selected_count"
     ]
+    assert len(members) == metadata["resolved_count"]
+
+
+def test_saved_target_group_interoperability_phase9_single_branch_reopens_in_legacy_explorer(
+    ready_campaign_context: tuple[Path, int, int],
+) -> None:
+    database_path, targeting_context_id, _ = ready_campaign_context
+    save_business_targeting_criteria(
+        database_path,
+        {
+            "match_strength": "BROAD",
+            "age_groups": ["25-34"],
+            "selection_mode": "ALL_MATCHING",
+        },
+        targeting_context_id=targeting_context_id,
+    )
+    created = save_target_group_and_create_campaign_draft(
+        database_path,
+        targeting_context_id=targeting_context_id,
+        request_payload=_request(target_group_name="Single Branch Target Group"),
+    )
+    audience_id = created["saved_target_group"]["saved_target_group_id"]
+    detail = get_saved_audience_detail(database_path, audience_id=audience_id)
+
+    with get_connection(database_path) as connection:
+        metadata = dict(
+            connection.execute(
+                "SELECT * FROM phase9_saved_target_groups WHERE audience_id = ?",
+                (audience_id,),
+            ).fetchone()
+        )
+    branches = json.loads(metadata["filter_branches_json"])
+
+    assert created["saved_target_group"]["filter_branch_count"] == 1
+    assert len(branches) == 1
+    assert detail["is_phase9_target_group"] is True
+    assert detail["filter_branch_count"] == 1
+    assert detail["can_reopen_in_legacy_audience_explorer"] is True
+    assert detail["reopen_guidance"] is None
+    assert detail["definition"]["filters"] == branches[0]
+    assert detail["replay_request"]["filters"] == branches[0]
+    assert detail["definition"]["selection"] == detail["replay_request"]["selection"]
+    _assert_no_pii_keys(detail)
 
 
 def test_edit_before_first_save_persists_only_final_values(
@@ -248,7 +334,7 @@ def test_edit_before_first_save_persists_only_final_values(
     }
 
 
-def test_changed_criteria_creates_new_group_without_mutating_previous_group(
+def test_saved_target_group_interoperability_keeps_previous_group_immutable_after_criteria_change(
     ready_campaign_context: tuple[Path, int, int],
 ) -> None:
     database_path, targeting_context_id, _ = ready_campaign_context
@@ -305,7 +391,7 @@ def test_changed_criteria_creates_new_group_without_mutating_previous_group(
     assert audience_count == 2
 
 
-def test_stale_source_is_visible_on_reopen_and_blocks_another_save(
+def test_saved_target_group_interoperability_stale_source_blocks_new_save(
     ready_campaign_context: tuple[Path, int, int],
 ) -> None:
     database_path, targeting_context_id, _ = ready_campaign_context
@@ -349,7 +435,7 @@ def test_stale_source_is_visible_on_reopen_and_blocks_another_save(
     assert created["campaign"]["status"] == "DRAFT"
 
 
-def test_repeat_save_is_idempotent_and_draft_failure_retry_reuses_group(
+def test_saved_target_group_interoperability_idempotent_retry_reuses_group(
     ready_campaign_context: tuple[Path, int, int],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

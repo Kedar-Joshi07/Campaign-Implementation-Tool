@@ -281,3 +281,7 @@ class SavedAudienceDetailResponse(AudienceApiResponseModel):
     pii_policy: dict[str, object]
     export_policy: dict[str, object]
     replay_request: dict[str, object]
+    is_phase9_target_group: bool
+    filter_branch_count: int | None = Field(default=None, ge=1)
+    can_reopen_in_legacy_audience_explorer: bool
+    reopen_guidance: str | None = None

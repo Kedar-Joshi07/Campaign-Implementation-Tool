@@ -32,9 +32,12 @@ Classification labels:
 | phase8/12_master_acceptance_checklist_run.json | Machine-readable 28-item final acceptance checklist; 28 PASS, 0 FAIL, 0 PENDING. |
 | phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md | Human-readable final acceptance checklist and evidence map. |
 | phase8/PHASE8_FINAL_ACCEPTANCE.md | Authoritative Phase 8 final report and GO decision. |
-| phase9/PHASE9_FINAL_ACCEPTANCE.md | Authoritative Phase 9 regression, exact-SHA CI, documentation, handoff, and freeze decision. |
-| phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md | Installed-Chrome business Campaign Planner end-to-end and alternate-state certification. |
-| phase9/final_system_browser/phase9_certification_manifest.json | Structured Phase 9 source, context, criteria, exact count, saved Target Group, Campaign Draft, telemetry, and decision evidence. |
+| phase9_closure/PHASE9_CLOSURE_ACCEPTANCE.md | Current authoritative Phase 9 closure/interoperability status; local regression is green and final GO remains pending Step 7 exact-SHA CI/freeze. |
+| phase9_closure/README.md | Current closure evidence index, authority boundary, and reading order. |
+| phase9_closure/06_REGRESSION_REPORT.md | Step 6 full regression, clean-room, compatibility, repository/LFS, and no-heavy-work evidence. |
+| phase9/PHASE9_FINAL_ACCEPTANCE.md | Historical original Phase 9 regression, exact-SHA CI, documentation, handoff, and freeze decision. |
+| phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md | Historical installed-Chrome business Campaign Planner certification for the original candidate. |
+| phase9/final_system_browser/phase9_certification_manifest.json | Historical structured source, context, exact-count, telemetry, and decision evidence for the original candidate. |
 | phase9/final_system_browser/ui_control_coverage.json | Phase 9 actionable-control inventory with terminal status for every control. |
 
 ## CURRENT SUPPORTING

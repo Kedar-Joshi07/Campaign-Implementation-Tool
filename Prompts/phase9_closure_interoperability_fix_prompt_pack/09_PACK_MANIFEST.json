@@ -1,0 +1,69 @@
+{
+  "pack_name": "Phase 9 Closure & Interoperability Correction Prompt Pack",
+  "version": "1.0",
+  "phase1_to_phase8_frozen_baseline": "d6a9f9b963622a334bf3e5c3220e5d0a73e528fe",
+  "phase9_pre_fix_baseline": "6934c586780b5f8f5bd57d533b5597ea63dec8cc",
+  "step_count": 7,
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 1517,
+      "sha256": "5995cd02eba8aa1b70e737eecc7e7ade561015d2271eca5fad027c423fd5abdf"
+    },
+    {
+      "file": "01_MASTER_GUARDRAILS.md",
+      "bytes": 1237,
+      "sha256": "35a01d56f1462105865a9ccc570f8fdd300c7e69cdf6ca09327be5e8270fb098"
+    },
+    {
+      "file": "01_STEP_01_RECONCILE_BASELINE_AND_REPRODUCE_DEFECT.md",
+      "bytes": 1029,
+      "sha256": "7755ad18be19f4ad80bc0dd9f55b2e7509cf0d866ecffb93d62aeb78d0ceb69d"
+    },
+    {
+      "file": "02_MASTER_ACCEPTANCE_CHECKLIST.md",
+      "bytes": 1889,
+      "sha256": "9386df05f4713f24ad48cdec30e329b0c2fb35639be4129b7996ff89fa3f5a62"
+    },
+    {
+      "file": "02_STEP_02_FIX_MULTI_BRANCH_REOPEN_INTEROPERABILITY.md",
+      "bytes": 1530,
+      "sha256": "e503cae751f91ea5a82afec256bc5719b7a2d661b1604c3f119f7a13cd1bad7c"
+    },
+    {
+      "file": "03_FINAL_REPORT_TEMPLATE.md",
+      "bytes": 820,
+      "sha256": "4ff987e8a86f05e90922e6e11cf68db3a7a63df3f3866742db59deba6c2bd6a6"
+    },
+    {
+      "file": "03_STEP_03_ADD_INTEROPERABILITY_REGRESSION_TESTS.md",
+      "bytes": 1298,
+      "sha256": "1d69a606ec330d038de094228f333d2781faf675372e1d5d60af18602908672a"
+    },
+    {
+      "file": "04_STEP_04_REAL_SYSTEM_BROWSER_CONTROL_RECERTIFICATION.md",
+      "bytes": 1313,
+      "sha256": "01db13b13a7e05a50d3316a8d74ff2511be8671de216eaccc3752a98c335aa24"
+    },
+    {
+      "file": "05_STEP_05_CORRECT_PHASE9_DOCUMENTATION_AND_EVIDENCE.md",
+      "bytes": 844,
+      "sha256": "8a043c549bdd11860c7286bed48751a6713238fbd765f2e0a43a6d256256a41c"
+    },
+    {
+      "file": "06_STEP_06_FULL_REGRESSION_AND_NO_HEAVY_WORK_GATE.md",
+      "bytes": 1099,
+      "sha256": "34e6b18425d4cdd1844666c8f763972611d24917d54ea0151594c826b8916124"
+    },
+    {
+      "file": "07_STEP_07_EXACT_SHA_CI_AND_PHASE9_FREEZE.md",
+      "bytes": 1079,
+      "sha256": "6b381f9dd471476b34b99a0e50f2cb158ef8f0dd29a7afa1a747232d19e6ca25"
+    },
+    {
+      "file": "08_SINGLE_MASTER_PHASE9_CLOSURE_PROMPT.md",
+      "bytes": 1002,
+      "sha256": "7df799424493b379c0a3e1822f85fbe9e6eeff0da0f79a611a015c1df56711ad"
+    }
+  ]
+}

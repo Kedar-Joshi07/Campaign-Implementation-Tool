@@ -16,7 +16,9 @@ Phase 9 adds a business-friendly Create Campaign workflow above the existing Pha
 
 ## Information architecture and terminology
 
-The business workspace contains Home / Overview, Create Campaign, and Campaigns. Data Status, Historical Analysis, Targeting Intelligence / Model Management, and Audience Explorer remain available as advanced/analyst tools.
+The business workspace contains Home / Overview, Create Campaign, Saved Target Groups, Campaigns, and Insights. Saved Target Groups provides a governed business-facing list of immutable groups. Insights routes business users to the existing Past Campaign Insights and Target Group Insights capabilities. Data Status, Historical Analysis, Targeting Intelligence / Model Management, and Audience Explorer remain available as advanced/analyst tools.
+
+The optional Region shortcut expands Northeast, Midwest, South, or West into the exact currently available State selections. Persisted criteria remain state-based, explicit, and auditable; Region does not introduce a new targeting or hash contract.
 
 The default flow uses Campaign Context, Targeting Preferences, Match Strength, Potential Customers, Target Group, Why these people?, and Up to date / Needs refresh. “PU,” model-run IDs, scoring-run IDs, feature hashes, artifact hashes, and raw provenance checksums are not required vocabulary in the default path.
 
@@ -63,18 +65,31 @@ Planning and preview expose opaque Potential Customer ID, score/rank description
 
 The historical `customer_id` and prospect `person_id` domains remain separate. Phase 9 introduces no identity bridge. Every saved Target Group preserves normalized context and criteria JSON, SHA-256 hashes, exact filter branches, scoring/model/analysis lineage, source checksums, contract versions, and the resolved count.
 
-## Certification result
+## Closure interoperability behavior
 
-- Candidate SHA: `d78ad1fb8347060d033b8b7a49902610ca676a53`
-- System browser: Google Chrome `152.0.7977.83`
-- Control inventory: 64 controls; 61 `PASS`; 3 individually justified exclusive error-state controls; 0 `FAIL`; 0 `NOT_RUN`
+Audience Explorer can represent one conjunctive filter definition, while a Phase 9 Target Group may preserve multiple disjoint filter branches. Saved-audience detail responses therefore identify whether a definition is Phase 9, report its authoritative branch count, and state whether legacy Audience Explorer reopen is safe.
+
+- Legacy Saved Audiences remain reopenable with their filters and selection restored exactly.
+- Single-branch Phase 9 Target Groups remain reopenable in Audience Explorer.
+- Multi-branch Phase 9 Target Groups fail closed in the legacy form. Reopen definition is disabled, the user is directed to Saved Target Groups or Campaign Planner, and branch 1 is never populated as though it were the complete definition.
+- Campaign creation and governed export continue to resolve members from the authoritative complete branch set. Exact union count, de-duplication, currentness, immutability, lineage, and PII boundaries are unchanged.
+
+## Certification and freeze result
+
+- Original final implementation and browser-candidate SHA: `00e8588b08b15abb1ad7db200d2bc9b88871fd18`
+- Original evidence-freeze SHA: `f1fc86b7c25b83a82b530876f675cc9ad530a916`
+- Corrected Phase 9 documentation/freeze baseline SHA: `6934c586780b5f8f5bd57d533b5597ea63dec8cc`
+- Closure correction final implementation/freeze SHA: pending exact-SHA CI in closure Step 07
+- Original certification browser: Google Chrome `152.0.7977.83` (historical Step 14 run)
+- Closure recertification browser: installed Google Chrome `153.0.8010.36`
+- Current control inventory: 75 controls; 71 `PASS`; 4 individually justified exclusive error-state controls; 0 `FAIL`; 0 `NOT_RUN`; 0 unjustified exclusions
 - Main Target Group: `#2`, Broad, 2,248 of 5,000,000
 - Changed-criteria Target Group: `#3`, Good, 457 of 5,000,000
 - Campaign Drafts: `#3` and `#4`
 - Browser telemetry: zero unexplained console, JavaScript, or critical network failures
 - Independent backend assertions: `PASS`
 
-Authoritative browser evidence is under `docs/evidence/phase9/final_system_browser/`.
+The original Step 14 report and manifest under `docs/evidence/phase9/final_system_browser/` remain historically accurate for candidate `00e8588...`. Current closure status, interoperability behavior, browser recertification, and final SHA status are authoritative under `docs/evidence/phase9_closure/`.
 
 ## Phase 10 handoff
 
@@ -86,7 +101,9 @@ Phase 10 must preserve these Phase 9 boundaries: no fake “latest run wins” c
 
 ## Authoritative references
 
-- `docs/evidence/phase9/PHASE9_FINAL_ACCEPTANCE.md`
+- `docs/evidence/phase9_closure/PHASE9_CLOSURE_ACCEPTANCE.md`
+- `docs/evidence/phase9_closure/README.md`
+- `docs/evidence/phase9/PHASE9_FINAL_ACCEPTANCE.md` (historical original freeze)
 - `docs/evidence/phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md`
 - `docs/evidence/phase9/final_system_browser/phase9_certification_manifest.json`
 - `docs/evidence/phase9/final_system_browser/ui_control_coverage.json`

@@ -482,6 +482,37 @@ def test_audience_explorer_script_uses_required_endpoints_and_state_contracts(
     assert 'querySelector("#audience-save-form").addEventListener("submit", submitSaveAudience)' in script
 
 
+def test_phase9_multi_branch_saved_target_group_interoperability_blocks_legacy_form_population(
+    client: TestClient,
+) -> None:
+    html = client.get("/").text
+    script = client.get("/static/js/audience-explorer.js").text
+    required_guidance = (
+        "This Target Group was created in Campaign Planner and contains multiple "
+        "targeting branches. Reopen it from Saved Target Groups / Campaign Planner "
+        "to preserve the exact definition."
+    )
+
+    assert 'id="saved-audience-phase9-reopen-guidance"' in html
+    assert 'data-view-target="saved-target-groups"' in html
+    assert 'data-view-target="campaign-planner"' in html
+    assert required_guidance in html
+    assert "detail.can_reopen_in_legacy_audience_explorer === false" in script
+    assert required_guidance in script
+
+    reopen_start = script.index("async function reopenSavedAudience()")
+    reopen_end = script.index("async function submitSaveAudience(", reopen_start)
+    reopen_body = script[reopen_start:reopen_end]
+    guard_position = reopen_body.index(
+        "detail.can_reopen_in_legacy_audience_explorer === false"
+    )
+    filter_read_position = reopen_body.index("detail.definition?.filters")
+    population_position = reopen_body.index("setFilterFormValues(filters, selection)")
+    assert guard_position < filter_read_position < population_position
+    guarded_block = reopen_body[guard_position:filter_read_position]
+    assert "return;" in guarded_block
+
+
 def test_audience_explorer_script_enforces_safe_fields_and_dom_patterns(
     client: TestClient,
 ) -> None:
