@@ -30,6 +30,7 @@ from app.services.target_group_campaign_service import (
 )
 from app.services.saved_audience_service import (
     PHASE9_MULTI_BRANCH_REOPEN_GUIDANCE,
+    PHASE9_UNREADABLE_BRANCH_REOPEN_GUIDANCE,
     get_saved_audience_detail,
 )
 from app.services.targeting_intelligence_service import link_targeting_intelligence
@@ -247,6 +248,50 @@ def test_phase9_multi_branch_saved_target_group_interoperability_preserves_exact
         "selected_count"
     ]
     assert len(members) == metadata["resolved_count"]
+
+
+def test_saved_target_group_interoperability_unreadable_branch_metadata_fails_closed(
+    ready_campaign_context: tuple[Path, int, int],
+) -> None:
+    database_path, targeting_context_id, _ = ready_campaign_context
+    created = save_target_group_and_create_campaign_draft(
+        database_path,
+        targeting_context_id=targeting_context_id,
+        request_payload=_request(target_group_name="Unreadable Branch Target Group"),
+    )
+    audience_id = created["saved_target_group"]["saved_target_group_id"]
+
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            """
+            UPDATE phase9_saved_target_groups
+            SET filter_branches_json = ?
+            WHERE audience_id = ?
+            """,
+            ("{}", audience_id),
+        )
+
+    detail = get_saved_audience_detail(database_path, audience_id=audience_id)
+    assert detail["is_phase9_target_group"] is True
+    assert detail["filter_branch_count"] is None
+    assert detail["can_reopen_in_legacy_audience_explorer"] is False
+    assert detail["reopen_guidance"] == PHASE9_UNREADABLE_BRANCH_REOPEN_GUIDANCE
+    _assert_no_pii_keys(detail)
+
+    app.dependency_overrides[get_database_path] = lambda: database_path
+    try:
+        with TestClient(app) as client:
+            response = client.get(f"/api/audiences/{audience_id}")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["is_phase9_target_group"] is True
+    assert "filter_branch_count" not in payload
+    assert payload["can_reopen_in_legacy_audience_explorer"] is False
+    assert payload["reopen_guidance"] == PHASE9_UNREADABLE_BRANCH_REOPEN_GUIDANCE
+    _assert_no_pii_keys(payload)
 
 
 def test_saved_target_group_interoperability_phase9_single_branch_reopens_in_legacy_explorer(

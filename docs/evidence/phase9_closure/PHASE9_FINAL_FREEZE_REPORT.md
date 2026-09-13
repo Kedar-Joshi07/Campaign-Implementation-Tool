@@ -19,7 +19,10 @@ is green, and GitHub Actions passed every required job on the exact final Phase
 |---|---|
 | Frozen Phase 1-8 baseline | `d6a9f9b963622a334bf3e5c3220e5d0a73e528fe` |
 | Corrected Phase 9 pre-fix baseline | `6934c586780b5f8f5bd57d533b5597ea63dec8cc` |
-| Final Phase 9 closure implementation | `111a9205df79ea160f5929dc25cc84f4e7a1fd19` |
+| Interoperability fix SHA | `111a9205df79ea160f5929dc25cc84f4e7a1fd19` |
+| Browser recertification application SHA | `111a9205df79ea160f5929dc25cc84f4e7a1fd19` |
+| Documentation/freeze evidence SHA | `5dd4537eda6a500ae381e62b013379372ef9568b` |
+| Final exact SHA at initial closure freeze | `5dd4537eda6a500ae381e62b013379372ef9568b` |
 
 The final report is committed separately as documentation-only freeze evidence,
 following the repository's established implementation-SHA/evidence-closure
@@ -28,7 +31,7 @@ self-referential report-commit SHA.
 
 ## Interoperability closure
 
-- Reopen strategy: **Option B - safe block and redirect**.
+- Chosen reopen strategy: **Option B - safe block and redirect**.
 - Legacy and Phase 9 single-branch audiences continue to reopen normally.
 - Phase 9 multi-branch Target Groups are detected using persisted Phase 9
   metadata and complete branch count.
@@ -39,13 +42,15 @@ self-referential report-commit SHA.
 - Authoritative exact union membership, canonical branch hash, resolved count,
   de-duplication, immutability, provenance, currentness, Campaign linkage, and
   export behavior remain unchanged.
+- No-PII result: PASS - planning, preview, and interoperability responses expose
+  no contact PII; contact fields remain restricted to governed exports.
 
 ## Regression results
 
 | Gate | Result |
 |---|---|
-| Full pytest | PASS - 557 passed in 416.48s |
-| Focused interoperability matrix | PASS - 7 passed in 40.28s |
+| Full pytest | PASS - 558 passed in 436.84s |
+| Focused interoperability matrix | PASS - 8 passed in 40.77s, including unreadable branch metadata fail-closed coverage |
 | Campaign Planner/preview/recommendation | PASS - 24 passed in 44.47s |
 | Phase 8 browser harness unit tests | PASS - 13 passed in 0.22s |
 | Explicit source/link/export contracts | PASS - 5 passed in 48.23s |
@@ -98,6 +103,17 @@ and Review-step Back.
 
 The Actions API was queried by exact `head_sha`; no branch-latest or unrelated
 run was used as acceptance evidence.
+
+The documentation/freeze evidence commit also passed an exact-SHA run:
+
+- Workflow: `CI`
+- Run number: `11`
+- Run ID: `34740956664`
+- Run URL: https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34740956664
+- Head SHA: `5dd4537eda6a500ae381e62b013379372ef9568b`
+- Workflow conclusion: `success`
+- Required jobs: Repository Hygiene, Python Validation, Tests, Clean-Room
+  Phase1-7, and Frontend Contract all succeeded
 
 ## Heavy-work decision
 

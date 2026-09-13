@@ -7,13 +7,13 @@
   "files": [
     {
       "file": "00_README.md",
-      "bytes": 1517,
-      "sha256": "5995cd02eba8aa1b70e737eecc7e7ade561015d2271eca5fad027c423fd5abdf"
+      "bytes": 1515,
+      "sha256": "b7676d5eb0dbc0698de7ecf461bae7c229572e27536369d34fdcc8daae465887"
     },
     {
       "file": "01_MASTER_GUARDRAILS.md",
-      "bytes": 1237,
-      "sha256": "35a01d56f1462105865a9ccc570f8fdd300c7e69cdf6ca09327be5e8270fb098"
+      "bytes": 1235,
+      "sha256": "50e92842b7461b588e8c9c3ee0733b5876b836f9da75927c46e4cd12a89d1f2f"
     },
     {
       "file": "01_STEP_01_RECONCILE_BASELINE_AND_REPRODUCE_DEFECT.md",
@@ -23,7 +23,7 @@
     {
       "file": "02_MASTER_ACCEPTANCE_CHECKLIST.md",
       "bytes": 1889,
-      "sha256": "9386df05f4713f24ad48cdec30e329b0c2fb35639be4129b7996ff89fa3f5a62"
+      "sha256": "693a111c14b09fda2dc7c24171724125ff97b6117e3fd0322d06fdc3ddc8c398"
     },
     {
       "file": "02_STEP_02_FIX_MULTI_BRANCH_REOPEN_INTEROPERABILITY.md",

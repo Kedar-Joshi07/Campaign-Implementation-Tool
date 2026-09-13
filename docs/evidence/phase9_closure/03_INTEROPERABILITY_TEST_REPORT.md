@@ -84,3 +84,15 @@ Additional checks:
 STEP_03_COMPLETE_STOP
 
 Step 4 was not started.
+
+## Closure follow-up regression
+
+The post-freeze evidence-integrity audit added
+`test_saved_target_group_interoperability_unreadable_branch_metadata_fails_closed`.
+It verifies that valid JSON with an invalid non-list branch shape fails closed
+at both service and API boundaries, omits no required safety capability or
+guidance, and exposes no contact PII. Malformed JSON is independently rejected
+by the database `json_valid` constraint.
+
+- Expanded focused interoperability matrix: 8 passed in 40.77s.
+- Full regression after the addition: 558 passed in 436.84s.

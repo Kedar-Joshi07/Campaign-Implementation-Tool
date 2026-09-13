@@ -23,6 +23,7 @@ exact-SHA GitHub Actions all passed.
 | Corrected Phase 9 documentation/freeze baseline | `6934c586780b5f8f5bd57d533b5597ea63dec8cc` | Closure pre-fix baseline |
 | Closure interoperability/final implementation | `111a9205df79ea160f5929dc25cc84f4e7a1fd19` | Exact tested implementation SHA |
 | Closure exact-SHA CI/final freeze | `111a9205df79ea160f5929dc25cc84f4e7a1fd19` | CI run #10, ID 34740649936, SUCCESS |
+| Documentation/freeze evidence | `5dd4537eda6a500ae381e62b013379372ef9568b` | CI run #11, ID 34740956664, SUCCESS |
 
 ## Interoperability acceptance
 
@@ -83,8 +84,8 @@ Chrome action returned successfully.
 | Documentation stale-value scan | PASS after Step 5 corrections; historical values classified rather than rewritten |
 | Model retraining | NOT RUN - prohibited and unnecessary |
 | 5M rescoring | NOT RUN - prohibited and unnecessary |
-| Full pytest | PASS - 557 passed in 416.48s |
-| Focused Phase 9 interoperability | PASS - 7 passed in 40.28s |
+| Full pytest | PASS - 558 passed in 436.84s |
+| Focused Phase 9 interoperability | PASS - 8 passed in 40.77s, including unreadable branch metadata fail-closed coverage |
 | Phase 9 planner/preview/recommendation | PASS - 24 passed in 44.47s |
 | Phase 8 browser harness unit tests | PASS - 13 passed in 0.22s |
 | Clean-room Phase 1-7 | PASS - deterministic isolated run and cleanup |
@@ -116,6 +117,7 @@ facts were not rewritten.
 ## Final release gates
 
 - Exact committed-SHA CI: PASS - run #10, ID 34740649936.
+- Exact documentation/freeze-SHA CI: PASS - run #11, ID 34740956664.
 - Required CI jobs: 5/5 SUCCESS.
 - Final freeze decision: GO.
 - Phase 10 handoff readiness: READY.

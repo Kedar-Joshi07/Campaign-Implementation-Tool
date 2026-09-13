@@ -34,9 +34,9 @@ PASS, 4 JUSTIFIED_EXCLUSIVE, 0 FAIL, and 0 NOT_RUN.
 - Corrected Phase 9 documentation/freeze baseline: `6934c586780b5f8f5bd57d533b5597ea63dec8cc`
 - Closure interoperability/final implementation SHA: `111a9205df79ea160f5929dc25cc84f4e7a1fd19`
 - Exact-SHA CI: workflow `CI` run `#10`, ID `34740649936`, SUCCESS
-- Evidence closure commit: documentation-only commit created after the exact
-  implementation-SHA CI result; it does not replace the certified
-  implementation SHA
+- Documentation/freeze evidence SHA: `5dd4537eda6a500ae381e62b013379372ef9568b`
+- Exact documentation/freeze-SHA CI: workflow `CI` run `#11`, ID
+  `34740956664`, SUCCESS
 
 ## Reading order
 
