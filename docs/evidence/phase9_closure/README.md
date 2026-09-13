@@ -37,6 +37,9 @@ PASS, 4 JUSTIFIED_EXCLUSIVE, 0 FAIL, and 0 NOT_RUN.
 - Documentation/freeze evidence SHA: `5dd4537eda6a500ae381e62b013379372ef9568b`
 - Exact documentation/freeze-SHA CI: workflow `CI` run `#11`, ID
   `34740956664`, SUCCESS
+- Evidence-integrity/fail-closed regression correction SHA:
+  `e49e579076e0c6bf78be5026ccafbb2c72e98549`
+- Exact correction-SHA CI: workflow `CI` run `#12`, ID `34743755762`, SUCCESS
 
 ## Reading order
 

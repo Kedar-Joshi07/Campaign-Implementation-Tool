@@ -115,6 +115,38 @@ The documentation/freeze evidence commit also passed an exact-SHA run:
 - Required jobs: Repository Hygiene, Python Validation, Tests, Clean-Room
   Phase1-7, and Frontend Contract all succeeded
 
+## Post-freeze evidence-integrity correction
+
+The subsequent read-only pack audit identified and corrected evidence metadata
+and one untested fail-closed edge case without changing application behavior:
+
+- prompt-pack manifest byte counts and hashes now validate for every entry;
+- the closure control ledger is bound to browser-tested implementation SHA
+  `111a9205df79ea160f5929dc25cc84f4e7a1fd19`;
+- the original control-ledger hash is pinned to the canonical Git blob at the
+  historical `00e8588...` candidate, while the current closure ledger has a
+  separately verified hash;
+- this report explicitly records browser, implementation, documentation/freeze,
+  and exact-SHA provenance; and
+- unreadable non-list branch metadata now has an explicit service/API
+  fail-closed and no-PII regression.
+
+Correction certification:
+
+- Correction SHA: `e49e579076e0c6bf78be5026ccafbb2c72e98549`
+- Workflow: `CI`
+- Run number: `12`
+- Run ID: `34743755762`
+- Run URL: https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34743755762
+- Workflow conclusion: `success`
+- Required jobs: 5/5 successful
+- Current full pytest: 558 passed in 436.84s
+- Current focused interoperability matrix: 8 passed in 40.77s
+
+This report addendum is committed separately as documentation-only evidence and
+is therefore intentionally not assigned a self-referential SHA inside its own
+contents. Repository history identifies that evidence commit unambiguously.
+
 ## Heavy-work decision
 
 Production retraining, 5-million-person rescoring, and rank rebuilding were not

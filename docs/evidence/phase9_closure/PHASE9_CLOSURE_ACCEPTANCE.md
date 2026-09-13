@@ -24,6 +24,7 @@ exact-SHA GitHub Actions all passed.
 | Closure interoperability/final implementation | `111a9205df79ea160f5929dc25cc84f4e7a1fd19` | Exact tested implementation SHA |
 | Closure exact-SHA CI/final freeze | `111a9205df79ea160f5929dc25cc84f4e7a1fd19` | CI run #10, ID 34740649936, SUCCESS |
 | Documentation/freeze evidence | `5dd4537eda6a500ae381e62b013379372ef9568b` | CI run #11, ID 34740956664, SUCCESS |
+| Evidence-integrity and fail-closed regression correction | `e49e579076e0c6bf78be5026ccafbb2c72e98549` | CI run #12, ID 34743755762, SUCCESS |
 
 ## Interoperability acceptance
 
@@ -118,6 +119,7 @@ facts were not rewritten.
 
 - Exact committed-SHA CI: PASS - run #10, ID 34740649936.
 - Exact documentation/freeze-SHA CI: PASS - run #11, ID 34740956664.
+- Exact correction-SHA CI: PASS - run #12, ID 34743755762.
 - Required CI jobs: 5/5 SUCCESS.
 - Final freeze decision: GO.
 - Phase 10 handoff readiness: READY.
