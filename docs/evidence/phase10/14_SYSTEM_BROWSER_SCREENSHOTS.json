@@ -1,0 +1,64 @@
+{
+  "browser": {
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "execution_mode": "headless",
+    "name": "system_chrome",
+    "product_version": "153.0.8010.36"
+  },
+  "screenshots": [
+    {
+      "horizontal_overflow": false,
+      "path": "docs/evidence/phase10/system_browser/step14/screenshots/phase10-ready-1920x1080.png",
+      "viewport": {
+        "height": 1080,
+        "width": 1920
+      }
+    },
+    {
+      "horizontal_overflow": false,
+      "path": "docs/evidence/phase10/system_browser/step14/screenshots/phase10-ready-1366x768.png",
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      }
+    },
+    {
+      "horizontal_overflow": false,
+      "path": "docs/evidence/phase10/system_browser/step14/screenshots/phase10-ready-1024x768.png",
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      }
+    },
+    {
+      "horizontal_overflow": false,
+      "path": "docs/evidence/phase10/system_browser/step14/screenshots/phase10-ready-768x1024.png",
+      "viewport": {
+        "height": 1024,
+        "width": 768
+      }
+    },
+    {
+      "horizontal_overflow": false,
+      "path": "docs/evidence/phase10/system_browser/step14/screenshots/phase10-ready-390x844.png",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    }
+  ],
+  "telemetry": {
+    "console_errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "http_errors": [
+      {
+        "method": "GET",
+        "status": 404,
+        "url": "http://127.0.0.1:8014/api/campaign-planner/contexts/2/campaign-draft"
+      }
+    ],
+    "page_errors": [],
+    "request_failures": []
+  }
+}

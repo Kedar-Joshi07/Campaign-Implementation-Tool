@@ -16,7 +16,7 @@ from app.database.connection import get_connection
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 14
+CURRENT_SCHEMA_VERSION = 15
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -37,6 +37,9 @@ EXPECTED_TABLES = (
     "campaign_export_events",
     "campaign_targeting_contexts",
     "phase9_saved_target_groups",
+    "phase10_intelligence_generations",
+    "phase10_orchestration_runs",
+    "phase10_context_bindings",
 )
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
@@ -280,6 +283,81 @@ PHASE9_SAVED_TARGET_GROUP_COLUMNS = (
     "source_status",
     "resolved_count",
     "created_at",
+)
+
+PHASE10_INTELLIGENCE_GENERATION_COLUMNS = (
+    "generation_id",
+    "intelligence_generation_contract_version",
+    "compatibility_contract_version",
+    "intelligence_key_sha256",
+    "modeling_context_json",
+    "modeling_context_sha256",
+    "historical_filters_json",
+    "historical_filters_sha256",
+    "historical_window_policy_version",
+    "multi_product_positive_policy_version",
+    "training_eligibility_policy_version",
+    "customer_import_id",
+    "customer_source_checksum",
+    "campaign_sales_import_id",
+    "campaign_sales_source_checksum",
+    "demographic_import_id",
+    "demographic_source_checksum",
+    "feature_contract_version",
+    "feature_contract_sha256",
+    "model_role_policy_version",
+    "evaluation_contract_version",
+    "automated_training_policy_version",
+    "analysis_run_id",
+    "model_run_id",
+    "scoring_run_id",
+    "artifact_sha256",
+    "score_semantics_json",
+    "score_semantics_sha256",
+    "rank_contract_version",
+    "analytics_contract_version",
+    "lifecycle_policy_version",
+    "generation_status",
+    "lifecycle_state",
+    "created_at",
+    "last_verified_at",
+    "last_used_at",
+)
+
+PHASE10_ORCHESTRATION_RUN_COLUMNS = (
+    "orchestration_id",
+    "orchestration_contract_version",
+    "targeting_context_id",
+    "modeling_context_sha256",
+    "intelligence_key_sha256",
+    "status",
+    "stage",
+    "progress_percent",
+    "business_message",
+    "technical_message",
+    "reuse_plan_json",
+    "analysis_run_id",
+    "model_run_id",
+    "scoring_run_id",
+    "generation_id",
+    "training_job_id",
+    "scoring_job_id",
+    "created_at",
+    "started_at",
+    "updated_at",
+    "completed_at",
+    "safe_error_message",
+)
+
+PHASE10_CONTEXT_BINDING_COLUMNS = (
+    "targeting_context_id",
+    "modeling_context_sha256",
+    "orchestration_id",
+    "generation_id",
+    "binding_status",
+    "created_at",
+    "updated_at",
+    "last_used_at",
 )
 
 CUSTOMER_COLUMNS = (
@@ -697,6 +775,68 @@ PHASE_NINE_REQUIRED_INDEX_STATEMENTS = {
     ),
 }
 
+PHASE_TEN_REQUIRED_INDEX_STATEMENTS = {
+    "idx_phase10_generations_modeling_context": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_generations_modeling_context "
+        "ON phase10_intelligence_generations "
+        "(modeling_context_sha256, created_at DESC, generation_id DESC)"
+    ),
+    "idx_phase10_generations_intelligence_key": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_generations_intelligence_key "
+        "ON phase10_intelligence_generations (intelligence_key_sha256)"
+    ),
+    "idx_phase10_generations_lifecycle": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_generations_lifecycle "
+        "ON phase10_intelligence_generations "
+        "(lifecycle_state, last_used_at DESC, generation_id DESC)"
+    ),
+    "idx_phase10_generations_analysis": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_generations_analysis "
+        "ON phase10_intelligence_generations (analysis_run_id, generation_id DESC)"
+    ),
+    "idx_phase10_generations_model": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_generations_model "
+        "ON phase10_intelligence_generations (model_run_id, generation_id DESC)"
+    ),
+    "idx_phase10_generations_scoring": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_generations_scoring "
+        "ON phase10_intelligence_generations (scoring_run_id, generation_id DESC)"
+    ),
+    "idx_phase10_orchestrations_modeling_context": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_orchestrations_modeling_context "
+        "ON phase10_orchestration_runs "
+        "(modeling_context_sha256, updated_at DESC, orchestration_id DESC)"
+    ),
+    "idx_phase10_orchestrations_intelligence_key": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_orchestrations_intelligence_key "
+        "ON phase10_orchestration_runs "
+        "(intelligence_key_sha256, updated_at DESC, orchestration_id DESC)"
+    ),
+    "idx_phase10_orchestrations_active_key": (
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_phase10_orchestrations_active_key "
+        "ON phase10_orchestration_runs (intelligence_key_sha256) "
+        "WHERE status IN ('QUEUED', 'RUNNING')"
+    ),
+    "idx_phase10_orchestrations_targeting_context": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_orchestrations_targeting_context "
+        "ON phase10_orchestration_runs "
+        "(targeting_context_id, updated_at DESC, orchestration_id DESC)"
+    ),
+    "idx_phase10_bindings_generation": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_bindings_generation "
+        "ON phase10_context_bindings (generation_id, updated_at DESC) "
+        "WHERE generation_id IS NOT NULL"
+    ),
+    "idx_phase10_bindings_orchestration": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_bindings_orchestration "
+        "ON phase10_context_bindings (orchestration_id, updated_at DESC)"
+    ),
+    "idx_phase10_bindings_modeling_context": (
+        "CREATE INDEX IF NOT EXISTS idx_phase10_bindings_modeling_context "
+        "ON phase10_context_bindings (modeling_context_sha256, updated_at DESC)"
+    ),
+}
+
 REQUIRED_INDEX_STATEMENTS = {
     **PHASE_ONE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_TWO_REQUIRED_INDEX_STATEMENTS,
@@ -706,6 +846,7 @@ REQUIRED_INDEX_STATEMENTS = {
     **PHASE_SIX_REQUIRED_INDEX_STATEMENTS,
     **PHASE_SEVEN_REQUIRED_INDEX_STATEMENTS,
     **PHASE_NINE_REQUIRED_INDEX_STATEMENTS,
+    **PHASE_TEN_REQUIRED_INDEX_STATEMENTS,
 }
 
 
@@ -2182,6 +2323,220 @@ def _migrate_to_version_14(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_15(connection: sqlite3.Connection) -> None:
+    """Add the Phase 10 registry without rewriting immutable analytical rows."""
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS phase10_intelligence_generations (
+            generation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            intelligence_generation_contract_version TEXT NOT NULL
+                CHECK (length(trim(intelligence_generation_contract_version)) BETWEEN 1 AND 24),
+            compatibility_contract_version TEXT NOT NULL
+                CHECK (length(trim(compatibility_contract_version)) BETWEEN 1 AND 24),
+            intelligence_key_sha256 TEXT NOT NULL
+                CHECK (length(trim(intelligence_key_sha256)) = 64),
+            modeling_context_json TEXT NOT NULL
+                CHECK (
+                    length(trim(modeling_context_json)) BETWEEN 2 AND 65536
+                    AND json_valid(modeling_context_json)
+                ),
+            modeling_context_sha256 TEXT NOT NULL
+                CHECK (length(trim(modeling_context_sha256)) = 64),
+            historical_filters_json TEXT NOT NULL
+                CHECK (
+                    length(trim(historical_filters_json)) BETWEEN 2 AND 65536
+                    AND json_valid(historical_filters_json)
+                ),
+            historical_filters_sha256 TEXT NOT NULL
+                CHECK (length(trim(historical_filters_sha256)) = 64),
+            historical_window_policy_version TEXT NOT NULL
+                CHECK (length(trim(historical_window_policy_version)) BETWEEN 1 AND 24),
+            multi_product_positive_policy_version TEXT NOT NULL
+                CHECK (length(trim(multi_product_positive_policy_version)) BETWEEN 1 AND 24),
+            training_eligibility_policy_version TEXT NOT NULL
+                CHECK (length(trim(training_eligibility_policy_version)) BETWEEN 1 AND 24),
+            customer_import_id INTEGER NOT NULL CHECK (customer_import_id > 0),
+            customer_source_checksum TEXT NOT NULL
+                CHECK (length(trim(customer_source_checksum)) = 64),
+            campaign_sales_import_id INTEGER NOT NULL CHECK (campaign_sales_import_id > 0),
+            campaign_sales_source_checksum TEXT NOT NULL
+                CHECK (length(trim(campaign_sales_source_checksum)) = 64),
+            demographic_import_id INTEGER NOT NULL CHECK (demographic_import_id > 0),
+            demographic_source_checksum TEXT NOT NULL
+                CHECK (length(trim(demographic_source_checksum)) = 64),
+            feature_contract_version TEXT NOT NULL
+                CHECK (length(trim(feature_contract_version)) BETWEEN 1 AND 24),
+            feature_contract_sha256 TEXT NOT NULL
+                CHECK (length(trim(feature_contract_sha256)) = 64),
+            model_role_policy_version TEXT NOT NULL
+                CHECK (length(trim(model_role_policy_version)) BETWEEN 1 AND 24),
+            evaluation_contract_version TEXT NOT NULL
+                CHECK (length(trim(evaluation_contract_version)) BETWEEN 1 AND 24),
+            automated_training_policy_version TEXT NOT NULL
+                CHECK (length(trim(automated_training_policy_version)) BETWEEN 1 AND 24),
+            analysis_run_id INTEGER NOT NULL CHECK (analysis_run_id > 0),
+            model_run_id INTEGER NOT NULL CHECK (model_run_id > 0),
+            scoring_run_id INTEGER NOT NULL CHECK (scoring_run_id > 0),
+            artifact_sha256 TEXT NOT NULL
+                CHECK (length(trim(artifact_sha256)) = 64),
+            score_semantics_json TEXT NOT NULL
+                CHECK (
+                    length(trim(score_semantics_json)) BETWEEN 2 AND 65536
+                    AND json_valid(score_semantics_json)
+                ),
+            score_semantics_sha256 TEXT NOT NULL
+                CHECK (length(trim(score_semantics_sha256)) = 64),
+            rank_contract_version TEXT NOT NULL
+                CHECK (length(trim(rank_contract_version)) BETWEEN 1 AND 24),
+            analytics_contract_version TEXT NOT NULL
+                CHECK (length(trim(analytics_contract_version)) BETWEEN 1 AND 24),
+            lifecycle_policy_version TEXT NOT NULL
+                CHECK (length(trim(lifecycle_policy_version)) BETWEEN 1 AND 24),
+            generation_status TEXT NOT NULL CHECK (generation_status = 'READY'),
+            lifecycle_state TEXT NOT NULL CHECK (
+                lifecycle_state IN (
+                    'CURRENT', 'REUSABLE', 'SUPERSEDED', 'STALE',
+                    'RETIREMENT_ELIGIBLE', 'PROTECTED'
+                )
+            ),
+            created_at TEXT NOT NULL,
+            last_verified_at TEXT NOT NULL,
+            last_used_at TEXT NOT NULL,
+            FOREIGN KEY (customer_import_id)
+                REFERENCES data_import_runs (import_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (campaign_sales_import_id)
+                REFERENCES data_import_runs (import_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (demographic_import_id)
+                REFERENCES data_import_runs (import_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (analysis_run_id)
+                REFERENCES historical_analysis_runs (analysis_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (model_run_id)
+                REFERENCES model_runs (model_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (scoring_run_id)
+                REFERENCES scoring_runs (scoring_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS phase10_orchestration_runs (
+            orchestration_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            orchestration_contract_version TEXT NOT NULL
+                CHECK (length(trim(orchestration_contract_version)) BETWEEN 1 AND 24),
+            targeting_context_id INTEGER NOT NULL CHECK (targeting_context_id > 0),
+            modeling_context_sha256 TEXT NOT NULL
+                CHECK (length(trim(modeling_context_sha256)) = 64),
+            intelligence_key_sha256 TEXT NOT NULL
+                CHECK (length(trim(intelligence_key_sha256)) = 64),
+            status TEXT NOT NULL
+                CHECK (status IN ('QUEUED', 'RUNNING', 'READY', 'BLOCKED', 'FAILED')),
+            stage TEXT NOT NULL CHECK (length(trim(stage)) BETWEEN 1 AND 80),
+            progress_percent INTEGER NOT NULL CHECK (progress_percent BETWEEN 0 AND 100),
+            business_message TEXT NOT NULL
+                CHECK (length(trim(business_message)) BETWEEN 1 AND 1000),
+            technical_message TEXT
+                CHECK (
+                    technical_message IS NULL
+                    OR length(trim(technical_message)) BETWEEN 1 AND 8192
+                ),
+            reuse_plan_json TEXT NOT NULL
+                CHECK (
+                    length(trim(reuse_plan_json)) BETWEEN 2 AND 65536
+                    AND json_valid(reuse_plan_json)
+                ),
+            analysis_run_id INTEGER CHECK (analysis_run_id IS NULL OR analysis_run_id > 0),
+            model_run_id INTEGER CHECK (model_run_id IS NULL OR model_run_id > 0),
+            scoring_run_id INTEGER CHECK (scoring_run_id IS NULL OR scoring_run_id > 0),
+            generation_id INTEGER CHECK (generation_id IS NULL OR generation_id > 0),
+            training_job_id INTEGER CHECK (training_job_id IS NULL OR training_job_id > 0),
+            scoring_job_id INTEGER CHECK (scoring_job_id IS NULL OR scoring_job_id > 0),
+            created_at TEXT NOT NULL,
+            started_at TEXT,
+            updated_at TEXT NOT NULL,
+            completed_at TEXT,
+            safe_error_message TEXT
+                CHECK (
+                    safe_error_message IS NULL
+                    OR length(trim(safe_error_message)) BETWEEN 1 AND 1000
+                ),
+            FOREIGN KEY (targeting_context_id)
+                REFERENCES campaign_targeting_contexts (targeting_context_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (analysis_run_id)
+                REFERENCES historical_analysis_runs (analysis_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (model_run_id)
+                REFERENCES model_runs (model_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (scoring_run_id)
+                REFERENCES scoring_runs (scoring_run_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (generation_id)
+                REFERENCES phase10_intelligence_generations (generation_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (training_job_id)
+                REFERENCES jobs (job_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (scoring_job_id)
+                REFERENCES jobs (job_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            CHECK (
+                (status = 'QUEUED' AND progress_percent = 0
+                    AND started_at IS NULL AND completed_at IS NULL)
+                OR (status = 'RUNNING' AND progress_percent BETWEEN 1 AND 99
+                    AND started_at IS NOT NULL AND completed_at IS NULL)
+                OR (status = 'READY' AND progress_percent = 100
+                    AND started_at IS NOT NULL AND completed_at IS NOT NULL
+                    AND analysis_run_id IS NOT NULL AND model_run_id IS NOT NULL
+                    AND scoring_run_id IS NOT NULL AND generation_id IS NOT NULL)
+                OR (status IN ('BLOCKED', 'FAILED') AND progress_percent BETWEEN 0 AND 99
+                    AND completed_at IS NOT NULL)
+            ),
+            CHECK (status != 'FAILED' OR safe_error_message IS NOT NULL)
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS phase10_context_bindings (
+            targeting_context_id INTEGER PRIMARY KEY CHECK (targeting_context_id > 0),
+            modeling_context_sha256 TEXT NOT NULL
+                CHECK (length(trim(modeling_context_sha256)) = 64),
+            orchestration_id INTEGER NOT NULL CHECK (orchestration_id > 0),
+            generation_id INTEGER CHECK (generation_id IS NULL OR generation_id > 0),
+            binding_status TEXT NOT NULL CHECK (
+                binding_status IN ('PREPARING', 'READY', 'BLOCKED', 'FAILED', 'STALE')
+            ),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            last_used_at TEXT NOT NULL,
+            FOREIGN KEY (targeting_context_id)
+                REFERENCES campaign_targeting_contexts (targeting_context_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (orchestration_id)
+                REFERENCES phase10_orchestration_runs (orchestration_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            FOREIGN KEY (generation_id)
+                REFERENCES phase10_intelligence_generations (generation_id)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
+            CHECK (binding_status != 'READY' OR generation_id IS NOT NULL)
+        )
+        """
+    )
+    # A generation key can have older SUPERSEDED/STALE rows; uniqueness belongs
+    # only to active orchestration, not immutable generation history.
+    connection.execute("DROP INDEX IF EXISTS idx_phase10_generations_intelligence_key")
+    for statement in PHASE_TEN_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -2196,6 +2551,7 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     12: _migrate_to_version_12,
     13: _migrate_to_version_13,
     14: _migrate_to_version_14,
+    15: _migrate_to_version_15,
 }
 
 

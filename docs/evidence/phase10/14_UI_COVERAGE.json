@@ -1,0 +1,165 @@
+{
+  "generated_at": "2026-09-14",
+  "prompt": "14_STEP_14_REAL_SYSTEM_BROWSER_BUSINESS_FLOW_CERTIFICATION.md",
+  "browser": "Installed Chrome",
+  "live_dom_inventory_count": 84,
+  "form_control_count": 31,
+  "terminal_status_vocabulary": [
+    "PASS",
+    "FAIL",
+    "JUSTIFIED_EXCLUSIVE"
+  ],
+  "inventory": [
+    {
+      "area": "Wizard shell",
+      "controls_or_states": ["planner-save-draft", "planner-step-1", "planner-step-2", "planner-step-3", "planner-step-4", "planner-step-5", "planner-progress-label", "planner-current-step-name", "planner-draft-status", "planner-status-announcement"],
+      "evidence": "Live DOM inventory and headed keyboard navigation",
+      "status": "PASS"
+    },
+    {
+      "area": "Campaign details",
+      "controls_or_states": ["planner-campaign-name", "planner-campaign-description", "planner-planned-launch-date", "planner-next-1"],
+      "evidence": "Scenario A completed required name and optional description, then advanced",
+      "status": "PASS"
+    },
+    {
+      "area": "Campaign Context loading and recovery",
+      "controls_or_states": ["planner-context-loading", "planner-context-error", "planner-context-retry", "planner-context-empty", "planner-context-summary"],
+      "evidence": "Live DOM state inventory verified status/alert/focus semantics",
+      "status": "PASS"
+    },
+    {
+      "area": "Campaign Context questions",
+      "controls_or_states": ["planner-context-products", "planner-context-types", "planner-context-categories", "planner-context-offers", "planner-context-delivery-channel", "planner-context-historical-channels", "planner-context-save", "planner-back-2", "planner-next-2"],
+      "evidence": "Scenarios A, C, D and E changed and persisted all modeling/delivery dimensions",
+      "status": "PASS"
+    },
+    {
+      "area": "Targeting options loading and recovery",
+      "controls_or_states": ["planner-targeting-loading", "planner-targeting-error", "planner-targeting-retry", "planner-targeting-save-summary"],
+      "evidence": "Live DOM state inventory verified status/alert/focus semantics",
+      "status": "PASS"
+    },
+    {
+      "area": "Match strength",
+      "controls_or_states": ["VERY_STRONG", "STRONG", "GOOD", "BROAD"],
+      "evidence": "GOOD exercised in A-E; VERY_STRONG selected by keyboard in F; all four live radio names inventoried",
+      "status": "PASS"
+    },
+    {
+      "area": "Primary demographic targeting",
+      "controls_or_states": ["planner-targeting-genders", "planner-targeting-age-groups", "planner-targeting-states", "planner-targeting-regions", "planner-targeting-income-groups"],
+      "evidence": "Options dynamically loaded; Female and income criteria persisted and changed the exact F preview",
+      "status": "PASS"
+    },
+    {
+      "area": "Progressively disclosed targeting",
+      "controls_or_states": ["planner-targeting-more", "planner-targeting-marital-statuses", "planner-targeting-education-levels", "planner-targeting-employment-statuses", "planner-targeting-resident-statuses", "planner-targeting-resident-types", "planner-targeting-employment-types"],
+      "evidence": "Live DOM inventory confirmed the closed details disclosure and all labeled controls",
+      "status": "PASS"
+    },
+    {
+      "area": "Numeric and selection targeting",
+      "controls_or_states": ["planner-targeting-family-min", "planner-targeting-family-max", "planner-targeting-top-percent", "planner-targeting-selection-mode", "planner-targeting-target-count"],
+      "evidence": "Live DOM inventory confirmed labels, bounds, optional/required behavior and TOP_N disclosure",
+      "status": "PASS"
+    },
+    {
+      "area": "Active targeting criteria",
+      "controls_or_states": ["planner-targeting-active", "planner-targeting-clear-all", "planner-targeting-chips", "criterion remove buttons", "planner-targeting-save", "planner-back-3", "planner-next-3"],
+      "evidence": "Live list and aria-live inventory; criteria changed through controls and persisted through preview",
+      "status": "PASS"
+    },
+    {
+      "area": "Intelligence initial and active preparation",
+      "controls_or_states": ["planner-intelligence-loading", "QUEUED", "RUNNING", "planner-intelligence-progress", "planner-intelligence-progressbar", "PREPARING_TARGET_GROUP"],
+      "evidence": "Scenario B displayed 0% queued and business-labeled preparation; Scenario D retry displayed 89% Potential customers",
+      "status": "PASS"
+    },
+    {
+      "area": "Intelligence reconnect",
+      "controls_or_states": ["Home / Overview", "Create Campaign", "persisted currentStep", "pollPreparation"],
+      "evidence": "Scenario B navigated away during preparation, returned, reconnected, and opened READY preview",
+      "status": "PASS"
+    },
+    {
+      "area": "Insufficient history",
+      "controls_or_states": ["BLOCKED", "planner-intelligence-back-context", "planner-next-4 disabled"],
+      "evidence": "Scenario C showed plain not-enough-history copy, no preview/fallback, and retained P2 Acquisition inputs after Back",
+      "status": "PASS"
+    },
+    {
+      "area": "Failure and retry",
+      "controls_or_states": ["FAILED alert", "planner-intelligence-retry", "planner-intelligence-back-context", "planner-next-4 disabled"],
+      "evidence": "Scenario D showed safe business copy without a stack/path, retained inputs, retried, displayed progress and reached READY",
+      "status": "PASS"
+    },
+    {
+      "area": "READY reuse",
+      "controls_or_states": ["READY", "planner-intelligence-status", "planner-next-4 enabled", "automatic exact preview"],
+      "evidence": "Scenario A reused a complete generation and automatically opened 78-person exact preview without a raw ID",
+      "status": "PASS"
+    },
+    {
+      "area": "Technical details",
+      "controls_or_states": ["planner-intelligence-advanced", "planner-intelligence-details"],
+      "evidence": "Hidden by default; opened explicitly; displayed status, run provenance and SHA-256 hashes; PII label scan returned false",
+      "status": "PASS"
+    },
+    {
+      "area": "Preview loading and error",
+      "controls_or_states": ["planner-target-preview-loading", "planner-target-preview-error", "planner-target-preview-retry"],
+      "evidence": "Live DOM inventory confirmed semantic status, focusable alert and explicit retry control",
+      "status": "PASS"
+    },
+    {
+      "area": "Exact preview empty and metrics",
+      "controls_or_states": ["planner-target-preview-empty", "planner-preview-available", "planner-preview-matching", "planner-preview-selected", "planner-preview-percent", "planner-preview-average-score", "planner-preview-strongest", "planner-preview-lowest", "planner-preview-why"],
+      "evidence": "A-E rendered non-empty exact metrics; F rendered the exact zero state after stricter criteria",
+      "status": "PASS"
+    },
+    {
+      "area": "Match comparison and profile",
+      "controls_or_states": ["planner-match-strength-panel", "planner-match-strength-comparisons", "planner-preview-score-bands", "planner-preview-demographic-mix"],
+      "evidence": "Exact four-strength counts, explanation/disclaimer, score distribution and demographic mix rendered from READY data",
+      "status": "PASS"
+    },
+    {
+      "area": "Privacy-safe prospect preview",
+      "controls_or_states": ["planner-preview-table-body", "planner-preview-page-status", "planner-preview-load-more"],
+      "evidence": "Scenario A rendered 25 privacy-safe rows with Potential Customer ID and no contact PII; load-more was available",
+      "status": "PASS"
+    },
+    {
+      "area": "Review and save boundary",
+      "controls_or_states": ["planner-back-4", "planner-next-4", "planner-review-error", "planner-target-group-name", "planner-target-group-description", "planner-back-5", "planner-save-target-group", "planner-save-success", "planner-review-technical"],
+      "evidence": "Live DOM inventory confirmed labels, required name, focusable alert, success live region and progressive technical disclosure; Step 14 stops before draft creation",
+      "status": "JUSTIFIED_EXCLUSIVE",
+      "reason": "The Step 14 required scenarios certify orchestration through exact preview. Saving a Target Group/Campaign Draft is a Phase 9 boundary already certified and is not requested as a Step 14 mutation."
+    }
+  ],
+  "scenario_results": {
+    "A_READY_reuse": "PASS",
+    "B_preparation_required_and_reconnect": "PASS",
+    "C_insufficient_history": "PASS",
+    "D_deterministic_failure_retry": "PASS",
+    "E_delivery_channel_reuse": "PASS",
+    "F_targeting_filter_change": "PASS"
+  },
+  "responsive_results": [
+    {"viewport": "1920x1080", "horizontal_overflow": false, "status": "PASS"},
+    {"viewport": "1366x768", "horizontal_overflow": false, "status": "PASS"},
+    {"viewport": "1024x768", "horizontal_overflow": false, "status": "PASS"},
+    {"viewport": "768x1024", "horizontal_overflow": false, "status": "PASS"},
+    {"viewport": "390x844", "horizontal_overflow": false, "status": "PASS"}
+  ],
+  "accessibility": {
+    "keyboard_navigation_and_activation": "PASS",
+    "focus_management": "PASS",
+    "labeled_controls": "PASS",
+    "unlabeled_control_count": 0,
+    "aria_live_progress_and_status": "PASS",
+    "focusable_error_alerts": "PASS",
+    "semantic_loading_states": "PASS"
+  }
+}

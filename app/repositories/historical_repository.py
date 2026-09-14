@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 CAMPAIGN_OPTION_LIMIT = 250
 PRODUCT_OPTION_LIMIT = 250
 CATEGORY_OPTION_LIMIT = 100
+CAMPAIGN_CATEGORY_OPTION_LIMIT = 100
+OFFER_TYPE_OPTION_LIMIT = 100
 CHANNEL_OPTION_LIMIT = 100
 CAMPAIGN_TYPE_OPTION_LIMIT = 100
 MONTHLY_TREND_LIMIT = 120
@@ -37,6 +39,8 @@ _FILTER_COLUMNS = {
     "campaign_ids": "campaign_id",
     "product_ids": "product_id",
     "product_categories": "product_category",
+    "campaign_categories": "campaign_category",
+    "offer_types": "offer_type",
     "campaign_channels": "campaign_channel",
     "campaign_types": "campaign_type",
 }
@@ -49,7 +53,9 @@ def build_matching_observations_cte(
     parameters: list[Any] = []
 
     for filter_name, column in _FILTER_COLUMNS.items():
-        values = filters[filter_name]
+        # Low-level callers and pre-Phase-10 persisted payloads may not yet carry
+        # the two extended dimensions; omission is equivalent to no filter.
+        values = filters.get(filter_name, [])
         if not values:
             continue
         placeholders = ", ".join("?" for _ in values)
@@ -187,11 +193,21 @@ class HistoricalRepository:
                 column="campaign_type",
                 limit=CAMPAIGN_TYPE_OPTION_LIMIT,
             )
+            campaign_categories = self._fetch_distinct_values(
+                connection,
+                column="campaign_category",
+                limit=CAMPAIGN_CATEGORY_OPTION_LIMIT,
+            )
+            offer_types = self._fetch_distinct_values(
+                connection,
+                column="offer_type",
+                limit=OFFER_TYPE_OPTION_LIMIT,
+            )
 
         self._log_option_inconsistencies(campaigns, products)
         elapsed = time.perf_counter() - started
         logger.info(
-            "Historical options queries completed | query_count=6 seconds=%.3f",
+            "Historical options queries completed | query_count=8 seconds=%.3f",
             elapsed,
         )
         return {
@@ -201,6 +217,8 @@ class HistoricalRepository:
                 for row in campaigns
             ],
             "product_categories": product_categories,
+            "campaign_categories": campaign_categories,
+            "offer_types": offer_types,
             "products": [
                 {
                     "product_id": row["product_id"],
@@ -220,7 +238,12 @@ class HistoricalRepository:
         column: str,
         limit: int,
     ) -> list[str]:
-        if column not in {"campaign_channel", "campaign_type"}:
+        if column not in {
+            "campaign_category",
+            "campaign_channel",
+            "campaign_type",
+            "offer_type",
+        }:
             raise ValueError(f"Unsupported historical option column: {column}")
         return [
             row["value"]
@@ -987,5 +1010,37 @@ class HistoricalRepository:
                 LIMIT ? OFFSET ?
                 """,
                 (limit, offset),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def list_completed_analysis_candidates(self) -> list[dict[str, Any]]:
+        """Return bounded-metadata completed runs for exact compatibility checks."""
+
+        with get_connection(self.database_path) as connection:
+            rows = connection.execute(
+                """
+                SELECT
+                    analysis_run_id,
+                    analysis_name,
+                    created_at,
+                    completed_at,
+                    status,
+                    conversion_definition,
+                    filters_json,
+                    results_json,
+                    customer_import_id,
+                    customer_source_checksum,
+                    campaign_sales_import_id,
+                    campaign_sales_source_checksum,
+                    observation_count,
+                    selected_customer_count,
+                    positive_customer_count,
+                    unlabeled_customer_count,
+                    positive_customer_rate,
+                    error_message
+                FROM historical_analysis_runs
+                WHERE status = 'COMPLETED'
+                ORDER BY completed_at DESC, analysis_run_id DESC
+                """
             ).fetchall()
         return [dict(row) for row in rows]

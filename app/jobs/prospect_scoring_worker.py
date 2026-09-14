@@ -7,7 +7,7 @@ import logging
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from app.database.schema import initialize_database
 from app.repositories.job_repository import (
@@ -22,6 +22,7 @@ from app.repositories.job_repository import (
 )
 from app.services.model_scoring_compatibility import ModelScoreabilityValidationError
 from app.services.prospect_scoring_service import (
+    DEFAULT_SCORING_CHUNK_SIZE,
     ProspectScoringExecutionError,
     run_chunked_prospect_scoring,
 )
@@ -101,7 +102,14 @@ def _mark_failed(
         )
 
 
-def run_prospect_scoring_job(database_path: str | Path, job_id: int) -> None:
+def run_prospect_scoring_job(
+    database_path: str | Path,
+    job_id: int,
+    *,
+    project_root: str | Path | None = None,
+    chunk_size: int = DEFAULT_SCORING_CHUNK_SIZE,
+    progress_observer: Callable[[str, int, str | None], None] | None = None,
+) -> None:
     """Execute one queued PROSPECT_SCORING job and persist lifecycle transitions."""
     path = initialize_database(database_path)
     repository = JobRepository(path)
@@ -159,11 +167,15 @@ def run_prospect_scoring_job(database_path: str | Path, job_id: int) -> None:
                 message=message,
                 model_run_id=model_run_id,
             )
+            if progress_observer is not None:
+                progress_observer(stage, progress_percent, message)
 
         scoring_result = run_chunked_prospect_scoring(
             path,
             model_run_id=model_run_id,
             job_id=job_id,
+            chunk_size=chunk_size,
+            project_root=project_root,
             progress_callback=progress_callback,
         )
         summary = scoring_result["summary"]

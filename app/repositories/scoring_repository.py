@@ -550,6 +550,102 @@ class ScoringRepository:
             ).fetchall()
         return [dict(row) for row in rows]
 
+    def list_model_candidates(
+        self,
+        model_run_id: int,
+        *,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """Return completed and failed/running scoring candidates deterministically."""
+
+        normalized_model_run_id = _require_positive_int(
+            model_run_id,
+            field_name="model_run_id",
+        )
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 1000:
+            raise ScoringValidationError("limit must be an integer between 1 and 1000.")
+        with get_connection(self.database_path) as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM scoring_runs
+                WHERE model_run_id = ?
+                ORDER BY
+                    CASE WHEN completed_at IS NULL THEN 1 ELSE 0 END,
+                    completed_at DESC,
+                    created_at DESC,
+                    scoring_run_id DESC
+                LIMIT ?
+                """,
+                (normalized_model_run_id, limit),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def fetch_phase10_score_integrity(self, scoring_run_id: int) -> dict[str, int]:
+        """Deep full-universe score integrity counts for Phase 10 compatibility."""
+
+        normalized_id = _require_positive_int(
+            scoring_run_id,
+            field_name="scoring_run_id",
+        )
+        with get_connection(self.database_path) as connection:
+            score_row = connection.execute(
+                """
+                SELECT
+                    COUNT(*) AS score_count,
+                    COUNT(DISTINCT person_id) AS distinct_person_count,
+                    SUM(
+                        CASE
+                            WHEN propensity_score IS NULL
+                              OR typeof(propensity_score) NOT IN ('integer', 'real')
+                              OR propensity_score != propensity_score
+                              OR propensity_score < 0
+                              OR propensity_score > 1
+                            THEN 1 ELSE 0
+                        END
+                    ) AS invalid_score_count
+                FROM propensity_scores
+                WHERE scoring_run_id = ?
+                """,
+                (normalized_id,),
+            ).fetchone()
+            missing_row = connection.execute(
+                """
+                SELECT COUNT(*) AS missing_person_count
+                FROM demographics AS demographic
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM propensity_scores AS score
+                    WHERE score.scoring_run_id = ?
+                      AND score.person_id = demographic.person_id
+                )
+                """,
+                (normalized_id,),
+            ).fetchone()
+            extra_row = connection.execute(
+                """
+                SELECT COUNT(*) AS extra_person_count
+                FROM propensity_scores AS score
+                WHERE score.scoring_run_id = ?
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM demographics AS demographic
+                      WHERE demographic.person_id = score.person_id
+                  )
+                """,
+                (normalized_id,),
+            ).fetchone()
+        score_count = int(score_row["score_count"])
+        distinct_count = int(score_row["distinct_person_count"])
+        return {
+            "score_count": score_count,
+            "distinct_person_count": distinct_count,
+            "duplicate_person_count": score_count - distinct_count,
+            "invalid_score_count": int(score_row["invalid_score_count"] or 0),
+            "missing_person_count": int(missing_row["missing_person_count"]),
+            "extra_person_count": int(extra_row["extra_person_count"]),
+        }
+
     def find_completed_run_for_model(self, model_run_id: int) -> dict[str, Any] | None:
         normalized_model_run_id = _require_positive_int(model_run_id, field_name="model_run_id")
         rows = self.find_completed_runs_for_model(normalized_model_run_id, limit=1)

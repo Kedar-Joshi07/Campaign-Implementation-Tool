@@ -7,6 +7,7 @@ from app.jobs.executor import (
     shutdown_model_training_executor,
     submit_audience_preparation_job,
     submit_prospect_scoring_job,
+    submit_phase10_orchestration_job,
     submit_model_training_job,
 )
 from app.jobs.audience_preparation_worker import run_audience_preparation_job
@@ -23,5 +24,6 @@ __all__ = (
     "shutdown_model_training_executor",
     "submit_audience_preparation_job",
     "submit_prospect_scoring_job",
+    "submit_phase10_orchestration_job",
     "submit_model_training_job",
 )

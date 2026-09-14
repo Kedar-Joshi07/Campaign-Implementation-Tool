@@ -31,6 +31,7 @@ from app.services.campaign_targeting_context_service import (
     get_business_targeting_criteria,
     get_campaign_targeting_context,
 )
+from app.services.phase10_lifecycle_service import touch_phase10_usage_for_context
 from app.services.targeting_intelligence_service import resolve_targeting_intelligence
 
 
@@ -340,7 +341,7 @@ def get_target_group_preview(
     context = get_campaign_targeting_context(
         path, targeting_context_id=targeting_context_id
     )["context"]
-    return {
+    response = {
         "target_group_preview_contract_version": TARGET_GROUP_PREVIEW_CONTRACT_VERSION,
         "targeting_context_id": targeting_context_id,
         "currentness": "UP_TO_DATE",
@@ -396,6 +397,10 @@ def get_target_group_preview(
             "saved_target_group_contract_version": None,
         },
     }
+    touch_phase10_usage_for_context(
+        path, targeting_context_id=targeting_context_id
+    )
+    return response
 
 
 def _encode_cursor(payload: dict[str, Any]) -> str:
@@ -558,7 +563,7 @@ def search_target_group_preview(
                 "last_person_id": str(last["person_id"]),
             }
         )
-    return {
+    response = {
         "target_group_preview_contract_version": TARGET_GROUP_PREVIEW_CONTRACT_VERSION,
         "targeting_context_id": targeting_context_id,
         "currentness": "UP_TO_DATE",
@@ -566,6 +571,10 @@ def search_target_group_preview(
         "next_cursor": next_cursor,
         "has_more": has_more,
     }
+    touch_phase10_usage_for_context(
+        path, targeting_context_id=targeting_context_id
+    )
+    return response
 
 
 __all__ = (

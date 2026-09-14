@@ -86,13 +86,28 @@ def test_application_startup_runs_stale_job_reconciliation_and_shutdown(
     def fake_shutdown(*, wait: bool) -> None:
         observed["wait"] = wait
 
+    def fake_phase10_reconcile(
+        database_path: Path,
+        *,
+        project_root: Path,
+    ) -> int:
+        observed["phase10_database_path"] = database_path
+        observed["phase10_project_root"] = project_root
+        return 0
+
     monkeypatch.setattr("app.main.reconcile_stale_model_training_jobs", fake_reconcile)
+    monkeypatch.setattr(
+        "app.main.reconcile_phase10_orchestrations",
+        fake_phase10_reconcile,
+    )
     monkeypatch.setattr("app.main.shutdown_model_training_executor", fake_shutdown)
 
     with TestClient(app):
         pass
 
     assert "database_path" in observed
+    assert observed["phase10_database_path"] == observed["database_path"]
+    assert isinstance(observed["phase10_project_root"], Path)
     assert observed["wait"] is False
 
 
@@ -105,6 +120,10 @@ def test_application_startup_tolerates_reconciliation_failure(
     monkeypatch.setattr(
         "app.main.reconcile_stale_model_training_jobs",
         failing_reconcile,
+    )
+    monkeypatch.setattr(
+        "app.main.reconcile_phase10_orchestrations",
+        lambda *_args, **_kwargs: 0,
     )
 
     with TestClient(app):

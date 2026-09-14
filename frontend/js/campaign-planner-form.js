@@ -92,7 +92,13 @@ async function continueFrom(step) {
   }
   if (step === 2 && !(await validateAndSaveCampaignContext())) return;
   if (step === 3 && !(await validateAndSaveBusinessTargeting())) return;
-  if (step === 3) await refreshTargetingIntelligence();
+  if (step === 3) {
+    completePlannerStep(step);
+    announce("Targeting preferences saved. Preparing your Target Group now.");
+    document.querySelector('[data-planner-panel="4"] h3').focus?.();
+    refreshTargetingIntelligence();
+    return;
+  }
   completePlannerStep(step);
   announce(`${STEP_NAMES[step]} completed. ${STEP_NAMES[Math.min(step + 1, STEP_COUNT)]} is ready.`);
   document.querySelector(`[data-planner-panel="${Math.min(step + 1, STEP_COUNT)}"] h3`).focus?.();
@@ -103,6 +109,7 @@ function moveBack(fromStep) {
   setCampaignPlannerStep(target);
   announce(`Returned to ${STEP_NAMES[target]}. Your entries have been retained.`);
   document.querySelector(`[data-planner-panel="${target}"] h3`).focus?.();
+  if (target === 4) refreshTargetingIntelligence();
 }
 
 function bindActions() {
@@ -121,7 +128,10 @@ function bindActions() {
   for (const button of document.querySelectorAll("[data-planner-step]")) {
     button.addEventListener("click", () => {
       const step = Number(button.dataset.plannerStep);
-      if (setCampaignPlannerStep(step)) announce(`${STEP_NAMES[step]} opened.`);
+      if (setCampaignPlannerStep(step)) {
+        announce(`${STEP_NAMES[step]} opened.`);
+        if (step === 4) refreshTargetingIntelligence();
+      }
     });
   }
   document.querySelector("#planner-save-draft").addEventListener("click", () => {

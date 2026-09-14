@@ -140,6 +140,8 @@ def test_options_are_real_deduplicated_stable_and_have_frozen_defaults(
     ]
     assert options["campaign_channels"] == ["Direct", "Email", "Social"]
     assert options["campaign_types"] == ["Acquisition", "Retention"]
+    assert options["campaign_categories"] == []
+    assert options["offer_types"] == []
     assert [item["value"] for item in options["conversion_definitions"]] == [
         "ATTRIBUTED_PURCHASE",
         "ANY_PURCHASE",
@@ -149,6 +151,8 @@ def test_options_are_real_deduplicated_stable_and_have_frozen_defaults(
         "campaign_ids": [],
         "product_ids": [],
         "product_categories": [],
+        "campaign_categories": [],
+        "offer_types": [],
         "campaign_channels": [],
         "campaign_types": [],
         "contact_date_from": "2025-01-05",
@@ -158,7 +162,7 @@ def test_options_are_real_deduplicated_stable_and_have_frozen_defaults(
     }
     assert "Inconsistent campaign labels detected" in caplog.text
     assert "Inconsistent product labels detected" in caplog.text
-    assert "query_count=6" in caplog.text
+    assert "query_count=8" in caplog.text
 
 
 def test_option_arrays_are_bounded(
@@ -169,6 +173,8 @@ def test_option_arrays_are_bounded(
     monkeypatch.setattr(repository_module, "CAMPAIGN_OPTION_LIMIT", 2)
     monkeypatch.setattr(repository_module, "PRODUCT_OPTION_LIMIT", 2)
     monkeypatch.setattr(repository_module, "CATEGORY_OPTION_LIMIT", 1)
+    monkeypatch.setattr(repository_module, "CAMPAIGN_CATEGORY_OPTION_LIMIT", 1)
+    monkeypatch.setattr(repository_module, "OFFER_TYPE_OPTION_LIMIT", 1)
     monkeypatch.setattr(repository_module, "CHANNEL_OPTION_LIMIT", 2)
     monkeypatch.setattr(repository_module, "CAMPAIGN_TYPE_OPTION_LIMIT", 1)
 
@@ -340,7 +346,7 @@ def test_services_execute_fixed_query_counts_without_demographic_access(
         for statement in statements
         if statement.lstrip().upper().startswith(("SELECT", "WITH"))
     ]
-    assert len(aggregate_queries) == 13
+    assert len(aggregate_queries) == 15
     assert all("demographics" not in statement.lower() for statement in statements)
 
     forbidden_keys = {

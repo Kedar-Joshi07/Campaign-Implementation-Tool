@@ -80,6 +80,8 @@ def get_historical_options(database_path: str | Path) -> dict[str, Any]:
             "campaign_ids": [],
             "product_ids": [],
             "product_categories": [],
+            "campaign_categories": [],
+            "offer_types": [],
             "campaign_channels": [],
             "campaign_types": [],
             "contact_date_from": available_date_from,

@@ -109,13 +109,13 @@ def test_fresh_schema_creates_phase9_table_columns_and_indexes(database_path: Pa
             ).fetchall()
         }
 
-    assert schema_version == str(CURRENT_SCHEMA_VERSION) == "14"
+    assert schema_version == str(CURRENT_SCHEMA_VERSION) == "15"
     assert columns == CAMPAIGN_TARGETING_CONTEXT_COLUMNS
     assert saved_target_group_columns == PHASE9_SAVED_TARGET_GROUP_COLUMNS
     assert set(PHASE_NINE_REQUIRED_INDEX_STATEMENTS) <= indexes
 
 
-def test_v12_to_v14_migrations_are_additive_idempotent_and_preserve_data(
+def test_v12_to_current_migrations_are_additive_idempotent_and_preserve_data(
     database_path: Path,
 ) -> None:
     _create_version_twelve_database(database_path)
@@ -132,7 +132,7 @@ def test_v12_to_v14_migrations_are_additive_idempotent_and_preserve_data(
         ).fetchone()[0]
         columns = _columns(connection, "campaign_targeting_contexts")
 
-    assert schema_version == "14"
+    assert schema_version == "15"
     assert sentinel == "preserve-me"
     assert columns == CAMPAIGN_TARGETING_CONTEXT_COLUMNS
 

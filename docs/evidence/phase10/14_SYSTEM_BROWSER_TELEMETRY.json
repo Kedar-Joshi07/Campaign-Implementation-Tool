@@ -1,0 +1,55 @@
+{
+  "generated_at": "2026-09-14",
+  "system_browser": {
+    "headed_business_flow": "Chrome extension-controlled installed browser",
+    "screenshot_browser": "system_chrome",
+    "screenshot_browser_version": "153.0.8010.36",
+    "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+  },
+  "application_telemetry": {
+    "unexplained_javascript_exceptions": 0,
+    "page_errors": 0,
+    "critical_network_failures": 0,
+    "failed_requests": 0,
+    "unexplained_console_errors": 0,
+    "status": "PASS"
+  },
+  "explained_exclusive_events": [
+    {
+      "status": "JUSTIFIED_EXCLUSIVE",
+      "source": "application empty-state request",
+      "count": 1,
+      "event": "GET /api/campaign-planner/contexts/2/campaign-draft returned 404",
+      "reason": "The Campaign Planner checks for an existing draft while reopening. No campaign draft had been created in this Step 14 preview-only fixture, and the frontend handles the 404 as the expected no-draft state. It was not a critical request and caused no page exception."
+    },
+    {
+      "status": "JUSTIFIED_EXCLUSIVE",
+      "source": "Chrome control extension",
+      "count": 8,
+      "event": "A listener indicated an asynchronous response, but the message channel closed",
+      "reason": "All eight identical messages occurred at the same millisecond while the browser-control viewport override was being applied. They contain no application URL, stack, module, or request failure and were absent from the independent installed-Chrome capture."
+    },
+    {
+      "status": "JUSTIFIED_EXCLUSIVE",
+      "source": "controlled Scenario D fault",
+      "count": 1,
+      "event": "POST targeting-intelligence/prepare returned the stable safe failure response",
+      "reason": "This was the explicitly required deterministic failure injection. The browser displayed safe business copy, retained inputs, exposed retry, and recovered to READY."
+    }
+  ],
+  "independent_installed_chrome_capture": {
+    "console_errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "page_errors": [],
+    "request_failures": [],
+    "http_errors": [
+      {
+        "method": "GET",
+        "status": 404,
+        "url": "http://127.0.0.1:8014/api/campaign-planner/contexts/2/campaign-draft",
+        "classification": "JUSTIFIED_EXCLUSIVE"
+      }
+    ]
+  }
+}

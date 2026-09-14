@@ -42,6 +42,7 @@ from app.services.target_group_preview_service import (
     _materialize_business_selection,
     _preview_inputs,
 )
+from app.services.phase10_lifecycle_service import touch_phase10_usage_for_context
 from app.services.targeting_intelligence_service import resolve_targeting_intelligence
 
 
@@ -280,6 +281,9 @@ def save_target_group_and_create_campaign_draft(
 ) -> dict[str, Any]:
     path, _resolution, criteria_response, audience_context = _preview_inputs(
         database_path, targeting_context_id=targeting_context_id
+    )
+    touch_phase10_usage_for_context(
+        path, targeting_context_id=targeting_context_id
     )
     repository = CampaignTargetingContextRepository(path)
     context_row = repository.fetch_context(targeting_context_id)

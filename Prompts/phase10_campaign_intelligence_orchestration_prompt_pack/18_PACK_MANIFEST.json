@@ -1,0 +1,130 @@
+{
+  "pack_name": "Phase 10 Automatic Campaign Intelligence & Targeting Orchestration Prompt Pack",
+  "version": "1.0",
+  "repository": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git",
+  "frozen_phase9_baseline": "7e54754053bf998e65c59a36c0096d5404bb6479",
+  "step_count": 16,
+  "file_count_excluding_manifest": 24,
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 2179,
+      "sha256": "651d137f84d6b6fb69557e5747f79e45e45fe067fe517a36390ac4b09c3e95e0"
+    },
+    {
+      "file": "01_MASTER_GUARDRAILS.md",
+      "bytes": 1765,
+      "sha256": "922d3fe412939ff4f482a893a316f5681ca6f8ba2d12dc5a25d2f1e60916c498"
+    },
+    {
+      "file": "01_STEP_01_BASELINE_RECONCILIATION_AND_PHASE9_FREEZE.md",
+      "bytes": 1105,
+      "sha256": "ec975decb5e3ef22b7ddd303fc6124abc2830443b2631eea5fab5301da7c3c44"
+    },
+    {
+      "file": "02_MASTER_ARCHITECTURE_CONTRACT.md",
+      "bytes": 2135,
+      "sha256": "50bf4102848ca5ecf4916edc6214acf2686c52de314187510725d4c670067237"
+    },
+    {
+      "file": "02_STEP_02_PHASE10_CONTEXT_IDENTITY_AND_POLICY_CONTRACTS.md",
+      "bytes": 1156,
+      "sha256": "66c3f13731fa691d71b899ae4cd40d789c17d5912d2a5b56c5a7383665990c07"
+    },
+    {
+      "file": "03_PHASE10_POLICY_AND_DECISION_CONTRACT.md",
+      "bytes": 2064,
+      "sha256": "9487b86d1b88f3f564cb43b86d6229718e1e02026d698b8536c56bf4b4effb1e"
+    },
+    {
+      "file": "03_STEP_03_EXTEND_HISTORICAL_CONTEXT_FILTERING.md",
+      "bytes": 1085,
+      "sha256": "9b1cd653caea30318828c911ca68d48df6bd82b8dc77f69ff3ff5a6b9ab3acda"
+    },
+    {
+      "file": "04_MASTER_ACCEPTANCE_CHECKLIST.md",
+      "bytes": 1948,
+      "sha256": "c86ff3770d1dff3ac9412c8d4d1237c8dd64af5718ec7fa43cfd97b0ed36d19f"
+    },
+    {
+      "file": "04_STEP_04_PHASE10_SCHEMA_REGISTRY_AND_REPOSITORIES.md",
+      "bytes": 1913,
+      "sha256": "7cf0aef1360119cd86162974022be05b1926a39d7f40e320fc786573a1156701"
+    },
+    {
+      "file": "05_PROGRESS_TRACKER.md",
+      "bytes": 901,
+      "sha256": "f83fee676e29b742a2b2f2dafad0bcd942c309a4f56d53af852206f79cfe70bc"
+    },
+    {
+      "file": "05_STEP_05_HISTORICAL_ANALYSIS_COMPATIBILITY_AND_ELIGIBILITY.md",
+      "bytes": 1603,
+      "sha256": "c9149814ed319fb2b6335537e152257c57b62e61fe8043ac7cb8a53297f29486"
+    },
+    {
+      "file": "06_FINAL_REPORT_TEMPLATE.md",
+      "bytes": 1106,
+      "sha256": "0c7a8f77c6285a294558c7c82df210917c56e67f0dd05ff6b7487ac4b54ac30e"
+    },
+    {
+      "file": "06_STEP_06_MODEL_COMPATIBILITY_REUSE_AND_VALIDATION.md",
+      "bytes": 1380,
+      "sha256": "c2a42991d8cfc7e0681223c2ed1c704e7d7113d60b4fe1573fd81eb507bbc0c0"
+    },
+    {
+      "file": "07_STEP_07_SCORING_RANK_COMPATIBILITY_AND_REUSE.md",
+      "bytes": 1147,
+      "sha256": "301364b2306c9579e8687805fd1f9bf4748ece0c3f791f96b933543477af2e4b"
+    },
+    {
+      "file": "08_STEP_08_DURABLE_REUSE_OR_BUILD_ORCHESTRATION.md",
+      "bytes": 1751,
+      "sha256": "5d3b79fa7608db336ed51202a0d23be7bb4cf36bfedcfc59c74c545d56808679"
+    },
+    {
+      "file": "09_STEP_09_PHASE10_API_AND_PHASE9_BRIDGE.md",
+      "bytes": 1348,
+      "sha256": "578ddb2c0bb16bf77044340bbe241fea09a7b3d706477799b458cff8c6f88685"
+    },
+    {
+      "file": "10_STEP_10_BUSINESS_UI_AUTOMATIC_PREPARATION_FLOW.md",
+      "bytes": 1891,
+      "sha256": "e4e0a9016664cdcbf23dc6904c75f5318b088fc60844ee380e463c35c7773cd5"
+    },
+    {
+      "file": "11_STEP_11_INTELLIGENCE_LIFECYCLE_AND_RETENTION.md",
+      "bytes": 1184,
+      "sha256": "eba47a80204417fb110b43d2e3b1bcadd9716f4844cfc944e611b74e3cab07ba"
+    },
+    {
+      "file": "12_STEP_12_COMPREHENSIVE_PHASE10_TEST_MATRIX.md",
+      "bytes": 1670,
+      "sha256": "0c9d6bdec105e7294773e61ec182ed85c8e1383dbd51a198296451f13269fa55"
+    },
+    {
+      "file": "13_STEP_13_BOUNDED_CLEANROOM_REUSE_BUILD_AND_RECOVERY.md",
+      "bytes": 1528,
+      "sha256": "fc43dc8c1ab51a43d3aed43fdf579728612111c2e32c3c1b94f755caa4781800"
+    },
+    {
+      "file": "14_STEP_14_REAL_SYSTEM_BROWSER_BUSINESS_FLOW_CERTIFICATION.md",
+      "bytes": 1487,
+      "sha256": "6bb7046cda81dc23b35603af389c9fbd0e1b1e2425f78850b0832df242426f76"
+    },
+    {
+      "file": "15_STEP_15_CLEAN_HEAD_FULL_5M_PHASE10_CERTIFICATION.md",
+      "bytes": 2578,
+      "sha256": "5b5a448007572c82ca577396b6378520d2ca74986bff53f69881fa6801826a6e"
+    },
+    {
+      "file": "16_STEP_16_EXACT_SHA_CI_DOCUMENTATION_AND_PHASE10_FREEZE.md",
+      "bytes": 1589,
+      "sha256": "961bc0f5e3cc0055f4fc2fd218d7921f5b17f1a22b959e2fe404c3ddaa56f328"
+    },
+    {
+      "file": "17_SINGLE_MASTER_PHASE10_PROMPT.md",
+      "bytes": 1417,
+      "sha256": "ca972d2968191e9699dccbc35eb7c0472abfcecbf46d83f8b985aeac60f89497"
+    }
+  ]
+}

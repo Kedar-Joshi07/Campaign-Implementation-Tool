@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Annotated, NoReturn
 
@@ -23,6 +24,10 @@ from app.schemas.campaign_targeting import (
     TargetGroupPreviewResponse,
     TargetGroupSearchRequest,
     TargetGroupSearchResponse,
+)
+from app.schemas.phase10_intelligence import (
+    Phase10IntelligencePlanResponse,
+    Phase10PreparationResponse,
 )
 from app.services.campaign_targeting_context_service import (
     CampaignContextNotFoundError,
@@ -53,10 +58,22 @@ from app.services.target_group_campaign_service import (
     reopen_phase9_campaign_draft,
     save_target_group_and_create_campaign_draft,
 )
+from app.services.phase10_api_service import (
+    Phase10ApiConflictError,
+    Phase10ApiContextNotFoundError,
+    Phase10ApiServiceError,
+    Phase10ApiValidationError,
+    get_phase10_intelligence_plan,
+    get_phase10_preparation,
+    prepare_phase10_targeting_intelligence,
+    retry_phase10_targeting_intelligence,
+)
+from app.services.phase10_orchestration_service import SAFE_FAILURE_MESSAGE
 
 
 router = APIRouter(prefix="/api/campaign-planner", tags=["campaign targeting"])
 DatabasePath = Annotated[Path, Depends(get_database_path)]
+logger = logging.getLogger(__name__)
 
 
 def _raise_context_error(exc: CampaignContextServiceError) -> NoReturn:
@@ -77,6 +94,29 @@ def _raise_context_error(exc: CampaignContextServiceError) -> NoReturn:
             ),
         ) from exc
     raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+
+
+def _raise_phase10_error(exc: Phase10ApiServiceError) -> NoReturn:
+    if isinstance(exc, Phase10ApiContextNotFoundError):
+        status_code = status.HTTP_404_NOT_FOUND
+    elif isinstance(exc, Phase10ApiConflictError):
+        status_code = status.HTTP_409_CONFLICT
+    elif isinstance(exc, Phase10ApiValidationError):
+        status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=SAFE_FAILURE_MESSAGE,
+        ) from exc
+    raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+
+
+def _raise_phase10_unexpected(exc: Exception) -> NoReturn:
+    logger.exception("Unexpected Phase 10 API failure", exc_info=exc)
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail=SAFE_FAILURE_MESSAGE,
+    ) from exc
 
 
 @router.get(
@@ -210,6 +250,80 @@ def targeting_intelligence_resolution(
         ).as_dict()
     except CampaignContextServiceError as exc:
         _raise_context_error(exc)
+
+
+@router.get(
+    "/contexts/{targeting_context_id}/intelligence-plan",
+    response_model=Phase10IntelligencePlanResponse,
+    summary="Inspect the targeting-intelligence preparation plan",
+)
+def targeting_intelligence_plan(
+    targeting_context_id: Annotated[int, PathParameter(gt=0)],
+    database_path: DatabasePath,
+) -> dict:
+    try:
+        return get_phase10_intelligence_plan(database_path, targeting_context_id)
+    except Phase10ApiServiceError as exc:
+        _raise_phase10_error(exc)
+    except Exception as exc:
+        _raise_phase10_unexpected(exc)
+
+
+@router.post(
+    "/contexts/{targeting_context_id}/targeting-intelligence/prepare",
+    response_model=Phase10PreparationResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Prepare or reuse targeting intelligence",
+)
+def prepare_targeting_intelligence(
+    targeting_context_id: Annotated[int, PathParameter(gt=0)],
+    database_path: DatabasePath,
+) -> dict:
+    try:
+        return prepare_phase10_targeting_intelligence(
+            database_path, targeting_context_id
+        )
+    except Phase10ApiServiceError as exc:
+        _raise_phase10_error(exc)
+    except Exception as exc:
+        _raise_phase10_unexpected(exc)
+
+
+@router.get(
+    "/contexts/{targeting_context_id}/targeting-intelligence/preparation",
+    response_model=Phase10PreparationResponse,
+    summary="Get targeting-intelligence preparation progress",
+)
+def targeting_intelligence_preparation(
+    targeting_context_id: Annotated[int, PathParameter(gt=0)],
+    database_path: DatabasePath,
+) -> dict:
+    try:
+        return get_phase10_preparation(database_path, targeting_context_id)
+    except Phase10ApiServiceError as exc:
+        _raise_phase10_error(exc)
+    except Exception as exc:
+        _raise_phase10_unexpected(exc)
+
+
+@router.post(
+    "/contexts/{targeting_context_id}/targeting-intelligence/preparation/retry",
+    response_model=Phase10PreparationResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Retry targeting-intelligence preparation from verified state",
+)
+def retry_targeting_intelligence_preparation(
+    targeting_context_id: Annotated[int, PathParameter(gt=0)],
+    database_path: DatabasePath,
+) -> dict:
+    try:
+        return retry_phase10_targeting_intelligence(
+            database_path, targeting_context_id
+        )
+    except Phase10ApiServiceError as exc:
+        _raise_phase10_error(exc)
+    except Exception as exc:
+        _raise_phase10_unexpected(exc)
 
 
 @router.put(

@@ -1482,18 +1482,31 @@
 
               <section id="planner-step-panel-4" class="panel planner-panel" data-planner-panel="4" aria-labelledby="planner-step-4-title" hidden>
                 <div class="panel-heading"><div><p class="eyebrow">Step 4</p><h3 id="planner-step-4-title" tabindex="-1">Target Group Preview</h3></div></div>
-                <div id="planner-intelligence-loading" class="empty-state compact-empty" role="status">Checking targeting intelligence…</div>
-                <div id="planner-intelligence-state" class="planner-intelligence-state" role="status" aria-live="polite" aria-atomic="true" hidden>
+                <div id="planner-intelligence-loading" class="empty-state compact-empty" role="status" aria-live="polite">Checking targeting intelligence…</div>
+                <div id="planner-intelligence-state" class="planner-intelligence-state" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden>
                   <div class="planner-intelligence-heading">
                     <span id="planner-intelligence-status" class="status-badge is-neutral">Not checked</span>
                     <h4 id="planner-intelligence-message">Targeting is not yet available for this campaign</h4>
                   </div>
                   <p id="planner-intelligence-explanation">Campaign context and targeting preferences remain saved while targeting intelligence is prepared.</p>
+                  <p id="planner-intelligence-reuse-message" class="planner-intelligence-reuse">Checking whether existing verified targeting intelligence can be reused.</p>
+                  <div id="planner-intelligence-progress" class="planner-intelligence-progress" hidden>
+                    <div id="planner-intelligence-progressbar" class="planner-intelligence-progress-track" role="progressbar" aria-labelledby="planner-intelligence-message planner-intelligence-progress-label" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                      <span id="planner-intelligence-progress-fill"></span>
+                    </div>
+                    <div class="planner-intelligence-progress-copy">
+                      <strong id="planner-intelligence-progress-percent">0%</strong>
+                      <span id="planner-intelligence-progress-label">Targeting intelligence</span>
+                    </div>
+                  </div>
                   <p id="planner-preview-block-note" class="panel-note">Exact target counts and target-group saving are blocked. No estimated or fabricated count is shown.</p>
-                  <button id="planner-intelligence-retry" class="button button-secondary" type="button">Check again</button>
+                  <div class="analysis-form-actions planner-intelligence-actions">
+                    <button id="planner-intelligence-retry" class="button button-secondary" type="button" aria-describedby="planner-intelligence-explanation planner-preview-block-note">Check again</button>
+                    <button id="planner-intelligence-back-context" class="button button-secondary" type="button" aria-describedby="planner-intelligence-explanation" hidden>Back to Campaign Context</button>
+                  </div>
                   <details id="planner-intelligence-advanced" class="planner-targeting-more">
                     <summary>View technical details</summary>
-                    <p class="panel-note">Advanced technical details are provided for audit review. An analyst or administrator must explicitly link a verified source. Campaign context never silently changes or retrains that source.</p>
+                    <p class="panel-note">Advanced technical details are provided for audit review. The normal business flow prepares and verifies targeting intelligence automatically.</p>
                     <dl id="planner-intelligence-details" class="normalized-filter-list"></dl>
                   </details>
                 </div>

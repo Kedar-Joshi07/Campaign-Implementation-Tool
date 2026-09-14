@@ -170,13 +170,12 @@ def normalize_historical_filters(
             "Historical analysis filters are invalid."
         ) from exc
 
-    available = HistoricalRepository(database_path).fetch_available_date_range()
-    if available["available_date_from"] is None or available["available_date_to"] is None:
-        raise HistoricalDataNotReadyError("Historical campaign data is not loaded.")
-
     try:
-        available_from = date.fromisoformat(available["available_date_from"])
-        available_to = date.fromisoformat(available["available_date_to"])
+        available_from_text, available_to_text = (
+            resolve_current_canonical_contact_date_range(database_path)
+        )
+        available_from = date.fromisoformat(available_from_text)
+        available_to = date.fromisoformat(available_to_text)
         normalized_from = filters.contact_date_from or available_from
         normalized_to = filters.contact_date_to or available_to
         if normalized_from < available_from or normalized_to > available_to:
@@ -200,6 +199,30 @@ def normalize_historical_filters(
         raise HistoricalAnalysisValidationError(
             "Historical analysis filters are invalid."
         ) from exc
+
+
+def resolve_current_canonical_contact_date_range(
+    database_path: str | Path,
+) -> tuple[str, str]:
+    """Return the exact inclusive contact-date range in current canonical history."""
+
+    available = HistoricalRepository(database_path).fetch_available_date_range()
+    available_from = available["available_date_from"]
+    available_to = available["available_date_to"]
+    if available_from is None or available_to is None:
+        raise HistoricalDataNotReadyError("Historical campaign data is not loaded.")
+    try:
+        normalized_from = date.fromisoformat(available_from).isoformat()
+        normalized_to = date.fromisoformat(available_to).isoformat()
+    except (TypeError, ValueError) as exc:
+        raise HistoricalDataIntegrityError(
+            "Historical contact-date range is invalid."
+        ) from exc
+    if normalized_from > normalized_to:
+        raise HistoricalDataIntegrityError(
+            "Historical contact-date range is invalid."
+        )
+    return normalized_from, normalized_to
 
 
 def _profile_group_counts(
@@ -347,15 +370,18 @@ def _decode_json_object(raw_value: str, *, label: str) -> dict[str, Any]:
 
 def _decode_filters(row: dict[str, Any]) -> dict[str, Any]:
     payload = _decode_json_object(row["filters_json"], label="filters")
+    compatibility_payload = dict(payload)
+    compatibility_payload.setdefault("campaign_categories", [])
+    compatibility_payload.setdefault("offer_types", [])
     try:
         filters = HistoricalAnalysisFilters.model_validate(
-            {"analysis_name": row["analysis_name"], **payload}
+            {"analysis_name": row["analysis_name"], **compatibility_payload}
         )
     except ValidationError as exc:
         raise ValueError("Stored filters do not match the filter contract") from exc
     normalized = filters.filter_payload()
     if (
-        payload != normalized
+        compatibility_payload != normalized
         or filters.analysis_name != row["analysis_name"]
         or filters.conversion_definition != row["conversion_definition"]
     ):

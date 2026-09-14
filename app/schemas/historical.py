@@ -27,6 +27,8 @@ class HistoricalAnalysisFilters(BaseModel):
     campaign_ids: list[str] = Field(default_factory=list, max_length=25)
     product_ids: list[str] = Field(default_factory=list, max_length=50)
     product_categories: list[str] = Field(default_factory=list, max_length=25)
+    campaign_categories: list[str] = Field(default_factory=list, max_length=50)
+    offer_types: list[str] = Field(default_factory=list, max_length=50)
     campaign_channels: list[str] = Field(default_factory=list, max_length=20)
     campaign_types: list[str] = Field(default_factory=list, max_length=20)
     contact_date_from: date | None = None
@@ -50,6 +52,8 @@ class HistoricalAnalysisFilters(BaseModel):
         "campaign_ids",
         "product_ids",
         "product_categories",
+        "campaign_categories",
+        "offer_types",
         "campaign_channels",
         "campaign_types",
         mode="before",
@@ -87,6 +91,8 @@ class HistoricalAnalysisFilters(BaseModel):
             "campaign_ids": list(self.campaign_ids),
             "product_ids": list(self.product_ids),
             "product_categories": list(self.product_categories),
+            "campaign_categories": list(self.campaign_categories),
+            "offer_types": list(self.offer_types),
             "campaign_channels": list(self.campaign_channels),
             "campaign_types": list(self.campaign_types),
             "contact_date_from": (
@@ -121,6 +127,8 @@ class HistoricalFilterResponse(HistoricalResponseModel):
     campaign_ids: list[str] = Field(max_length=25)
     product_ids: list[str] = Field(max_length=50)
     product_categories: list[str] = Field(max_length=25)
+    campaign_categories: list[str] = Field(max_length=50)
+    offer_types: list[str] = Field(max_length=50)
     campaign_channels: list[str] = Field(max_length=20)
     campaign_types: list[str] = Field(max_length=20)
     contact_date_from: date
@@ -133,6 +141,8 @@ class HistoricalDefaultsResponse(HistoricalResponseModel):
     campaign_ids: list[str] = Field(max_length=25)
     product_ids: list[str] = Field(max_length=50)
     product_categories: list[str] = Field(max_length=25)
+    campaign_categories: list[str] = Field(max_length=50)
+    offer_types: list[str] = Field(max_length=50)
     campaign_channels: list[str] = Field(max_length=20)
     campaign_types: list[str] = Field(max_length=20)
     contact_date_from: date | None
@@ -147,6 +157,8 @@ class HistoricalOptionsResponse(HistoricalResponseModel):
     campaigns: list[CampaignOptionResponse] = Field(max_length=250)
     product_categories: list[str] = Field(max_length=100)
     products: list[ProductOptionResponse] = Field(max_length=250)
+    campaign_categories: list[str] = Field(max_length=100)
+    offer_types: list[str] = Field(max_length=100)
     campaign_channels: list[str] = Field(max_length=100)
     campaign_types: list[str] = Field(max_length=100)
     conversion_definitions: list[ConversionDefinitionResponse] = Field(max_length=3)

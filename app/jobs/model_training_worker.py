@@ -7,7 +7,7 @@ import logging
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from app.database.schema import initialize_database
 from app.repositories.job_repository import (
@@ -16,6 +16,7 @@ from app.repositories.job_repository import (
     JobRepository,
 )
 from app.services.model_training_service import (
+    DEFAULT_ARTIFACT_ROOT,
     TRAINING_PROGRESS_STAGES,
     ModelTrainingExecutionError,
     ModelTrainingServiceError,
@@ -57,7 +58,14 @@ def _result_payload_from_summary(summary: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def run_model_training_job(database_path: str | Path, job_id: int) -> None:
+def run_model_training_job(
+    database_path: str | Path,
+    job_id: int,
+    *,
+    project_root: str | Path | None = None,
+    artifact_root: str | Path = DEFAULT_ARTIFACT_ROOT,
+    progress_observer: Callable[[str, int, str | None], None] | None = None,
+) -> None:
     """Execute one queued MODEL_TRAINING job and persist state transitions."""
     path = initialize_database(database_path)
     repository = JobRepository(path)
@@ -105,6 +113,8 @@ def run_model_training_job(database_path: str | Path, job_id: int) -> None:
             message=message,
             model_run_id=model_run_id,
         )
+        if progress_observer is not None:
+            progress_observer(stage, progress_percent, message)
 
     try:
         summary = train_and_persist_model(
@@ -114,6 +124,8 @@ def run_model_training_job(database_path: str | Path, job_id: int) -> None:
             random_seed=int(request_payload["random_seed"]),
             validation_fraction=float(request_payload["validation_fraction"]),
             run_elkan_challenger=bool(request_payload["run_elkan_challenger"]),
+            project_root=project_root,
+            artifact_root=artifact_root,
             progress_callback=progress_callback,
         )
         model_run_id = int(summary["model_run_id"])

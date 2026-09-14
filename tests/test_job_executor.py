@@ -79,11 +79,38 @@ def test_submit_scoring_forwards_worker_and_job_arguments(
     assert args == ("relative.db", 9)
 
 
+def test_submit_phase10_parent_uses_the_same_bounded_executor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.workers.phase10_orchestration_worker import (
+        run_phase10_orchestration_job,
+    )
+
+    fake_executor = _FakeExecutor(max_workers=1)
+    monkeypatch.setattr(executor_module, "get_model_training_executor", lambda: fake_executor)
+
+    future = executor_module.submit_phase10_orchestration_job(
+        Path("relative.db"),
+        11,
+        project_root=Path("project"),
+    )
+
+    assert future == {
+        "submitted": True,
+        "args": ("relative.db", 11, "project"),
+    }
+    fn, args = fake_executor.submit_calls[0]
+    assert fn is run_phase10_orchestration_job
+    assert args == ("relative.db", 11, "project")
+
+
 def test_submit_rejects_invalid_job_id() -> None:
     with pytest.raises(ValueError):
         executor_module.submit_model_training_job("db.sqlite", 0)
     with pytest.raises(ValueError):
         executor_module.submit_prospect_scoring_job("db.sqlite", -1)
+    with pytest.raises(ValueError):
+        executor_module.submit_phase10_orchestration_job("db.sqlite", 0)
 
 
 def test_shutdown_is_idempotent_and_clears_instance(

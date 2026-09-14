@@ -23,6 +23,9 @@ from app.routers.models import router as model_router
 from app.routers.reference import router as reference_router
 from app.services.campaign_service import reconcile_stale_campaign_export_events
 from app.services.model_job_service import reconcile_stale_model_training_jobs
+from app.services.phase10_orchestration_service import (
+    reconcile_phase10_orchestrations,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -48,6 +51,17 @@ async def lifespan(_: FastAPI):
         )
     except Exception:
         logger.exception("Compute startup reconciliation failed")
+    try:
+        resumed_phase10 = reconcile_phase10_orchestrations(
+            DATABASE_PATH,
+            project_root=PROJECT_ROOT,
+        )
+        logger.info(
+            "Phase 10 startup reconciliation completed | resumed_orchestrations=%s",
+            resumed_phase10,
+        )
+    except Exception:
+        logger.exception("Phase 10 startup reconciliation failed")
     try:
         stale_campaign_exports = reconcile_stale_campaign_export_events(DATABASE_PATH)
         logger.info(

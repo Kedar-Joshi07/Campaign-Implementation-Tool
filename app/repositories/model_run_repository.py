@@ -180,5 +180,30 @@ class ModelRunRepository:
                 ).fetchall()
         return [dict(row) for row in rows]
 
+    def list_analysis_candidates(self, analysis_run_id: int) -> list[dict[str, Any]]:
+        """Return every model candidate for one analysis in deterministic order."""
+
+        if (
+            isinstance(analysis_run_id, bool)
+            or not isinstance(analysis_run_id, int)
+            or analysis_run_id <= 0
+        ):
+            raise ValueError("analysis_run_id must be a positive integer.")
+        with get_connection(self.database_path) as connection:
+            rows = connection.execute(
+                """
+                SELECT *
+                FROM model_runs
+                WHERE analysis_run_id = ?
+                ORDER BY
+                    CASE WHEN completed_at IS NULL THEN 1 ELSE 0 END,
+                    completed_at DESC,
+                    created_at DESC,
+                    model_run_id DESC
+                """,
+                (analysis_run_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
 
 __all__ = ("ModelRunRepository",)

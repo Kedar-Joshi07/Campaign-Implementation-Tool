@@ -69,6 +69,35 @@ def submit_audience_preparation_job(
     return executor.submit(run_audience_preparation_job, path, job_id)
 
 
+def submit_phase10_orchestration_job(
+    database_path: str | Path,
+    orchestration_id: int,
+    *,
+    project_root: str | Path | None = None,
+) -> Future[None]:
+    """Submit one Phase 10 parent; its child workers run synchronously inside it."""
+
+    if (
+        isinstance(orchestration_id, bool)
+        or not isinstance(orchestration_id, int)
+        or orchestration_id <= 0
+    ):
+        raise ValueError("orchestration_id must be a positive integer.")
+    path = str(Path(database_path))
+    root = None if project_root is None else str(Path(project_root))
+    from app.workers.phase10_orchestration_worker import (
+        run_phase10_orchestration_job,
+    )
+
+    executor = get_model_training_executor()
+    return executor.submit(
+        run_phase10_orchestration_job,
+        path,
+        orchestration_id,
+        root,
+    )
+
+
 def shutdown_model_training_executor(*, wait: bool = False) -> None:
     """Shut down the process executor if it was created."""
     global _MODEL_TRAINING_EXECUTOR
@@ -86,5 +115,6 @@ __all__ = (
     "shutdown_model_training_executor",
     "submit_audience_preparation_job",
     "submit_prospect_scoring_job",
+    "submit_phase10_orchestration_job",
     "submit_model_training_job",
 )
