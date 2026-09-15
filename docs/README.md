@@ -1,6 +1,6 @@
 # Documentation Index
 
-This folder contains implementation summaries and evidence indexes for the Phase 1 to Phase 9 delivery history.
+This folder contains implementation summaries and evidence indexes for the Phase 1 to Phase 10 delivery history.
 
 ## Current implementation summaries
 
@@ -13,6 +13,7 @@ This folder contains implementation summaries and evidence indexes for the Phase
 - PHASE_7_IMPLEMENTATION_SUMMARY.md
 - PHASE_8_IMPLEMENTATION_SUMMARY.md
 - PHASE_9_IMPLEMENTATION_SUMMARY.md
+- PHASE_10_IMPLEMENTATION_SUMMARY.md
 
 ## Current authoritative references
 
@@ -40,6 +41,12 @@ This folder contains implementation summaries and evidence indexes for the Phase
   - Historical original Phase 9 business workflow, regression, CI, and freeze decision.
 - evidence/phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md
   - Installed-Chrome certification for the business Campaign Planner and required alternate states.
+- evidence/phase10/README.md
+  - Phase 10 evidence authority, implementation reading order, and final certification references.
+- evidence/phase10/PHASE10_FINAL_ACCEPTANCE.md
+  - Final local, browser, full-5M, bounded-CI, lineage, and compatibility acceptance.
+- evidence/phase10/PHASE10_FINAL_FREEZE_REPORT.md
+  - Exact implementation/documentation SHA chain, exact-SHA GitHub Actions results, and Phase 10 freeze decision.
 
 ## Historical phase records
 

@@ -1,6 +1,6 @@
 # Evidence Registry
 
-This index classifies evidence artifacts for the Phase 1 to Phase 9 repository baseline.
+This index classifies evidence artifacts for the Phase 1 to Phase 10 repository baseline.
 
 Classification labels:
 
@@ -40,6 +40,11 @@ Classification labels:
 | phase9/final_system_browser/PHASE9_SYSTEM_BROWSER_CERTIFICATION_REPORT.md | Historical installed-Chrome business Campaign Planner certification for the original candidate. |
 | phase9/final_system_browser/phase9_certification_manifest.json | Historical structured source, context, exact-count, telemetry, and decision evidence for the original candidate. |
 | phase9/final_system_browser/ui_control_coverage.json | Phase 9 actionable-control inventory with terminal status for every control. |
+| phase10/README.md | Phase 10 evidence authority and reading order. |
+| phase10/PHASE10_FINAL_ACCEPTANCE.md | Final Phase 10 acceptance across exact compatibility, browser, full-5M, regression, and privacy gates. |
+| phase10/PHASE10_FINAL_FREEZE_REPORT.md | Final exact-SHA CI chain and authoritative Phase 10 freeze decision. |
+| phase10/15_FULL_5M_CERTIFICATION.md | Clean-head installed-Chrome certification of the real full 5M orchestration path. |
+| phase10/15_FULL_5M_CERTIFICATION.json | Machine-readable full-5M identities, counts, checksums, timings, and regression results. |
 
 ## CURRENT SUPPORTING
 
@@ -63,6 +68,20 @@ Classification labels:
 | phase9/11_PROGRESSIVE_DISCLOSURE_REPORT.md | Business-default and technical-detail separation evidence. |
 | phase9/12_STATE_AND_VALIDATION_REPORT.md | Validation and state-model evidence. |
 | phase9/13_ACCESSIBILITY_RESPONSIVE_USABILITY_REPORT.md | Accessibility, keyboard, responsive, and usability evidence. |
+| phase10/01_BASELINE_AND_ARCHITECTURE.md | Frozen Phase 9 baseline, architecture inventory, and Phase 10 handoff constraints. |
+| phase10/02_CONTEXT_IDENTITY_AND_POLICIES.md | Modeling Context identity, layered compatibility fingerprints, and frozen policies. |
+| phase10/03_HISTORICAL_CONTEXT_EXTENSION.md | Context-aware historical filtering and deterministic replay. |
+| phase10/04_SCHEMA_AND_REGISTRY.md | Schema v15 intelligence generation, orchestration, and context-binding registry. |
+| phase10/05_HISTORICAL_COMPATIBILITY_AND_ELIGIBILITY.md | Exact historical reuse and P/U training eligibility. |
+| phase10/06_MODEL_COMPATIBILITY.md | Governed model compatibility, reuse, artifact validation, and fail-closed behavior. |
+| phase10/07_SCORING_RANK_COMPATIBILITY.md | Full-universe scoring, rank, and analytics compatibility. |
+| phase10/08_ORCHESTRATION_ENGINE.md | Durable minimum-work reuse/build orchestration and recovery. |
+| phase10/09_API_AND_PHASE9_BRIDGE.md | Business API, READY publication, and Phase 9 source bridge. |
+| phase10/10_BUSINESS_UI.md | Automatic business UI preparation and progressive disclosure. |
+| phase10/11_LIFECYCLE_RETENTION.md | Non-destructive lifecycle classification, protection graph, and usage tracking. |
+| phase10/12_TEST_MATRIX.md | Comprehensive Phase 10 requirement-to-test matrix. |
+| phase10/13_CLEANROOM_PHASE10_REPORT.md | Bounded clean-room reuse/build/recovery certification. |
+| phase10/14_SYSTEM_BROWSER_CERTIFICATION.md | Installed-Chrome Phase 10 business-flow and control certification. |
 
 ## HISTORICAL BASELINE
 
@@ -90,7 +109,7 @@ Classification labels:
 | phase8/01_master_acceptance_checklist_run.json | phase8/12_master_acceptance_checklist_run.json |
 | phase8/01_MASTER_ACCEPTANCE_CHECKLIST_RUN.md | phase8/12_MASTER_ACCEPTANCE_CHECKLIST_RUN.md |
 
-## Diagram 1: End-to-end Phase 1 to 9 flow
+## Diagram 1: End-to-end Phase 1 to 10 flow
 
 ```mermaid
 flowchart LR
@@ -105,6 +124,8 @@ flowchart LR
   I --> J[Exact Target Group preview\nExplicit current source]
   J --> K[Immutable Target Group\nCampaign Draft]
   K --> G
+  I --> P10[Phase 10 exact compatibility\nreuse or minimum build]
+  P10 --> J
 ```
 
 ## Diagram 2: Historical customer vs prospect identity separation

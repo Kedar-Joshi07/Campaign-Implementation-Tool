@@ -1,0 +1,272 @@
+{
+  "manifest_contract": "phase10-step15-full-5m-certification-v1",
+  "result": "PASS",
+  "certification_date": "2026-09-15",
+  "baseline": {
+    "branch": "main",
+    "clean_head_precondition": true,
+    "head_sha": "a24a24d8f809405533ad342d1ab71e5a425eaa84",
+    "head_subject": "feat(phase10): complete orchestration through browser certification",
+    "dirty_override_used": false,
+    "runtime_database": "data/step7_validation_runtime/phase10_step15/runtime.db",
+    "runtime_isolated": true
+  },
+  "browser": {
+    "product": "Google Chrome",
+    "version": "153.0.8010.36",
+    "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "real_installed_browser": true,
+    "business_flow": [
+      "Campaign Details",
+      "Campaign Context",
+      "Targeting Preferences",
+      "Target Group Preview",
+      "Review and Save"
+    ],
+    "decisive_build_initiated_by_browser": true,
+    "mocked_jobs": false
+  },
+  "canonical_lfs_sources": {
+    "data/campaign_sales_570000.csv.gz": {
+      "lfs_oid_sha256": "89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116",
+      "bytes": 6466267
+    },
+    "data/customer_master_125000.csv.gz": {
+      "lfs_oid_sha256": "8a2c5601a96dc54708246a84cfd7715cf53e3d6f95e67472b1e2c2428bf0d18f",
+      "bytes": 6145025
+    },
+    "data/usa_demographic_synthetic_5000000_rows.csv.gz": {
+      "lfs_oid_sha256": "adb33ce1daf92b547171960f69f893fec93296d3d514ac7e1bdffbf5c736ac71",
+      "bytes": 333670533
+    }
+  },
+  "imports": {
+    "customers": {
+      "import_id": 1,
+      "rows_read": 125000,
+      "rows_inserted": 125000,
+      "rows_rejected": 0,
+      "source_checksum": "99a09d2f0db06980afe290cf74a4db1df76cf8c340534fb2088879fb093d9ea9",
+      "started_at": "2026-09-14T18:07:25Z",
+      "completed_at": "2026-09-14T18:07:28Z"
+    },
+    "campaign_sales": {
+      "import_id": 2,
+      "rows_read": 570000,
+      "rows_inserted": 570000,
+      "rows_rejected": 0,
+      "source_checksum": "2fdb11c576a180b7349e50e0bf9d3b0a66d0d354ba8d42062756c8cd840965c4",
+      "started_at": "2026-09-14T18:07:42Z",
+      "completed_at": "2026-09-14T18:08:08Z"
+    },
+    "demographics": {
+      "import_id": 3,
+      "rows_read": 5000000,
+      "rows_inserted": 5000000,
+      "rows_rejected": 0,
+      "source_checksum": "e12fa5f54606aee0e6704db418f2054df29f4e1b8827d82ed2ce7897b7693e75",
+      "started_at": "2026-09-14T18:08:24Z",
+      "completed_at": "2026-09-14T18:11:52Z"
+    }
+  },
+  "decisive_build": {
+    "targeting_context_id": 4,
+    "campaign_context_sha256": "3b79ddc38f7c15f1cdc0fba54aa3f2555c6ee896145803b2b40f8092ec7f0a89",
+    "targeting_criteria_sha256": "ee2c59b1f6817d43fec582eb0c183eb97e56b292689469f29c01e98791bb3063",
+    "modeling_context_sha256": "27ee771a07470729ace3cd219106942813efe58d04f76fa055b044c2317d05f1",
+    "intelligence_key_sha256": "6fe4c881a2a7b99b6d4128b401ad944aa95589c43028e6279773685bf7e8f420",
+    "orchestration_id": 6,
+    "generation_id": 3,
+    "analysis_run_id": 3,
+    "model_run_id": 3,
+    "scoring_run_id": 3,
+    "training_job_id": 5,
+    "scoring_job_id": 6,
+    "status": "READY",
+    "generation_status": "READY",
+    "binding_status": "READY",
+    "reuse_plan": {
+      "analysis": "BUILD",
+      "model": "BUILD",
+      "scoring": "BUILD",
+      "rank": "BUILD"
+    },
+    "historical_compatibility": {
+      "decision": "ELIGIBLE",
+      "observation_count": 563250,
+      "selected_customer_count": 119748,
+      "positive_customer_count": 25473,
+      "unlabeled_customer_count": 94275,
+      "positive_customer_rate": 0.212722
+    },
+    "model": {
+      "selected_candidate": "BAGGING_PU",
+      "selection_policy": "PRIMARY_ROLE_GOVERNED",
+      "artifact_sha256": "7bcd7b61f926a04ea648bb865ba397fb096cdb2b3cd8a40b09806792d9b33164",
+      "observed_label_roc_auc": 0.6112045414504421,
+      "observed_label_average_precision": 0.2826338623788278,
+      "top_10_lift": 1.519136408243376,
+      "top_10_recall": 0.1519136408243376,
+      "quality_flags": [
+        "CHALLENGER_OUTPERFORMED_PRIMARY",
+        "OBSERVED_LABEL_METRICS_ONLY"
+      ],
+      "validation_customer_count": 23950,
+      "validation_positive_count": 5095,
+      "validation_unlabeled_count": 18855
+    },
+    "scoring": {
+      "demographic_source_count": 5000000,
+      "scored_count": 5000000,
+      "distinct_person_count": 5000000,
+      "duplicate_count": 0,
+      "invalid_nonfinite_or_out_of_range_count": 0,
+      "missing_count": 0,
+      "extra_count": 0,
+      "score_min": 0.06774103945805435,
+      "score_mean": 0.20595671379862576,
+      "score_max": 0.9782832402557606,
+      "chunk_size": 25000,
+      "chunk_count": 200,
+      "largest_chunk_rows": 25000,
+      "largest_transformed_matrix_bytes": 3396428,
+      "rows_per_second": 5246.241602955645,
+      "deterministic_rescore": {
+        "sample_size": 256,
+        "max_abs_diff": 0.0,
+        "verified": true
+      },
+      "boundedness": {
+        "keyset_query": true,
+        "offset_used": false,
+        "whole_population_dataframe": false,
+        "whole_population_fetchall": false,
+        "whole_population_list": false
+      }
+    },
+    "rank_and_analytics": {
+      "rank_boundary_count": 100,
+      "rank_population": 5000000,
+      "analytics_snapshot_count": 1,
+      "analytics_population": 5000000,
+      "created_at": "2026-09-15T10:00:59Z"
+    },
+    "stage_runtime": {
+      "orchestration_started_at": "2026-09-15T09:33:58Z",
+      "orchestration_completed_at": "2026-09-15T10:03:40Z",
+      "orchestration_wall_seconds": 1782,
+      "historical_analysis_seconds": 41,
+      "model_job_seconds": 25,
+      "primary_model_fit_seconds": 5.682331899995916,
+      "full_scoring_seconds": 953.0632362000033,
+      "post_scoring_verification_rank_analytics_seconds": 571,
+      "final_readiness_and_binding_seconds": 161,
+      "note": "Post-scoring and final readiness durations are wall-clock intervals between durable stage timestamps; they are not separately instrumented CPU timings."
+    }
+  },
+  "browser_preview": {
+    "currentness": "UP_TO_DATE",
+    "potential_customers_available": 5000000,
+    "matching_your_preferences": 146,
+    "selected_for_target_group": 146,
+    "average_targeting_match_score": 0.690,
+    "strongest_match_display": 0.976,
+    "lowest_selected_match_display": 0.602,
+    "privacy_safe_preview_rows_displayed": 25,
+    "contact_pii_displayed": false
+  },
+  "reuse_follow_up": {
+    "original_orchestration_id": 3,
+    "follow_up_orchestration_id": 4,
+    "modeling_context_sha256": "4a9d3c30e58e0214bb3d2454fec1f7199f71a1a2fb95707d1a3eee2bf1a61725",
+    "generation_id_before": 1,
+    "generation_id_after": 1,
+    "analysis_run_id_before": 1,
+    "analysis_run_id_after": 1,
+    "model_run_id_before": 1,
+    "model_run_id_after": 1,
+    "scoring_run_id_before": 1,
+    "scoring_run_id_after": 1,
+    "training_job_id": null,
+    "scoring_job_id": null,
+    "reuse_plan": {
+      "analysis": "REUSE",
+      "model": "REUSE",
+      "scoring": "REUSE",
+      "rank": "REUSE"
+    },
+    "browser_observation": "A second campaign used the same Modeling Context with different campaign details/delivery channel. A later targeting-only edit produced two valid branches without creating training, scoring, or generation records."
+  },
+  "saved_target_group": {
+    "saved_target_group_id": 1,
+    "name": "Phase 10 Full 5M Multi-Branch Certification Target Group",
+    "targeting_context_id": 4,
+    "source_scoring_run_id": 3,
+    "filter_branches_sha256": "9430cde645b19f986691a3bd6a5a04f1618e7e53c79c243b88e4f6b6a605b2e6",
+    "branch_count": 2,
+    "branch_1_count": 0,
+    "branch_2_count": 146,
+    "branch_intersection_count": 0,
+    "union_row_count": 146,
+    "union_distinct_person_count": 146,
+    "duplicate_count": 0,
+    "resolved_count": 146,
+    "source_status": "READY",
+    "created_at": "2026-09-15T10:09:01Z",
+    "legacy_reopen": {
+      "safe": true,
+      "currentness": "CURRENT",
+      "contact_pii_exposed_pre_export": false,
+      "export_performed": false,
+      "campaign_finalized": false
+    }
+  },
+  "campaign_draft": {
+    "campaign_id": 1,
+    "name": "Phase 10 Full 5M Multi-Branch Certification",
+    "status": "DRAFT",
+    "channel": "EMAIL",
+    "saved_target_group_id": 1,
+    "saved_audience_filter_hash": "9430cde645b19f986691a3bd6a5a04f1618e7e53c79c243b88e4f6b6a605b2e6",
+    "resolved_count": 146,
+    "analysis_run_id": 3,
+    "model_run_id": 3,
+    "scoring_run_id": 3,
+    "created_at": "2026-09-15T10:09:03Z"
+  },
+  "regression": {
+    "full_pytest": {
+      "result": "PASS",
+      "passed": 647,
+      "duration_seconds": 1468.02
+    },
+    "phase1_to_phase7_cleanroom": {
+      "result": "PASS",
+      "completed_at": "2026-09-15T13:55:26Z",
+      "report": "docs/evidence/phase10/15_CLEANROOM_PHASE1_TO_PHASE7_REPORT.md",
+      "json": "docs/evidence/phase10/15_cleanroom_phase1_to_phase7.json"
+    },
+    "phase8_harness": {
+      "result": "PASS",
+      "passed": 13,
+      "duration_seconds": 1.72
+    },
+    "phase9_tests": {
+      "result": "PASS",
+      "passed": 74,
+      "deselected": 573,
+      "duration_seconds": 530.85
+    },
+    "phase10_tests": {
+      "result": "PASS",
+      "passed": 89,
+      "deselected": 558,
+      "duration_seconds": 459.25
+    },
+    "compileall": "PASS",
+    "pip_check": "PASS",
+    "sqlite_integrity_check": "ok",
+    "ci_hygiene": "PASS",
+    "git_lfs_fsck": "PASS"
+  }
+}

@@ -161,3 +161,6 @@ jobs:
 
       - name: Run bounded Phase 9 contract and business UI tests
         run: pytest -q tests/test_phase9_*.py
+
+      - name: Run bounded Phase 10 orchestration and business UI tests
+        run: pytest -q tests/test_phase10_*.py

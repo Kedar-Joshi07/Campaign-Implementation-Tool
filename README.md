@@ -263,6 +263,10 @@ Business Campaign Planner and Target Groups:
 - GET /api/campaign-planner/contexts/{targeting_context_id}/targeting-criteria
 - PUT /api/campaign-planner/contexts/{targeting_context_id}/targeting-criteria
 - GET /api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence
+- GET /api/campaign-planner/contexts/{targeting_context_id}/intelligence-plan
+- POST /api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence/prepare
+- GET /api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence/preparation
+- POST /api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence/preparation/retry
 - PUT /api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence
 - DELETE /api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence
 - GET /api/campaign-planner/contexts/{targeting_context_id}/target-group-preview
@@ -282,6 +286,7 @@ Business Campaign Planner and Target Groups:
 - Phase 7: campaign draft/finalize/currentness and deterministic export with audit events.
 - Phase 8: system-browser release assurance, exhaustive control coverage, reproducibility, CI, and repository freeze.
 - Phase 9: business-friendly campaign planning, deterministic targeting criteria, explicit intelligence-source gating, exact Target Group preview/recommendations, immutable Target Group save, and Campaign Draft creation.
+- Phase 10: exact Modeling Context identity, automatic compatibility-driven reuse/build orchestration, durable progress and recovery, context-bound intelligence generations, and non-destructive lifecycle governance.
 
 ## Phase 9 business targeting
 
@@ -289,7 +294,9 @@ The default Create Campaign path uses business language and keeps model/scoring 
 
 Match Strength is an exact minimum-score rule: Very Strong `0.90+`, Strong `0.80+`, Good `0.70+`, and Broad `0.60+`. Recommendations compare exact counts and never claim purchase probability. The optional Region shortcut is backend-owned and expands only to currently available State values; immutable criteria remain exact, state-based, and auditable. Planning and preview exclude contact PII; contact fields remain available only through the governed, acknowledged Phase 7 finalized-campaign export profiles.
 
-Phase 10 owns automatic analysis/model/scoring compatibility, reuse/build/refresh orchestration, long-running progress, context-specific provenance, and scoring lifecycle/retention. Phase 9 intentionally contains no “latest run wins” fallback.
+Phase 10 implements automatic analysis/model/scoring/rank compatibility, reuse/build/refresh orchestration, long-running durable progress, context-specific provenance, and scoring lifecycle/retention. Resolution is by exact Modeling Context and layered compatibility fingerprints; there is no “latest run wins” fallback. Delivery and descriptive Campaign fields plus prospect-targeting filters remain outside the Modeling Context, so those changes reuse valid intelligence. Analytical dimensions, source checksums, artifacts, governed policies, or score semantics invalidate the corresponding compatibility layer and trigger the minimum required rebuild.
+
+The normal business path automatically prepares intelligence between Campaign Context and Target Group Preview. READY publication atomically binds the verified generation and exact scoring source back to the Phase 9 context. Lifecycle reconciliation classifies generations as CURRENT, REUSABLE, SUPERSEDED, STALE, RETIREMENT_ELIGIBLE, or PROTECTED without deleting analytical lineage. See `docs/PHASE_10_IMPLEMENTATION_SUMMARY.md` and `docs/evidence/phase10/README.md`.
 
 ## Phase 8 release assurance
 
@@ -400,7 +407,7 @@ $env:OUT_NAME = "usa_demographic_synthetic_5000000_rows.csv.gz"
 git diff --check
 ```
 
-Most recent full regression evidence records 477 passing tests in the Phase 8 final acceptance artifacts.
+The Phase 10 Step 15 full regression records 647 passing tests. Normal CI excludes full-5M, performance, clean-room, and installed-browser markers from the unit/integration job, runs the bounded Phase 1–7 clean-room separately, and includes bounded Phase 9 and Phase 10 contract/UI suites. Full 5M scoring remains an explicit release-certification workload, not a normal CI workload.
 
 ## Configuration
 
