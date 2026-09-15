@@ -6,10 +6,11 @@ Phase 10 delivers automatic Campaign Intelligence Orchestration above the Phase 
 
 ```mermaid
 flowchart LR
-  CP[Campaign Planner] --> CC[Campaign Context]
-  CC --> AP[Automatic intelligence preparation]
-  AP --> TP[Targeting Preferences]
-  TP --> TG[Exact Target Group]
+  CP[Campaign Planner] --> CD[Campaign Details]
+  CD --> CC[Campaign Context]
+  CC --> TP[Targeting Preferences]
+  TP --> AP[Automatic intelligence preparation]
+  AP --> TG[Exact Target Group]
   TG --> STG[Saved Target Group]
   STG --> C[Campaign Draft]
   C --> F[Finalize]

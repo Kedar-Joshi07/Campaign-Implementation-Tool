@@ -41,6 +41,7 @@ All implementation, browser, clean-room, full-5M, regression, repository, lineag
 | Compileall / pip check / diff hygiene | PASS |
 | Repository hygiene / Git LFS fsck | PASS |
 | Exact implementation-SHA CI | PASS — run `#15`, ID `34987273123`, 5/5 required jobs successful |
+| Exact documentation/freeze-SHA CI | PASS — run `#16`, ID `34988219822`, head `f1c64b3fb519055100936e87f76815d682a731bd`, 5/5 required jobs successful |
 
 ## Exact-SHA GitHub Actions acceptance
 
@@ -60,6 +61,11 @@ All implementation, browser, clean-room, full-5M, regression, repository, lineag
 | Frontend Contract / bounded Phase 9+10 | `104442966910` | SUCCESS |
 
 The GitHub Actions API was queried using exact `head_sha=dbbba2d19f1013c04f65bdba5db285772a0c6878`. No branch-latest or unrelated workflow run was accepted.
+
+The documentation/freeze commit
+`f1c64b3fb519055100936e87f76815d682a731bd` was independently verified by
+exact-head CI run `#16`, ID `34988219822`, with the same five required jobs
+successful. It records the trusted implementation SHA without redefining it.
 
 ## Full-scale trusted lineage
 

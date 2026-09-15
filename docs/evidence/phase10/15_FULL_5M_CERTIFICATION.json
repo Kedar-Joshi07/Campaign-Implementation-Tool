@@ -195,7 +195,10 @@
       "scoring": "REUSE",
       "rank": "REUSE"
     },
-    "browser_observation": "A second campaign used the same Modeling Context with different campaign details/delivery channel. A later targeting-only edit produced two valid branches without creating training, scoring, or generation records."
+    "certified_event_source": "Immutable orchestration 4 and its exact Modeling Context/intelligence hashes",
+    "current_context_snapshot_preserved": false,
+    "post_certification_runtime_note": "The disposable runtime Campaign Context 2 was changed during later validation. Its final mutable row is not the snapshot of the earlier reuse event and is correctly treated as stale for that later analytical context.",
+    "browser_observation": "A second campaign initially used the same Modeling Context with different campaign details/delivery channel and reused orchestration lineage without new jobs. A separate targeting-only edit on the decisive full-build context produced two valid branches without creating training, scoring, or generation records."
   },
   "saved_target_group": {
     "saved_target_group_id": 1,
@@ -233,6 +236,17 @@
     "model_run_id": 3,
     "scoring_run_id": 3,
     "created_at": "2026-09-15T10:09:03Z"
+  },
+  "lifecycle_snapshot": {
+    "source": "Step 15 isolated certification runtime",
+    "captured_during_evidence_reconciliation": "2026-09-16",
+    "current": 3,
+    "reusable": 0,
+    "superseded": 0,
+    "stale": 0,
+    "retirement_eligible": 0,
+    "protected": 0,
+    "physical_analytical_deletions": false
   },
   "regression": {
     "full_pytest": {

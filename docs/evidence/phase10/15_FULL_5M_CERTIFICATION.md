@@ -117,7 +117,16 @@ Legacy Campaign Builder reopen showed the saved audience and campaign as current
 
 Browser orchestration `4` reused the exact Modeling Context SHA `4a9d3c30e58e0214bb3d2454fec1f7199f71a1a2fb95707d1a3eee2bf1a61725` from orchestration `3` for a second campaign with different delivery/details. Its plan was `REUSE` for analysis, model, scoring, and rank, and it created no training or scoring job. Generation, analysis, model, and scoring identities remained `1/1/1/1`.
 
-A subsequent targeting-only change produced two valid filter branches without creating a new generation, model run, or scoring run. This proves prospect targeting remains outside Modeling Context identity and does not trigger heavy work.
+That certified event is preserved by immutable orchestration `4` and its exact
+Modeling Context/intelligence hashes. The disposable runtime's mutable Campaign
+Context `2` was changed during later validation, so its final row is not the
+authoritative snapshot of the earlier reuse event; readiness correctly treats
+that later analytical-context change as stale.
+
+A separate targeting-only change on the decisive full-build context produced
+two valid filter branches without creating a new generation, model run, or
+scoring run. This proves prospect targeting remains outside Modeling Context
+identity and does not trigger heavy work.
 
 ## Regression and repository gates
 

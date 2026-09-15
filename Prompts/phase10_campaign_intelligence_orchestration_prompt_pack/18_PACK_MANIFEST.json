@@ -44,7 +44,7 @@
     {
       "file": "04_MASTER_ACCEPTANCE_CHECKLIST.md",
       "bytes": 1948,
-      "sha256": "c86ff3770d1dff3ac9412c8d4d1237c8dd64af5718ec7fa43cfd97b0ed36d19f"
+      "sha256": "44d5f168435e8c95eac101c78060a66a344ef0ac6f6a0412dcdab345a757da68"
     },
     {
       "file": "04_STEP_04_PHASE10_SCHEMA_REGISTRY_AND_REPOSITORIES.md",
@@ -53,8 +53,8 @@
     },
     {
       "file": "05_PROGRESS_TRACKER.md",
-      "bytes": 901,
-      "sha256": "f83fee676e29b742a2b2f2dafad0bcd942c309a4f56d53af852206f79cfe70bc"
+      "bytes": 2370,
+      "sha256": "42477c786538d126c1335a1bd13bea885961cdc508d413e7e2d1320a85ec90f4"
     },
     {
       "file": "05_STEP_05_HISTORICAL_ANALYSIS_COMPATIBILITY_AND_ELIGIBILITY.md",

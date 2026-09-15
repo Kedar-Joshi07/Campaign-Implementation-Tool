@@ -1,68 +1,68 @@
 # Phase 10 Master Acceptance Checklist
 
 ## Identity
-- [ ] versioned Modeling Context
-- [ ] order-insensitive canonical hashes
-- [ ] delivery channel excluded
-- [ ] campaign details excluded
-- [ ] targeting preferences excluded
-- [ ] product/type/category/offer/historical-channel included
-- [ ] policy versions included
+- [x] versioned Modeling Context
+- [x] order-insensitive canonical hashes
+- [x] delivery channel excluded
+- [x] campaign details excluded
+- [x] targeting preferences excluded
+- [x] product/type/category/offer/historical-channel included
+- [x] policy versions included
 
 ## Historical
-- [ ] campaign_categories supported backward-compatibly
-- [ ] offer_types supported backward-compatibly
-- [ ] old saved analyses still work
-- [ ] full canonical date range persisted
-- [ ] contacted-only + attributed-purchase policy
-- [ ] multi-product ANY-positive proven
-- [ ] insufficient history blocks, never broadens
+- [x] campaign_categories supported backward-compatibly
+- [x] offer_types supported backward-compatibly
+- [x] old saved analyses still work
+- [x] full canonical date range persisted
+- [x] contacted-only + attributed-purchase policy
+- [x] multi-product ANY-positive proven
+- [x] insufficient history blocks, never broadens
 
 ## Compatibility/reuse
-- [ ] no latest-run fallback
-- [ ] exact historical compatibility
-- [ ] exact model compatibility
-- [ ] exact scoring compatibility
-- [ ] exact rank/analytics readiness
-- [ ] READY full reuse
-- [ ] rank-only rebuild
-- [ ] score-only rebuild
-- [ ] model+score rebuild
-- [ ] full build
-- [ ] delivery channel reuse
-- [ ] target-filter reuse
+- [x] no latest-run fallback
+- [x] exact historical compatibility
+- [x] exact model compatibility
+- [x] exact scoring compatibility
+- [x] exact rank/analytics readiness
+- [x] READY full reuse
+- [x] rank-only rebuild
+- [x] score-only rebuild
+- [x] model+score rebuild
+- [x] full build
+- [x] delivery channel reuse
+- [x] target-filter reuse
 
 ## Orchestration
-- [ ] durable persistence
-- [ ] idempotent Prepare
-- [ ] one active exact build
-- [ ] no nested executor deadlock
-- [ ] refresh/navigation resume
-- [ ] restart reconciliation
-- [ ] retry from highest verified stage
-- [ ] child lineage persisted
+- [x] durable persistence
+- [x] idempotent Prepare
+- [x] one active exact build
+- [x] no nested executor deadlock
+- [x] refresh/navigation resume
+- [x] restart reconciliation
+- [x] retry from highest verified stage
+- [x] child lineage persisted
 
 ## UI
-- [ ] analyst not required in normal business path
-- [ ] automatic preparation on preview transition
-- [ ] business-friendly progress
-- [ ] insufficient-history state
-- [ ] retry state
-- [ ] technical details hidden by default
-- [ ] Phase 9 targeting/preview semantics unchanged
-- [ ] no PII
+- [x] analyst not required in normal business path
+- [x] automatic preparation on preview transition
+- [x] business-friendly progress
+- [x] insufficient-history state
+- [x] retry state
+- [x] technical details hidden by default
+- [x] Phase 9 targeting/preview semantics unchanged
+- [x] no PII
 
 ## Lifecycle
-- [ ] generation registry
-- [ ] protected references
-- [ ] non-destructive retirement eligibility
-- [ ] no automatic score deletion
+- [x] generation registry
+- [x] protected references
+- [x] non-destructive retirement eligibility
+- [x] no automatic score deletion
 
 ## Certification
-- [ ] comprehensive tests
-- [ ] Phase 1–9 regression
-- [ ] bounded clean-room
-- [ ] real Chrome/Edge certification
-- [ ] clean-head full 5M Phase 10 certification
-- [ ] exact-SHA CI
-- [ ] Phase 10 GO
+- [x] comprehensive tests
+- [x] Phase 1–9 regression
+- [x] bounded clean-room
+- [x] real Chrome/Edge certification
+- [x] clean-head full 5M Phase 10 certification
+- [x] exact-SHA CI
+- [x] Phase 10 GO
