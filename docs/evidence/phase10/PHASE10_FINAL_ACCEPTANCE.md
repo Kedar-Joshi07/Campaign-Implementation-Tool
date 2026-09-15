@@ -2,11 +2,11 @@
 
 Generated: 2026-09-15
 
-## Candidate decision
+## Final decision
 
-`READY_FOR_EXACT_SHA_CI`
+`GO`
 
-All local implementation, browser, clean-room, full-5M, regression, repository, lineage, and privacy gates are green. Final `GO` is conditioned only on GitHub Actions passing every required job for the exact committed candidate SHA. The final result and exact run are recorded in `PHASE10_FINAL_FREEZE_REPORT.md` after remote verification.
+All implementation, browser, clean-room, full-5M, regression, repository, lineage, privacy, and exact-SHA GitHub Actions gates are green. Phase 10 is accepted and frozen for the trusted implementation SHA below.
 
 ## Functional acceptance
 
@@ -40,6 +40,26 @@ All local implementation, browser, clean-room, full-5M, regression, repository, 
 | SQLite integrity | `ok` |
 | Compileall / pip check / diff hygiene | PASS |
 | Repository hygiene / Git LFS fsck | PASS |
+| Exact implementation-SHA CI | PASS — run `#15`, ID `34987273123`, 5/5 required jobs successful |
+
+## Exact-SHA GitHub Actions acceptance
+
+- Workflow: `CI`
+- Trusted implementation SHA: `dbbba2d19f1013c04f65bdba5db285772a0c6878`
+- Run number: `15`
+- Run ID: `34987273123`
+- Run URL: <https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34987273123>
+- Workflow conclusion: `success`
+
+| Required job | Job ID | Result |
+|---|---:|---|
+| Repository Hygiene | `104442500422` | SUCCESS |
+| Python Validation | `104442708708` | SUCCESS |
+| Tests | `104442966967` | SUCCESS |
+| Clean-Room Phase1-7 | `104442967010` | SUCCESS |
+| Frontend Contract / bounded Phase 9+10 | `104442966910` | SUCCESS |
+
+The GitHub Actions API was queried using exact `head_sha=dbbba2d19f1013c04f65bdba5db285772a0c6878`. No branch-latest or unrelated workflow run was accepted.
 
 ## Full-scale trusted lineage
 
@@ -62,12 +82,8 @@ All local implementation, browser, clean-room, full-5M, regression, repository, 
 - Contact PII remains unavailable to planning/orchestration/preview surfaces and requires finalized-Campaign export acknowledgement.
 - This POC remains single-node SQLite with local artifacts and no send/activation integration.
 
-## Finalization condition
+## Final acceptance result
 
-Change this candidate decision to `GO` only after the `CI` workflow is queried by the exact committed candidate SHA and the following jobs all conclude `success`:
+`PHASE_10_FROZEN_GO`
 
-- Repository Hygiene
-- Python Validation
-- Tests
-- Clean-Room Phase1-7
-- Frontend Contract, including bounded Phase 9 and Phase 10 validation
+The documentation/freeze report is committed separately so the exact tested implementation SHA remains explicit and is never replaced by a guessed self-referential document SHA.

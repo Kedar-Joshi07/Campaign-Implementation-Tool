@@ -4,11 +4,11 @@ Generated: 2026-09-15
 
 Prompt: `16_STEP_16_EXACT_SHA_CI_DOCUMENTATION_AND_PHASE10_FREEZE.md`
 
-## Current decision
+## Final decision
 
-`PENDING_EXACT_SHA_CI`
+`GO`
 
-The implementation, local regression, installed-browser certification, full-5M certification, and repository hygiene gates are complete. This report is finalized only after the implementation/documentation candidate is committed, pushed, and GitHub Actions is verified by exact `head_sha`.
+The implementation, local regression, installed-browser certification, full-5M certification, repository hygiene, and exact-SHA GitHub Actions gates are complete. Phase 10 is frozen on the trusted implementation SHA `dbbba2d19f1013c04f65bdba5db285772a0c6878`.
 
 ## SHA chain
 
@@ -16,8 +16,8 @@ The implementation, local regression, installed-browser certification, full-5M c
 |---|---|---|
 | Frozen Phase 9 closure baseline | `e49e579076e0c6bf78be5026ccafbb2c72e98549` | Historical exact-SHA CI green |
 | Phase 10 implementation through Step 14 | `a24a24d8f809405533ad342d1ab71e5a425eaa84` | Clean baseline used for Step 15 |
-| Phase 10 implementation/documentation candidate | Recorded after commit | Awaiting exact-SHA CI |
-| Phase 10 documentation/freeze SHA | Recorded after exact candidate CI | Pending |
+| Phase 10 implementation and Step 15 certification candidate | `dbbba2d19f1013c04f65bdba5db285772a0c6878` | Exact-SHA CI run `#15` SUCCESS |
+| Phase 10 documentation/freeze SHA | Commit containing this finalized report | Documentation-only; verified separately by exact SHA after push |
 
 The final documentation commit records the tested candidate SHA rather than guessing its own self-referential SHA. Repository history and the second exact-SHA CI run identify the documentation/freeze commit.
 
@@ -31,12 +31,32 @@ The final documentation commit records the tested candidate SHA rather than gues
 | Phase 1–9 regression | PASS |
 | Installed-browser business flow | PASS |
 | Documentation and evidence consistency | PASS |
-| Exact candidate-SHA CI | PENDING |
-| Exact documentation/freeze-SHA CI | PENDING |
+| Exact implementation-SHA CI | PASS |
+| Exact documentation/freeze-SHA CI | Verified after this documentation-only commit is pushed |
 
 ## Normal CI boundary
 
 The `CI` workflow contains the required jobs: Repository Hygiene, Python Validation, Tests, Clean-Room Phase1-7, and Frontend Contract. Frontend Contract includes bounded Phase 9 and Phase 10 test suites. Heavy full-5M scoring remains excluded from normal CI and is certified separately by Step 15.
+
+## Exact implementation-SHA GitHub Actions certification
+
+- Workflow: `CI`
+- Run number: `15`
+- Run ID: `34987273123`
+- Run URL: <https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/34987273123>
+- Head SHA: `dbbba2d19f1013c04f65bdba5db285772a0c6878`
+- Workflow status/conclusion: `completed` / `success`
+- Created/completed: `2026-09-15T15:16:01Z` / `2026-09-15T15:19:46Z`
+
+| Required job | Job ID | Result |
+|---|---:|---|
+| Repository Hygiene | `104442500422` | SUCCESS |
+| Python Validation | `104442708708` | SUCCESS |
+| Tests | `104442966967` | SUCCESS |
+| Clean-Room Phase1-7 | `104442967010` | SUCCESS |
+| Frontend Contract / bounded Phase 9+10 | `104442966910` | SUCCESS |
+
+This run was selected by exact `head_sha`, not by branch-latest state.
 
 ## Local release evidence
 
@@ -51,6 +71,8 @@ The `CI` workflow contains the required jobs: Repository Hygiene, Python Validat
 - Multi-branch Target Group union: 146 distinct, zero duplicates.
 - Compileall, pip check, diff hygiene, CI hygiene, Git LFS fsck, and SQLite integrity: PASS.
 
-## Freeze condition
+## Freeze result
 
-Phase 10 is not frozen by this candidate version of the report. The final documentation-only update records exact GitHub Actions run IDs, URLs, conclusions, required-job results, the trusted Phase 10 implementation SHA, and the `PHASE_10_FROZEN_GO` decision.
+`PHASE_10_FROZEN_GO`
+
+Phase 10 is frozen. The trusted implementation SHA is `dbbba2d19f1013c04f65bdba5db285772a0c6878`. This report is a documentation-only follow-up and does not redefine the tested implementation candidate. Its own exact commit and CI run are identified by repository history and the final handoff, avoiding a self-referential SHA claim.
