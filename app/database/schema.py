@@ -12,11 +12,25 @@ from typing import Any
 
 from app.config import APP_VERSION, DATABASE_PATH
 from app.database.connection import get_connection
+from app.database.phase11_schema import (
+    CAMPAIGN_SEARCH_RUN_COLUMNS,
+    CAMPAIGN_RESULT_SNAPSHOT_COLUMNS,
+    CAMPAIGN_RESULT_EXPORT_EVENT_COLUMNS,
+    PHASE_ELEVEN_CREATE_TABLE_STATEMENTS,
+    PHASE_ELEVEN_REQUIRED_INDEX_STATEMENTS,
+    PHASE_ELEVEN_TRIGGER_STATEMENTS,
+)
+from app.database.phase11_feedback_schema import (
+    CAMPAIGN_SEARCH_FUTURE_LINEAGE_COLUMNS,
+    PHASE_ELEVEN_FEEDBACK_CREATE_TABLE_STATEMENT,
+    PHASE_ELEVEN_FEEDBACK_INDEX_STATEMENTS,
+    PHASE_ELEVEN_FEEDBACK_TRIGGER_STATEMENTS,
+)
 
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 15
+CURRENT_SCHEMA_VERSION = 18
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -40,6 +54,10 @@ EXPECTED_TABLES = (
     "phase10_intelligence_generations",
     "phase10_orchestration_runs",
     "phase10_context_bindings",
+    "campaign_search_runs",
+    "campaign_result_snapshots",
+    "campaign_result_export_events",
+    "campaign_search_future_lineage",
 )
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
@@ -455,6 +473,18 @@ DEMOGRAPHIC_COLUMNS = (
     "occupation_industry",
     "family_yearly_income",
     "religion",
+    "email_contactable",
+    "direct_mail_contactable",
+    "sms_opt_in",
+    "whatsapp_opt_in",
+    "telemarketing_contactable",
+    "do_not_call",
+    "push_token",
+    "push_opt_in",
+    "advertising_id",
+    "advertising_targetable",
+    "web_visitor_id",
+    "onsite_targetable",
 )
 
 CREATE_TABLE_STATEMENTS = (
@@ -582,7 +612,25 @@ CREATE_TABLE_STATEMENTS = (
         type_of_employment TEXT,
         occupation_industry TEXT,
         family_yearly_income REAL NOT NULL CHECK (family_yearly_income >= 0),
-        religion TEXT
+        religion TEXT,
+        email_contactable INTEGER NOT NULL DEFAULT 0
+            CHECK (email_contactable IN (0, 1)),
+        direct_mail_contactable INTEGER NOT NULL DEFAULT 0
+            CHECK (direct_mail_contactable IN (0, 1)),
+        sms_opt_in INTEGER NOT NULL DEFAULT 0 CHECK (sms_opt_in IN (0, 1)),
+        whatsapp_opt_in INTEGER NOT NULL DEFAULT 0
+            CHECK (whatsapp_opt_in IN (0, 1)),
+        telemarketing_contactable INTEGER NOT NULL DEFAULT 0
+            CHECK (telemarketing_contactable IN (0, 1)),
+        do_not_call INTEGER NOT NULL DEFAULT 0 CHECK (do_not_call IN (0, 1)),
+        push_token TEXT,
+        push_opt_in INTEGER NOT NULL DEFAULT 0 CHECK (push_opt_in IN (0, 1)),
+        advertising_id TEXT,
+        advertising_targetable INTEGER NOT NULL DEFAULT 0
+            CHECK (advertising_targetable IN (0, 1)),
+        web_visitor_id TEXT,
+        onsite_targetable INTEGER NOT NULL DEFAULT 0
+            CHECK (onsite_targetable IN (0, 1))
     )
     """,
 )
@@ -847,6 +895,7 @@ REQUIRED_INDEX_STATEMENTS = {
     **PHASE_SEVEN_REQUIRED_INDEX_STATEMENTS,
     **PHASE_NINE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_TEN_REQUIRED_INDEX_STATEMENTS,
+    **PHASE_ELEVEN_REQUIRED_INDEX_STATEMENTS,
 }
 
 
@@ -2537,6 +2586,91 @@ def _migrate_to_version_15(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_16(connection: sqlite3.Connection) -> None:
+    """Append governed Phase 11 contactability and activation source fields."""
+
+    if not _table_exists(connection, "demographics"):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 16 because demographics does not exist."
+        )
+
+    existing_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(demographics)").fetchall()
+    }
+    additions = (
+        (
+            "email_contactable",
+            "INTEGER NOT NULL DEFAULT 0 CHECK (email_contactable IN (0, 1))",
+        ),
+        (
+            "direct_mail_contactable",
+            "INTEGER NOT NULL DEFAULT 0 CHECK (direct_mail_contactable IN (0, 1))",
+        ),
+        ("sms_opt_in", "INTEGER NOT NULL DEFAULT 0 CHECK (sms_opt_in IN (0, 1))"),
+        (
+            "whatsapp_opt_in",
+            "INTEGER NOT NULL DEFAULT 0 CHECK (whatsapp_opt_in IN (0, 1))",
+        ),
+        (
+            "telemarketing_contactable",
+            "INTEGER NOT NULL DEFAULT 0 CHECK (telemarketing_contactable IN (0, 1))",
+        ),
+        ("do_not_call", "INTEGER NOT NULL DEFAULT 0 CHECK (do_not_call IN (0, 1))"),
+        ("push_token", "TEXT"),
+        ("push_opt_in", "INTEGER NOT NULL DEFAULT 0 CHECK (push_opt_in IN (0, 1))"),
+        ("advertising_id", "TEXT"),
+        (
+            "advertising_targetable",
+            "INTEGER NOT NULL DEFAULT 0 CHECK (advertising_targetable IN (0, 1))",
+        ),
+        ("web_visitor_id", "TEXT"),
+        (
+            "onsite_targetable",
+            "INTEGER NOT NULL DEFAULT 0 CHECK (onsite_targetable IN (0, 1))",
+        ),
+    )
+    for column_name, definition in additions:
+        if column_name not in existing_columns:
+            connection.execute(
+                f'ALTER TABLE demographics ADD COLUMN "{column_name}" {definition}'
+            )
+
+
+def _migrate_to_version_17(connection: sqlite3.Connection) -> None:
+    """Create separate immutable business-search/result/export registries."""
+    for statement in PHASE_ELEVEN_CREATE_TABLE_STATEMENTS:
+        connection.execute(statement)
+    for statement in PHASE_ELEVEN_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+    for statement in PHASE_ELEVEN_TRIGGER_STATEMENTS:
+        connection.execute(statement)
+
+
+def _migrate_to_version_18(connection: sqlite3.Connection) -> None:
+    """Add a nullable, write-once seam for future delivery/outcome lineage."""
+
+    if not _table_exists(connection, "campaign_search_runs"):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 18 because campaign_search_runs does not exist."
+        )
+    connection.execute(PHASE_ELEVEN_FEEDBACK_CREATE_TABLE_STATEMENT)
+    connection.execute(
+        """
+        INSERT OR IGNORE INTO campaign_search_future_lineage (
+            search_run_id, created_at, updated_at
+        )
+        SELECT search_run_id, created_at, created_at
+        FROM campaign_search_runs
+        ORDER BY search_run_id
+        """
+    )
+    for statement in PHASE_ELEVEN_FEEDBACK_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+    for statement in PHASE_ELEVEN_FEEDBACK_TRIGGER_STATEMENTS:
+        connection.execute(statement)
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -2552,6 +2686,9 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     13: _migrate_to_version_13,
     14: _migrate_to_version_14,
     15: _migrate_to_version_15,
+    16: _migrate_to_version_16,
+    17: _migrate_to_version_17,
+    18: _migrate_to_version_18,
 }
 
 

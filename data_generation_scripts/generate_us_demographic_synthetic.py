@@ -1,4 +1,4 @@
-import os, re, json, math, time, gzip, random, zipfile, xml.etree.ElementTree as ET
+import os, re, json, math, time, gzip, random, hashlib, zipfile, xml.etree.ElementTree as ET
 from pathlib import Path
 import numpy as np
 from faker import Faker
@@ -26,6 +26,63 @@ SAMPLE = OUTDIR / os.environ.get('SAMPLE_NAME', 'usa_demographic_synthetic_sampl
 
 rng = np.random.default_rng(SEED)
 random.seed(SEED)
+
+# Phase 11 contactability and activation fields use a separate deterministic
+# integer mixer, never the demographic RNG.  Adding these fields therefore does
+# not perturb any of the frozen model-feature values generated below.
+CONTACTABILITY_TARGET_RATES = {
+    'email_contactable': .88,
+    'direct_mail_contactable': .92,
+    'sms_opt_in': .42,
+    'whatsapp_opt_in': .30,
+    'do_not_call': .18,
+    'telemarketing_contactable_when_not_dnc': .67,
+    'push_token_present': .62,
+    'push_opt_in_when_token_present': .54,
+    'advertising_id_present': .74,
+    'advertising_targetable_when_id_present': .68,
+    'web_visitor_id_present': .67,
+    'onsite_targetable_when_id_present': .72,
+}
+
+_UINT64_MASK = (1 << 64) - 1
+
+
+def deterministic_uint64(values, salt):
+    """SplitMix64-derived deterministic values independent of chunk size."""
+    x = values.astype(np.uint64) + np.uint64((SEED + salt) & _UINT64_MASK)
+    x = (x ^ (x >> np.uint64(30))) * np.uint64(0xBF58476D1CE4E5B9)
+    x = (x ^ (x >> np.uint64(27))) * np.uint64(0x94D049BB133111EB)
+    return x ^ (x >> np.uint64(31))
+
+
+def deterministic_unit_interval(values, salt):
+    mixed = deterministic_uint64(values, salt)
+    return (mixed >> np.uint64(11)).astype(np.float64) / float(1 << 53)
+
+
+def deterministic_advertising_id(high, low):
+    high_value = int(high)
+    low_value = int(low)
+    variant = 8 | ((low_value >> 60) & 0x3)
+    return (
+        f'{(high_value >> 32) & 0xffffffff:08x}-'
+        f'{(high_value >> 16) & 0xffff:04x}-'
+        f'4{high_value & 0x0fff:03x}-'
+        f'{variant:x}{(low_value >> 48) & 0x0fff:03x}-'
+        f'{low_value & 0xffffffffffff:012x}'
+    )
+
+
+def file_sha256(path):
+    digest = hashlib.sha256()
+    with open(path, 'rb') as handle:
+        while True:
+            block = handle.read(1024 * 1024)
+            if not block:
+                break
+            digest.update(block)
+    return digest.hexdigest()
 
 # Exact state ranking/weight anchor from U.S. Census Bureau 2020 urban/rural state workbook.
 URBAN = {
@@ -215,7 +272,7 @@ with open(STATE_REF,'w',encoding='utf-8',newline='') as f:
         name,up,pct=URBAN[s]; med,u18,o65,fp,ba,fb,_=CFG[s]
         f.write(f'{i},{name},{s},{up},{pct:.4f},{STATE_P[i-1]:.8f},{med},{u18:.4f},{o65:.4f},{ba:.4f},{fb:.4f}\n')
 
-headers=['person_id','first_name','last_name','gender','age','address_line_1','address_line_2','street','postal_code','city','state','country','phone_number','email','individual_yearly_income','marital_status','education','employment_status','resident_status','resident_type','family_member_count','number_of_children_in_family','number_of_adults_in_family','ethnicity','type_of_employment','occupation_industry','family_yearly_income','religion']
+headers=['person_id','first_name','last_name','gender','age','address_line_1','address_line_2','street','postal_code','city','state','country','phone_number','email','individual_yearly_income','marital_status','education','employment_status','resident_status','resident_type','family_member_count','number_of_children_in_family','number_of_adults_in_family','ethnicity','type_of_employment','occupation_industry','family_yearly_income','religion','email_contactable','direct_mail_contactable','sms_opt_in','whatsapp_opt_in','telemarketing_contactable','do_not_call','push_token','push_opt_in','advertising_id','advertising_targetable','web_visitor_id','onsite_targetable']
 
 # Running validation counters
 state_count=np.zeros(len(STATE_CODES),dtype=np.int64)
@@ -223,6 +280,19 @@ eth_count={x:0 for x in ETHNICITIES}
 gender_count={'Male':0,'Female':0,'Non-binary/Other':0}
 age_sum=0; income_sum=0; family_income_sum=0; employed=0; sample_lines=[]
 age_contract_adjusted_rows=0
+contactability_counts={
+    'email_contactable':0,
+    'direct_mail_contactable':0,
+    'sms_opt_in':0,
+    'whatsapp_opt_in':0,
+    'telemarketing_contactable':0,
+    'do_not_call':0,
+    'push_opt_in':0,
+    'advertising_targetable':0,
+    'onsite_targetable':0,
+}
+identifier_present_counts={'push_token':0,'advertising_id':0,'web_visitor_id':0}
+contactability_contract_violation_count=0
 
 start=time.time()
 compressed_raw=open(OUT,'wb')
@@ -387,10 +457,42 @@ for base in range(0,N_ROWS,CHUNK):
     dom=domains[ids%3]
     email=np.array([f'person{v:09d}@{d}' for v,d in zip(ids,dom)],dtype=object)
 
+    # Phase 11 governed contactability and activation identifiers. All draws
+    # are ID-derived and do not consume the demographic RNG.
+    email_contactable=deterministic_unit_interval(ids,101)<CONTACTABILITY_TARGET_RATES['email_contactable']
+    direct_mail_contactable=deterministic_unit_interval(ids,102)<CONTACTABILITY_TARGET_RATES['direct_mail_contactable']
+    sms_opt_in=deterministic_unit_interval(ids,103)<CONTACTABILITY_TARGET_RATES['sms_opt_in']
+    whatsapp_opt_in=deterministic_unit_interval(ids,104)<CONTACTABILITY_TARGET_RATES['whatsapp_opt_in']
+    do_not_call=deterministic_unit_interval(ids,105)<CONTACTABILITY_TARGET_RATES['do_not_call']
+    telemarketing_contactable=(~do_not_call)&(deterministic_unit_interval(ids,106)<CONTACTABILITY_TARGET_RATES['telemarketing_contactable_when_not_dnc'])
+
+    push_present=deterministic_unit_interval(ids,107)<CONTACTABILITY_TARGET_RATES['push_token_present']
+    push_opt_in=push_present&(deterministic_unit_interval(ids,108)<CONTACTABILITY_TARGET_RATES['push_opt_in_when_token_present'])
+    push_high=deterministic_uint64(ids,109); push_low=deterministic_uint64(ids,110)
+    push_token=np.array([f'pt_{int(a):016x}{int(b):016x}' if present else '' for a,b,present in zip(push_high,push_low,push_present)],dtype=object)
+
+    advertising_present=deterministic_unit_interval(ids,111)<CONTACTABILITY_TARGET_RATES['advertising_id_present']
+    advertising_targetable=advertising_present&(deterministic_unit_interval(ids,112)<CONTACTABILITY_TARGET_RATES['advertising_targetable_when_id_present'])
+    advertising_high=deterministic_uint64(ids,113); advertising_low=deterministic_uint64(ids,114)
+    advertising_id=np.array([deterministic_advertising_id(a,b) if present else '' for a,b,present in zip(advertising_high,advertising_low,advertising_present)],dtype=object)
+
+    web_present=deterministic_unit_interval(ids,115)<CONTACTABILITY_TARGET_RATES['web_visitor_id_present']
+    onsite_targetable=web_present&(deterministic_unit_interval(ids,116)<CONTACTABILITY_TARGET_RATES['onsite_targetable_when_id_present'])
+    web_high=deterministic_uint64(ids,117); web_low=deterministic_uint64(ids,118)
+    web_visitor_id=np.array([f'wv_{int(a):016x}{int(b):016x}' if present else '' for a,b,present in zip(web_high,web_low,web_present)],dtype=object)
+
+    chunk_violations=int(np.sum(push_opt_in&~push_present))
+    chunk_violations+=int(np.sum(advertising_targetable&~advertising_present))
+    chunk_violations+=int(np.sum(onsite_targetable&~web_present))
+    chunk_violations+=int(np.sum(telemarketing_contactable&do_not_call))
+    if chunk_violations:
+        raise RuntimeError(f'Contactability generation contract violated: {chunk_violations}')
+    contactability_contract_violation_count += chunk_violations
+
     # Build/write chunk. Values intentionally avoid commas/newlines to keep fast CSV serialization valid.
     lines=[]; append=lines.append
     for i in range(n):
-        append(','.join((person[i],str(first[i]),str(last[i]),str(genders[i]),str(int(ages[i])),addr1[i],str(addr2[i]),str(street[i]),str(zips[i]),str(cities[i]),str(STATE_NAMES[st_idx[i]]),'United States',str(phones[i]),email[i],str(int(individual[i])),str(marital[i]),str(education[i]),str(empstat[i]),str(resident_status[i]),str(resident_type[i]),str(int(family_count[i])),str(int(children[i])),str(int(adults[i])),str(ethn[i]),str(type_emp[i]),str(industry[i]),str(int(fam[i])),str(religions[i]))))
+        append(','.join((person[i],str(first[i]),str(last[i]),str(genders[i]),str(int(ages[i])),addr1[i],str(addr2[i]),str(street[i]),str(zips[i]),str(cities[i]),str(STATE_NAMES[st_idx[i]]),'United States',str(phones[i]),email[i],str(int(individual[i])),str(marital[i]),str(education[i]),str(empstat[i]),str(resident_status[i]),str(resident_type[i]),str(int(family_count[i])),str(int(children[i])),str(int(adults[i])),str(ethn[i]),str(type_emp[i]),str(industry[i]),str(int(fam[i])),str(religions[i]),str(int(email_contactable[i])),str(int(direct_mail_contactable[i])),str(int(sms_opt_in[i])),str(int(whatsapp_opt_in[i])),str(int(telemarketing_contactable[i])),str(int(do_not_call[i])),str(push_token[i]),str(int(push_opt_in[i])),str(advertising_id[i]),str(int(advertising_targetable[i])),str(web_visitor_id[i]),str(int(onsite_targetable[i])))))
     block=('\n'.join(lines)+'\n').encode('utf-8')
     compressed_output.write(block)
 
@@ -405,6 +507,18 @@ for base in range(0,N_ROWS,CHUNK):
     for v,c in zip(vals,cnts): gender_count[str(v)]+=int(c)
     vals,cnts=np.unique(ethn,return_counts=True)
     for v,c in zip(vals,cnts): eth_count[str(v)]+=int(c)
+    contactability_counts['email_contactable']+=int(email_contactable.sum())
+    contactability_counts['direct_mail_contactable']+=int(direct_mail_contactable.sum())
+    contactability_counts['sms_opt_in']+=int(sms_opt_in.sum())
+    contactability_counts['whatsapp_opt_in']+=int(whatsapp_opt_in.sum())
+    contactability_counts['telemarketing_contactable']+=int(telemarketing_contactable.sum())
+    contactability_counts['do_not_call']+=int(do_not_call.sum())
+    contactability_counts['push_opt_in']+=int(push_opt_in.sum())
+    contactability_counts['advertising_targetable']+=int(advertising_targetable.sum())
+    contactability_counts['onsite_targetable']+=int(onsite_targetable.sum())
+    identifier_present_counts['push_token']+=int(push_present.sum())
+    identifier_present_counts['advertising_id']+=int(advertising_present.sum())
+    identifier_present_counts['web_visitor_id']+=int(web_present.sum())
 
     done=base+n; elapsed=time.time()-start
     print(f'PROGRESS {done}/{N_ROWS} rows ({done/N_ROWS:.1%}) elapsed={elapsed:.1f}s',flush=True)
@@ -412,14 +526,37 @@ for base in range(0,N_ROWS,CHUNK):
 compressed_output.close()
 compressed_raw.close()
 
+compressed_sha256=file_sha256(OUT)
+
 summary={
  'rows':N_ROWS,'columns':len(headers),'seed':SEED,'id_offset':ID_OFFSET,'id_start':ID_OFFSET+1,'id_end':ID_OFFSET+N_ROWS,'file':_portable_repo_path(OUT),'file_size_bytes':OUT.stat().st_size,
+ 'file_sha256':compressed_sha256,'source_columns':headers,
  'mean_age':age_sum/N_ROWS,'mean_individual_yearly_income':income_sum/N_ROWS,'mean_family_yearly_income':family_income_sum/N_ROWS,
  'population_age_contract':'ADULT_18_100','age_contract_range':'18..100','age_contract_adjusted_rows':age_contract_adjusted_rows,'age_contract_mode':'GENERATED_VALID_FROM_SOURCE',
  'employed_share':employed/N_ROWS,'gender_distribution':{k:v/N_ROWS for k,v in gender_count.items()},
  'ethnicity_distribution':{k:v/N_ROWS for k,v in eth_count.items()},
  'state_distribution':{STATE_CODES[i]:{'state':URBAN[STATE_CODES[i]][0],'rows':int(state_count[i]),'share':float(state_count[i]/N_ROWS)} for i in range(len(STATE_CODES))},
- 'contact_safety':'Emails use IANA-reserved example.com/example.net/example.org domains. Phones use the fictional 555-0100..0199 exchange range. Addresses are algorithmically synthesized, not copied from address records.',
+ 'contactability_contract_version':'1','contactability_target_rates':CONTACTABILITY_TARGET_RATES,
+ 'contactability_distribution':{k:{'rows':int(v),'share':float(v/N_ROWS)} for k,v in contactability_counts.items()},
+ 'identifier_availability':{k:{'rows_present':int(v),'rows_missing':int(N_ROWS-v),'present_share':float(v/N_ROWS)} for k,v in identifier_present_counts.items()},
+ 'contactability_contract_violation_count':contactability_contract_violation_count,
+ 'contactability_rules':{
+   'email_contactable':'Requires governed valid email.',
+   'direct_mail_contactable':'Requires address_line_1, city, state, and postal_code.',
+   'sms_opt_in':'Requires governed valid phone.',
+   'whatsapp_opt_in':'Requires governed valid phone.',
+   'telemarketing_contactable':'Requires governed valid phone and do_not_call=false.',
+   'push_opt_in':'Cannot be true without push_token.',
+   'advertising_targetable':'Cannot be true without advertising_id.',
+   'onsite_targetable':'Cannot be true without web_visitor_id.'
+ },
+ 'identifier_rules':{
+   'push_token':'Nullable deterministic synthetic opaque pt_ token.',
+   'advertising_id':'Nullable deterministic synthetic UUID-like identifier.',
+   'web_visitor_id':'Nullable deterministic synthetic opaque wv_ key.'
+ },
+ 'model_feature_exclusion':['email_contactable','direct_mail_contactable','sms_opt_in','whatsapp_opt_in','telemarketing_contactable','do_not_call','push_token','push_opt_in','advertising_id','advertising_targetable','web_visitor_id','onsite_targetable'],
+ 'contact_safety':'Emails use IANA-reserved example.com/example.net/example.org domains. Phones use the fictional 555-0100..0199 exchange range. Addresses and activation identifiers are algorithmically synthesized, not copied from records. Identifier presence never implies consent or targetability.',
  'methodology':'State selection and row weights follow Census 2020 urban population counts for the top 27 states. Demographic/economic fields are correlated synthetic draws calibrated to broad recent ACS/QuickFacts-style state parameters. Religion is survey-calibrated synthetic data based on Pew 2023-24 national/regional patterns, because the Census does not collect religion.',
  'source_urls':['https://www2.census.gov/geo/docs/reference/ua/State_Urban_Rural_Pop_2020_2010.xlsx','https://www.census.gov/programs-surveys/acs/data/data-via-api.html','https://www.census.gov/quickfacts/','https://www.pewresearch.org/religious-landscape-study/']
 }

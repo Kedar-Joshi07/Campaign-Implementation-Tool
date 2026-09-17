@@ -2,6 +2,16 @@
 
 from __future__ import annotations
 
+from app.services.omnichannel_profile_contracts import (
+    BASE_EXPORT_COLUMNS,
+    CAMPAIGN_CHANNEL_DIRECT_MAIL,
+    CAMPAIGN_CHANNEL_EMAIL,
+    COMMON_PROHIBITED_EXPORT_FIELDS,
+    EXPORT_PROFILE_DIRECT_MAIL_CONTACT_V1,
+    EXPORT_PROFILE_EMAIL_CONTACT_V1,
+    OMNICHANNEL_PROFILE_REGISTRY,
+)
+
 CAMPAIGN_CONTRACT_VERSION = "1"
 CAMPAIGN_EXPORT_CONTRACT_VERSION = "1"
 CAMPAIGN_MEMBER_RESOLUTION_CONTRACT_VERSION = "1"
@@ -10,49 +20,26 @@ CAMPAIGN_STATUS_DRAFT = "DRAFT"
 CAMPAIGN_STATUS_FINALIZED = "FINALIZED"
 CAMPAIGN_STATUSES = (CAMPAIGN_STATUS_DRAFT, CAMPAIGN_STATUS_FINALIZED)
 
-CAMPAIGN_CHANNEL_EMAIL = "EMAIL"
-CAMPAIGN_CHANNEL_DIRECT_MAIL = "DIRECT_MAIL"
+# The legacy Campaign workflow remains deliberately limited until the Phase 11
+# result export engine is implemented.  The backend-owned omnichannel registry
+# is the authority for the expanded profile surface.
 CAMPAIGN_CHANNELS = (CAMPAIGN_CHANNEL_EMAIL, CAMPAIGN_CHANNEL_DIRECT_MAIL)
 
-EXPORT_PROFILE_EMAIL_CONTACT_V1 = "EMAIL_CONTACT_V1"
-EXPORT_PROFILE_DIRECT_MAIL_CONTACT_V1 = "DIRECT_MAIL_CONTACT_V1"
+EMAIL_EXPORT_COLUMNS = OMNICHANNEL_PROFILE_REGISTRY[
+    EXPORT_PROFILE_EMAIL_CONTACT_V1
+].output_columns
+DIRECT_MAIL_EXPORT_COLUMNS = OMNICHANNEL_PROFILE_REGISTRY[
+    EXPORT_PROFILE_DIRECT_MAIL_CONTACT_V1
+].output_columns
 
-BASE_EXPORT_COLUMNS = (
-    "person_id",
-    "propensity_score",
-    "percentile_bucket",
-    "decile",
-    "rank_band",
-)
-
-EMAIL_EXPORT_COLUMNS = (
-    *BASE_EXPORT_COLUMNS,
-    "first_name",
-    "last_name",
-    "email",
-)
-
-DIRECT_MAIL_EXPORT_COLUMNS = (
-    *BASE_EXPORT_COLUMNS,
-    "first_name",
-    "last_name",
-    "address_line_1",
-    "address_line_2",
-    "city",
-    "state",
-    "postal_code",
-)
-
-PROHIBITED_EXPORT_FIELDS = (
-    "ethnicity",
-    "religion",
-    "occupation_industry",
-    "family_yearly_income",
-    "number_of_children_in_family",
-    "number_of_adults_in_family",
-    "customer_id",
-    "phone_number",
-)
+# Compatibility name for common prohibitions only.  Contact identifiers such
+# as phone/email are governed by each profile's exact allowlist/prohibited set;
+# they are intentionally not globally prohibited or globally permitted.
+PROHIBITED_EXPORT_FIELDS = COMMON_PROHIBITED_EXPORT_FIELDS
+PROFILE_PROHIBITED_FIELDS = {
+    name: profile.prohibited_fields
+    for name, profile in OMNICHANNEL_PROFILE_REGISTRY.items()
+}
 
 CHANNEL_EXPORT_PROFILE = {
     CAMPAIGN_CHANNEL_EMAIL: EXPORT_PROFILE_EMAIL_CONTACT_V1,
@@ -60,8 +47,8 @@ CHANNEL_EXPORT_PROFILE = {
 }
 
 PROFILE_EXPORT_COLUMNS = {
-    EXPORT_PROFILE_EMAIL_CONTACT_V1: EMAIL_EXPORT_COLUMNS,
-    EXPORT_PROFILE_DIRECT_MAIL_CONTACT_V1: DIRECT_MAIL_EXPORT_COLUMNS,
+    name: profile.output_columns
+    for name, profile in OMNICHANNEL_PROFILE_REGISTRY.items()
 }
 
 __all__ = (
@@ -81,5 +68,6 @@ __all__ = (
     "EXPORT_PROFILE_DIRECT_MAIL_CONTACT_V1",
     "EXPORT_PROFILE_EMAIL_CONTACT_V1",
     "PROFILE_EXPORT_COLUMNS",
+    "PROFILE_PROHIBITED_FIELDS",
     "PROHIBITED_EXPORT_FIELDS",
 )

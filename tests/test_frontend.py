@@ -11,9 +11,10 @@ from app.main import app
 
 
 @pytest.fixture
-def client(tmp_path: Path):
+def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     database_path = tmp_path / "frontend.db"
     initialize_database(database_path)
+    monkeypatch.setattr("app.main.DATABASE_PATH", database_path)
     app.dependency_overrides[get_database_path] = lambda: database_path
     with TestClient(app) as test_client:
         yield test_client
@@ -56,6 +57,11 @@ def test_frontend_contains_functional_phase_one_views(client: TestClient) -> Non
         "/static/js/campaign-planner-form.js",
         "/static/js/data-status.js",
         "/static/js/app.js",
+        "/static/js/view-contract.js",
+        "/static/js/components/multi-select-dropdown.js",
+        "/static/js/business-search-form.js",
+        "/static/js/business-search-status.js",
+        "/static/js/saved-target-groups.js",
     ),
 )
 def test_frontend_assets_are_served(client: TestClient, asset_path: str) -> None:
@@ -65,24 +71,23 @@ def test_frontend_assets_are_served(client: TestClient, asset_path: str) -> None
     assert response.text
 
 
-def test_navigation_groups_and_phase7_shell_labels_are_visible(client: TestClient) -> None:
+def test_business_navigation_and_retained_phase7_shell_are_separate(client: TestClient) -> None:
     html = client.get("/").text
 
-    assert "Business Workspace" in html
-    assert "Home / Overview" in html
-    assert "Advanced" in html
+    navigation = html.split('<nav id="business-navigation"', 1)[1].split("</nav>", 1)[0]
+    assert 'aria-label="Primary business navigation"' in navigation
+    assert navigation.count("data-view-target=") == 3
+    for target in ("home", "find-potential-customers", "results"):
+        assert f'data-view-target="{target}"' in navigation
     assert html.count('class="navigation-item is-disabled"') == 0
     assert "Later phase</small>" not in html
-    assert 'data-view-target="model-training"' in html
-    assert 'data-view-target="audience-explorer"' in html
-    assert 'data-view-target="campaigns"' in html
+    for target in ("model-training", "audience-explorer", "campaigns"):
+        assert f'data-view-target="{target}"' not in navigation
+        assert f'data-view="{target}"' in html
     assert "Phase 2</small>" not in html
     assert "Phases 4-5</small>" not in html
     assert "Phase 6</small>" not in html
     assert "Phase 7 shell</small>" not in html
-    assert "Legacy tools</small>" in html
-    assert "Targeting Intelligence / Model Management" in html
-    assert "Scoring / Targeting Results" in html
     assert "Audience Explorer" in html
     assert "Campaigns" in html
 
@@ -139,7 +144,8 @@ def test_campaign_planner_uses_dedicated_session_state_and_navigation_modules(
     form_script = client.get("/static/js/campaign-planner-form.js").text
 
     assert 'from "./campaign-planner-form.js"' in app_script
-    assert '"campaign-planner": "Create Campaign"' in app_script
+    assert 'from "./view-contract.js"' in app_script
+    assert 'id="campaign-planner-title">Find Potential Customers</h2>' in client.get("/").text
     assert "initializeCampaignPlanner();" in app_script
     assert "loadCampaignPlanner();" in app_script
     assert 'STORAGE_KEY = "phase9-campaign-planner-draft-v1"' in state_script
@@ -207,14 +213,13 @@ def test_default_overview_uses_business_language_without_identity_linkage(
     assert '<p>Prospect universe</p><span class="metric-index"' not in html
 
 
-def test_historical_analysis_navigation_and_workspace_are_enabled(
+def test_historical_analysis_workspace_retained_without_home_legacy_entry(
     client: TestClient,
 ) -> None:
     html = client.get("/").text
 
-    assert html.count('data-view-target="historical-analysis"') == 3
-    assert 'id="historical-analysis-cta"' in html
-    assert "Analyze historical campaigns" in html
+    assert 'id="historical-analysis-cta"' not in html
+    assert 'id="home-find-potential-customers"' in html
     assert 'data-view="historical-analysis"' in html
     assert 'id="historical-analysis-form"' in html
     assert "Analyze Population" in html
@@ -237,7 +242,7 @@ def test_historical_overview_has_three_accessible_visuals_and_all_states(
     assert 'id="overview-retry"' in html
 
 
-def test_historical_overview_script_uses_api_cache_and_safe_dom_rendering(
+def test_historical_overview_is_retained_but_home_uses_bounded_business_apis(
     client: TestClient,
 ) -> None:
     historical_script = client.get("/static/js/historical-overview.js").text
@@ -245,7 +250,9 @@ def test_historical_overview_script_uses_api_cache_and_safe_dom_rendering(
 
     assert 'import { getCachedJSON } from "./api.js"' in historical_script
     assert 'getCachedJSON("/api/historical/overview"' in historical_script
-    assert "loadHistoricalOverview(force)" in overview_script
+    assert "loadHistoricalOverview(force)" not in overview_script
+    assert 'getCachedJSON("/api/business/overview"' in overview_script
+    assert 'getCachedJSON("/api/business/recent-results?limit=5"' in overview_script
     assert "textContent" in historical_script
     assert "document.createElement" in historical_script
     assert "document.createElementNS" in historical_script
@@ -264,11 +271,11 @@ def test_overview_retry_restores_global_backend_status_after_success(
 ) -> None:
     overview_script = client.get("/static/js/overview.js").text
 
-    assert 'querySelector("#overview-retry")' in overview_script
+    assert 'find("overview-retry")' in overview_script
     assert "loadOverview(true)" in overview_script
-    assert 'state: "is-offline"' in overview_script
-    assert 'state: "is-online"' in overview_script
-    assert "hideError(errorBanner)" in overview_script
+    assert 'dispatchBackendStatus("is-offline"' in overview_script
+    assert 'dispatchBackendStatus("is-online"' in overview_script
+    assert 'hideError(find("overview-error"))' in overview_script
 
 
 def test_data_status_script_renders_exact_and_approximate_policy_labels(
@@ -549,7 +556,7 @@ def test_campaign_builder_shell_contains_required_regions_and_controls(
     html = client.get("/").text
 
     assert 'data-view="campaigns"' in html
-    assert 'data-view-target="campaigns"' in html
+    assert 'id="campaigns-view"' in html
     for control_id in (
         "campaign-new-draft",
         "campaigns-refresh",

@@ -1,0 +1,394 @@
+{
+  "deterministic_match": true,
+  "duration_seconds": 368.901,
+  "generated_at": "2026-09-17",
+  "overall_status": "PASS",
+  "report_contract_version": "1",
+  "runs": [
+    {
+      "bounded_source_counts": {
+        "campaign_sales": 80,
+        "customers": 40,
+        "final_demographics": 81,
+        "initial_demographics": 80
+      },
+      "canonical_result": {
+        "final_counts": {
+          "audience_analytics_snapshots": 3,
+          "audience_rank_boundaries": 300,
+          "campaign_result_export_events": 4,
+          "campaign_result_snapshots": 3,
+          "campaign_search_runs": 8,
+          "historical_analysis_runs": 2,
+          "model_runs": 2,
+          "phase10_intelligence_generations": 3,
+          "phase10_orchestration_runs": 9,
+          "propensity_scores": 241,
+          "scoring_runs": 3
+        },
+        "final_rank_sha256": "0e5b789f97d2430b96271a1c57fe4df3854c911ea19184f65dbdb1d6726f410c",
+        "final_score_sha256": "a6a612eb58696e4c714e4c2908ddaf743056362f0f73c8f55f6b6dafe387cf39",
+        "first_model_artifact_sha256": "b7fe155b40abbf38ed413ce0cdf1485ba0d46b6ade637df5e4fc83da0c43209f",
+        "first_modeling_context_sha256": "2b3cd0b11721217a184caaaeabf4faf8440eaf9955e075737b702f8649b61f07",
+        "scenarios": {
+          "10_restart_recovery": {
+            "history_count": 8,
+            "history_persisted": true,
+            "reconciled_parent_count": 1,
+            "resumed_status": "READY",
+            "status": "PASS"
+          },
+          "1_new_business_run_new_intelligence": {
+            "email_export_sha256": "359cd3254c4924a8123ea79a38e2b1ab7f7295c0da9fd608e4ebb49c05e1b9d2",
+            "home_completed_results": 1,
+            "result_source": "NEW_INTELLIGENCE_BUILD",
+            "selected_count": 20,
+            "snapshot_sha256": "d7271f1c33874f4daa6f1ce9fc0d0958e9d2620ef212133145bf89dbebfbc571",
+            "status": "PASS"
+          },
+          "2_identical_exact_result_reuse": {
+            "membership_source_calls": 0,
+            "new_search_run": true,
+            "no_model_or_scoring_build": true,
+            "result_source": "EXACT_RESULT_REUSE",
+            "same_snapshot": true,
+            "status": "PASS"
+          },
+          "3_filter_change_intelligence_reuse": {
+            "new_snapshot": true,
+            "result_source": "INTELLIGENCE_REUSE",
+            "same_generation": true,
+            "same_scoring": true,
+            "selected_count": 20,
+            "status": "PASS"
+          },
+          "4_delivery_profile_change": {
+            "profile": "SMS_CONTACT_V1",
+            "same_generation": true,
+            "same_snapshot": true,
+            "sms_export_sha256": "c58d3b9b0903d4223e1f550a1561fcf8d1aa6a92323bf79b82895eb59dbaa177",
+            "status": "PASS"
+          },
+          "5_new_modeling_context": {
+            "generation_changed": true,
+            "modeling_context_changed": true,
+            "result_source": "NEW_INTELLIGENCE_BUILD",
+            "status": "PASS"
+          },
+          "6_consent_contactability": {
+            "email": {
+              "deliverable": 13,
+              "selected": 20,
+              "undeliverable": 7
+            },
+            "sms": {
+              "deliverable": 8,
+              "selected": 20,
+              "undeliverable": 12
+            },
+            "status": "PASS"
+          },
+          "7_paid_media_hash_only": {
+            "csv_sha256": "59bc2982767dca33cb8deb624e1498dfc9b8e8eaa6ef3b76368fe14934f7e288",
+            "hash_only": true,
+            "row_count": 20,
+            "status": "PASS"
+          },
+          "8_gated_profile_extension": {
+            "post_extension_available": true,
+            "pre_extension_unavailable": true,
+            "push_export_sha256": "2a5c43af44b8adf0173dc02352335ef6040b25f52cf58e382914d99eeb928114",
+            "push_row_count": 20,
+            "status": "PASS"
+          },
+          "9_snapshot_corruption": {
+            "bad_artifact_not_served": true,
+            "deterministic_repair": true,
+            "result_source": "INTELLIGENCE_REUSE",
+            "snapshot_sha256": "005f49c2ed4dadd75ce264b65409a1caf3b87cde669d2c3fd55330f704416454",
+            "status": "PASS"
+          }
+        },
+        "second_model_artifact_sha256": "b7fe155b40abbf38ed413ce0cdf1485ba0d46b6ade637df5e4fc83da0c43209f",
+        "second_modeling_context_sha256": "978c584e72ab1931e80823b35d2910625eb9c7dcdade1b0067f6e128563c9859"
+      },
+      "canonical_result_sha256": "c9ce8954b92b107f506c08e15ec455e68fbc598ee09b284acdc4b8ff261bd109",
+      "duration_seconds": 181.883,
+      "label": "A",
+      "scenarios": {
+        "10_restart_recovery": {
+          "history_count": 8,
+          "history_persisted": true,
+          "reconciled_parent_count": 1,
+          "resumed_status": "READY",
+          "status": "PASS"
+        },
+        "1_new_business_run_new_intelligence": {
+          "email_export_sha256": "359cd3254c4924a8123ea79a38e2b1ab7f7295c0da9fd608e4ebb49c05e1b9d2",
+          "home_completed_results": 1,
+          "result_source": "NEW_INTELLIGENCE_BUILD",
+          "selected_count": 20,
+          "snapshot_sha256": "d7271f1c33874f4daa6f1ce9fc0d0958e9d2620ef212133145bf89dbebfbc571",
+          "status": "PASS"
+        },
+        "2_identical_exact_result_reuse": {
+          "membership_source_calls": 0,
+          "new_search_run": true,
+          "no_model_or_scoring_build": true,
+          "result_source": "EXACT_RESULT_REUSE",
+          "same_snapshot": true,
+          "status": "PASS"
+        },
+        "3_filter_change_intelligence_reuse": {
+          "new_snapshot": true,
+          "result_source": "INTELLIGENCE_REUSE",
+          "same_generation": true,
+          "same_scoring": true,
+          "selected_count": 20,
+          "status": "PASS"
+        },
+        "4_delivery_profile_change": {
+          "profile": "SMS_CONTACT_V1",
+          "same_generation": true,
+          "same_snapshot": true,
+          "sms_export_sha256": "c58d3b9b0903d4223e1f550a1561fcf8d1aa6a92323bf79b82895eb59dbaa177",
+          "status": "PASS"
+        },
+        "5_new_modeling_context": {
+          "generation_changed": true,
+          "modeling_context_changed": true,
+          "result_source": "NEW_INTELLIGENCE_BUILD",
+          "status": "PASS"
+        },
+        "6_consent_contactability": {
+          "email": {
+            "deliverable": 13,
+            "selected": 20,
+            "undeliverable": 7
+          },
+          "sms": {
+            "deliverable": 8,
+            "selected": 20,
+            "undeliverable": 12
+          },
+          "status": "PASS"
+        },
+        "7_paid_media_hash_only": {
+          "csv_sha256": "59bc2982767dca33cb8deb624e1498dfc9b8e8eaa6ef3b76368fe14934f7e288",
+          "hash_only": true,
+          "row_count": 20,
+          "status": "PASS"
+        },
+        "8_gated_profile_extension": {
+          "post_extension_available": true,
+          "pre_extension_unavailable": true,
+          "push_export_sha256": "2a5c43af44b8adf0173dc02352335ef6040b25f52cf58e382914d99eeb928114",
+          "push_row_count": 20,
+          "status": "PASS"
+        },
+        "9_snapshot_corruption": {
+          "bad_artifact_not_served": true,
+          "deterministic_repair": true,
+          "result_source": "INTELLIGENCE_REUSE",
+          "snapshot_sha256": "005f49c2ed4dadd75ce264b65409a1caf3b87cde669d2c3fd55330f704416454",
+          "status": "PASS"
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "bounded_source_counts": {
+        "campaign_sales": 80,
+        "customers": 40,
+        "final_demographics": 81,
+        "initial_demographics": 80
+      },
+      "canonical_result": {
+        "final_counts": {
+          "audience_analytics_snapshots": 3,
+          "audience_rank_boundaries": 300,
+          "campaign_result_export_events": 4,
+          "campaign_result_snapshots": 3,
+          "campaign_search_runs": 8,
+          "historical_analysis_runs": 2,
+          "model_runs": 2,
+          "phase10_intelligence_generations": 3,
+          "phase10_orchestration_runs": 9,
+          "propensity_scores": 241,
+          "scoring_runs": 3
+        },
+        "final_rank_sha256": "0e5b789f97d2430b96271a1c57fe4df3854c911ea19184f65dbdb1d6726f410c",
+        "final_score_sha256": "a6a612eb58696e4c714e4c2908ddaf743056362f0f73c8f55f6b6dafe387cf39",
+        "first_model_artifact_sha256": "b7fe155b40abbf38ed413ce0cdf1485ba0d46b6ade637df5e4fc83da0c43209f",
+        "first_modeling_context_sha256": "2b3cd0b11721217a184caaaeabf4faf8440eaf9955e075737b702f8649b61f07",
+        "scenarios": {
+          "10_restart_recovery": {
+            "history_count": 8,
+            "history_persisted": true,
+            "reconciled_parent_count": 1,
+            "resumed_status": "READY",
+            "status": "PASS"
+          },
+          "1_new_business_run_new_intelligence": {
+            "email_export_sha256": "359cd3254c4924a8123ea79a38e2b1ab7f7295c0da9fd608e4ebb49c05e1b9d2",
+            "home_completed_results": 1,
+            "result_source": "NEW_INTELLIGENCE_BUILD",
+            "selected_count": 20,
+            "snapshot_sha256": "d7271f1c33874f4daa6f1ce9fc0d0958e9d2620ef212133145bf89dbebfbc571",
+            "status": "PASS"
+          },
+          "2_identical_exact_result_reuse": {
+            "membership_source_calls": 0,
+            "new_search_run": true,
+            "no_model_or_scoring_build": true,
+            "result_source": "EXACT_RESULT_REUSE",
+            "same_snapshot": true,
+            "status": "PASS"
+          },
+          "3_filter_change_intelligence_reuse": {
+            "new_snapshot": true,
+            "result_source": "INTELLIGENCE_REUSE",
+            "same_generation": true,
+            "same_scoring": true,
+            "selected_count": 20,
+            "status": "PASS"
+          },
+          "4_delivery_profile_change": {
+            "profile": "SMS_CONTACT_V1",
+            "same_generation": true,
+            "same_snapshot": true,
+            "sms_export_sha256": "c58d3b9b0903d4223e1f550a1561fcf8d1aa6a92323bf79b82895eb59dbaa177",
+            "status": "PASS"
+          },
+          "5_new_modeling_context": {
+            "generation_changed": true,
+            "modeling_context_changed": true,
+            "result_source": "NEW_INTELLIGENCE_BUILD",
+            "status": "PASS"
+          },
+          "6_consent_contactability": {
+            "email": {
+              "deliverable": 13,
+              "selected": 20,
+              "undeliverable": 7
+            },
+            "sms": {
+              "deliverable": 8,
+              "selected": 20,
+              "undeliverable": 12
+            },
+            "status": "PASS"
+          },
+          "7_paid_media_hash_only": {
+            "csv_sha256": "59bc2982767dca33cb8deb624e1498dfc9b8e8eaa6ef3b76368fe14934f7e288",
+            "hash_only": true,
+            "row_count": 20,
+            "status": "PASS"
+          },
+          "8_gated_profile_extension": {
+            "post_extension_available": true,
+            "pre_extension_unavailable": true,
+            "push_export_sha256": "2a5c43af44b8adf0173dc02352335ef6040b25f52cf58e382914d99eeb928114",
+            "push_row_count": 20,
+            "status": "PASS"
+          },
+          "9_snapshot_corruption": {
+            "bad_artifact_not_served": true,
+            "deterministic_repair": true,
+            "result_source": "INTELLIGENCE_REUSE",
+            "snapshot_sha256": "005f49c2ed4dadd75ce264b65409a1caf3b87cde669d2c3fd55330f704416454",
+            "status": "PASS"
+          }
+        },
+        "second_model_artifact_sha256": "b7fe155b40abbf38ed413ce0cdf1485ba0d46b6ade637df5e4fc83da0c43209f",
+        "second_modeling_context_sha256": "978c584e72ab1931e80823b35d2910625eb9c7dcdade1b0067f6e128563c9859"
+      },
+      "canonical_result_sha256": "c9ce8954b92b107f506c08e15ec455e68fbc598ee09b284acdc4b8ff261bd109",
+      "duration_seconds": 187.017,
+      "label": "B",
+      "scenarios": {
+        "10_restart_recovery": {
+          "history_count": 8,
+          "history_persisted": true,
+          "reconciled_parent_count": 1,
+          "resumed_status": "READY",
+          "status": "PASS"
+        },
+        "1_new_business_run_new_intelligence": {
+          "email_export_sha256": "359cd3254c4924a8123ea79a38e2b1ab7f7295c0da9fd608e4ebb49c05e1b9d2",
+          "home_completed_results": 1,
+          "result_source": "NEW_INTELLIGENCE_BUILD",
+          "selected_count": 20,
+          "snapshot_sha256": "d7271f1c33874f4daa6f1ce9fc0d0958e9d2620ef212133145bf89dbebfbc571",
+          "status": "PASS"
+        },
+        "2_identical_exact_result_reuse": {
+          "membership_source_calls": 0,
+          "new_search_run": true,
+          "no_model_or_scoring_build": true,
+          "result_source": "EXACT_RESULT_REUSE",
+          "same_snapshot": true,
+          "status": "PASS"
+        },
+        "3_filter_change_intelligence_reuse": {
+          "new_snapshot": true,
+          "result_source": "INTELLIGENCE_REUSE",
+          "same_generation": true,
+          "same_scoring": true,
+          "selected_count": 20,
+          "status": "PASS"
+        },
+        "4_delivery_profile_change": {
+          "profile": "SMS_CONTACT_V1",
+          "same_generation": true,
+          "same_snapshot": true,
+          "sms_export_sha256": "c58d3b9b0903d4223e1f550a1561fcf8d1aa6a92323bf79b82895eb59dbaa177",
+          "status": "PASS"
+        },
+        "5_new_modeling_context": {
+          "generation_changed": true,
+          "modeling_context_changed": true,
+          "result_source": "NEW_INTELLIGENCE_BUILD",
+          "status": "PASS"
+        },
+        "6_consent_contactability": {
+          "email": {
+            "deliverable": 13,
+            "selected": 20,
+            "undeliverable": 7
+          },
+          "sms": {
+            "deliverable": 8,
+            "selected": 20,
+            "undeliverable": 12
+          },
+          "status": "PASS"
+        },
+        "7_paid_media_hash_only": {
+          "csv_sha256": "59bc2982767dca33cb8deb624e1498dfc9b8e8eaa6ef3b76368fe14934f7e288",
+          "hash_only": true,
+          "row_count": 20,
+          "status": "PASS"
+        },
+        "8_gated_profile_extension": {
+          "post_extension_available": true,
+          "pre_extension_unavailable": true,
+          "push_export_sha256": "2a5c43af44b8adf0173dc02352335ef6040b25f52cf58e382914d99eeb928114",
+          "push_row_count": 20,
+          "status": "PASS"
+        },
+        "9_snapshot_corruption": {
+          "bad_artifact_not_served": true,
+          "deterministic_repair": true,
+          "result_source": "INTELLIGENCE_REUSE",
+          "snapshot_sha256": "005f49c2ed4dadd75ce264b65409a1caf3b87cde669d2c3fd55330f704416454",
+          "status": "PASS"
+        }
+      },
+      "status": "PASS"
+    }
+  ],
+  "runtime_cleanup": {
+    "runtime_removed": true
+  }
+}

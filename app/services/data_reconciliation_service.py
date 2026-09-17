@@ -296,7 +296,90 @@ def run_reconciliation(
                 ), 0) AS family_arithmetic_violation_count,
                 COALESCE(SUM(
                     CASE WHEN family_yearly_income < individual_yearly_income THEN 1 ELSE 0 END
-                ), 0) AS family_income_below_individual_violation_count
+                ), 0) AS family_income_below_individual_violation_count,
+                COALESCE(SUM(email_contactable), 0) AS email_contactable_count,
+                COALESCE(SUM(direct_mail_contactable), 0) AS direct_mail_contactable_count,
+                COALESCE(SUM(sms_opt_in), 0) AS sms_opt_in_count,
+                COALESCE(SUM(whatsapp_opt_in), 0) AS whatsapp_opt_in_count,
+                COALESCE(SUM(telemarketing_contactable), 0)
+                    AS telemarketing_contactable_count,
+                COALESCE(SUM(do_not_call), 0) AS do_not_call_count,
+                COALESCE(SUM(CASE WHEN push_token IS NOT NULL THEN 1 ELSE 0 END), 0)
+                    AS push_token_count,
+                COALESCE(SUM(push_opt_in), 0) AS push_opt_in_count,
+                COALESCE(SUM(CASE WHEN advertising_id IS NOT NULL THEN 1 ELSE 0 END), 0)
+                    AS advertising_id_count,
+                COALESCE(SUM(advertising_targetable), 0)
+                    AS advertising_targetable_count,
+                COALESCE(SUM(CASE WHEN web_visitor_id IS NOT NULL THEN 1 ELSE 0 END), 0)
+                    AS web_visitor_id_count,
+                COALESCE(SUM(onsite_targetable), 0) AS onsite_targetable_count,
+                COALESCE(SUM(
+                    CASE
+                        WHEN email_contactable = 1
+                            AND (email IS NULL OR TRIM(email) = '')
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS email_contactable_without_identifier_count,
+                COALESCE(SUM(
+                    CASE
+                        WHEN direct_mail_contactable = 1 AND (
+                            address_line_1 IS NULL OR TRIM(address_line_1) = ''
+                            OR city IS NULL OR TRIM(city) = ''
+                            OR state IS NULL OR TRIM(state) = ''
+                            OR postal_code IS NULL OR TRIM(postal_code) = ''
+                        )
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS direct_mail_contactable_without_identifier_count,
+                COALESCE(SUM(
+                    CASE
+                        WHEN sms_opt_in = 1
+                            AND (phone_number IS NULL OR TRIM(phone_number) = '')
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS sms_opt_in_without_identifier_count,
+                COALESCE(SUM(
+                    CASE
+                        WHEN whatsapp_opt_in = 1
+                            AND (phone_number IS NULL OR TRIM(phone_number) = '')
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS whatsapp_opt_in_without_identifier_count,
+                COALESCE(SUM(
+                    CASE
+                        WHEN telemarketing_contactable = 1
+                            AND (phone_number IS NULL OR TRIM(phone_number) = '')
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS telemarketing_without_identifier_count,
+                COALESCE(SUM(
+                    CASE
+                        WHEN telemarketing_contactable = 1 AND do_not_call = 1
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS telemarketing_dnc_conflict_count,
+                COALESCE(SUM(
+                    CASE
+                        WHEN push_opt_in = 1
+                            AND (push_token IS NULL OR TRIM(push_token) = '')
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS push_opt_in_without_identifier_count,
+                COALESCE(SUM(
+                    CASE
+                        WHEN advertising_targetable = 1
+                            AND (advertising_id IS NULL OR TRIM(advertising_id) = '')
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS advertising_targetable_without_identifier_count,
+                COALESCE(SUM(
+                    CASE
+                        WHEN onsite_targetable = 1
+                            AND (web_visitor_id IS NULL OR TRIM(web_visitor_id) = '')
+                        THEN 1 ELSE 0
+                    END
+                ), 0) AS onsite_targetable_without_identifier_count
             FROM demographics
             """,
         )
@@ -317,6 +400,33 @@ def run_reconciliation(
                 "age_below_18_count": demographic_metrics["age_below_18_count"],
                 "age_above_100_count": demographic_metrics["age_above_100_count"],
                 "adult_count_below_1": demographic_metrics["adult_count_below_1"],
+                "email_contactable_without_identifier_count": demographic_metrics[
+                    "email_contactable_without_identifier_count"
+                ],
+                "direct_mail_contactable_without_identifier_count": demographic_metrics[
+                    "direct_mail_contactable_without_identifier_count"
+                ],
+                "sms_opt_in_without_identifier_count": demographic_metrics[
+                    "sms_opt_in_without_identifier_count"
+                ],
+                "whatsapp_opt_in_without_identifier_count": demographic_metrics[
+                    "whatsapp_opt_in_without_identifier_count"
+                ],
+                "telemarketing_without_identifier_count": demographic_metrics[
+                    "telemarketing_without_identifier_count"
+                ],
+                "telemarketing_dnc_conflict_count": demographic_metrics[
+                    "telemarketing_dnc_conflict_count"
+                ],
+                "push_opt_in_without_identifier_count": demographic_metrics[
+                    "push_opt_in_without_identifier_count"
+                ],
+                "advertising_targetable_without_identifier_count": demographic_metrics[
+                    "advertising_targetable_without_identifier_count"
+                ],
+                "onsite_targetable_without_identifier_count": demographic_metrics[
+                    "onsite_targetable_without_identifier_count"
+                ],
             },
             query_seconds=demographic_seconds,
         )

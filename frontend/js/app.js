@@ -7,18 +7,29 @@ import { initializeOverview, loadOverview } from "./overview.js";
 import { initializeCampaigns, loadCampaigns } from "./campaigns.js";
 import { initializeCampaignPlanner, loadCampaignPlanner } from "./campaign-planner-form.js";
 import { initializeSavedTargetGroups, loadSavedTargetGroups } from "./saved-target-groups.js";
+import { applyViewContract, resolveBusinessRoute, VIEW_DEFINITIONS, VIEW_GROUPS } from "./view-contract.js";
+import { initializeBusinessSearchForm, loadBusinessSearchForm } from "./business-search-form.js";
+import { initializeSearchStatus, loadSearchStatus, loadSearchHistory, stopSearchStatus } from "./business-search-status.js";
 
-const viewTitles = {
-  overview: "Overview",
-  "campaign-planner": "Create Campaign",
-  "saved-target-groups": "Saved Target Groups",
-  insights: "Insights",
-  "data-status": "Data Status",
-  "historical-analysis": "Historical Analysis",
-  "model-training": "Model Training & Prospect Scoring",
-  "audience-explorer": "Audience Explorer",
-  campaigns: "Campaigns",
-};
+// Explicit retained-wizard harness seam. Never enables the shell in normal routing.
+export function initializeLegacyCampaignPlannerForHarness() {
+  initializeCampaignPlanner();
+  loadCampaignPlanner();
+}
+
+// Explicit regression/future-exposure seam, never called by normal hash routing.
+// UI hiding is not security: this does not authorize access to any API.
+export function loadLegacyWorkspace(viewName) {
+  if (!Object.hasOwn(VIEW_DEFINITIONS, viewName)) return;
+  const definition = VIEW_DEFINITIONS[viewName];
+  if (!definition || definition.group === VIEW_GROUPS.BUSINESS_USER_VISIBLE) return;
+  const loaders = {
+    "saved-target-groups": loadSavedTargetGroups, "data-status": loadDataStatus,
+    "historical-analysis": loadHistoricalAnalysis, "model-training": loadModelTraining,
+    "audience-explorer": loadAudienceExplorer, campaigns: loadCampaigns,
+  };
+  return loaders[viewName]?.();
+}
 
 function setBackendStatus(state, text) {
   const status = document.querySelector("#backend-status");
@@ -45,49 +56,54 @@ async function checkBackendHealth(force = false) {
   }
 }
 
-function showView(viewName) {
-  const safeView = Object.hasOwn(viewTitles, viewName) ? viewName : "overview";
+function showView(route) {
+  stopSearchStatus();
+  const safeView = route.definition.domView;
   for (const view of document.querySelectorAll("[data-view]")) {
     view.hidden = view.dataset.view !== safeView;
   }
-  for (const item of document.querySelectorAll("[data-view-target]")) {
-    const active = item.dataset.viewTarget === safeView;
+  for (const item of document.querySelectorAll("#business-navigation [data-view-target]")) {
+    const active = item.dataset.viewTarget === (route.definition.parentNavigation || route.key);
     item.classList.toggle("is-active", active);
     if (active) item.setAttribute("aria-current", "page");
     else item.removeAttribute("aria-current");
   }
 
-  const title = viewTitles[safeView];
+  const title = route.definition.title;
   document.querySelector("#page-title").textContent = title;
   document.title = `${title} | Campaign Implementation Intelligence`;
   if (safeView === "overview") loadOverview();
-  else if (safeView === "campaign-planner") loadCampaignPlanner();
-  else if (safeView === "saved-target-groups") loadSavedTargetGroups();
-  else if (safeView === "data-status") loadDataStatus();
-  else if (safeView === "historical-analysis") loadHistoricalAnalysis();
-  else if (safeView === "model-training") loadModelTraining();
-  else if (safeView === "audience-explorer") loadAudienceExplorer();
-  else if (safeView === "campaigns") loadCampaigns();
+  else if (safeView === "campaign-planner") loadBusinessSearchForm();
+  else if (safeView === "results") loadSearchHistory();
+  else if (safeView === "result-detail") loadSearchStatus(route.runId);
+  document.querySelector("#result-detail-view").dataset.searchRunId = route.runId || "";
 }
 
-function requestedView() {
-  return window.location.hash.replace(/^#/, "") || "overview";
+function renderRequestedRoute() {
+  const route = resolveBusinessRoute(window.location.hash);
+  if (window.location.hash !== route.hash) {
+    window.history.replaceState(null, "", route.hash);
+  }
+  showView(route);
 }
 
 function initializeNavigation() {
   for (const item of document.querySelectorAll("[data-view-target]")) {
-    item.addEventListener("click", () => {
-      const target = item.dataset.viewTarget;
-      if (window.location.hash === `#${target}`) showView(target);
-      else window.location.hash = target;
+    item.addEventListener("click", (event) => {
+      event.preventDefault();
+      const route = resolveBusinessRoute(`#${item.dataset.viewTarget}`);
+      if (window.location.hash === route.hash) renderRequestedRoute();
+      else window.location.hash = route.hash;
     });
   }
-  window.addEventListener("hashchange", () => showView(requestedView()));
+  window.addEventListener("hashchange", renderRequestedRoute);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  applyViewContract();
   initializeOverview();
-  initializeCampaignPlanner();
+  initializeBusinessSearchForm();
+  initializeSearchStatus();
   initializeSavedTargetGroups();
   initializeDataStatus();
   initializeHistoricalAnalysis();
@@ -100,5 +116,5 @@ document.addEventListener("DOMContentLoaded", () => {
     setBackendStatus(event.detail.state, event.detail.text);
   });
   checkBackendHealth();
-  showView(requestedView());
+  renderRequestedRoute();
 });

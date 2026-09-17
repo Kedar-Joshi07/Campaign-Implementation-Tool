@@ -1,0 +1,87 @@
+"""Bounded Phase 11 single-form submission and safe status projections."""
+from datetime import date
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class PotentialCustomerSearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    campaign_name: str = Field(min_length=1, max_length=120)
+    description: str | None = Field(default=None, max_length=500)
+    planned_launch_date: date | None = None
+    context: dict[str, Any]
+    criteria: dict[str, Any]
+    export_profile: str
+
+
+class Phase11SavedCampaignContext(BaseModel):
+    """Exact additive Phase 11 context; legacy CampaignChannel remains frozen."""
+
+    model_config = ConfigDict(extra="forbid")
+    product_ids: list[str] = Field(min_length=1, max_length=50)
+    campaign_types: list[str] = Field(max_length=50)
+    campaign_categories: list[str] = Field(max_length=50)
+    offer_types: list[str] = Field(max_length=50)
+    campaign_channel: str = Field(min_length=1, max_length=40)
+    historical_campaign_channels: list[str] = Field(max_length=50)
+    campaign_targeting_context_contract_version: str
+
+
+class SearchSubmissionStatus(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    search_run_id: int = Field(gt=0)
+    campaign_name: str
+    status: Literal["QUEUED", "PROCESSING", "COMPLETED", "BLOCKED", "FAILED"]
+    created_at: str
+    completed_at: str | None
+    selected_count: int | None
+    delivery_channel: str
+    export_profile: str
+    safe_message: str
+
+
+class SearchResultProduct(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    product_id: str
+    product_name: str
+    product_category: str
+
+
+class SearchResultHistoryItem(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    search_run_id: int = Field(gt=0)
+    campaign_name: str
+    created_at: str
+    completed_at: str | None
+    status: Literal["QUEUED", "PROCESSING", "COMPLETED", "BLOCKED", "FAILED"]
+    selected_products: list[SearchResultProduct] = Field(max_length=50)
+    campaign_types: list[str] = Field(max_length=50)
+    campaign_categories: list[str] = Field(max_length=50)
+    offer_types: list[str] = Field(max_length=50)
+    delivery_channel: str
+    export_profile: str
+    delivery_profile_label: str
+    match_strength: str
+    targeting_summary: list[str] = Field(max_length=20)
+    selected_count: int | None = Field(default=None, ge=0)
+    result_source: str | None
+    result_source_label: str
+    processing_seconds: float | None = Field(default=None, ge=0)
+    currentness: Literal["CURRENT", "STALE", "UNVERIFIED", "NOT_AVAILABLE"]
+    download_eligible: bool
+    safe_message: str
+
+
+class SearchResultDetail(SearchResultHistoryItem):
+    description: str | None
+    planned_launch_date: str | None
+    campaign_context: dict[str, Any]
+    targeting_criteria: dict[str, Any]
+    filter_branches: list[dict[str, Any]] = Field(min_length=1, max_length=49)
+    selection: dict[str, Any]
+    result_source_explanation: str
+    score_summary: dict[str, Any] | None
+    demographic_summary: dict[str, Any]
+    snapshot_provenance: dict[str, Any] | None
+    technical_details: dict[str, Any]

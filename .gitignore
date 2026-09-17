@@ -35,6 +35,8 @@ playwright-report/
 test-results/
 artifacts/models/*
 !artifacts/models/.gitkeep
+artifacts/results/*
+!artifacts/results/.gitkeep
 artifacts/*.db
 artifacts/*.db-wal
 artifacts/*.db-shm

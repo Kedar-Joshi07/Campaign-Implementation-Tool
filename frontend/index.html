@@ -3,16 +3,16 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Campaign Implementation Intelligence data foundation dashboard">
-    <title>Overview | Campaign Implementation Intelligence</title>
+    <meta name="description" content="Find potential customers and review campaign targeting results">
+    <title>Home | Campaign Implementation Intelligence</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/static/css/main.css?v=phase9-13c">
-    <link rel="stylesheet" href="/static/css/components.css?v=phase9-13c">
+    <link rel="stylesheet" href="/static/css/main.css?v=phase11-14">
+    <link rel="stylesheet" href="/static/css/components.css?v=phase11-14">
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Primary navigation">
-        <a class="brand" href="#overview" aria-label="Campaign Implementation Intelligence overview">
+        <a class="brand" href="#home" data-view-target="home" aria-label="Campaign Implementation Intelligence home">
           <span class="brand-mark" aria-hidden="true">CI</span>
           <span class="brand-copy">
             <strong>Campaign</strong>
@@ -20,37 +20,15 @@
           </span>
         </a>
 
-        <nav class="navigation" aria-label="Application sections">
-          <p class="navigation-label">Business Workspace</p>
-          <button class="navigation-item is-active" type="button" data-view-target="overview" aria-current="page">
-            <span class="nav-icon" aria-hidden="true">HM</span><span>Home / Overview</span>
+        <nav id="business-navigation" class="navigation" aria-label="Primary business navigation">
+          <button id="nav-home" class="navigation-item is-active" type="button" data-view-target="home" aria-current="page">
+            <span class="nav-icon" aria-hidden="true">HM</span><span>Home</span>
           </button>
-          <button class="navigation-item" type="button" data-view-target="campaign-planner">
-            <span class="nav-icon" aria-hidden="true">+</span><span>Create Campaign</span>
+          <button id="nav-find-potential-customers" class="navigation-item" type="button" data-view-target="find-potential-customers">
+            <span class="nav-icon" aria-hidden="true">+</span><span>Find Potential Customers</span>
           </button>
-          <button class="navigation-item" type="button" data-view-target="saved-target-groups">
-            <span class="nav-icon" aria-hidden="true">TG</span><span>Saved Target Groups</span>
-          </button>
-          <button class="navigation-item" type="button" data-view-target="campaigns">
-            <span class="nav-icon" aria-hidden="true">CP</span><span>Campaigns</span><small>Legacy tools</small>
-          </button>
-          <button class="navigation-item" type="button" data-view-target="insights">
-            <span class="nav-icon" aria-hidden="true">IN</span><span>Insights</span>
-          </button>
-
-          <p class="navigation-label">Advanced / Analyst Tools</p>
-          <button class="navigation-item" type="button" data-view-target="data-status">
-            <span class="nav-icon" aria-hidden="true">DS</span><span>Data Status</span>
-          </button>
-          <button class="navigation-item" type="button" data-view-target="historical-analysis">
-            <span class="nav-icon" aria-hidden="true">HA</span><span>Historical Analysis</span>
-          </button>
-
-          <button class="navigation-item" type="button" data-view-target="model-training">
-            <span class="nav-icon" aria-hidden="true">TI</span><span>Targeting Intelligence / Model Management</span><small>Scoring / Targeting Results</small>
-          </button>
-          <button class="navigation-item" type="button" data-view-target="audience-explorer">
-            <span class="nav-icon" aria-hidden="true">AE</span><span>Audience Explorer</span>
+          <button id="nav-results" class="navigation-item" type="button" data-view-target="results">
+            <span class="nav-icon" aria-hidden="true">RS</span><span>Results</span>
           </button>
         </nav>
 
@@ -59,7 +37,7 @@
             <span class="eyebrow eyebrow-on-dark">Status</span>
             <span class="phase-chip">Core capabilities complete</span>
           </div>
-          <p>Phase 7 Campaign Builder is enabled with governed draft, finalize, and export-history workflows.</p>
+          <p>Find Potential Customers and review your results. Downloads do not activate or send campaigns.</p>
         </div>
       </aside>
 
@@ -67,7 +45,7 @@
         <header class="topbar">
           <div>
             <p class="eyebrow">Campaign Implementation Tool</p>
-            <h1 id="page-title">Overview</h1>
+            <h1 id="page-title">Home</h1>
           </div>
           <button id="backend-status" class="connection-status is-checking" type="button" aria-live="polite" title="Check backend connection">
             <span class="status-dot" aria-hidden="true"></span>
@@ -75,14 +53,66 @@
           </button>
         </header>
 
-        <section id="overview-view" class="view" data-view="overview" aria-labelledby="overview-title">
+        <section id="overview-view" class="view" data-view="overview" aria-labelledby="business-overview-title">
           <div id="overview-error" class="error-banner" role="alert" hidden>
             <div>
-              <strong>Overview data is unavailable</strong>
-              <p id="overview-error-message">The backend request could not be completed.</p>
+              <strong>Home is temporarily unavailable</strong>
+              <p id="overview-error-message">We could not load the latest campaign overview. Please try again.</p>
             </div>
             <button id="overview-retry" class="button button-danger" type="button">Try again</button>
           </div>
+
+          <section class="hero business-home-hero">
+            <div>
+              <p class="eyebrow">Campaign targeting</p>
+              <h2 id="business-overview-title">Turn your campaign idea into a ready customer group.</h2>
+              <p class="hero-copy">See your latest search activity, then find the potential customers who best match your next campaign.</p>
+            </div>
+            <button id="home-find-potential-customers" class="button button-primary" type="button" data-view-target="find-potential-customers">Find Potential Customers</button>
+          </section>
+
+          <section class="metric-grid business-home-metrics" aria-label="Potential customer search summary">
+            <article class="metric-card metric-card-primary">
+              <div class="metric-label-row"><p>Potential Customers Available</p><span class="metric-index" aria-hidden="true">01</span></div>
+              <strong id="home-potential-customers" class="metric-value is-loading">&mdash;</strong>
+              <span>People available for campaign targeting</span>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label-row"><p>Search Runs</p><span class="metric-index" aria-hidden="true">02</span></div>
+              <strong id="home-search-runs" class="metric-value is-loading">&mdash;</strong>
+              <span>Saved potential-customer searches</span>
+            </article>
+            <article class="metric-card metric-card-positive">
+              <div class="metric-label-row"><p>Completed Results</p><span class="metric-index" aria-hidden="true">03</span></div>
+              <strong id="home-completed-results" class="metric-value is-loading">&mdash;</strong>
+              <span>Searches with results ready</span>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label-row"><p>Latest Result Count</p><span class="metric-index" aria-hidden="true">04</span></div>
+              <strong id="home-latest-result-count" class="metric-value is-loading">&mdash;</strong>
+              <span>Potential customers in the newest completed result</span>
+            </article>
+          </section>
+
+          <section class="business-home-results" aria-labelledby="home-recent-results-title">
+            <div class="section-heading results-heading">
+              <div>
+                <p class="eyebrow">Latest activity</p>
+                <h2 id="home-recent-results-title">Recent Results</h2>
+                <p>Your five newest searches, with the information needed to continue.</p>
+              </div>
+              <button class="button button-secondary" type="button" data-view-target="results">View All Results</button>
+            </div>
+            <p id="home-results-status" class="results-live-status" role="status" aria-live="polite">Loading recent results&hellip;</p>
+            <div id="home-results-empty" class="results-empty-state" hidden>
+              <h3>No searches yet</h3>
+              <p>Find potential customers to create your first campaign result.</p>
+              <button class="button button-primary" type="button" data-view-target="find-potential-customers">Find Potential Customers</button>
+            </div>
+            <ul id="home-recent-results" class="home-recent-results" aria-label="Recent potential customer results"></ul>
+          </section>
+
+          <div id="legacy-overview-content" hidden>
 
           <section class="hero">
             <div>
@@ -176,8 +206,8 @@
                 <h2 id="historical-overview-title">See what campaign history is telling you.</h2>
                 <p>Aggregate performance from the loaded campaign history, ready to shape a governed customer cohort.</p>
               </div>
-              <button id="historical-analysis-cta" class="button button-primary" type="button" data-view-target="historical-analysis">
-                Analyze historical campaigns
+              <button id="legacy-home-find-potential-customers" class="button button-primary" type="button" data-view-target="find-potential-customers">
+                Find Potential Customers
               </button>
             </div>
 
@@ -241,6 +271,7 @@
               </div>
             </div>
           </section>
+          </div>
         </section>
 
         <section id="historical-analysis-view" class="view" data-view="historical-analysis" aria-labelledby="historical-analysis-title" hidden>
@@ -1233,10 +1264,51 @@
         </section>
 
         <section id="campaign-planner-view" class="view" data-view="campaign-planner" aria-labelledby="campaign-planner-title" hidden>
+          <section class="page-intro">
+            <div><h2 id="campaign-planner-title">Find Potential Customers</h2><p>Describe your campaign and preferences in one request. Multiple answers within a question mean OR; different questions work together as AND.</p></div>
+          </section>
+          <p id="business-search-loading" role="status">Loading current campaign choices and download profiles…</p>
+          <div id="business-search-error" class="error-state" role="alert" tabindex="-1" hidden>
+            <p id="business-search-error-message"></p>
+            <button id="business-search-retry" class="button button-secondary" type="button">Reload choices</button>
+          </div>
+          <p id="business-search-workflow-note" class="notice" hidden>Targeting intelligence preparation is not connected in this release yet. Submitted requests are saved with a blocked status and remain discoverable in Results.</p>
+          <form id="business-search-form" class="business-search-form" novalidate hidden>
+            <fieldset class="panel"><legend>Campaign Details</legend>
+              <div class="analysis-form-grid">
+                <div class="form-field form-field-wide"><label for="business-campaign-name">Campaign Name</label><input id="business-campaign-name" name="campaign_name" type="text" maxlength="120" required></div>
+                <div class="form-field form-field-wide"><label for="business-description">Description — optional</label><textarea id="business-description" name="description" maxlength="500" rows="3"></textarea></div>
+                <div class="form-field"><label for="business-launch-date">Planned Launch Date — optional</label><input id="business-launch-date" name="planned_launch_date" type="date"></div>
+              </div>
+            </fieldset>
+            <fieldset class="panel"><legend>Campaign Context</legend><div id="business-context-fields" class="analysis-form-grid"></div></fieldset>
+            <fieldset class="panel"><legend>Targeting Preferences</legend>
+              <fieldset class="planner-strength-fieldset"><legend>Match Strength</legend><div id="business-match-strength" class="planner-strength-options"></div></fieldset>
+              <div id="business-targeting-fields" class="analysis-form-grid"></div>
+              <details class="planner-targeting-more"><summary>More options</summary><div id="business-more-fields" class="analysis-form-grid"></div>
+                <div class="analysis-form-grid">
+                  <div class="form-field"><label for="business-family-min">Minimum Family Size — optional</label><input id="business-family-min" name="family_member_count_min" type="number" min="1" step="1"></div>
+                  <div class="form-field"><label for="business-family-max">Maximum Family Size — optional</label><input id="business-family-max" name="family_member_count_max" type="number" min="1" step="1"></div>
+                </div>
+              </details>
+              <div class="analysis-form-grid">
+                <div class="form-field"><label for="business-top-percent">Top Matching % — optional</label><input id="business-top-percent" name="top_matching_percent" type="number" min="1" max="100" step="1"></div>
+                <div class="form-field"><label for="business-selection-mode">How many Potential Customers?</label><select id="business-selection-mode" name="selection_mode"><option value="ALL_MATCHING">All matching Potential Customers</option><option value="TOP_N">Top number of matching Potential Customers</option></select></div>
+                <div id="business-target-count-field" class="form-field" hidden><label for="business-target-count">Target Count</label><input id="business-target-count" name="target_count" type="number" min="1" step="1" disabled></div>
+              </div>
+            </fieldset>
+            <fieldset class="panel"><legend>Delivery / Download Profile</legend>
+              <div class="form-field"><label for="business-export-profile">Delivery Channel / Download Profile</label><select id="business-export-profile" name="export_profile" required aria-describedby="business-profile-help"></select></div>
+              <p id="business-profile-help">Delivery choice does not retrain targeting intelligence. Downloads use profile-specific identifiers and contact permissions; not every selected person is necessarily deliverable. This tool does not activate or send campaigns.</p>
+            </fieldset>
+            <button id="business-search-submit" class="button button-primary" type="submit" disabled>Find Potential Customers</button>
+            <p id="business-search-status" role="status" aria-live="polite"></p>
+          </form>
+          <div id="legacy-campaign-planner-shell" hidden>
           <section class="page-intro campaign-planner-shell">
             <div>
               <p class="eyebrow">Business Campaign Planner</p>
-              <h2 id="campaign-planner-title">Create Campaign</h2>
+              <h2 id="legacy-campaign-planner-title">Advanced Campaign Planner</h2>
               <p>Describe your campaign first, then move through context, targeting preferences, preview, and review in one guided flow.</p>
             </div>
             <button id="planner-save-draft" class="button button-secondary" type="button">Save draft</button>
@@ -1322,7 +1394,7 @@
                 <div id="planner-context-empty" class="empty-state compact-empty" role="status" aria-live="polite" aria-atomic="true" hidden>
                   No products are currently available. Refresh the campaign choices after product data is available.
                 </div>
-                <p id="planner-multiselect-help" class="panel-note planner-keyboard-help">Keyboard: hold Ctrl (or Command) while selecting to choose more than one option.</p>
+                <p id="planner-multiselect-help" class="panel-note planner-keyboard-help">Open a dropdown to search and select multiple options. Use arrows to move, Space or Enter to toggle, and Escape to close. Select All visible adds filtered matches; Clear All clears every selection. Native fallback: hold Ctrl (or Command) while selecting multiple options.</p>
                 <form id="planner-context-form" hidden>
                   <div class="analysis-form-grid planner-context-grid">
                     <div class="form-field form-field-wide">
@@ -1651,6 +1723,65 @@
           </div>
 
           <div id="planner-status-announcement" class="visually-hidden" role="status" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <section id="results-view" class="view" data-view="results" aria-labelledby="results-title" hidden>
+          <div class="section-heading results-heading">
+            <div>
+              <p class="eyebrow">Potential Customer Searches</p>
+              <h2 id="results-title">Results</h2>
+              <p>Every submitted search remains here, including searches still processing or unable to complete.</p>
+            </div>
+            <button id="business-history-refresh" class="button button-secondary" type="button">Refresh Results</button>
+          </div>
+          <p id="results-status" class="results-live-status" role="status" aria-live="polite">Loading saved searches…</p>
+          <div id="results-empty" class="results-empty-state">
+            <h3>No searches yet</h3>
+            <p>Use Find Potential Customers to create your first saved search.</p>
+            <button class="button button-primary" type="button" data-view-target="find-potential-customers">Find Potential Customers</button>
+          </div>
+          <ul id="business-search-history" class="business-search-history" aria-label="Potential customer search history"></ul>
+          <div class="results-pagination">
+            <button id="business-history-more" class="button button-secondary" type="button" hidden>Load Older Searches</button>
+          </div>
+        </section>
+
+        <section id="result-detail-view" class="view" data-view="result-detail" aria-labelledby="result-detail-title" hidden>
+          <div class="result-detail-toolbar">
+            <button id="result-detail-back" class="button button-secondary" type="button" data-view-target="results">Back to Results</button>
+            <a id="result-detail-download" class="button button-primary" href="#" hidden>Download Potential Customers</a>
+          </div>
+          <p id="result-detail-status" class="results-live-status" role="status" aria-live="polite">Loading saved result…</p>
+          <div id="result-detail-error" class="error-banner" role="alert" hidden>
+            <div><strong>Result details could not be loaded</strong><p>Please return to Results and try again.</p></div>
+            <button id="result-detail-retry" class="button button-danger" type="button">Try again</button>
+          </div>
+          <article id="result-detail-content" class="result-detail-content" hidden>
+            <header class="result-detail-hero">
+              <div>
+                <p id="result-detail-run-id" class="eyebrow"></p>
+                <h2 id="result-detail-title">Result Details</h2>
+                <p id="result-detail-description"></p>
+              </div>
+              <span id="result-detail-badge" class="result-status-badge"></span>
+            </header>
+            <dl id="result-detail-overview" class="result-overview-grid"></dl>
+            <div class="result-detail-grid">
+              <section class="result-detail-panel" aria-labelledby="result-context-title"><h3 id="result-context-title">Campaign Context</h3><dl id="result-context-details" class="result-definition-list"></dl></section>
+              <section class="result-detail-panel" aria-labelledby="result-targeting-title"><h3 id="result-targeting-title">Targeting Criteria</h3><dl id="result-targeting-details" class="result-definition-list"></dl></section>
+              <section class="result-detail-panel" aria-labelledby="result-selection-title"><h3 id="result-selection-title">Selection and Result Source</h3><dl id="result-selection-details" class="result-definition-list"></dl></section>
+              <section class="result-detail-panel" aria-labelledby="result-profile-title"><h3 id="result-profile-title">Score and Demographic Summary</h3><dl id="result-profile-details" class="result-definition-list"></dl></section>
+              <section class="result-detail-panel" aria-labelledby="result-provenance-title"><h3 id="result-provenance-title">Snapshot Provenance</h3><dl id="result-provenance-details" class="result-definition-list"></dl></section>
+              <section class="result-detail-panel" aria-labelledby="result-download-title"><h3 id="result-download-title">Download Profile</h3><dl id="result-download-details" class="result-definition-list"></dl><p id="result-download-help" class="panel-note"></p></section>
+            </div>
+            <details id="result-technical-disclosure" class="result-technical-disclosure">
+              <summary>View technical details</summary>
+              <p class="panel-note">Audit identifiers and hashes are shown without contact information or artifact file paths.</p>
+              <dl id="result-technical-details" class="result-definition-list"></dl>
+            </details>
+            <p class="result-privacy-note">Result details contain analytical membership and aggregate information only. Contact information is never shown here.</p>
+          </article>
         </section>
 
         <section id="campaigns-view" class="view" data-view="campaigns" aria-labelledby="campaigns-title" hidden>

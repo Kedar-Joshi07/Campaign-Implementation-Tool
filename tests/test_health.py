@@ -14,6 +14,15 @@ from app.dependencies import get_database_path
 from app.main import app, unexpected_exception_handler
 
 
+@pytest.fixture(autouse=True)
+def isolated_startup_database(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # TestClient starts the application even when request dependencies are
+    # overridden. Startup recovery must not reconcile the real runtime database.
+    database_path = tmp_path / "startup.db"
+    initialize_database(database_path)
+    monkeypatch.setattr("app.main.DATABASE_PATH", database_path)
+
+
 @pytest.fixture
 def client(tmp_path: Path):
     database_path = tmp_path / "health.db"

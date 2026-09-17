@@ -1,0 +1,230 @@
+{
+  "absolute_sla_asserted": false,
+  "contract": "phase11-step17-bounded-performance-v1",
+  "environment": {
+    "canonical_database_opened": false,
+    "fixture_membership_rows": 20000,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.0"
+  },
+  "exact_cache_relative_gate": {
+    "comparison": "intelligence_reuse_filter_and_materialize / exact_cache_hit",
+    "passed": true,
+    "required_minimum_ratio": 1.25,
+    "speedup_ratio": 2.342
+  },
+  "generated_at": "2026-09-17T10:11:10Z",
+  "optional_atomic_optimization_comparison": {
+    "reason": "Step 10 found no current Phase 11 generation, so the optional index was correctly not introduced and no before/after comparison exists.",
+    "status": "NOT_APPLICABLE"
+  },
+  "timings": {
+    "exact_cache_hit": {
+      "median_seconds": 0.300717,
+      "membership_source_calls": 0,
+      "propensity_score_population_scan": false,
+      "repetitions": 5,
+      "seconds": [
+        0.316374,
+        0.300717,
+        0.309335,
+        0.27367,
+        0.283521
+      ]
+    },
+    "export_profiles": {
+      "DIRECT_MAIL_CONTACT_V1": {
+        "body_bytes": 300,
+        "maximum_seconds": 0.336363,
+        "median_seconds": 0.320413,
+        "minimum_seconds": 0.313404,
+        "repetitions": 3,
+        "seconds": [
+          0.320413,
+          0.336363,
+          0.313404
+        ]
+      },
+      "DISPLAY_AUDIENCE_V1": {
+        "body_bytes": 189,
+        "maximum_seconds": 0.344593,
+        "median_seconds": 0.335915,
+        "minimum_seconds": 0.321052,
+        "repetitions": 3,
+        "seconds": [
+          0.344593,
+          0.335915,
+          0.321052
+        ]
+      },
+      "EMAIL_CONTACT_V1": {
+        "body_bytes": 152,
+        "maximum_seconds": 0.300954,
+        "median_seconds": 0.269263,
+        "minimum_seconds": 0.257934,
+        "repetitions": 3,
+        "seconds": [
+          0.300954,
+          0.257934,
+          0.269263
+        ]
+      },
+      "MOBILE_PUSH_CONTACT_V1": {
+        "body_bytes": 126,
+        "maximum_seconds": 0.320895,
+        "median_seconds": 0.31418,
+        "minimum_seconds": 0.3053,
+        "repetitions": 3,
+        "seconds": [
+          0.320895,
+          0.31418,
+          0.3053
+        ]
+      },
+      "PAID_SEARCH_AUDIENCE_V1": {
+        "body_bytes": 409,
+        "maximum_seconds": 0.287249,
+        "median_seconds": 0.251774,
+        "minimum_seconds": 0.250326,
+        "repetitions": 3,
+        "seconds": [
+          0.250326,
+          0.251774,
+          0.287249
+        ]
+      },
+      "PAID_SOCIAL_AUDIENCE_V1": {
+        "body_bytes": 409,
+        "maximum_seconds": 0.3686,
+        "median_seconds": 0.33857,
+        "minimum_seconds": 0.289234,
+        "repetitions": 3,
+        "seconds": [
+          0.3686,
+          0.289234,
+          0.33857
+        ]
+      },
+      "SMS_CONTACT_V1": {
+        "body_bytes": 154,
+        "maximum_seconds": 0.320291,
+        "median_seconds": 0.299713,
+        "minimum_seconds": 0.299383,
+        "repetitions": 3,
+        "seconds": [
+          0.320291,
+          0.299383,
+          0.299713
+        ]
+      },
+      "TELEMARKETING_CONTACT_V1": {
+        "body_bytes": 154,
+        "maximum_seconds": 0.339538,
+        "median_seconds": 0.339202,
+        "minimum_seconds": 0.305215,
+        "repetitions": 3,
+        "seconds": [
+          0.339538,
+          0.305215,
+          0.339202
+        ]
+      },
+      "WEBSITE_AUDIENCE_V1": {
+        "body_bytes": 187,
+        "maximum_seconds": 0.315351,
+        "median_seconds": 0.290085,
+        "minimum_seconds": 0.261605,
+        "repetitions": 3,
+        "seconds": [
+          0.315351,
+          0.261605,
+          0.290085
+        ]
+      },
+      "WHATSAPP_CONTACT_V1": {
+        "body_bytes": 206,
+        "maximum_seconds": 0.280278,
+        "median_seconds": 0.279407,
+        "minimum_seconds": 0.245678,
+        "repetitions": 3,
+        "seconds": [
+          0.280278,
+          0.245678,
+          0.279407
+        ]
+      }
+    },
+    "home_load": {
+      "maximum_seconds": 0.097194,
+      "median_seconds": 0.032102,
+      "minimum_seconds": 0.029044,
+      "repetitions": 5,
+      "seconds": [
+        0.097194,
+        0.030688,
+        0.029044,
+        0.032102,
+        0.035658
+      ]
+    },
+    "intelligence_reuse_filter_and_materialize": {
+      "median_seconds": 0.704136,
+      "repetitions": 5,
+      "rows_per_snapshot": 20000,
+      "seconds": [
+        0.628037,
+        0.643035,
+        0.704136,
+        0.763627,
+        0.932751
+      ]
+    },
+    "options_load": {
+      "maximum_seconds": 0.454199,
+      "median_seconds": 0.381984,
+      "minimum_seconds": 0.36816,
+      "repetitions": 5,
+      "seconds": [
+        0.430467,
+        0.374549,
+        0.36816,
+        0.381984,
+        0.454199
+      ]
+    },
+    "result_history": {
+      "maximum_seconds": 0.122486,
+      "median_seconds": 0.101732,
+      "minimum_seconds": 0.091545,
+      "repetitions": 5,
+      "seconds": [
+        0.092094,
+        0.101732,
+        0.091545,
+        0.122486,
+        0.107828
+      ]
+    },
+    "snapshot_read": {
+      "maximum_seconds": 0.095275,
+      "median_seconds": 0.089805,
+      "minimum_seconds": 0.084888,
+      "repetitions": 5,
+      "seconds": [
+        0.089805,
+        0.084888,
+        0.088626,
+        0.092156,
+        0.095275
+      ]
+    },
+    "snapshot_write": {
+      "median_seconds": 0.728356,
+      "repetitions": 1,
+      "rows": 20000,
+      "seconds": [
+        0.728356
+      ]
+    }
+  }
+}

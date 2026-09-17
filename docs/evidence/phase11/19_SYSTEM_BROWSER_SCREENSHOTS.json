@@ -1,0 +1,40 @@
+{
+  "browser": {
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "execution_mode": "headed",
+    "name": "system_chrome",
+    "product_version": "153.0.8010.48"
+  },
+  "screenshots": [
+    {
+      "horizontal_overflow": false,
+      "path": "docs/evidence/phase11/system_browser/step19/screenshots/phase11-result-1920x1080.png",
+      "status": "PASS",
+      "viewport": "1920x1080"
+    },
+    {
+      "horizontal_overflow": false,
+      "path": "docs/evidence/phase11/system_browser/step19/screenshots/phase11-result-1366x768.png",
+      "status": "PASS",
+      "viewport": "1366x768"
+    },
+    {
+      "horizontal_overflow": false,
+      "path": "docs/evidence/phase11/system_browser/step19/screenshots/phase11-result-1024x768.png",
+      "status": "PASS",
+      "viewport": "1024x768"
+    },
+    {
+      "horizontal_overflow": false,
+      "path": "docs/evidence/phase11/system_browser/step19/screenshots/phase11-result-768x1024.png",
+      "status": "PASS",
+      "viewport": "768x1024"
+    },
+    {
+      "horizontal_overflow": false,
+      "path": "docs/evidence/phase11/system_browser/step19/screenshots/phase11-result-390x844.png",
+      "status": "PASS",
+      "viewport": "390x844"
+    }
+  ]
+}

@@ -51,7 +51,7 @@ The runtime follows Router -> Schema -> Service -> Repository -> SQLite layering
 ## Current versions and frozen contracts
 
 - Application version default: 0.1.0
-- Current SQLite schema version: 14
+- Current SQLite schema version: 17
 - Feature contract version: 1
 - Feature contract SHA-256: a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535
 - Model role policy version: 2
@@ -115,14 +115,19 @@ These files are authoritative tracked inputs for reproducible local setup.
 Checksum policy:
 
 - Raw GZIP SHA-256: byte-level identity for the tracked compressed artifact.
-- Decompressed content SHA-256: semantic/provenance checksum for drift detection.
-- LFS object ref: pointer identity from git lfs ls-files.
+- Decompressed content SHA-256: logical CSV identity independent of gzip metadata.
+- LFS object ref: SHA-256 identity of the compressed object.
+- Operational source currentness: the importer hashes each source filename, a NUL separator, all raw file bytes, and a final NUL; this checksum is persisted in `data_import_runs`. No contactability or identifier field is excluded.
 
 | File | Expected rows | Bytes | Raw GZIP SHA-256 | Decompressed content SHA-256 | LFS object ref |
 |---|---:|---:|---|---|---|
 | data/customer_master_125000.csv.gz | 125,000 | 6,145,025 | 8a2c5601a96dc54708246a84cfd7715cf53e3d6f95e67472b1e2c2428bf0d18f | fa0e53b055e0340d0a7cfc6dfdd2fc8bcf18c606e7c8b2b13853ef9a561447bd | 8a2c5601a96dc54708246a84cfd7715cf53e3d6f95e67472b1e2c2428bf0d18f |
 | data/campaign_sales_570000.csv.gz | 570,000 | 6,466,267 | 89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116 | f0a391bbd2ef8262644b1f5c879f3ba1d473476889db8b48e6fde222ea640e0d | 89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116 |
-| data/usa_demographic_synthetic_5000000_rows.csv.gz | 5,000,000 | 333,670,533 | adb33ce1daf92b547171960f69f893fec93296d3d514ac7e1bdffbf5c736ac71 | a664b1a3904079a3c8b5c398de10009d52e8fd2ec6b4751a5caebb4512cb7dba | adb33ce1daf92b547171960f69f893fec93296d3d514ac7e1bdffbf5c736ac71 |
+| data/usa_demographic_synthetic_5000000_rows.csv.gz | 5,000,000 | 512,842,205 | 27d8e2a978458a095e16fc51a682e1f3373e41b663a4e61defa47e2d1bdf8b1d | 5694d2048e96b270a3d522e2cc08c1af26561f6fd3c08f104e9957e76653612c | 27d8e2a978458a095e16fc51a682e1f3373e41b663a4e61defa47e2d1bdf8b1d |
+
+Phase 11 Step 4 extends canonical demographics from 28 to 40 columns with deterministic contactability, consent, and nullable push/advertising/web identifiers. The original 28 columns remain byte-for-byte unchanged. Rates, identifier rules, and regeneration details are in [data/README.md](data/README.md).
+
+The new canonical import checksum is `336cbef90fb601d84e2206b191a71b355810da282c918ec0b6e469528f70215f`. Prior Phase 10 scores are stale for this source; a new full scoring generation is required before current-source targeting/export. Historical/model reuse remains subject to existing Phase 10 compatibility gates because the 11 model features are unchanged. Step 4 does not run scoring.
 
 If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs pull before imports.
 
@@ -133,7 +138,17 @@ If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs
 .\.venv\Scripts\python.exe scripts\init_db.py --inspect
 ```
 
-Initialization is idempotent and creates/verifies schema version 14.
+Initialization is idempotent and creates/verifies schema version 18. The 15-to-16 migration appends source fields with false/null defaults. The 16-to-17 migration adds separate `campaign_search_runs`, `campaign_result_snapshots`, and `campaign_result_export_events` registries without modifying Phase 1–10 rows or legacy Campaign export semantics. The 17-to-18 migration adds a nullable, write-once future activation and outcome-lineage seam without implementing delivery, feedback ingestion, or retraining.
+
+Phase 11 Step 5 persists immutable business submissions separately from reusable, contact-PII-free result-snapshot metadata. Completed history and snapshot identity are protected; search-result exports have their own count/checksum/currentness audit records. Snapshot materialization, exact-result orchestration, and new download/UI integration remain the later Step 9/11/13 boundaries. See [Step 5 evidence](docs/evidence/phase11/05_SEARCH_RUN_RESULT_SCHEMA.md).
+
+Phase 11 Step 6 limits normal navigation to **Home**, **Find Potential Customers**, and **Results**, governed by `frontend/js/view-contract.js`. Empty/unknown/hidden legacy fragments redirect to `#home`; `#overview` and `#campaign-planner` normalize to their business routes without adding history entries. Legacy views/modules and APIs remain intact. UI hiding is not authentication, authorization, or RBAC. Results and Result Details are navigation-only placeholders until Step 12 connects real history/details. See [Step 6 evidence](docs/evidence/phase11/06_BUSINESS_NAVIGATION.md).
+
+Phase 11 Step 7 progressively enhances all 16 campaign-context and targeting multi-selects using one searchable, keyboard-accessible Vanilla-JS dropdown. Select All visible adds filtered available matches; Clear All removes all selections across the filter. Backend option values, native form validation, existing saved context/criteria, Region-to-State semantics, and legacy components remain authoritative. The five-step planner is still retained; Step 8 owns the single-form redesign. See [Step 7 evidence](docs/evidence/phase11/07_MULTISELECT_COMPONENT.md).
+
+Phase 11 Step 8 makes **Find Potential Customers** one business form while retaining the hidden legacy planner and frozen Phase 9/10 semantics. Each valid intentional request durably records a fresh context/criteria lineage and immutable search run before its execution handoff; Results can rediscover the request after navigation or reload. Delivery/profile and prospect-filter changes do not alter Modeling Context. Until the Step 11 publisher completes the execution composition, public submissions truthfully remain `BLOCKED` rather than showing invented results. See [Step 8 evidence](docs/evidence/phase11/08_FIND_POTENTIAL_CUSTOMERS_FORM.md).
+
+Phase 11 Step 9 implements the exact-result → intelligence-reuse → new-intelligence-build decision engine. It delegates compatibility and preparation to frozen Phase 10 services, validates exact cache hits without scanning scores, and streams exact OR-branch Audience Engine membership in global rank order on a miss. Durable `PROCESSING` searches can resume after Phase 10 work or restart. Step 11 still owns atomic membership publication, so production submission remains disabled until that collaborator is composed. See [Step 9 evidence](docs/evidence/phase11/09_SMART_REUSE_ENGINE.md).
 
 ## Import data (enforced order)
 
@@ -368,7 +383,7 @@ Supported export profiles:
 - EMAIL_CONTACT_V1: person_id, score/rank fields, name, email
 - DIRECT_MAIL_CONTACT_V1: person_id, score/rank fields, name, mailing address fields
 
-Prohibited fields include ethnicity, religion, occupation_industry, family_yearly_income, number_of_children_in_family, number_of_adults_in_family, customer_id, and phone_number.
+Prohibited fields include ethnicity, religion, occupation_industry, family_yearly_income, number_of_children_in_family, number_of_adults_in_family, and customer_id. Phone is prohibited in the legacy Email/Direct Mail profiles, not globally: the Phase 11 backend registry permits it only for SMS/WhatsApp/Telemarketing and emits only hashed match keys for paid media. All ten Phase 11 registry profiles now have source-field support; the result-snapshot download engine is integrated separately in Step 13.
 
 Scope boundary: this POC stops at target-list export. It does not implement send/activation platform workflows.
 
@@ -393,6 +408,8 @@ Demographic generator (env-driven, default seed 20260818):
 ```powershell
 $env:SEED = "20260818"
 $env:N_ROWS = "5000000"
+$env:CHUNK = "200000"
+$env:ID_OFFSET = "0"
 $env:OUTDIR = (Resolve-Path .\data).Path
 $env:OUT_NAME = "usa_demographic_synthetic_5000000_rows.csv.gz"
 .\.venv\Scripts\python.exe data_generation_scripts\generate_us_demographic_synthetic.py

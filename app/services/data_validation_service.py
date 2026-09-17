@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import re
 from collections.abc import Mapping
 from datetime import date
 
@@ -11,6 +12,17 @@ from app.database.schema import (
     CUSTOMER_COLUMNS,
     DEMOGRAPHIC_COLUMNS,
 )
+from app.services.omnichannel_profile_contracts import (
+    normalize_email_identifier,
+    normalize_us_phone_identifier,
+)
+
+
+_PUSH_TOKEN_PATTERN = re.compile(r"^pt_[0-9a-f]{32}$")
+_ADVERTISING_ID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+)
+_WEB_VISITOR_ID_PATTERN = re.compile(r"^wv_[0-9a-f]{32}$")
 
 
 class DataValidationError(ValueError):
@@ -249,5 +261,68 @@ def validate_demographic_row(row: Mapping[str, str]) -> tuple[object, ...]:
         )
     values["individual_yearly_income"] = individual_income
     values["family_yearly_income"] = family_income
+
+    email = values["email"]
+    if email is not None and normalize_email_identifier(email) is None:
+        raise DataValidationError("email must be a valid governed email when provided")
+    phone = values["phone_number"]
+    if phone is not None and normalize_us_phone_identifier(phone) is None:
+        raise DataValidationError("phone_number must be a valid governed US phone when provided")
+
+    flag_fields = (
+        "email_contactable",
+        "direct_mail_contactable",
+        "sms_opt_in",
+        "whatsapp_opt_in",
+        "telemarketing_contactable",
+        "do_not_call",
+        "push_opt_in",
+        "advertising_targetable",
+        "onsite_targetable",
+    )
+    for field in flag_fields:
+        values[field] = _flag(row[field], field)
+
+    push_token = values["push_token"]
+    if push_token is not None and _PUSH_TOKEN_PATTERN.fullmatch(str(push_token)) is None:
+        raise DataValidationError("push_token must be a deterministic synthetic opaque identifier")
+    advertising_id = values["advertising_id"]
+    if (
+        advertising_id is not None
+        and _ADVERTISING_ID_PATTERN.fullmatch(str(advertising_id).lower()) is None
+    ):
+        raise DataValidationError("advertising_id must be a deterministic UUID-like identifier")
+    if advertising_id is not None:
+        values["advertising_id"] = str(advertising_id).lower()
+    web_visitor_id = values["web_visitor_id"]
+    if (
+        web_visitor_id is not None
+        and _WEB_VISITOR_ID_PATTERN.fullmatch(str(web_visitor_id)) is None
+    ):
+        raise DataValidationError("web_visitor_id must be a deterministic synthetic opaque key")
+
+    if values["email_contactable"] and email is None:
+        raise DataValidationError("email_contactable=true requires email")
+    address_fields = ("address_line_1", "city", "state", "postal_code")
+    if values["direct_mail_contactable"] and any(values[field] is None for field in address_fields):
+        raise DataValidationError(
+            "direct_mail_contactable=true requires address_line_1, city, state, and postal_code"
+        )
+    if values["sms_opt_in"] and phone is None:
+        raise DataValidationError("sms_opt_in=true requires phone_number")
+    if values["whatsapp_opt_in"] and phone is None:
+        raise DataValidationError("whatsapp_opt_in=true requires phone_number")
+    if values["telemarketing_contactable"] and phone is None:
+        raise DataValidationError("telemarketing_contactable=true requires phone_number")
+    if values["telemarketing_contactable"] and values["do_not_call"]:
+        raise DataValidationError(
+            "telemarketing_contactable=true is incompatible with do_not_call=true"
+        )
+    if values["push_opt_in"] and push_token is None:
+        raise DataValidationError("push_opt_in=true requires push_token")
+    if values["advertising_targetable"] and advertising_id is None:
+        raise DataValidationError("advertising_targetable=true requires advertising_id")
+    if values["onsite_targetable"] and web_visitor_id is None:
+        raise DataValidationError("onsite_targetable=true requires web_visitor_id")
 
     return tuple(values[column] for column in DEMOGRAPHIC_COLUMNS)

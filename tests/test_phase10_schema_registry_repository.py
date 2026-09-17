@@ -259,7 +259,7 @@ def test_fresh_v15_schema_has_exact_tables_columns_and_indexes(tmp_path: Path) -
         assert _columns(connection, "phase10_context_bindings") == (
             PHASE10_CONTEXT_BINDING_COLUMNS
         )
-    assert version == str(CURRENT_SCHEMA_VERSION) == "15"
+    assert version == str(CURRENT_SCHEMA_VERSION) == "18"
     assert set(PHASE_TEN_REQUIRED_INDEX_STATEMENTS) <= indexes
 
 
@@ -273,7 +273,7 @@ def test_v14_upgrade_is_additive_idempotent_and_preserves_phase9_rows(tmp_path: 
     with get_connection(path) as connection:
         assert connection.execute(
             "SELECT value FROM app_metadata WHERE key = 'schema_version'"
-        ).fetchone()[0] == "15"
+        ).fetchone()[0] == str(CURRENT_SCHEMA_VERSION)
         assert connection.execute(
             "SELECT value FROM app_metadata WHERE key = 'phase10_migration_sentinel'"
         ).fetchone()[0] == "preserve-me"

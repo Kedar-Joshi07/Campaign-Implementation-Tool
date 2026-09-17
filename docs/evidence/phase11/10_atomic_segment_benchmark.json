@@ -1,0 +1,73 @@
+{
+  "benchmark_status": "REFUSED_NO_CURRENT_GENERATION",
+  "candidate_generations": [],
+  "contract": "phase11-step10-atomic-segment-benchmark-v1",
+  "database": "data/campaign_poc.db",
+  "database_state": {
+    "active_jobs": [],
+    "active_phase10_orchestrations": [],
+    "database_bytes": 6702706688,
+    "demographic_rows": 5000000,
+    "propensity_score_rows": 10000000,
+    "relevant_indexes": [
+      {
+        "name": "idx_demographics_age",
+        "sql": "CREATE INDEX idx_demographics_age ON demographics (age)",
+        "tbl_name": "demographics"
+      },
+      {
+        "name": "idx_demographics_education",
+        "sql": "CREATE INDEX idx_demographics_education ON demographics (education)",
+        "tbl_name": "demographics"
+      },
+      {
+        "name": "idx_demographics_employment_status",
+        "sql": "CREATE INDEX idx_demographics_employment_status ON demographics (employment_status)",
+        "tbl_name": "demographics"
+      },
+      {
+        "name": "idx_demographics_individual_yearly_income",
+        "sql": "CREATE INDEX idx_demographics_individual_yearly_income ON demographics (individual_yearly_income)",
+        "tbl_name": "demographics"
+      },
+      {
+        "name": "idx_demographics_resident_status",
+        "sql": "CREATE INDEX idx_demographics_resident_status ON demographics (resident_status)",
+        "tbl_name": "demographics"
+      },
+      {
+        "name": "idx_demographics_state",
+        "sql": "CREATE INDEX idx_demographics_state ON demographics (state)",
+        "tbl_name": "demographics"
+      },
+      {
+        "name": "idx_demographics_type_of_employment",
+        "sql": "CREATE INDEX idx_demographics_type_of_employment ON demographics (type_of_employment)",
+        "tbl_name": "demographics"
+      },
+      {
+        "name": "sqlite_autoindex_demographics_1",
+        "sql": null,
+        "tbl_name": "demographics"
+      },
+      {
+        "name": "idx_propensity_scores_run_score_person",
+        "sql": "CREATE INDEX idx_propensity_scores_run_score_person ON propensity_scores (scoring_run_id, propensity_score DESC, person_id ASC)",
+        "tbl_name": "propensity_scores"
+      },
+      {
+        "name": "sqlite_autoindex_propensity_scores_1",
+        "sql": null,
+        "tbl_name": "propensity_scores"
+      }
+    ],
+    "schema_version": "17",
+    "sqlite_page_count": 1636403,
+    "sqlite_page_size": 4096
+  },
+  "generated_at": "2026-09-16T20:22:26Z",
+  "reason": "No READY generation passed the existing Audience Engine currentness gates.",
+  "rejected_candidates": [],
+  "repetitions": 3,
+  "timings": {}
+}

@@ -41,13 +41,15 @@ def test_phase5_api_surface_includes_scoring_and_step7_navigation_state() -> Non
     assert "/models/{model_run_id}/scoring-status" in router_source
     assert "/scoring-runs" in router_source
     assert html.count('class="navigation-item is-disabled"') == 0
-    assert 'data-view-target="model-training"' in html
-    assert 'data-view-target="audience-explorer"' in html
+    assert 'data-view="model-training"' in html
+    assert 'data-view="audience-explorer"' in html
     assert '<span>Historical Analysis</span><small>Phase 2</small>' not in html
     assert '<span>Model Training &amp; Prospect Scoring</span><small>Phases 4-5</small>' not in html
     assert '<span>Audience Explorer</span><small>Phase 6</small>' not in html
     assert '<span>Campaigns</span><small>Phase 7 shell</small>' not in html
-    assert '<span>Campaigns</span><small>Legacy tools</small>' in html
+    assert 'data-view="campaigns"' in html
+    navigation = html.split('<nav id="business-navigation"', 1)[1].split("</nav>", 1)[0]
+    assert 'data-view-target="campaigns"' not in navigation
 
 
 def test_phase3_documentation_records_contract_cli_caveat_and_phase4_boundary() -> None:
@@ -143,7 +145,7 @@ def test_phase5_scope_scan_confirms_campaign_activation_surfaces_absent() -> Non
     assert 'data-view="audience-explorer"' in html
     assert 'data-view-target="audience-explorer"' in html
     assert 'data-view="campaigns"' in html
-    assert 'data-view-target="campaigns"' in html
+    assert 'id="campaigns-view"' in html
 
     for activation_forbidden in (
         "activate campaign",

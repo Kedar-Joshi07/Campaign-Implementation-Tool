@@ -110,6 +110,15 @@ def _demographic_row(person_id: str = "US_TEST_001") -> dict[str, str]:
             "number_of_children_in_family": "1",
             "number_of_adults_in_family": "2",
             "family_yearly_income": "95000",
+            "email_contactable": "0",
+            "direct_mail_contactable": "0",
+            "sms_opt_in": "0",
+            "whatsapp_opt_in": "0",
+            "telemarketing_contactable": "0",
+            "do_not_call": "0",
+            "push_opt_in": "0",
+            "advertising_targetable": "0",
+            "onsite_targetable": "0",
         }
     )
     return row

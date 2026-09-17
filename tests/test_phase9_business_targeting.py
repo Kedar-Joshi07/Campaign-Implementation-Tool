@@ -91,7 +91,8 @@ def targeting_context_id(database_path: Path) -> int:
 
 
 @pytest.fixture
-def client(database_path: Path):
+def client(database_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("app.main.DATABASE_PATH", database_path)
     app.dependency_overrides[get_database_path] = lambda: database_path
     with TestClient(app) as test_client:
         yield test_client

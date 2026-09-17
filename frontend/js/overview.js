@@ -1,164 +1,135 @@
 import { getCachedJSON } from "./api.js";
-import { loadHistoricalOverview } from "./historical-overview.js";
-import { formatDate, formatExactInteger, hideError, setButtonLoading, setStatusBadge, showError } from "./ui.js";
+import { formatExactInteger, hideError, setButtonLoading } from "./ui.js";
 
 const metricIds = [
-  "customer-count", "campaign-sales-count", "demographic-count",
-  "distinct-campaigns", "distinct-products", "known-positive-count",
+  "home-potential-customers",
+  "home-search-runs",
+  "home-completed-results",
+  "home-latest-result-count",
 ];
 let initialized = false;
 let loadedOnce = false;
 
-function setMetric(id, value, loaded) {
-  const element = document.querySelector(`#${id}`);
-  element.classList.remove("is-loading");
-  element.textContent = loaded ? formatExactInteger(value) : "Not loaded";
-}
+const find = (id) => document.querySelector(`#${id}`);
+const make = (tag, className, text) => {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+};
 
-function setSummaryLoading() {
-  for (const id of metricIds) {
-    const element = document.querySelector(`#${id}`);
-    element.textContent = "—";
-    element.classList.add("is-loading");
-  }
-  const dateRange = document.querySelector("#campaign-date-range");
-  dateRange.textContent = "—";
-  dateRange.classList.add("is-loading");
-}
-
-function setSummaryError() {
-  for (const id of metricIds) {
-    const element = document.querySelector(`#${id}`);
-    element.classList.remove("is-loading");
-    element.textContent = "Unavailable";
-  }
-  const dateRange = document.querySelector("#campaign-date-range");
-  dateRange.classList.remove("is-loading");
-  dateRange.textContent = "Unavailable";
-}
-
-function renderSummary(summary) {
-  const customersLoaded = summary.customer_count > 0;
-  const campaignsLoaded = summary.campaign_sales_count > 0;
-  const demographicsLoaded = summary.demographic_count > 0;
-  setMetric("customer-count", summary.customer_count, customersLoaded);
-  setMetric("campaign-sales-count", summary.campaign_sales_count, campaignsLoaded);
-  setMetric("demographic-count", summary.demographic_count, demographicsLoaded);
-  setMetric("distinct-campaigns", summary.distinct_campaigns, campaignsLoaded);
-  setMetric("distinct-products", summary.distinct_products, campaignsLoaded);
-  setMetric("known-positive-count", summary.known_positive_count, campaignsLoaded);
-
-  const dateRange = document.querySelector("#campaign-date-range");
-  dateRange.classList.remove("is-loading");
-  dateRange.textContent = campaignsLoaded
-    ? `${formatDate(summary.campaign_contact_date_min)} — ${formatDate(summary.campaign_contact_date_max)}`
-    : "Not loaded";
-  document.querySelector("#attributed-purchase-count").textContent = campaignsLoaded
-    ? formatExactInteger(summary.attributed_purchase_count)
-    : "Not loaded";
-  document.querySelector("#database-name").textContent = summary.database_path || "—";
-  document.querySelector("#schema-version").textContent = summary.schema_version
-    ? `Version ${summary.schema_version}`
-    : "—";
-}
-
-function renderHealth(health) {
-  document.querySelector("#application-health").textContent = health.application_status === "ok" ? "Operational" : "Degraded";
-  document.querySelector("#database-health").textContent = health.database_status === "connected" ? "Connected" : "Unavailable";
-  document.querySelector("#schema-health").textContent = health.schema_status === "ready" ? "Ready" : health.schema_status;
-  setStatusBadge(document.querySelector("#overview-health-badge"), health.status === "ok" ? "OK" : "ERROR");
-}
-
-function renderHealthError() {
-  document.querySelector("#application-health").textContent = "Unavailable";
-  document.querySelector("#database-health").textContent = "Unavailable";
-  document.querySelector("#schema-health").textContent = "Unknown";
-  setStatusBadge(document.querySelector("#overview-health-badge"), "ERROR");
+function dispatchBackendStatus(state, text) {
   window.dispatchEvent(new CustomEvent("backend-status", {
-    detail: { state: "is-offline", text: "Backend unavailable" },
+    detail: { state, text },
   }));
 }
 
-function setReadinessLoading() {
-  document.querySelector("#readiness-spinner").hidden = false;
-  document.querySelector("#readiness-note").textContent = "Overview remains interactive while complete integrity reconciliation runs. Exact checks may take 60-180 seconds on full volumes.";
-  for (const id of ["customers-readiness", "campaign-sales-readiness", "demographics-readiness"]) {
-    setStatusBadge(document.querySelector(`#${id}`), "Checking");
-  }
+function setMetric(id, value, emptyLabel = "No completed result") {
+  const element = find(id);
+  element.classList.remove("is-loading");
+  element.textContent = value === null || value === undefined
+    ? emptyLabel
+    : formatExactInteger(value);
 }
 
-function renderReadiness(datasets) {
-  const statusElements = {
-    customers: "customers-readiness",
-    campaign_sales: "campaign-sales-readiness",
-    demographics: "demographics-readiness",
-  };
-  for (const dataset of datasets) {
-    const id = statusElements[dataset.dataset_name];
-    if (id) {
-      setStatusBadge(document.querySelector(`#${id}`), dataset.reconciliation_status);
-    }
+function setLoading() {
+  for (const id of metricIds) {
+    const element = find(id);
+    element.textContent = "—";
+    element.classList.add("is-loading");
   }
-  document.querySelector("#readiness-spinner").hidden = true;
-  document.querySelector("#readiness-note").textContent = "Counts and structural integrity reflect the latest complete database check. Heavy exact validation runs independently from summary cards.";
+  find("home-results-status").textContent = "Loading recent results…";
+  find("home-results-empty").hidden = true;
+  find("home-recent-results").replaceChildren();
+}
+
+function renderOverview(payload) {
+  setMetric("home-potential-customers", payload.potential_customers_available);
+  setMetric("home-search-runs", payload.search_runs);
+  setMetric("home-completed-results", payload.completed_results);
+  setMetric("home-latest-result-count", payload.latest_result_count);
+}
+
+function statusLabel(value) {
+  return String(value).replaceAll("_", " ").toLowerCase()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function resultCard(run) {
+  const item = make("li", "home-result-card");
+  const header = make("div", "home-result-card-header");
+  header.append(
+    make("h3", null, run.campaign_name),
+    make(
+      "span",
+      `result-status-badge is-${run.status.toLowerCase()}`,
+      statusLabel(run.status),
+    ),
+  );
+  const facts = make("dl", "home-result-facts");
+  const entries = [
+    ["Potential Customers", run.selected_count === null
+      ? "Pending" : Number(run.selected_count).toLocaleString()],
+    ["Delivery Profile", run.delivery_profile_label],
+  ];
+  for (const [term, value] of entries) {
+    facts.append(make("dt", null, term), make("dd", null, value));
+  }
+  const action = make("a", "button button-secondary", "View Result");
+  action.href = `#results/${run.search_run_id}`;
+  item.append(header, facts, make("p", "panel-note", run.safe_message), action);
+  return item;
+}
+
+function renderRecentResults(results) {
+  find("home-recent-results").replaceChildren(...results.map(resultCard));
+  find("home-results-empty").hidden = results.length !== 0;
+  find("home-results-status").textContent = results.length
+    ? `${results.length} recent search${results.length === 1 ? "" : "es"}, newest first.`
+    : "No recent searches.";
+}
+
+function showUnavailable(error) {
+  for (const id of metricIds) setMetric(id, null, "Unavailable");
+  find("home-recent-results").replaceChildren();
+  find("home-results-empty").hidden = true;
+  find("home-results-status").textContent =
+    "Recent results are unavailable. Try again when the service is available.";
+  find("overview-error-message").textContent =
+    "We could not load the latest campaign overview. Please try again.";
+  find("overview-error").hidden = false;
+  console.error(error);
+  dispatchBackendStatus("is-offline", "Backend unavailable");
 }
 
 export function initializeOverview() {
   if (initialized) return;
   initialized = true;
-  document.querySelector("#overview-refresh").addEventListener("click", () => loadOverview(true));
-  document.querySelector("#overview-retry").addEventListener("click", () => loadOverview(true));
+  find("overview-retry").addEventListener("click", () => loadOverview(true));
 }
 
 export async function loadOverview(force = false) {
   if (loadedOnce && !force) return;
   loadedOnce = true;
-  const errorBanner = document.querySelector("#overview-error");
-  const errorMessage = document.querySelector("#overview-error-message");
-  const refreshButton = document.querySelector("#overview-refresh");
-  hideError(errorBanner);
-  setButtonLoading(refreshButton, true, "Refreshing…");
-  if (force || !document.querySelector("#customer-count").textContent.match(/[0-9]/)) setSummaryLoading();
-  setReadinessLoading();
-
-  const errors = [];
-  let healthResult = null;
-  await Promise.all([
-    getCachedJSON("/api/data/summary", { maxAgeMs: 300_000, force }).then(renderSummary).catch((error) => {
-      setSummaryError();
-      errors.push(error);
-    }),
-    getCachedJSON("/api/health", { maxAgeMs: 30_000, force }).then((health) => {
-      healthResult = health;
-      renderHealth(health);
-    }).catch((error) => {
-      renderHealthError();
-      errors.push(error);
-    }),
-    getCachedJSON("/api/data/status", { maxAgeMs: 300_000, force }).then(renderReadiness).catch((error) => {
-      document.querySelector("#readiness-spinner").hidden = true;
-      document.querySelector("#readiness-note").textContent = "Reconciliation could not be completed. Summary counts remain available.";
-      for (const id of ["customers-readiness", "campaign-sales-readiness", "demographics-readiness"]) {
-        setStatusBadge(document.querySelector(`#${id}`), "ERROR");
-      }
-      errors.push(error);
-    }),
-    loadHistoricalOverview(force).catch((error) => {
-      errors.push(error);
-    }),
-  ]);
-  setButtonLoading(refreshButton, false, "Refreshing…");
-  if (errors.length) {
-    showError(errorBanner, errorMessage, errors[0]);
-    window.dispatchEvent(new CustomEvent("backend-status", {
-      detail: { state: "is-offline", text: "Backend unavailable" },
-    }));
-  } else if (healthResult) {
-    window.dispatchEvent(new CustomEvent("backend-status", {
-      detail: {
-        state: "is-online",
-        text: `Database online · v${healthResult.version}`,
-      },
-    }));
+  const retry = find("overview-retry");
+  hideError(find("overview-error"));
+  setButtonLoading(retry, true, "Trying again…");
+  setLoading();
+  try {
+    const overview = await getCachedJSON("/api/business/overview", {
+      maxAgeMs: 60_000,
+      force,
+    });
+    renderOverview(overview);
+    const results = await getCachedJSON("/api/business/recent-results?limit=5", {
+      maxAgeMs: 30_000,
+      force,
+    });
+    renderRecentResults(results);
+    dispatchBackendStatus("is-online", "Backend online");
+  } catch (error) {
+    showUnavailable(error);
+  } finally {
+    setButtonLoading(retry, false, "Trying again…");
   }
 }

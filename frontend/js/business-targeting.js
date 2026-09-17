@@ -1,4 +1,5 @@
 import { getCachedJSON, getJSON } from "./api.js";
+import { enhanceMultiSelect, refreshMultiSelect, setMultiSelectState, focusMultiSelect } from "./components/multi-select-dropdown.js";
 import {
   getCampaignPlannerState,
   updateTargetingCriteria,
@@ -68,6 +69,7 @@ function populateOptions(options) {
       if (typeof item === "string") appendOption(select, item);
       else appendOption(select, item.value, item.label);
     }
+    refreshMultiSelect(select);
   }
 
   const regionSelect = document.querySelector("#planner-targeting-regions");
@@ -75,6 +77,7 @@ function populateOptions(options) {
   for (const region of options.regions || []) {
     appendOption(regionSelect, region.value, region.label);
   }
+  refreshMultiSelect(regionSelect);
 
   for (const selector of ["#planner-targeting-family-min", "#planner-targeting-family-max"]) {
     const input = document.querySelector(selector);
@@ -95,6 +98,7 @@ function applySelectedRegions() {
   for (const option of stateSelect.options) {
     if (regionStateValues.has(option.value)) option.selected = true;
   }
+  refreshMultiSelect(stateSelect);
   document.querySelector("#planner-targeting-regions-count").textContent =
     `${selectedRegions.length} selected`;
 }
@@ -127,11 +131,13 @@ function applyCriteria(criteria) {
     for (const option of document.querySelector(selector).options) {
       option.selected = selected.has(option.value);
     }
+    refreshMultiSelect(document.querySelector(selector));
   }
   selectedRegions = [];
   for (const option of document.querySelector("#planner-targeting-regions").options) {
     option.selected = false;
   }
+  refreshMultiSelect(document.querySelector("#planner-targeting-regions"));
   document.querySelector("#planner-targeting-regions-count").textContent = "0 selected";
   const scalarFields = {
     "#planner-targeting-family-min": criteria.family_member_count_min,
@@ -254,7 +260,7 @@ function removeCriterion(button) {
   const focusSelector = field in MULTI_FIELDS
     ? MULTI_FIELDS[field].selector
     : scalarFocusSelectors[field];
-  document.querySelector(focusSelector)?.focus();
+  focusMultiSelect(document.querySelector(focusSelector));
 }
 
 function clearAllCriteria() {
@@ -274,6 +280,9 @@ function clearAllCriteria() {
 }
 
 function setLoading(loading) {
+  for (const { selector } of [...Object.values(MULTI_FIELDS), { selector: "#planner-targeting-regions" }]) {
+    setMultiSelectState(document.querySelector(selector), { loading, error: "" });
+  }
   document.querySelector("#planner-targeting-loading").hidden = !loading;
   document.querySelector("#planner-targeting-form").hidden = loading;
   document.querySelector("#planner-targeting-save").disabled = loading;
@@ -281,6 +290,9 @@ function setLoading(loading) {
 
 function showLoadError(error) {
   setLoading(false);
+  for (const { selector } of [...Object.values(MULTI_FIELDS), { selector: "#planner-targeting-regions" }]) {
+    setMultiSelectState(document.querySelector(selector), { error: "Choices could not be loaded. Try again." });
+  }
   document.querySelector("#planner-targeting-form").hidden = true;
   document.querySelector("#planner-targeting-save").disabled = true;
   const errorBox = document.querySelector("#planner-targeting-error");
@@ -393,6 +405,9 @@ export function initializeBusinessTargeting(onStatus) {
   if (initialized) return;
   initialized = true;
   announce = onStatus;
+  for (const { selector } of [...Object.values(MULTI_FIELDS), { selector: "#planner-targeting-regions" }]) {
+    enhanceMultiSelect(document.querySelector(selector));
+  }
   document.querySelector("#planner-targeting-form").addEventListener("change", () => {
     document.querySelector("#planner-targeting-error").hidden = true;
     captureCriteria();

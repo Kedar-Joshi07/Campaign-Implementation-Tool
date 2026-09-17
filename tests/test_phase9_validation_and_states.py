@@ -148,7 +148,12 @@ def test_unexpected_backend_error_is_sanitized_for_business_users(
         )
 
     monkeypatch.setattr(campaign_targeting_router, "get_target_group_preview", explode)
-    app.dependency_overrides[get_database_path] = lambda: tmp_path / "safe-errors.db"
+    from app.database.schema import initialize_database
+
+    safe_database_path = tmp_path / "safe-errors.db"
+    initialize_database(safe_database_path)
+    monkeypatch.setattr("app.main.DATABASE_PATH", safe_database_path)
+    app.dependency_overrides[get_database_path] = lambda: safe_database_path
     try:
         with TestClient(app) as client:
             response = client.get(

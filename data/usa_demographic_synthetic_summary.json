@@ -1,12 +1,55 @@
 {
   "rows": 5000000,
-  "columns": 28,
+  "columns": 40,
   "seed": 20260818,
   "id_offset": 0,
   "id_start": 1,
   "id_end": 5000000,
   "file": "data/usa_demographic_synthetic_5000000_rows.csv.gz",
-  "file_size_bytes": 333670533,
+  "file_size_bytes": 512842205,
+  "file_sha256": "27d8e2a978458a095e16fc51a682e1f3373e41b663a4e61defa47e2d1bdf8b1d",
+  "source_columns": [
+    "person_id",
+    "first_name",
+    "last_name",
+    "gender",
+    "age",
+    "address_line_1",
+    "address_line_2",
+    "street",
+    "postal_code",
+    "city",
+    "state",
+    "country",
+    "phone_number",
+    "email",
+    "individual_yearly_income",
+    "marital_status",
+    "education",
+    "employment_status",
+    "resident_status",
+    "resident_type",
+    "family_member_count",
+    "number_of_children_in_family",
+    "number_of_adults_in_family",
+    "ethnicity",
+    "type_of_employment",
+    "occupation_industry",
+    "family_yearly_income",
+    "religion",
+    "email_contactable",
+    "direct_mail_contactable",
+    "sms_opt_in",
+    "whatsapp_opt_in",
+    "telemarketing_contactable",
+    "do_not_call",
+    "push_token",
+    "push_opt_in",
+    "advertising_id",
+    "advertising_targetable",
+    "web_visitor_id",
+    "onsite_targetable"
+  ],
   "mean_age": 48.6629524,
   "mean_individual_yearly_income": 43249.85366,
   "mean_family_yearly_income": 114660.26592,
@@ -166,7 +209,107 @@
       "share": 0.0125746
     }
   },
-  "contact_safety": "Emails use IANA-reserved example.com/example.net/example.org domains. Phones use the fictional 555-0100..0199 exchange range. Addresses are algorithmically synthesized, not copied from address records.",
+  "contactability_contract_version": "1",
+  "contactability_target_rates": {
+    "email_contactable": 0.88,
+    "direct_mail_contactable": 0.92,
+    "sms_opt_in": 0.42,
+    "whatsapp_opt_in": 0.3,
+    "do_not_call": 0.18,
+    "telemarketing_contactable_when_not_dnc": 0.67,
+    "push_token_present": 0.62,
+    "push_opt_in_when_token_present": 0.54,
+    "advertising_id_present": 0.74,
+    "advertising_targetable_when_id_present": 0.68,
+    "web_visitor_id_present": 0.67,
+    "onsite_targetable_when_id_present": 0.72
+  },
+  "contactability_distribution": {
+    "email_contactable": {
+      "rows": 4398985,
+      "share": 0.879797
+    },
+    "direct_mail_contactable": {
+      "rows": 4599610,
+      "share": 0.919922
+    },
+    "sms_opt_in": {
+      "rows": 2100825,
+      "share": 0.420165
+    },
+    "whatsapp_opt_in": {
+      "rows": 1500731,
+      "share": 0.3001462
+    },
+    "telemarketing_contactable": {
+      "rows": 2745904,
+      "share": 0.5491808
+    },
+    "do_not_call": {
+      "rows": 899928,
+      "share": 0.1799856
+    },
+    "push_opt_in": {
+      "rows": 1673698,
+      "share": 0.3347396
+    },
+    "advertising_targetable": {
+      "rows": 2514943,
+      "share": 0.5029886
+    },
+    "onsite_targetable": {
+      "rows": 2410207,
+      "share": 0.4820414
+    }
+  },
+  "identifier_availability": {
+    "push_token": {
+      "rows_present": 3099544,
+      "rows_missing": 1900456,
+      "present_share": 0.6199088
+    },
+    "advertising_id": {
+      "rows_present": 3699362,
+      "rows_missing": 1300638,
+      "present_share": 0.7398724
+    },
+    "web_visitor_id": {
+      "rows_present": 3349299,
+      "rows_missing": 1650701,
+      "present_share": 0.6698598
+    }
+  },
+  "contactability_contract_violation_count": 0,
+  "contactability_rules": {
+    "email_contactable": "Requires governed valid email.",
+    "direct_mail_contactable": "Requires address_line_1, city, state, and postal_code.",
+    "sms_opt_in": "Requires governed valid phone.",
+    "whatsapp_opt_in": "Requires governed valid phone.",
+    "telemarketing_contactable": "Requires governed valid phone and do_not_call=false.",
+    "push_opt_in": "Cannot be true without push_token.",
+    "advertising_targetable": "Cannot be true without advertising_id.",
+    "onsite_targetable": "Cannot be true without web_visitor_id."
+  },
+  "identifier_rules": {
+    "push_token": "Nullable deterministic synthetic opaque pt_ token.",
+    "advertising_id": "Nullable deterministic synthetic UUID-like identifier.",
+    "web_visitor_id": "Nullable deterministic synthetic opaque wv_ key."
+  },
+  "model_feature_exclusion": [
+    "email_contactable",
+    "direct_mail_contactable",
+    "sms_opt_in",
+    "whatsapp_opt_in",
+    "telemarketing_contactable",
+    "do_not_call",
+    "push_token",
+    "push_opt_in",
+    "advertising_id",
+    "advertising_targetable",
+    "web_visitor_id",
+    "onsite_targetable"
+  ],
+  "contact_safety": "Emails use IANA-reserved example.com/example.net/example.org domains. Phones use the fictional 555-0100..0199 exchange range. Addresses and activation identifiers are algorithmically synthesized, not copied from records. Identifier presence never implies consent or targetability.",
   "methodology": "State selection and row weights follow Census 2020 urban population counts for the top 27 states. Demographic/economic fields are correlated synthetic draws calibrated to broad recent ACS/QuickFacts-style state parameters. Religion is survey-calibrated synthetic data based on Pew 2023-24 national/regional patterns, because the Census does not collect religion.",
   "source_urls": [
     "https://www2.census.gov/geo/docs/reference/ua/State_Urban_Rural_Pop_2020_2010.xlsx",

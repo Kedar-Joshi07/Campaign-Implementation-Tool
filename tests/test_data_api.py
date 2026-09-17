@@ -21,6 +21,9 @@ def database_path(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def client(database_path: Path, monkeypatch: pytest.MonkeyPatch):
+    # Dependency overrides affect requests, not the application lifespan.
+    # Keep startup recovery on this same bounded fixture, never the 5M runtime.
+    monkeypatch.setattr("app.main.DATABASE_PATH", database_path)
     monkeypatch.setattr(config, "EXPECTED_CUSTOMER_ROWS", 1)
     monkeypatch.setattr(config, "EXPECTED_CAMPAIGN_SALES_ROWS", 3)
     monkeypatch.setattr(config, "EXPECTED_DEMOGRAPHIC_ROWS", 3)

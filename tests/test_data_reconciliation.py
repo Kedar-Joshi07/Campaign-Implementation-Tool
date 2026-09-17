@@ -220,6 +220,55 @@ def test_deliberately_broken_fixture_is_error(database_path: Path) -> None:
             (0, 1, 1, "PER_001"),
             "adult_count_below_1",
         ),
+        (
+            "UPDATE demographics SET email_contactable = ? WHERE person_id = ?",
+            (1, "PER_001"),
+            "email_contactable_without_identifier_count",
+        ),
+        (
+            "UPDATE demographics SET direct_mail_contactable = ? WHERE person_id = ?",
+            (1, "PER_001"),
+            "direct_mail_contactable_without_identifier_count",
+        ),
+        (
+            "UPDATE demographics SET sms_opt_in = ? WHERE person_id = ?",
+            (1, "PER_001"),
+            "sms_opt_in_without_identifier_count",
+        ),
+        (
+            "UPDATE demographics SET whatsapp_opt_in = ? WHERE person_id = ?",
+            (1, "PER_001"),
+            "whatsapp_opt_in_without_identifier_count",
+        ),
+        (
+            "UPDATE demographics SET telemarketing_contactable = ? WHERE person_id = ?",
+            (1, "PER_001"),
+            "telemarketing_without_identifier_count",
+        ),
+        (
+            """
+            UPDATE demographics
+            SET telemarketing_contactable = ?, do_not_call = ?
+            WHERE person_id = ?
+            """,
+            (1, 1, "PER_001"),
+            "telemarketing_dnc_conflict_count",
+        ),
+        (
+            "UPDATE demographics SET push_opt_in = ? WHERE person_id = ?",
+            (1, "PER_001"),
+            "push_opt_in_without_identifier_count",
+        ),
+        (
+            "UPDATE demographics SET advertising_targetable = ? WHERE person_id = ?",
+            (1, "PER_001"),
+            "advertising_targetable_without_identifier_count",
+        ),
+        (
+            "UPDATE demographics SET onsite_targetable = ? WHERE person_id = ?",
+            (1, "PER_001"),
+            "onsite_targetable_without_identifier_count",
+        ),
     ),
 )
 def test_demographic_contract_boundary_violations_are_structural_errors(

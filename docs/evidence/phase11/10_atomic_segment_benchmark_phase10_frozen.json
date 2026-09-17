@@ -1,0 +1,313 @@
+{
+  "benchmark_status": "COMPLETED",
+  "candidate_generations": [
+    {
+      "created_at": "2026-09-15T10:03:40Z",
+      "generation_id": 3,
+      "generation_status": "READY",
+      "intelligence_key_sha256": "6fe4c881a2a7b99b6d4128b401ad944aa95589c43028e6279773685bf7e8f420",
+      "last_verified_at": "2026-09-15T10:03:40Z",
+      "lifecycle_state": "CURRENT",
+      "modeling_context_sha256": "27ee771a07470729ace3cd219106942813efe58d04f76fa055b044c2317d05f1",
+      "scored_person_count": 5000000,
+      "scoring_run_id": 3,
+      "scoring_status": "COMPLETED"
+    },
+    {
+      "created_at": "2026-09-15T09:24:43Z",
+      "generation_id": 2,
+      "generation_status": "READY",
+      "intelligence_key_sha256": "01d40f8fceae35958039ce7418a29b222995c9144b0a79b74e2ee0ddc2d4209d",
+      "last_verified_at": "2026-09-15T10:03:40Z",
+      "lifecycle_state": "CURRENT",
+      "modeling_context_sha256": "6dd8a3cf325badbf84d51e741d5fcd33fcff2e88573f2cd443634a46e426d8b0",
+      "scored_person_count": 5000000,
+      "scoring_run_id": 2,
+      "scoring_status": "COMPLETED"
+    },
+    {
+      "created_at": "2026-09-14T19:02:39Z",
+      "generation_id": 1,
+      "generation_status": "READY",
+      "intelligence_key_sha256": "a5cf60cff2cdb27a0c2892efe901be01d2f266baa929f36e5e5be981d2b113bc",
+      "last_verified_at": "2026-09-15T10:03:40Z",
+      "lifecycle_state": "CURRENT",
+      "modeling_context_sha256": "4a9d3c30e58e0214bb3d2454fec1f7199f71a1a2fb95707d1a3eee2bf1a61725",
+      "scored_person_count": 5000000,
+      "scoring_run_id": 1,
+      "scoring_status": "COMPLETED"
+    }
+  ],
+  "contract": "phase11-step10-atomic-segment-benchmark-v1",
+  "database": "data/step7_validation_runtime/phase10_step15/runtime.db",
+  "database_state": {
+    "active_jobs": [],
+    "active_phase10_orchestrations": [],
+    "database_bytes": 3951153152,
+    "demographic_rows": 5000000,
+    "propensity_score_rows": 15000000,
+    "relevant_indexes": [
+      {
+        "name": "sqlite_autoindex_demographics_1",
+        "sql": null,
+        "tbl_name": "demographics"
+      },
+      {
+        "name": "idx_propensity_scores_run_score_person",
+        "sql": "CREATE INDEX idx_propensity_scores_run_score_person ON propensity_scores (scoring_run_id, propensity_score DESC, person_id ASC)",
+        "tbl_name": "propensity_scores"
+      },
+      {
+        "name": "sqlite_autoindex_propensity_scores_1",
+        "sql": null,
+        "tbl_name": "propensity_scores"
+      }
+    ],
+    "schema_version": "15",
+    "sqlite_page_count": 964637,
+    "sqlite_page_size": 4096
+  },
+  "generated_at": "2026-09-16T20:23:57Z",
+  "rejected_candidates": [],
+  "repetitions": 3,
+  "selected_generation": {
+    "created_at": "2026-09-15T10:03:40Z",
+    "generation_id": 3,
+    "generation_status": "READY",
+    "intelligence_key_sha256": "6fe4c881a2a7b99b6d4128b401ad944aa95589c43028e6279773685bf7e8f420",
+    "last_verified_at": "2026-09-15T10:03:40Z",
+    "lifecycle_state": "CURRENT",
+    "modeling_context_sha256": "27ee771a07470729ace3cd219106942813efe58d04f76fa055b044c2317d05f1",
+    "scored_person_count": 5000000,
+    "scoring_run_id": 3,
+    "scoring_status": "COMPLETED"
+  },
+  "timings": {
+    "advanced_demographics": {
+      "maximum_seconds": 6.821172,
+      "minimum_seconds": 5.678157,
+      "p50_like_median_seconds": 6.061058,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "education": [
+            "Associate degree"
+          ],
+          "employment_status": [
+            "Employed full-time"
+          ],
+          "marital_status": [
+            "Married"
+          ],
+          "resident_status": [
+            "Citizen by birth"
+          ],
+          "resident_type": [
+            "Inner suburban"
+          ],
+          "type_of_employment": [
+            "Gig/contract"
+          ]
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        5.678157,
+        6.061058,
+        6.821172
+      ],
+      "stable_result": {
+        "matching_count": 805,
+        "row_count": 0,
+        "selected_count": 805
+      }
+    },
+    "age_income_bucket": {
+      "maximum_seconds": 7.210631,
+      "minimum_seconds": 7.018469,
+      "p50_like_median_seconds": 7.142521,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "age_max": 34,
+          "age_min": 25,
+          "individual_yearly_income_max": 74999,
+          "individual_yearly_income_min": 50000
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        7.210631,
+        7.018469,
+        7.142521
+      ],
+      "stable_result": {
+        "matching_count": 144297,
+        "row_count": 0,
+        "selected_count": 144297
+      }
+    },
+    "five_states": {
+      "maximum_seconds": 12.356987,
+      "minimum_seconds": 11.622292,
+      "p50_like_median_seconds": 11.863418,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "state": [
+            "Arizona",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Florida"
+          ]
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        12.356987,
+        11.622292,
+        11.863418
+      ],
+      "stable_result": {
+        "matching_count": 1526425,
+        "row_count": 0,
+        "selected_count": 1526425
+      }
+    },
+    "multi_age_multi_income_states": {
+      "maximum_seconds": 9.538357,
+      "minimum_seconds": 7.97788,
+      "p50_like_median_seconds": 8.305201,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "age_max": 44,
+          "age_min": 18,
+          "individual_yearly_income_max": 99999,
+          "individual_yearly_income_min": 25000,
+          "state": [
+            "Arizona",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Florida"
+          ]
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        9.538357,
+        7.97788,
+        8.305201
+      ],
+      "stable_result": {
+        "matching_count": 328920,
+        "row_count": 0,
+        "selected_count": 328920
+      }
+    },
+    "one_state": {
+      "maximum_seconds": 19.110336,
+      "minimum_seconds": 6.888655,
+      "p50_like_median_seconds": 7.028321,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "state": [
+            "Arizona"
+          ]
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        19.110336,
+        7.028321,
+        6.888655
+      ],
+      "stable_result": {
+        "matching_count": 136250,
+        "row_count": 0,
+        "selected_count": 136250
+      }
+    },
+    "score_threshold_no_demographics": {
+      "maximum_seconds": 0.468554,
+      "minimum_seconds": 0.409119,
+      "p50_like_median_seconds": 0.421237,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "score_min": 0.7
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        0.468554,
+        0.421237,
+        0.409119
+      ],
+      "stable_result": {
+        "matching_count": 152,
+        "row_count": 0,
+        "selected_count": 152
+      }
+    },
+    "top_n_100": {
+      "maximum_seconds": 11.964214,
+      "minimum_seconds": 11.747195,
+      "p50_like_median_seconds": 11.794739,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "state": [
+            "Arizona",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Florida"
+          ]
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "TOP_N",
+          "target_count": 100
+        }
+      },
+      "seconds": [
+        11.747195,
+        11.794739,
+        11.964214
+      ],
+      "stable_result": {
+        "matching_count": 1526425,
+        "row_count": 0,
+        "selected_count": 100
+      }
+    }
+  }
+}

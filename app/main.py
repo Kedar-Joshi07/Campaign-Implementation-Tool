@@ -21,11 +21,14 @@ from app.routers.health import router as health_router
 from app.routers.historical import router as historical_router
 from app.routers.models import router as model_router
 from app.routers.reference import router as reference_router
+from app.routers.potential_customer_search import router as potential_customer_search_router
+from app.routers.business import router as business_router
 from app.services.campaign_service import reconcile_stale_campaign_export_events
 from app.services.model_job_service import reconcile_stale_model_training_jobs
 from app.services.phase10_orchestration_service import (
     reconcile_phase10_orchestrations,
 )
+from app.services.phase11_export_service import reconcile_stale_result_export_events
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -71,6 +74,14 @@ async def lifespan(_: FastAPI):
     except Exception:
         logger.exception("Campaign export startup reconciliation failed")
     try:
+        stale_result_exports = reconcile_stale_result_export_events(DATABASE_PATH)
+        logger.info(
+            "Result export startup reconciliation completed | reconciled_stale_exports=%s",
+            stale_result_exports,
+        )
+    except Exception:
+        logger.exception("Result export startup reconciliation failed")
+    try:
         yield
     finally:
         shutdown_model_training_executor(wait=False)
@@ -97,6 +108,8 @@ app.include_router(historical_router)
 app.include_router(model_router)
 app.include_router(campaign_router)
 app.include_router(campaign_targeting_router)
+app.include_router(potential_customer_search_router)
+app.include_router(business_router)
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 

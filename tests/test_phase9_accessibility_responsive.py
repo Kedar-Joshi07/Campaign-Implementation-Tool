@@ -83,7 +83,7 @@ def test_keyboard_stepper_validation_multiselect_and_chip_contracts() -> None:
     assert 'chip.setAttribute("role", "listitem")' in targeting_script
     assert "button.type = \"button\"" in targeting_script
     assert "button.setAttribute(\"aria-label\", `Remove ${text}`)" in targeting_script
-    assert "document.querySelector(focusSelector)?.focus()" in targeting_script
+    assert "focusMultiSelect(document.querySelector(focusSelector))" in targeting_script
 
     for selector in (
         ".planner-step:focus-visible",

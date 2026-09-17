@@ -1,4 +1,5 @@
 import { getCachedJSON, getJSON } from "./api.js";
+import { enhanceMultiSelect, refreshMultiSelect, setMultiSelectState } from "./components/multi-select-dropdown.js";
 import {
   getCampaignPlannerState,
   setTargetingContextId,
@@ -74,6 +75,7 @@ function populateOptions(options) {
     appendOption(delivery, channel.value, channel.label);
   }
   campaignOptionsAvailable = options.products.length > 0;
+  for (const selector of Object.values(FIELD_IDS)) refreshMultiSelect(document.querySelector(selector));
   document.querySelector("#planner-context-empty").hidden = campaignOptionsAvailable;
   document.querySelector("#planner-next-2").disabled = !campaignOptionsAvailable;
 }
@@ -85,10 +87,14 @@ function applyContext(context) {
       ? new Set([context[field]])
       : new Set(context[field] || []);
     for (const option of select.options) option.selected = selected.has(option.value);
+    refreshMultiSelect(select);
   }
 }
 
 function setLoading(loading) {
+  for (const selector of Object.values(FIELD_IDS)) {
+    setMultiSelectState(document.querySelector(selector), { loading, error: "" });
+  }
   document.querySelector("#planner-context-loading").hidden = !loading;
   document.querySelector("#planner-context-form").hidden =
     loading || !campaignOptionsAvailable;
@@ -98,6 +104,9 @@ function setLoading(loading) {
 
 function showLoadError(error) {
   setLoading(false);
+  for (const selector of Object.values(FIELD_IDS)) {
+    setMultiSelectState(document.querySelector(selector), { error: "Choices could not be loaded. Try again." });
+  }
   document.querySelector("#planner-context-form").hidden = true;
   document.querySelector("#planner-context-save").disabled = true;
   document.querySelector("#planner-context-empty").hidden = true;
@@ -199,7 +208,9 @@ export function initializeCampaignContext(onStatus) {
   initialized = true;
   announce = onStatus;
   for (const selector of Object.values(FIELD_IDS)) {
-    document.querySelector(selector).addEventListener("change", () => {
+    const select = document.querySelector(selector);
+    if (select.multiple) enhanceMultiSelect(select);
+    select.addEventListener("change", () => {
       document.querySelector("#planner-context-error").hidden = true;
       captureContext();
     });
