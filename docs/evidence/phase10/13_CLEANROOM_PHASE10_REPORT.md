@@ -25,8 +25,8 @@ scenarios. Their canonical hashes, counts, and results matched exactly.
 
 ## Determinism
 
-- Clean room A canonical SHA-256: `ea85eeabbf755d598e856623e41312c697a06641338dbb957b61a29427d8059f`
-- Clean room B canonical SHA-256: `ea85eeabbf755d598e856623e41312c697a06641338dbb957b61a29427d8059f`
+- Clean room A canonical SHA-256: `a2f3230abf6945e8cdccad1bcfd317ac98e5bed0d3c63ccc184bb85c282ef5b7`
+- Clean room B canonical SHA-256: `a2f3230abf6945e8cdccad1bcfd317ac98e5bed0d3c63ccc184bb85c282ef5b7`
 - Exact canonical equality: `true`
 
 The comparison includes Modeling Context and intelligence identities,
@@ -46,8 +46,8 @@ file was read as an execution input or modified.
 
 ## Verification
 
-- Final A/B certification: PASS in 99.951 seconds.
-- Affected scoring/lifecycle/orchestration regression: PASS - 14 tests in 103.89s.
+- Final A/B certification: PASS in 312.09 seconds.
+- Affected scoring/lifecycle/orchestration regression: PASS - 14 tests.
 - Ruff, Python compilation and diff checks: PASS.
 
 ## Machine-readable evidence

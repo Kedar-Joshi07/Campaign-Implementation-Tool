@@ -1,8 +1,8 @@
 {
-  "completed_at": "2026-09-13T04:59:14Z",
-  "generated_at": "2026-09-13T04:58:12Z",
+  "completed_at": "2026-09-18T04:42:25Z",
+  "generated_at": "2026-09-18T04:39:31Z",
   "overall_status": "PASS",
-  "runtime_root": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-u_0l4s7e",
+  "runtime_root": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-8y2cq_s1",
   "stages": {
     "cleanup": {
       "runtime_removed": true,
@@ -41,8 +41,8 @@
         },
         "demographics": {
           "match": true,
-          "run_a": "9ddedcc23666bcdfaad90d4bd604804fea24ca369493d470a3f346177d4f929a",
-          "run_b": "9ddedcc23666bcdfaad90d4bd604804fea24ca369493d470a3f346177d4f929a"
+          "run_a": "9ba9994374058984ba22f95838c3852ba7ca68642fab4305aa4a493cb54769db",
+          "run_b": "9ba9994374058984ba22f95838c3852ba7ca68642fab4305aa4a493cb54769db"
         },
         "product_master": {
           "match": true,
@@ -50,7 +50,7 @@
           "run_b": "082af8365afe0471d7d1781a1affc641a2b7c6d390d3556a1a04ee6b1c1f793f"
         }
       },
-      "duration_seconds": 12.462,
+      "duration_seconds": 24.316,
       "python": {
         "executable": "C:\\POCs\\Campaign Implementation Tool\\.venv\\Scripts\\python.exe",
         "version": "3.12.0"
@@ -61,14 +61,14 @@
         "demographics": 20260905
       },
       "selected_input_files": {
-        "campaign_sales": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-u_0l4s7e\\generated\\run_a\\campaign_sales.csv.gz",
-        "customers": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-u_0l4s7e\\generated\\run_a\\customers.csv.gz",
-        "demographics": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-u_0l4s7e\\generated\\run_a\\demographics.csv.gz"
+        "campaign_sales": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-8y2cq_s1\\generated\\run_a\\campaign_sales.csv.gz",
+        "customers": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-8y2cq_s1\\generated\\run_a\\customers.csv.gz",
+        "demographics": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-8y2cq_s1\\generated\\run_a\\demographics.csv.gz"
       },
       "status": "PASS"
     },
     "step2": {
-      "duration_seconds": 2.035,
+      "duration_seconds": 4.755,
       "identity_isolation": {
         "customer_person_id_overlap_count": 0
       },
@@ -90,7 +90,7 @@
         }
       },
       "reconciliation": {
-        "database_path": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-u_0l4s7e\\cleanroom.db",
+        "database_path": "C:\\POCs\\Campaign Implementation Tool\\artifacts\\cleanroom-runtime\\phase1-7-8y2cq_s1\\cleanroom.db",
         "datasets": {
           "campaign_sales": {
             "acceptable_count": true,
@@ -116,7 +116,7 @@
               "total_rows": 9000,
               "underage_campaign_contact_count": 0
             },
-            "query_seconds": 0.043675,
+            "query_seconds": 0.040634,
             "status": "OK",
             "structural_error_count": 0,
             "structural_issues": {
@@ -142,7 +142,7 @@
               "null_or_blank_critical_identifiers": 0,
               "total_rows": 1200
             },
-            "query_seconds": 0.000687,
+            "query_seconds": 0.000759,
             "status": "OK",
             "structural_error_count": 0,
             "structural_issues": {
@@ -161,39 +161,69 @@
             "expected_count_match": true,
             "metrics": {
               "adult_count_below_1": 0,
+              "advertising_id_count": 8875,
+              "advertising_targetable_count": 6036,
+              "advertising_targetable_without_identifier_count": 0,
               "age_above_100_count": 0,
               "age_below_18_count": 0,
+              "direct_mail_contactable_count": 11035,
+              "direct_mail_contactable_without_identifier_count": 0,
               "distinct_person_id": 12000,
+              "do_not_call_count": 2135,
+              "email_contactable_count": 10568,
+              "email_contactable_without_identifier_count": 0,
               "family_arithmetic_violation_count": 0,
               "family_income_below_individual_violation_count": 0,
               "max_age": 100,
               "max_individual_yearly_income": 665500.0,
               "min_age": 18,
               "min_individual_yearly_income": 0.0,
-              "total_rows": 12000
+              "onsite_targetable_count": 5808,
+              "onsite_targetable_without_identifier_count": 0,
+              "push_opt_in_count": 4064,
+              "push_opt_in_without_identifier_count": 0,
+              "push_token_count": 7442,
+              "sms_opt_in_count": 5041,
+              "sms_opt_in_without_identifier_count": 0,
+              "telemarketing_contactable_count": 6609,
+              "telemarketing_dnc_conflict_count": 0,
+              "telemarketing_without_identifier_count": 0,
+              "total_rows": 12000,
+              "web_visitor_id_count": 8047,
+              "whatsapp_opt_in_count": 3584,
+              "whatsapp_opt_in_without_identifier_count": 0
             },
-            "query_seconds": 0.009296,
+            "query_seconds": 0.025498,
             "status": "OK",
             "structural_error_count": 0,
             "structural_issues": {
               "adult_count_below_1": 0,
+              "advertising_targetable_without_identifier_count": 0,
               "age_above_100_count": 0,
               "age_below_18_count": 0,
+              "direct_mail_contactable_without_identifier_count": 0,
               "duplicate_person_id_count": 0,
+              "email_contactable_without_identifier_count": 0,
               "family_arithmetic_violation_count": 0,
-              "family_income_below_individual_violation_count": 0
+              "family_income_below_individual_violation_count": 0,
+              "onsite_targetable_without_identifier_count": 0,
+              "push_opt_in_without_identifier_count": 0,
+              "sms_opt_in_without_identifier_count": 0,
+              "telemarketing_dnc_conflict_count": 0,
+              "telemarketing_without_identifier_count": 0,
+              "whatsapp_opt_in_without_identifier_count": 0
             }
           }
         },
-        "generated_at": "2026-09-13T04:58:26Z",
+        "generated_at": "2026-09-18T04:40:00Z",
         "overall_status": "OK",
-        "total_query_seconds": 0.062713
+        "total_query_seconds": 0.103761
       },
       "status": "PASS"
     },
     "step3": {
       "analysis_run_id": 1,
-      "duration_seconds": 3.015,
+      "duration_seconds": 6.568,
       "model_contract": {
         "artifact_sha256": "382994c1343905326477465108264dcd60ff9471da97d95ea4e28a22ebdfadb7",
         "feature_contract_sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
@@ -246,7 +276,7 @@
       "status": "PASS"
     },
     "step4": {
-      "duration_seconds": 15.252,
+      "duration_seconds": 51.353,
       "filter_family_checks": {
         "age": 12000,
         "band": 720,
@@ -277,7 +307,7 @@
         "active_job": null,
         "analytics_contract_version": "1",
         "analytics_prepared": true,
-        "analytics_snapshot_created_at": "2026-09-13T04:58:30Z",
+        "analytics_snapshot_created_at": "2026-09-18T04:40:10Z",
         "boundary_count": 100,
         "currentness_issues": [],
         "is_canonical": true,
@@ -373,7 +403,7 @@
           }
         }
       },
-      "duration_seconds": 29.667,
+      "duration_seconds": 86.686,
       "source_drift": {
         "blocked_export_detail": "saved audience: Saved scoring run provenance is stale or invalid.",
         "blocked_export_status": 409,

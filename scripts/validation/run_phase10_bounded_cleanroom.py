@@ -249,6 +249,18 @@ def _demographic_rows(count: int) -> list[dict[str, object]]:
             "number_of_adults_in_family": 2,
             "type_of_employment": "Salaried",
             "family_yearly_income": 70_000 + (index * 100),
+            "email_contactable": 0,
+            "direct_mail_contactable": 0,
+            "sms_opt_in": 0,
+            "whatsapp_opt_in": 0,
+            "telemarketing_contactable": 0,
+            "do_not_call": 0,
+            "push_token": "",
+            "push_opt_in": 0,
+            "advertising_id": "",
+            "advertising_targetable": 0,
+            "web_visitor_id": "",
+            "onsite_targetable": 0,
         }
         for index in range(1, count + 1)
     ]

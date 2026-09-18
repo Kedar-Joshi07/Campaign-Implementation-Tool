@@ -1,6 +1,6 @@
 {
   "deterministic_match": true,
-  "duration_seconds": 99.951,
+  "duration_seconds": 312.09,
   "generated_at": "2026-09-14",
   "overall_status": "PASS",
   "report_contract_version": "1",
@@ -15,7 +15,7 @@
         "initial_demographics": 80
       },
       "canonical_result": {
-        "final_artifact_sha256": "3bde963c05d4900db8474929060b4fac25fe9cd46d4ab043a092ad6dfafcd5aa",
+        "final_artifact_sha256": "0fc6a6ef77956be4b007c235564b16e7868cf6ffb69387e6dd10f43c5189f307",
         "final_counts": {
           "audience_analytics_snapshots": 4,
           "audience_rank_boundaries": 400,
@@ -28,13 +28,13 @@
           "saved_audiences": 3,
           "scoring_runs": 4
         },
-        "final_intelligence_key_sha256": "4bd6f04dda00d5dae49208df73c4d5bb63c4855bcd8e5edf8a6c4a9ee705ef6e",
+        "final_intelligence_key_sha256": "a7620ff0fbdfeb6800ec410da6658eb9ea22329748074ab42d11378c646b7746",
         "final_modeling_context_sha256": "2b3cd0b11721217a184caaaeabf4faf8440eaf9955e075737b702f8649b61f07",
         "final_rank_sha256": "67a9bc71e3717868e46209e874280c741adf6f97ae3bdb7f50ca918b319e53b7",
         "final_score_rows": 324,
         "final_score_sha256": "f1ad5989de29c12f65e67916f2117f0dae64eb394c27372f540de3c83a05f537",
-        "initial_artifact_sha256": "34ee8186329571b082c4db2b1936d8bbeb48c39f7fa113339537911ff5a0724b",
-        "initial_intelligence_key_sha256": "5497c5ea4ec0924a673f12a4a69bf051d91a16586937b845fdaae96f2c600ecb",
+        "initial_artifact_sha256": "b7fe155b40abbf38ed413ce0cdf1485ba0d46b6ade637df5e4fc83da0c43209f",
+        "initial_intelligence_key_sha256": "96f49a26b5099bcaf125ee36928307d5a0c3b79d2b2c0de0bd12db43c4291a14",
         "initial_modeling_context_sha256": "2b3cd0b11721217a184caaaeabf4faf8440eaf9955e075737b702f8649b61f07",
         "multi_branch_members_sha256": "f7f8f98d89914d5db30068ec6b825620aa7db490bcf16c03e85c65ca3bc93172",
         "multi_branch_selected_count": 10,
@@ -115,8 +115,8 @@
           }
         }
       },
-      "canonical_result_sha256": "ea85eeabbf755d598e856623e41312c697a06641338dbb957b61a29427d8059f",
-      "duration_seconds": 47.111,
+      "canonical_result_sha256": "a2f3230abf6945e8cdccad1bcfd317ac98e5bed0d3c63ccc184bb85c282ef5b7",
+      "duration_seconds": 156.427,
       "label": "A",
       "scenarios": {
         "1_full_new_build": {
@@ -205,7 +205,7 @@
         "initial_demographics": 80
       },
       "canonical_result": {
-        "final_artifact_sha256": "3bde963c05d4900db8474929060b4fac25fe9cd46d4ab043a092ad6dfafcd5aa",
+        "final_artifact_sha256": "0fc6a6ef77956be4b007c235564b16e7868cf6ffb69387e6dd10f43c5189f307",
         "final_counts": {
           "audience_analytics_snapshots": 4,
           "audience_rank_boundaries": 400,
@@ -218,13 +218,13 @@
           "saved_audiences": 3,
           "scoring_runs": 4
         },
-        "final_intelligence_key_sha256": "4bd6f04dda00d5dae49208df73c4d5bb63c4855bcd8e5edf8a6c4a9ee705ef6e",
+        "final_intelligence_key_sha256": "a7620ff0fbdfeb6800ec410da6658eb9ea22329748074ab42d11378c646b7746",
         "final_modeling_context_sha256": "2b3cd0b11721217a184caaaeabf4faf8440eaf9955e075737b702f8649b61f07",
         "final_rank_sha256": "67a9bc71e3717868e46209e874280c741adf6f97ae3bdb7f50ca918b319e53b7",
         "final_score_rows": 324,
         "final_score_sha256": "f1ad5989de29c12f65e67916f2117f0dae64eb394c27372f540de3c83a05f537",
-        "initial_artifact_sha256": "34ee8186329571b082c4db2b1936d8bbeb48c39f7fa113339537911ff5a0724b",
-        "initial_intelligence_key_sha256": "5497c5ea4ec0924a673f12a4a69bf051d91a16586937b845fdaae96f2c600ecb",
+        "initial_artifact_sha256": "b7fe155b40abbf38ed413ce0cdf1485ba0d46b6ade637df5e4fc83da0c43209f",
+        "initial_intelligence_key_sha256": "96f49a26b5099bcaf125ee36928307d5a0c3b79d2b2c0de0bd12db43c4291a14",
         "initial_modeling_context_sha256": "2b3cd0b11721217a184caaaeabf4faf8440eaf9955e075737b702f8649b61f07",
         "multi_branch_members_sha256": "f7f8f98d89914d5db30068ec6b825620aa7db490bcf16c03e85c65ca3bc93172",
         "multi_branch_selected_count": 10,
@@ -305,8 +305,8 @@
           }
         }
       },
-      "canonical_result_sha256": "ea85eeabbf755d598e856623e41312c697a06641338dbb957b61a29427d8059f",
-      "duration_seconds": 52.839,
+      "canonical_result_sha256": "a2f3230abf6945e8cdccad1bcfd317ac98e5bed0d3c63ccc184bb85c282ef5b7",
+      "duration_seconds": 155.662,
       "label": "B",
       "scenarios": {
         "1_full_new_build": {
