@@ -166,4 +166,7 @@ jobs:
         run: pytest -q tests/test_phase10_*.py
 
       - name: Run bounded Phase 11 contract, UI, cache, and profile tests
+        env:
+          SYSTEM_BROWSER: chrome
+          SYSTEM_BROWSER_PATH: /usr/bin/google-chrome
         run: pytest -q -m "not cleanroom and not performance and not full5m" tests/test_phase11_*.py
