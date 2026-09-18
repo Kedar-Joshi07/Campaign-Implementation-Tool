@@ -149,12 +149,17 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-dependency-path: requirements.lock
+          cache-dependency-path: |
+            requirements.lock
+            requirements-browser.lock
 
       - name: Install locked dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.lock
+
+      - name: Install pinned browser-test dependencies
+        run: python -m pip install -r requirements-browser.lock
 
       - name: Run frontend and API contract tests
         run: pytest -m "browser or integration" tests/test_frontend.py tests/test_*_api.py
