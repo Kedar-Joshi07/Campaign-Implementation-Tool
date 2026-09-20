@@ -1,6 +1,6 @@
 # Campaign Implementation Intelligence
 
-Campaign Implementation Intelligence is a local FastAPI + SQLite proof of concept that implements the frozen Phase 1 to Phase 9 synthetic marketing workflow:
+Campaign Implementation Intelligence is a local FastAPI + SQLite proof of concept that implements the frozen Phase 1 to Phase 11 synthetic marketing workflow:
 
 1. Synthetic source data generation and ingestion.
 2. Phase 1 data foundation and reconciliation.
@@ -10,6 +10,8 @@ Campaign Implementation Intelligence is a local FastAPI + SQLite proof of concep
 6. Phase 6 Audience Explorer filtering, search, profile, and saved audiences.
 7. Phase 7 Campaign Builder draft/finalize/currentness and deterministic target-list export.
 8. Phase 9 business-friendly campaign context, targeting, exact Target Group preview, and draft creation.
+9. Phase 10 automatic compatibility-driven intelligence reuse/build orchestration.
+10. Phase 11 simplified business search, durable smart result reuse, and governed omnichannel download.
 
 All source data in this repository is synthetic. The historical customer universe and the demographic prospect universe are intentionally independent.
 
@@ -17,7 +19,7 @@ All source data in this repository is synthetic. The historical customer univers
 - Prospect scoring and campaign export use person_id.
 - The application does not create or infer a customer_id to person_id linkage.
 
-## Product flow (Phase 1 to 9)
+## Product flow (Phase 1 to 11)
 
 1. Load synthetic customer, campaign-sales, and demographic source files.
 2. Import data into SQLite with strict schema/header validation.
@@ -29,6 +31,8 @@ All source data in this repository is synthetic. The historical customer univers
 8. Explore audiences, estimate/select cohorts, and save immutable audience definitions.
 9. Build campaigns from current saved audiences, finalize, and export EMAIL or DIRECT_MAIL target lists.
 10. Use Create Campaign for a guided business workflow that captures campaign context, applies explicit business targeting, compares exact match-strength counts, saves an immutable Target Group, and creates a Campaign Draft.
+11. Use the three-tab business workflow: Home → Find Potential Customers → Smart Reuse → Result.
+12. Download the immutable result through its saved governed omnichannel profile; contact PII is joined only at this boundary.
 
 ## Technology stack
 
@@ -51,7 +55,7 @@ The runtime follows Router -> Schema -> Service -> Repository -> SQLite layering
 ## Current versions and frozen contracts
 
 - Application version default: 0.1.0
-- Current SQLite schema version: 17
+- Current SQLite schema version: 18
 - Feature contract version: 1
 - Feature contract SHA-256: a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535
 - Model role policy version: 2
@@ -70,9 +74,18 @@ The runtime follows Router -> Schema -> Service -> Repository -> SQLite layering
 - Age-bucket and income-group contract versions: 1
 - Targeting-intelligence resolution contract version: 1
 - Target Group preview, saved Target Group, and Target Group campaign contract versions: 1
-- Export profiles:
-  - EMAIL -> EMAIL_CONTACT_V1
-  - DIRECT_MAIL -> DIRECT_MAIL_CONTACT_V1
+- Phase 11 search-run, result-cache, membership, result-export, and omnichannel-profile contract versions: 1
+- Omnichannel export profiles:
+  - EMAIL → EMAIL_CONTACT_V1
+  - DIRECT_MAIL → DIRECT_MAIL_CONTACT_V1
+  - SMS → SMS_CONTACT_V1
+  - WHATSAPP → WHATSAPP_CONTACT_V1
+  - TELEMARKETING → TELEMARKETING_CONTACT_V1
+  - PAID_SOCIAL → PAID_SOCIAL_AUDIENCE_V1
+  - PAID_SEARCH → PAID_SEARCH_AUDIENCE_V1
+  - MOBILE_PUSH → MOBILE_PUSH_CONTACT_V1
+  - DISPLAY → DISPLAY_AUDIENCE_V1
+  - WEBSITE_ONSITE → WEBSITE_AUDIENCE_V1
 
 ## Repository layout
 
@@ -140,15 +153,15 @@ If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs
 
 Initialization is idempotent and creates/verifies schema version 18. The 15-to-16 migration appends source fields with false/null defaults. The 16-to-17 migration adds separate `campaign_search_runs`, `campaign_result_snapshots`, and `campaign_result_export_events` registries without modifying Phase 1–10 rows or legacy Campaign export semantics. The 17-to-18 migration adds a nullable, write-once future activation and outcome-lineage seam without implementing delivery, feedback ingestion, or retraining.
 
-Phase 11 Step 5 persists immutable business submissions separately from reusable, contact-PII-free result-snapshot metadata. Completed history and snapshot identity are protected; search-result exports have their own count/checksum/currentness audit records. Snapshot materialization, exact-result orchestration, and new download/UI integration remain the later Step 9/11/13 boundaries. See [Step 5 evidence](docs/evidence/phase11/05_SEARCH_RUN_RESULT_SCHEMA.md).
+Phase 11 persists immutable business submissions separately from reusable, contact-PII-free result snapshots. Exact hits reuse a validated snapshot; otherwise the system reuses compatible Phase 10 intelligence or builds only missing layers, then atomically materializes one requested membership. Search-result exports have their own count/checksum/currentness audit records. See [smart reuse and snapshot contracts](docs/PHASE_11_RESULT_SNAPSHOTS_AND_SMART_REUSE.md).
 
-Phase 11 Step 6 limits normal navigation to **Home**, **Find Potential Customers**, and **Results**, governed by `frontend/js/view-contract.js`. Empty/unknown/hidden legacy fragments redirect to `#home`; `#overview` and `#campaign-planner` normalize to their business routes without adding history entries. Legacy views/modules and APIs remain intact. UI hiding is not authentication, authorization, or RBAC. Results and Result Details are navigation-only placeholders until Step 12 connects real history/details. See [Step 6 evidence](docs/evidence/phase11/06_BUSINESS_NAVIGATION.md).
+Phase 11 limits normal navigation to **Home**, **Find Potential Customers**, and **Results**, governed by `frontend/js/view-contract.js`. Empty/unknown/hidden legacy fragments redirect to `#home`; `#overview` and `#campaign-planner` normalize to their business routes without adding history entries. Legacy views/modules and APIs remain intact. Results and Result Detail are connected to durable run/snapshot history. UI hiding is not authentication, authorization, or RBAC. See [business UI and navigation](docs/PHASE_11_BUSINESS_UI.md).
 
-Phase 11 Step 7 progressively enhances all 16 campaign-context and targeting multi-selects using one searchable, keyboard-accessible Vanilla-JS dropdown. Select All visible adds filtered available matches; Clear All removes all selections across the filter. Backend option values, native form validation, existing saved context/criteria, Region-to-State semantics, and legacy components remain authoritative. The five-step planner is still retained; Step 8 owns the single-form redesign. See [Step 7 evidence](docs/evidence/phase11/07_MULTISELECT_COMPONENT.md).
+Phase 11 progressively enhances campaign-context and targeting multi-selects using one searchable, keyboard-accessible Vanilla-JS dropdown. Select All visible adds filtered available matches; Clear All removes all selections across the filter. Backend option values, native form validation, existing saved context/criteria, Region-to-State semantics, and retained legacy components remain authoritative.
 
-Phase 11 Step 8 makes **Find Potential Customers** one business form while retaining the hidden legacy planner and frozen Phase 9/10 semantics. Each valid intentional request durably records a fresh context/criteria lineage and immutable search run before its execution handoff; Results can rediscover the request after navigation or reload. Delivery/profile and prospect-filter changes do not alter Modeling Context. Until the Step 11 publisher completes the execution composition, public submissions truthfully remain `BLOCKED` rather than showing invented results. See [Step 8 evidence](docs/evidence/phase11/08_FIND_POTENTIAL_CUSTOMERS_FORM.md).
+**Find Potential Customers** is one business form while the hidden legacy planner and frozen Phase 9/10 semantics remain intact. Each valid intentional request durably records fresh context/criteria lineage and an immutable search run before execution. Results can rediscover and reopen the request after navigation, reload, or restart. Delivery/profile and prospect-filter changes do not alter Modeling Context.
 
-Phase 11 Step 9 implements the exact-result → intelligence-reuse → new-intelligence-build decision engine. It delegates compatibility and preparation to frozen Phase 10 services, validates exact cache hits without scanning scores, and streams exact OR-branch Audience Engine membership in global rank order on a miss. Durable `PROCESSING` searches can resume after Phase 10 work or restart. Step 11 still owns atomic membership publication, so production submission remains disabled until that collaborator is composed. See [Step 9 evidence](docs/evidence/phase11/09_SMART_REUSE_ENGINE.md).
+The smart-reuse engine follows exact result → compatible Phase 10 intelligence → minimum new Phase 10 build. It validates exact cache hits without scanning scores, streams exact OR-branch Audience Engine membership in global rank order on a miss, and publishes an immutable snapshot atomically. Durable `PROCESSING` searches can resume after Phase 10 work or restart. There is no all-permutation precompute.
 
 ## Import data (enforced order)
 
@@ -290,6 +303,20 @@ Business Campaign Planner and Target Groups:
 - POST /api/campaign-planner/contexts/{targeting_context_id}/save-target-group-and-create-draft
 - GET /api/campaign-planner/contexts/{targeting_context_id}/campaign-draft
 
+Phase 11 business workflow:
+
+- GET /api/business/overview
+- GET /api/business/recent-results
+- GET /api/export-profiles
+- GET /api/potential-customer-search/options
+- POST /api/potential-customer-search/runs
+- GET /api/potential-customer-search/runs
+- GET /api/potential-customer-search/runs/{search_run_id}
+- GET /api/potential-customer-search/runs/{search_run_id}/status
+- GET /api/potential-customer-search/results
+- GET /api/potential-customer-search/runs/{search_run_id}/result
+- GET /api/potential-customer-search/runs/{search_run_id}/download
+
 ## Phase summary
 
 - Phase 1: import, reconciliation, aggregate data/reference APIs.
@@ -302,6 +329,7 @@ Business Campaign Planner and Target Groups:
 - Phase 8: system-browser release assurance, exhaustive control coverage, reproducibility, CI, and repository freeze.
 - Phase 9: business-friendly campaign planning, deterministic targeting criteria, explicit intelligence-source gating, exact Target Group preview/recommendations, immutable Target Group save, and Campaign Draft creation.
 - Phase 10: exact Modeling Context identity, automatic compatibility-driven reuse/build orchestration, durable progress and recovery, context-bound intelligence generations, and non-destructive lifecycle governance.
+- Phase 11: three-tab business workflow, exact-result smart reuse, durable immutable result snapshots/history, and governed ten-profile omnichannel downloads.
 
 ## Phase 9 business targeting
 
@@ -312,6 +340,12 @@ Match Strength is an exact minimum-score rule: Very Strong `0.90+`, Strong `0.80
 Phase 10 implements automatic analysis/model/scoring/rank compatibility, reuse/build/refresh orchestration, long-running durable progress, context-specific provenance, and scoring lifecycle/retention. Resolution is by exact Modeling Context and layered compatibility fingerprints; there is no “latest run wins” fallback. Delivery and descriptive Campaign fields plus prospect-targeting filters remain outside the Modeling Context, so those changes reuse valid intelligence. Analytical dimensions, source checksums, artifacts, governed policies, or score semantics invalidate the corresponding compatibility layer and trigger the minimum required rebuild.
 
 The normal business path automatically prepares intelligence between Campaign Context and Target Group Preview. READY publication atomically binds the verified generation and exact scoring source back to the Phase 9 context. Lifecycle reconciliation classifies generations as CURRENT, REUSABLE, SUPERSEDED, STALE, RETIREMENT_ELIGIBLE, or PROTECTED without deleting analytical lineage. See `docs/PHASE_10_IMPLEMENTATION_SUMMARY.md` and `docs/evidence/phase10/README.md`.
+
+## Phase 11 business search and smart reuse
+
+The default Phase 11 path is **Home → Find Potential Customers → Smart Reuse → Result → Download**. Every submission is a durable history event. The system reuses a fully validated exact result when possible, otherwise filters compatible Phase 10 intelligence, otherwise builds only missing intelligence layers and materializes the requested result. Search history is distinct from snapshot identity, so repeated requests remain auditable without duplicating valid membership.
+
+All ten omnichannel profiles are backend-owned and source-truthful. Membership snapshots and JSON/UI projections contain no contact PII. At download time, the engine revalidates lineage/currentness, joins only the profile-required fields in bounded chunks, enforces consent/contactability/targetability, and persists aggregate audit metadata. Paid-media profiles emit only SHA-256 match keys. See `docs/PHASE_11_IMPLEMENTATION_SUMMARY.md` and `docs/evidence/phase11/README.md`.
 
 ## Phase 8 release assurance
 
@@ -378,12 +412,12 @@ Rules:
 - Export requires FINALIZED status and explicit acknowledge_pii=true.
 - Export events persist metadata-only audit details (counts, checksums, currentness state).
 
-Supported export profiles:
+Legacy finalized-Campaign export profiles:
 
 - EMAIL_CONTACT_V1: person_id, score/rank fields, name, email
 - DIRECT_MAIL_CONTACT_V1: person_id, score/rank fields, name, mailing address fields
 
-Prohibited fields include ethnicity, religion, occupation_industry, family_yearly_income, number_of_children_in_family, number_of_adults_in_family, and customer_id. Phone is prohibited in the legacy Email/Direct Mail profiles, not globally: the Phase 11 backend registry permits it only for SMS/WhatsApp/Telemarketing and emits only hashed match keys for paid media. All ten Phase 11 registry profiles now have source-field support; the result-snapshot download engine is integrated separately in Step 13.
+Prohibited fields include ethnicity, religion, occupation_industry, family_yearly_income, number_of_children_in_family, number_of_adults_in_family, and customer_id. Phone is prohibited in the legacy Email/Direct Mail profiles, not globally: the Phase 11 backend registry permits it only for SMS/WhatsApp/Telemarketing and emits only hashed match keys for paid media. All ten Phase 11 registry profiles have source-field support and are integrated into the current result-snapshot download engine.
 
 Scope boundary: this POC stops at target-list export. It does not implement send/activation platform workflows.
 
@@ -424,7 +458,7 @@ $env:OUT_NAME = "usa_demographic_synthetic_5000000_rows.csv.gz"
 git diff --check
 ```
 
-The Phase 10 Step 15 full regression records 647 passing tests. Normal CI excludes full-5M, performance, clean-room, and installed-browser markers from the unit/integration job, runs the bounded Phase 1–7 clean-room separately, and includes bounded Phase 9 and Phase 10 contract/UI suites. Full 5M scoring remains an explicit release-certification workload, not a normal CI workload.
+Phase 11 Step 20 records 966 passing tests and successful full-5M certification. Normal CI excludes full-5M and performance work from the unit job, runs the bounded Phase 1–7 clean-room separately, and includes bounded Phase 9, Phase 10, and Phase 11 contract/UI/cache/profile suites. Phase 11 UI contracts use installed system Chrome with pinned browser-test-only dependencies. Full 5M scoring remains explicit release-certification work, not normal CI.
 
 ## Configuration
 

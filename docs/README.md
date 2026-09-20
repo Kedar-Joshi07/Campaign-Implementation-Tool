@@ -1,6 +1,6 @@
 # Documentation Index
 
-This folder contains implementation summaries and evidence indexes for the Phase 1 to Phase 10 delivery history.
+This folder contains implementation summaries and evidence indexes for the Phase 1 to Phase 11 delivery history.
 
 ## Current implementation summaries
 
@@ -14,6 +14,12 @@ This folder contains implementation summaries and evidence indexes for the Phase
 - PHASE_8_IMPLEMENTATION_SUMMARY.md
 - PHASE_9_IMPLEMENTATION_SUMMARY.md
 - PHASE_10_IMPLEMENTATION_SUMMARY.md
+- PHASE_11_IMPLEMENTATION_SUMMARY.md
+- PHASE_11_API_AND_SCHEMA.md
+- PHASE_11_OMNICHANNEL_PROFILES.md
+- PHASE_11_RESULT_SNAPSHOTS_AND_SMART_REUSE.md
+- PHASE_11_BUSINESS_UI.md
+- PHASE_11_FUTURE_FEEDBACK_LINEAGE.md
 
 ## Current authoritative references
 
@@ -47,6 +53,12 @@ This folder contains implementation summaries and evidence indexes for the Phase
   - Final local, browser, full-5M, bounded-CI, lineage, and compatibility acceptance.
 - evidence/phase10/PHASE10_FINAL_FREEZE_REPORT.md
   - Exact implementation/documentation SHA chain, exact-SHA GitHub Actions results, and Phase 10 freeze decision.
+- evidence/phase11/README.md
+  - Phase 11 evidence authority, reading order, and final certification references.
+- evidence/phase11/PHASE11_FINAL_ACCEPTANCE.md
+  - Final business workflow, reuse, privacy, browser, full-5M, compatibility, and CI acceptance.
+- evidence/phase11/PHASE11_FINAL_FREEZE_REPORT.md
+  - Exact implementation/documentation SHA chain, exact-SHA GitHub Actions results, and Phase 11 freeze decision.
 
 ## Historical phase records
 

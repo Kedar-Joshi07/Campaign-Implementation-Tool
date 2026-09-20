@@ -4,6 +4,8 @@
 
 Phase 11 preserves enough immutable evidence to support a future closed-loop feedback system. It does not activate campaigns, ingest outcomes, create supervised labels, schedule retraining, select a challenger model, or modify a model from feedback.
 
+This contract is the future feedback/retraining seam referenced by the Phase 11 implementation summary and schema reference. It is intentionally separate from the current Home → Find Potential Customers → Result → Download workflow and from the future RBAC presentation seam in `frontend/js/view-contract.js`.
+
 The intended future vocabulary is:
 
 - closed-loop feedback;
@@ -112,4 +114,3 @@ A future retraining decision must be a governed recommendation or schedule with 
 - champion/challenger execution or promotion;
 - model replacement; or
 - reinforcement learning.
-
