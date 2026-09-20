@@ -2,11 +2,11 @@
 
 Generated: 2026-09-20
 
-## Current decision
+## Final decision
 
-`PROVISIONAL_GO_AWAITING_DOCUMENTATION_SHA_CI`
+`GO`
 
-All product, data, privacy, reuse, persistence, browser, full-5M, regression, hygiene, and implementation-SHA CI gates are green for trusted implementation SHA `feb18146499bf5a2856b1680b3f658d27db34482`. The decision becomes final `GO` only after the documentation/freeze candidate containing this report passes exact-head GitHub CI.
+All product, data, privacy, reuse, persistence, browser, full-5M, regression, hygiene, implementation-SHA CI, and documentation-SHA CI gates are green. Phase 11 is accepted and frozen for trusted implementation SHA `feb18146499bf5a2856b1680b3f658d27db34482`; the tested documentation/freeze milestone is `b0ff7777f897ff062f758b7f91dc46603809e08f`.
 
 ## Functional acceptance
 
@@ -44,7 +44,7 @@ All product, data, privacy, reuse, persistence, browser, full-5M, regression, hy
 | SQLite integrity | PASS — `ok` |
 | Compile, dependency, diff, repository, and Git LFS hygiene | PASS |
 | Exact implementation-SHA GitHub CI | PASS — run `#20`, ID `35330170690`, 5/5 jobs |
-| Exact documentation/freeze-SHA GitHub CI | PENDING |
+| Exact documentation/freeze-SHA GitHub CI | PASS — run `#21`, ID `35502790834`, 5/5 jobs |
 
 ## Exact implementation-SHA CI
 
@@ -63,6 +63,24 @@ All product, data, privacy, reuse, persistence, browser, full-5M, regression, hy
 | Frontend Contract / bounded Phase 9+10+11 | `105552806646` | SUCCESS |
 
 The run was selected through GitHub's Actions API with exact `head_sha=feb18146499bf5a2856b1680b3f658d27db34482`, not by branch-latest inference.
+
+## Exact documentation/freeze-SHA CI
+
+- Workflow: `CI`
+- Head SHA: `b0ff7777f897ff062f758b7f91dc46603809e08f`
+- Run: `#21`, ID `35502790834`
+- URL: <https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/35502790834>
+- Conclusion: `success`
+
+| Required job | Job ID | Result |
+|---|---:|---|
+| Repository Hygiene | `106057428407` | SUCCESS |
+| Python Validation | `106057496864` | SUCCESS |
+| Tests | `106057575121` | SUCCESS |
+| Clean-Room Phase1-7 | `106057575067` | SUCCESS |
+| Frontend Contract / bounded Phase 9+10+11 | `106057575137` | SUCCESS |
+
+This run was also selected by exact `head_sha`, not by branch-latest state. It certifies the separate documentation candidate without redefining the trusted implementation SHA.
 
 ## Full-scale trusted lineage
 
@@ -88,6 +106,8 @@ No application, frontend, data, or generator file changed between the clean Step
 - The POC stops at governed target-list download; no activation/send integration exists.
 - Future activation/feedback/retraining columns are nullable lineage seams only.
 
-## Finalization condition
+## Final acceptance result
 
-Replace the provisional decision with `PHASE_11_FROZEN_GO` only after the documentation candidate's exact SHA and all five required GitHub jobs are recorded as successful in the freeze report.
+`PHASE_11_FROZEN_GO`
+
+This evidence-integrity update records the already tested documentation milestone. Its own commit is documentation-only and is identified by repository history and the final handoff rather than by an impossible self-referential SHA inside the commit.

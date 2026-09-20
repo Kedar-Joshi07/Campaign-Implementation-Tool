@@ -4,11 +4,11 @@ Generated: 2026-09-20
 
 Prompt: `21_STEP_21_CI_DOCUMENTATION_AND_PHASE11_FREEZE.md`
 
-## Current decision
+## Final decision
 
-`PROVISIONAL_GO_AWAITING_DOCUMENTATION_SHA_CI`
+`GO`
 
-Trusted implementation SHA `feb18146499bf5a2856b1680b3f658d27db34482` is exact-head CI green. The documentation/freeze candidate has not yet been committed or tested, so Phase 11 is not declared frozen in this provisional report.
+Trusted implementation SHA `feb18146499bf5a2856b1680b3f658d27db34482` and documentation/freeze milestone `b0ff7777f897ff062f758b7f91dc46603809e08f` are both exact-head CI green. Phase 11 is frozen.
 
 ## SHA chain
 
@@ -19,7 +19,7 @@ Trusted implementation SHA `feb18146499bf5a2856b1680b3f658d27db34482` is exact-h
 | Phase 11 full-5M evidence and initial CI candidate | `8fd5ee26c3fd446b3783bfe92594537b0a3c7cbc` | CI `#18`; failed only because the new Phase 11 UI gate lacked CI browser configuration |
 | System-Chrome CI configuration candidate | `2bd1050029a829a7a538b24de91e67e0bbf8b5cc` | CI `#19`; 200 tests passed, UI cases could not import absent Playwright |
 | Trusted Phase 11 implementation candidate | `feb18146499bf5a2856b1680b3f658d27db34482` | Exact-SHA CI `#20` SUCCESS, 5/5 jobs |
-| Phase 11 documentation/freeze candidate | Pending | Exact-SHA CI required before final GO |
+| Phase 11 documentation/freeze milestone | `b0ff7777f897ff062f758b7f91dc46603809e08f` | Exact-SHA CI `#21` SUCCESS, 5/5 jobs |
 
 The two failed intermediate runs exposed CI-environment omissions, not product assertions. The final CI job installs a pinned browser-test-only lock and points the existing system-browser harness at GitHub Ubuntu's installed Chrome. Runtime dependencies remain unchanged.
 
@@ -36,8 +36,8 @@ The two failed intermediate runs exposed CI-environment omissions, not product a
 | True full-5M path works | PASS |
 | Phase 1–10 remains green | PASS |
 | Exact implementation-SHA CI | PASS — run `#20`, ID `35330170690` |
-| Documentation/evidence consistent | PASS locally; exact docs-SHA CI pending |
-| Exact documentation/freeze-SHA CI | PENDING |
+| Documentation/evidence consistent | PASS |
+| Exact documentation/freeze-SHA CI | PASS — run `#21`, ID `35502790834` |
 
 ## Normal CI boundary
 
@@ -60,14 +60,31 @@ The `CI` workflow requires Repository Hygiene, Python Validation, Tests, Clean-R
 | Clean-Room Phase1-7 | `105552806711` | SUCCESS |
 | Frontend Contract / bounded Phase 9+10+11 | `105552806646` | SUCCESS |
 
+## Exact documentation/freeze-SHA GitHub Actions certification
+
+- Workflow/run: `CI` `#21`
+- Run ID: `35502790834`
+- URL: <https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/35502790834>
+- Head SHA: `b0ff7777f897ff062f758b7f91dc46603809e08f`
+- Created/completed: `2026-09-20T09:36:45Z` / `2026-09-20T09:43:09Z`
+- Conclusion: `success`
+
+| Required job | Job ID | Result |
+|---|---:|---|
+| Repository Hygiene | `106057428407` | SUCCESS |
+| Python Validation | `106057496864` | SUCCESS |
+| Tests | `106057575121` | SUCCESS |
+| Clean-Room Phase1-7 | `106057575067` | SUCCESS |
+| Frontend Contract / bounded Phase 9+10+11 | `106057575137` | SUCCESS |
+
+This run was selected by exact `head_sha=b0ff7777f897ff062f758b7f91dc46603809e08f`, not by branch-latest inference.
+
 ## No-product-change proof after full-scale certification
 
 `git diff --quiet a137b71e33ab37d7551880c927c05318a599939d..feb18146499bf5a2856b1680b3f658d27db34482 -- app frontend data data_generation_scripts` returned success. Only Step 20 evidence/harnesses, refreshed clean-room evidence, a bounded Phase 10 fixture correction, CI configuration, and a pinned browser-test lock changed.
 
-## Finalization procedure
+## Freeze result
 
-1. Commit this documentation candidate separately from the implementation SHA.
-2. Push and select its workflow by exact `head_sha`.
-3. Require all five jobs to complete successfully.
-4. Record that documentation SHA/run here and in final acceptance.
-5. Mark `PHASE_11_FROZEN_GO`; any later evidence-integrity update must be documentation-only and identified by repository history/final handoff rather than making a self-referential SHA claim.
+`PHASE_11_FROZEN_GO`
+
+Phase 11 is frozen on trusted implementation SHA `feb18146499bf5a2856b1680b3f658d27db34482`. The tested documentation/freeze milestone is `b0ff7777f897ff062f758b7f91dc46603809e08f`, certified by run `#21`, ID `35502790834`. This later evidence-integrity correction changes only final acceptance/freeze text; its exact commit is identified by repository history and the final handoff, avoiding a self-referential SHA claim.
