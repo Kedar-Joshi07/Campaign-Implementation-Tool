@@ -11,219 +11,219 @@
     "comparison": "intelligence_reuse_filter_and_materialize / exact_cache_hit",
     "passed": true,
     "required_minimum_ratio": 1.25,
-    "speedup_ratio": 2.342
+    "speedup_ratio": 2.575
   },
-  "generated_at": "2026-09-17T10:11:10Z",
+  "generated_at": "2026-09-20T10:51:20Z",
   "optional_atomic_optimization_comparison": {
-    "reason": "Step 10 found no current Phase 11 generation, so the optional index was correctly not introduced and no before/after comparison exists.",
+    "reason": "The current Phase 11 5M generation benchmark completed with stable exact results. Step 10 retained the existing indexed Audience Engine because no additional atomic candidate demonstrated a net runtime and storage benefit; therefore no before/after candidate comparison exists.",
     "status": "NOT_APPLICABLE"
   },
   "timings": {
     "exact_cache_hit": {
-      "median_seconds": 0.300717,
+      "median_seconds": 0.599704,
       "membership_source_calls": 0,
       "propensity_score_population_scan": false,
       "repetitions": 5,
       "seconds": [
-        0.316374,
-        0.300717,
-        0.309335,
-        0.27367,
-        0.283521
+        0.58933,
+        0.546086,
+        0.742364,
+        0.599704,
+        0.642366
       ]
     },
     "export_profiles": {
       "DIRECT_MAIL_CONTACT_V1": {
         "body_bytes": 300,
-        "maximum_seconds": 0.336363,
-        "median_seconds": 0.320413,
-        "minimum_seconds": 0.313404,
+        "maximum_seconds": 0.541717,
+        "median_seconds": 0.53951,
+        "minimum_seconds": 0.536667,
         "repetitions": 3,
         "seconds": [
-          0.320413,
-          0.336363,
-          0.313404
+          0.541717,
+          0.53951,
+          0.536667
         ]
       },
       "DISPLAY_AUDIENCE_V1": {
         "body_bytes": 189,
-        "maximum_seconds": 0.344593,
-        "median_seconds": 0.335915,
-        "minimum_seconds": 0.321052,
+        "maximum_seconds": 0.566302,
+        "median_seconds": 0.547198,
+        "minimum_seconds": 0.536545,
         "repetitions": 3,
         "seconds": [
-          0.344593,
-          0.335915,
-          0.321052
+          0.547198,
+          0.536545,
+          0.566302
         ]
       },
       "EMAIL_CONTACT_V1": {
         "body_bytes": 152,
-        "maximum_seconds": 0.300954,
-        "median_seconds": 0.269263,
-        "minimum_seconds": 0.257934,
+        "maximum_seconds": 0.520055,
+        "median_seconds": 0.50748,
+        "minimum_seconds": 0.474782,
         "repetitions": 3,
         "seconds": [
-          0.300954,
-          0.257934,
-          0.269263
+          0.474782,
+          0.520055,
+          0.50748
         ]
       },
       "MOBILE_PUSH_CONTACT_V1": {
         "body_bytes": 126,
-        "maximum_seconds": 0.320895,
-        "median_seconds": 0.31418,
-        "minimum_seconds": 0.3053,
+        "maximum_seconds": 0.574321,
+        "median_seconds": 0.556281,
+        "minimum_seconds": 0.50591,
         "repetitions": 3,
         "seconds": [
-          0.320895,
-          0.31418,
-          0.3053
+          0.50591,
+          0.574321,
+          0.556281
         ]
       },
       "PAID_SEARCH_AUDIENCE_V1": {
         "body_bytes": 409,
-        "maximum_seconds": 0.287249,
-        "median_seconds": 0.251774,
-        "minimum_seconds": 0.250326,
+        "maximum_seconds": 0.526256,
+        "median_seconds": 0.4993,
+        "minimum_seconds": 0.487854,
         "repetitions": 3,
         "seconds": [
-          0.250326,
-          0.251774,
-          0.287249
+          0.4993,
+          0.487854,
+          0.526256
         ]
       },
       "PAID_SOCIAL_AUDIENCE_V1": {
         "body_bytes": 409,
-        "maximum_seconds": 0.3686,
-        "median_seconds": 0.33857,
-        "minimum_seconds": 0.289234,
+        "maximum_seconds": 0.684871,
+        "median_seconds": 0.638233,
+        "minimum_seconds": 0.529324,
         "repetitions": 3,
         "seconds": [
-          0.3686,
-          0.289234,
-          0.33857
+          0.684871,
+          0.529324,
+          0.638233
         ]
       },
       "SMS_CONTACT_V1": {
         "body_bytes": 154,
-        "maximum_seconds": 0.320291,
-        "median_seconds": 0.299713,
-        "minimum_seconds": 0.299383,
+        "maximum_seconds": 0.579378,
+        "median_seconds": 0.550907,
+        "minimum_seconds": 0.548043,
         "repetitions": 3,
         "seconds": [
-          0.320291,
-          0.299383,
-          0.299713
+          0.550907,
+          0.579378,
+          0.548043
         ]
       },
       "TELEMARKETING_CONTACT_V1": {
         "body_bytes": 154,
-        "maximum_seconds": 0.339538,
-        "median_seconds": 0.339202,
-        "minimum_seconds": 0.305215,
+        "maximum_seconds": 0.523107,
+        "median_seconds": 0.49883,
+        "minimum_seconds": 0.490922,
         "repetitions": 3,
         "seconds": [
-          0.339538,
-          0.305215,
-          0.339202
+          0.490922,
+          0.523107,
+          0.49883
         ]
       },
       "WEBSITE_AUDIENCE_V1": {
         "body_bytes": 187,
-        "maximum_seconds": 0.315351,
-        "median_seconds": 0.290085,
-        "minimum_seconds": 0.261605,
+        "maximum_seconds": 0.566715,
+        "median_seconds": 0.547652,
+        "minimum_seconds": 0.450141,
         "repetitions": 3,
         "seconds": [
-          0.315351,
-          0.261605,
-          0.290085
+          0.566715,
+          0.547652,
+          0.450141
         ]
       },
       "WHATSAPP_CONTACT_V1": {
         "body_bytes": 206,
-        "maximum_seconds": 0.280278,
-        "median_seconds": 0.279407,
-        "minimum_seconds": 0.245678,
+        "maximum_seconds": 0.595309,
+        "median_seconds": 0.557891,
+        "minimum_seconds": 0.546865,
         "repetitions": 3,
         "seconds": [
-          0.280278,
-          0.245678,
-          0.279407
+          0.595309,
+          0.557891,
+          0.546865
         ]
       }
     },
     "home_load": {
-      "maximum_seconds": 0.097194,
-      "median_seconds": 0.032102,
-      "minimum_seconds": 0.029044,
+      "maximum_seconds": 0.198772,
+      "median_seconds": 0.059934,
+      "minimum_seconds": 0.046051,
       "repetitions": 5,
       "seconds": [
-        0.097194,
-        0.030688,
-        0.029044,
-        0.032102,
-        0.035658
+        0.198772,
+        0.046051,
+        0.055562,
+        0.062829,
+        0.059934
       ]
     },
     "intelligence_reuse_filter_and_materialize": {
-      "median_seconds": 0.704136,
+      "median_seconds": 1.543939,
       "repetitions": 5,
       "rows_per_snapshot": 20000,
       "seconds": [
-        0.628037,
-        0.643035,
-        0.704136,
-        0.763627,
-        0.932751
+        1.5443,
+        1.644704,
+        1.426882,
+        1.453642,
+        1.543939
       ]
     },
     "options_load": {
-      "maximum_seconds": 0.454199,
-      "median_seconds": 0.381984,
-      "minimum_seconds": 0.36816,
+      "maximum_seconds": 0.61128,
+      "median_seconds": 0.56407,
+      "minimum_seconds": 0.498737,
       "repetitions": 5,
       "seconds": [
-        0.430467,
-        0.374549,
-        0.36816,
-        0.381984,
-        0.454199
+        0.56407,
+        0.498737,
+        0.533596,
+        0.61128,
+        0.576208
       ]
     },
     "result_history": {
-      "maximum_seconds": 0.122486,
-      "median_seconds": 0.101732,
-      "minimum_seconds": 0.091545,
+      "maximum_seconds": 0.166641,
+      "median_seconds": 0.150355,
+      "minimum_seconds": 0.127049,
       "repetitions": 5,
       "seconds": [
-        0.092094,
-        0.101732,
-        0.091545,
-        0.122486,
-        0.107828
+        0.151983,
+        0.166641,
+        0.146389,
+        0.127049,
+        0.150355
       ]
     },
     "snapshot_read": {
-      "maximum_seconds": 0.095275,
-      "median_seconds": 0.089805,
-      "minimum_seconds": 0.084888,
+      "maximum_seconds": 0.260265,
+      "median_seconds": 0.154087,
+      "minimum_seconds": 0.134366,
       "repetitions": 5,
       "seconds": [
-        0.089805,
-        0.084888,
-        0.088626,
-        0.092156,
-        0.095275
+        0.145539,
+        0.185755,
+        0.154087,
+        0.260265,
+        0.134366
       ]
     },
     "snapshot_write": {
-      "median_seconds": 0.728356,
+      "median_seconds": 1.369815,
       "repetitions": 1,
       "rows": 20000,
       "seconds": [
-        0.728356
+        1.369815
       ]
     }
   }

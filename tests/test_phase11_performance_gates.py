@@ -259,8 +259,10 @@ def test_bounded_phase11_performance_gates(
     metrics["optional_atomic_optimization_comparison"] = {
         "status": "NOT_APPLICABLE",
         "reason": (
-            "Step 10 found no current Phase 11 generation, so the optional index "
-            "was correctly not introduced and no before/after comparison exists."
+            "The current Phase 11 5M generation benchmark completed with stable "
+            "exact results. Step 10 retained the existing indexed Audience Engine "
+            "because no additional atomic candidate demonstrated a net runtime and "
+            "storage benefit; therefore no before/after candidate comparison exists."
         ),
     }
     _write_metrics(metrics)

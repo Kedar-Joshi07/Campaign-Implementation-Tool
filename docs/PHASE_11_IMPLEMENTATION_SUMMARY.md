@@ -35,7 +35,7 @@ flowchart TD
 
 The exact result cache key binds the current Phase 10 generation, canonical targeting criteria and OR branches, selection mode/count, and frozen filter/rank/membership contracts. It deliberately excludes campaign name, description, launch date, delivery channel, and export profile because those fields do not change analytical membership.
 
-There is no all-permutation precompute. Phase 11 first validates an exact snapshot, otherwise delegates compatibility to Phase 10 and streams one requested membership in global rank order. The optional atomic-segment index was evaluated and rejected because its storage/build cost did not outperform the existing exact-result and intelligence-reuse layers for this POC.
+There is no all-permutation precompute. Phase 11 first validates an exact snapshot, otherwise delegates compatibility to Phase 10 and streams one requested membership in global rank order. The optional atomic-segment gate was completed against current Phase 11 generation 1/scoring run 3 over all seven required query shapes. Results were stable, and no additional structure was adopted because no candidate demonstrated a net runtime/storage benefit over the existing indexed Audience Engine plus exact-result reuse.
 
 ## Durable search and result model
 

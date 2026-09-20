@@ -20,6 +20,7 @@ Trusted implementation SHA `feb18146499bf5a2856b1680b3f658d27db34482` and docume
 | System-Chrome CI configuration candidate | `2bd1050029a829a7a538b24de91e67e0bbf8b5cc` | CI `#19`; 200 tests passed, UI cases could not import absent Playwright |
 | Trusted Phase 11 implementation candidate | `feb18146499bf5a2856b1680b3f658d27db34482` | Exact-SHA CI `#20` SUCCESS, 5/5 jobs |
 | Phase 11 documentation/freeze milestone | `b0ff7777f897ff062f758b7f91dc46603809e08f` | Exact-SHA CI `#21` SUCCESS, 5/5 jobs |
+| Evidence-integrity head before Step 10 closure | `7864b3e6dbe2ee7dcba547eb4ec1ef323e98003c` | Exact-SHA CI `#22` SUCCESS, 5/5 jobs |
 
 The two failed intermediate runs exposed CI-environment omissions, not product assertions. The final CI job installs a pinned browser-test-only lock and points the existing system-browser harness at GitHub Ubuntu's installed Chrome. Runtime dependencies remain unchanged.
 
@@ -82,6 +83,91 @@ This run was selected by exact `head_sha=b0ff7777f897ff062f758b7f91dc46603809e08
 ## No-product-change proof after full-scale certification
 
 `git diff --quiet a137b71e33ab37d7551880c927c05318a599939d..feb18146499bf5a2856b1680b3f658d27db34482 -- app frontend data data_generation_scripts` returned success. Only Step 20 evidence/harnesses, refreshed clean-room evidence, a bounded Phase 10 fixture correction, CI configuration, and a pinned browser-test lock changed.
+
+## Template-complete certification record
+
+### Repository and schema
+
+| Field | Certified value |
+|---|---|
+| Baseline SHA | `881b5a652e869af1415547de452b9cccd2c18293` |
+| Trusted implementation SHA | `feb18146499bf5a2856b1680b3f658d27db34482` |
+| Documentation/freeze SHA | `b0ff7777f897ff062f758b7f91dc46603809e08f` |
+| Last exact-head evidence CI before closure | `7864b3e6dbe2ee7dcba547eb4ec1ef323e98003c`, run `#22`, ID `35503208698`, SUCCESS 5/5 |
+| Schema version | `18` |
+
+### Business UI
+
+| Field | Certified value |
+|---|---|
+| Visible tabs | Home; Find Potential Customers; Results |
+| Hidden legacy surfaces | Data Status; Historical Analysis; Model Training & Scoring; Audience Explorer; legacy Campaigns; Insights; Saved Audience/Target Group technical views |
+| Legacy implementation | Retained in source/DOM/API; hidden through centralized view-group metadata |
+| Future role seam | `BUSINESS_USER_VISIBLE`, `ANALYST_HIDDEN`, `ADMIN_HIDDEN`; presentation seam only, not authorization |
+| Multi-select | PASS — reusable component, all 16 adapters, search/check/deselect/Select All/Clear/chips/keyboard/Escape/outside-click/ARIA |
+
+### Representative full-5M result lineage
+
+| Field | Certified value |
+|---|---|
+| Search run / snapshot | `5` / `2` |
+| Modeling-context SHA | `b5a864f988754b5561f34759f25ef833d65d7ea08e66232e7fed8e26b6f51bff` |
+| Targeting-criteria SHA | `6dbd21700759330390cd77780eb563838c58df7ccd6549615c3df3dddbcb0012` |
+| Filter-branches SHA | `8c7185cf3a5fa911c9dda4b8b153f26ee05602df60007d07210a220dcaaf6ec8` |
+| Generation / analysis / model / scoring | `1` / `4` / `3` / `3` |
+| Result source | `INTELLIGENCE_REUSE` |
+| Selection / selected count | `TOP_N 1000` / `4` |
+| Durable processing duration | `768.0` seconds |
+| Snapshot format | `CSV_GZIP`, membership contract `1` |
+| Snapshot SHA-256 | `249419a561584431d7755a4d688f07a0b1accf40b321b7c4bb3656dcc475be0f` |
+| Snapshot currentness | `CURRENT` |
+| PII absent | PASS — five analytical membership columns only |
+| Future feedback seam | PASS — nullable write-once activation/provider/feedback/outcome references; no feedback/RL implementation claimed |
+
+The durable duration includes orchestration/poll lifecycle time. The exact-repeat
+service decision was independently measured at approximately `0.015` seconds and
+added zero membership-source calls.
+
+### Reuse certification
+
+| Requirement | Certified result |
+|---|---|
+| New build | Search `3`, snapshot `1`, `NEW_INTELLIGENCE_BUILD`, full current 5M scoring |
+| Exact result | Search `4`, same snapshot `1`, `EXACT_RESULT_REUSE`, zero membership-source calls |
+| Intelligence reuse | Search `5`, snapshot `2`, same generation/model/scoring, no 5M rescore |
+| Filter-only no-rescore | PASS |
+| Delivery-profile no-rescore | Searches `6`–`8` reused snapshot `2` for SMS, WhatsApp and Paid Social |
+| Atomic-segment gate | Current generation `1` / scoring `3`; seven shapes × three stable repetitions; `NO IMPLEMENTATION` |
+
+### Omnichannel profiles
+
+| Profile | Certification |
+|---|---|
+| `EMAIL_CONTACT_V1` | PASS |
+| `DIRECT_MAIL_CONTACT_V1` | PASS |
+| `SMS_CONTACT_V1` | PASS |
+| `WHATSAPP_CONTACT_V1` | PASS |
+| `TELEMARKETING_CONTACT_V1` | PASS |
+| `PAID_SOCIAL_AUDIENCE_V1` | PASS — hash-only, no raw identifiers |
+| `PAID_SEARCH_AUDIENCE_V1` | PASS — hash-only, no raw identifiers |
+| `MOBILE_PUSH_CONTACT_V1` | PASS — source identifier and opt-in gated |
+| `DISPLAY_AUDIENCE_V1` | PASS — advertising identifier and targetability gated |
+| `WEBSITE_AUDIENCE_V1` | PASS — visitor identifier and targetability gated |
+
+### Browser, regression and static gates
+
+| Field | Certified value |
+|---|---|
+| Browser/version | Installed Google Chrome `153.0.8010.48` |
+| Control coverage | 549 observations; 0 reachable `NOT_RUN`; PASS/FAIL/JUSTIFIED_EXCLUSIVE vocabulary |
+| Responsive/accessibility | PASS at 1920×1080, 1366×768, 1024×768, 768×1024 and 390×844 |
+| Console/network | 0 console errors, page errors, failed requests or critical HTTP errors |
+| Full pytest | 966 passed |
+| Phase 1–10 bounded regression | 655 passed |
+| Phase 11 Step 17 matrix | 200 service/API + 61 browser + 1 performance passed |
+| Clean-room | 10/10 scenarios twice; matching canonical SHA |
+| Full 5M | 5,000,000 rows/distinct; 0 duplicates/invalids/lineage errors; 100 rank boundaries |
+| Static/hygiene | compileall, pip check, diff hygiene, repository/LFS hygiene and SQLite integrity PASS |
 
 ## Freeze result
 

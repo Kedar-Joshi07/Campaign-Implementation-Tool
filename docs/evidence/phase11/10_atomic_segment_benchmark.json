@@ -1,6 +1,19 @@
 {
-  "benchmark_status": "REFUSED_NO_CURRENT_GENERATION",
-  "candidate_generations": [],
+  "benchmark_status": "COMPLETED",
+  "candidate_generations": [
+    {
+      "created_at": "2026-09-17T20:07:40Z",
+      "generation_id": 1,
+      "generation_status": "READY",
+      "intelligence_key_sha256": "6c588e1616dc0cc35a902b51158c53390ecb4ffce3efc0b401c15ba84fbb86c1",
+      "last_verified_at": "2026-09-17T22:27:58Z",
+      "lifecycle_state": "CURRENT",
+      "modeling_context_sha256": "b5a864f988754b5561f34759f25ef833d65d7ea08e66232e7fed8e26b6f51bff",
+      "scored_person_count": 5000000,
+      "scoring_run_id": 3,
+      "scoring_status": "COMPLETED"
+    }
+  ],
   "contract": "phase11-step10-atomic-segment-benchmark-v1",
   "database": "data/campaign_poc.db",
   "database_state": {
@@ -8,7 +21,7 @@
     "active_phase10_orchestrations": [],
     "database_bytes": 6702706688,
     "demographic_rows": 5000000,
-    "propensity_score_rows": 10000000,
+    "propensity_score_rows": 15000000,
     "relevant_indexes": [
       {
         "name": "idx_demographics_age",
@@ -61,13 +74,251 @@
         "tbl_name": "propensity_scores"
       }
     ],
-    "schema_version": "17",
+    "schema_version": "18",
     "sqlite_page_count": 1636403,
     "sqlite_page_size": 4096
   },
-  "generated_at": "2026-09-16T20:22:26Z",
-  "reason": "No READY generation passed the existing Audience Engine currentness gates.",
+  "generated_at": "2026-09-20T10:37:09Z",
   "rejected_candidates": [],
   "repetitions": 3,
-  "timings": {}
+  "selected_generation": {
+    "created_at": "2026-09-17T20:07:40Z",
+    "generation_id": 1,
+    "generation_status": "READY",
+    "intelligence_key_sha256": "6c588e1616dc0cc35a902b51158c53390ecb4ffce3efc0b401c15ba84fbb86c1",
+    "last_verified_at": "2026-09-17T22:27:58Z",
+    "lifecycle_state": "CURRENT",
+    "modeling_context_sha256": "b5a864f988754b5561f34759f25ef833d65d7ea08e66232e7fed8e26b6f51bff",
+    "scored_person_count": 5000000,
+    "scoring_run_id": 3,
+    "scoring_status": "COMPLETED"
+  },
+  "timings": {
+    "advanced_demographics": {
+      "maximum_seconds": 2.154725,
+      "minimum_seconds": 1.795338,
+      "p50_like_median_seconds": 2.000935,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "education": [
+            "Associate degree"
+          ],
+          "employment_status": [
+            "Employed full-time"
+          ],
+          "marital_status": [
+            "Married"
+          ],
+          "resident_status": [
+            "Citizen by birth"
+          ],
+          "resident_type": [
+            "Inner suburban"
+          ],
+          "type_of_employment": [
+            "Gig/contract"
+          ]
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        2.154725,
+        2.000935,
+        1.795338
+      ],
+      "stable_result": {
+        "matching_count": 805,
+        "row_count": 0,
+        "selected_count": 805
+      }
+    },
+    "age_income_bucket": {
+      "maximum_seconds": 12.869947,
+      "minimum_seconds": 10.584964,
+      "p50_like_median_seconds": 10.889234,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "age_max": 34,
+          "age_min": 25,
+          "individual_yearly_income_max": 74999,
+          "individual_yearly_income_min": 50000
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        12.869947,
+        10.889234,
+        10.584964
+      ],
+      "stable_result": {
+        "matching_count": 144297,
+        "row_count": 0,
+        "selected_count": 144297
+      }
+    },
+    "five_states": {
+      "maximum_seconds": 28.198878,
+      "minimum_seconds": 9.385039,
+      "p50_like_median_seconds": 9.580604,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "state": [
+            "Arizona",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Florida"
+          ]
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        28.198878,
+        9.385039,
+        9.580604
+      ],
+      "stable_result": {
+        "matching_count": 1526425,
+        "row_count": 0,
+        "selected_count": 1526425
+      }
+    },
+    "multi_age_multi_income_states": {
+      "maximum_seconds": 9.053819,
+      "minimum_seconds": 8.521476,
+      "p50_like_median_seconds": 8.81777,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "age_max": 44,
+          "age_min": 18,
+          "individual_yearly_income_max": 99999,
+          "individual_yearly_income_min": 25000,
+          "state": [
+            "Arizona",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Florida"
+          ]
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        8.81777,
+        8.521476,
+        9.053819
+      ],
+      "stable_result": {
+        "matching_count": 328920,
+        "row_count": 0,
+        "selected_count": 328920
+      }
+    },
+    "one_state": {
+      "maximum_seconds": 31.306594,
+      "minimum_seconds": 2.681729,
+      "p50_like_median_seconds": 2.886989,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "state": [
+            "Arizona"
+          ]
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        31.306594,
+        2.681729,
+        2.886989
+      ],
+      "stable_result": {
+        "matching_count": 136250,
+        "row_count": 0,
+        "selected_count": 136250
+      }
+    },
+    "score_threshold_no_demographics": {
+      "maximum_seconds": 1.713468,
+      "minimum_seconds": 1.381195,
+      "p50_like_median_seconds": 1.612901,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "score_min": 0.7
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "ALL_MATCHING",
+          "target_count": null
+        }
+      },
+      "seconds": [
+        1.612901,
+        1.713468,
+        1.381195
+      ],
+      "stable_result": {
+        "matching_count": 28,
+        "row_count": 0,
+        "selected_count": 28
+      }
+    },
+    "top_n_100": {
+      "maximum_seconds": 11.46208,
+      "minimum_seconds": 9.868124,
+      "p50_like_median_seconds": 10.484398,
+      "repetitions": 3,
+      "request": {
+        "filters": {
+          "state": [
+            "Arizona",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Florida"
+          ]
+        },
+        "scoring_run_id": 3,
+        "selection": {
+          "mode": "TOP_N",
+          "target_count": 100
+        }
+      },
+      "seconds": [
+        9.868124,
+        11.46208,
+        10.484398
+      ],
+      "stable_result": {
+        "matching_count": 1526425,
+        "row_count": 0,
+        "selected_count": 100
+      }
+    }
+  }
 }

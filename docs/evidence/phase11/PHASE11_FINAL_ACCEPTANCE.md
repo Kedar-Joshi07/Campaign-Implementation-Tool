@@ -37,6 +37,7 @@ All product, data, privacy, reuse, persistence, browser, full-5M, regression, hy
 | Full-scale score integrity | PASS — zero duplicate, invalid, missing, extra, or lineage-invalid rows |
 | Smart-reuse full-scale scenarios | PASS — new build, exact reuse, intelligence reuse, delivery reuse |
 | Deterministic canonical source regeneration | PASS — exact gzip SHA `27d8e2a978458a095e16fc51a682e1f3373e41b663a4e61defa47e2d1bdf8b1d` |
+| Current-generation atomic-segment gate | PASS — generation `1` / scoring `3`, seven required shapes, three stable repetitions each, evidence-backed `NO IMPLEMENTATION` |
 | Step 20 full pytest | PASS — 966 passed |
 | Step 21 bounded repository regression | PASS — 855 passed, 111 deselected |
 | Step 21 bounded Phase 11 CI command | PASS — 261 passed, 4 deselected locally |
@@ -45,6 +46,7 @@ All product, data, privacy, reuse, persistence, browser, full-5M, regression, hy
 | Compile, dependency, diff, repository, and Git LFS hygiene | PASS |
 | Exact implementation-SHA GitHub CI | PASS — run `#20`, ID `35330170690`, 5/5 jobs |
 | Exact documentation/freeze-SHA GitHub CI | PASS — run `#21`, ID `35502790834`, 5/5 jobs |
+| Exact evidence-integrity-head GitHub CI | PASS — run `#22`, ID `35503208698`, 5/5 jobs for `7864b3e6dbe2ee7dcba547eb4ec1ef323e98003c` |
 
 ## Exact implementation-SHA CI
 

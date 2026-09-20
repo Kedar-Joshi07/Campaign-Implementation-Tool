@@ -54,15 +54,15 @@ Machine-readable samples are retained in
 
 | Operation | Repetitions | Median seconds | Notes |
 | --- | ---: | ---: | --- |
-| Home load | 5 | 0.032102 | Metadata-only `/api/business/overview` |
-| Options load | 5 | 0.381984 | Backend-owned search options |
-| Exact cache hit | 5 | 0.300717 | Zero membership-source calls; no propensity-score population scan |
-| Intelligence-reuse filter/materialize | 5 | 0.704136 | 20,000 analytical membership rows per snapshot |
-| Snapshot write | 1 | 0.728356 | Atomic gzip + manifest + registry publication, 20,000 rows |
-| Snapshot read/validation | 5 | 0.089805 | Full immutable artifact/manifest validation |
-| Result history | 5 | 0.101732 | Business results API, bounded to 20 |
+| Home load | 5 | 0.059934 | Metadata-only `/api/business/overview` |
+| Options load | 5 | 0.564070 | Backend-owned search options |
+| Exact cache hit | 5 | 0.599704 | Zero membership-source calls; no propensity-score population scan |
+| Intelligence-reuse filter/materialize | 5 | 1.543939 | 20,000 analytical membership rows per snapshot |
+| Snapshot write | 1 | 1.369815 | Atomic gzip + manifest + registry publication, 20,000 rows |
+| Snapshot read/validation | 5 | 0.154087 | Full immutable artifact/manifest validation |
+| Result history | 5 | 0.150355 | Business results API, bounded to 20 |
 
-The measured exact-cache speedup was **2.342×**, so the required material
+The refreshed exact-cache speedup was **2.575×**, so the required material
 advantage passed. Exact and intelligence-reuse runs shared the same Phase 10
 generation; only the exact targeting/membership key changed.
 
@@ -70,16 +70,16 @@ generation; only the exact targeting/membership key changed.
 
 | Profile | Median seconds | Stream bytes |
 | --- | ---: | ---: |
-| EMAIL_CONTACT_V1 | 0.269263 | 152 |
-| DIRECT_MAIL_CONTACT_V1 | 0.320413 | 300 |
-| SMS_CONTACT_V1 | 0.299713 | 154 |
-| WHATSAPP_CONTACT_V1 | 0.279407 | 206 |
-| TELEMARKETING_CONTACT_V1 | 0.339202 | 154 |
-| PAID_SOCIAL_AUDIENCE_V1 | 0.338570 | 409 |
-| PAID_SEARCH_AUDIENCE_V1 | 0.251774 | 409 |
-| MOBILE_PUSH_CONTACT_V1 | 0.314180 | 126 |
-| DISPLAY_AUDIENCE_V1 | 0.335915 | 189 |
-| WEBSITE_AUDIENCE_V1 | 0.290085 | 187 |
+| EMAIL_CONTACT_V1 | 0.507480 | 152 |
+| DIRECT_MAIL_CONTACT_V1 | 0.539510 | 300 |
+| SMS_CONTACT_V1 | 0.550907 | 154 |
+| WHATSAPP_CONTACT_V1 | 0.557891 | 206 |
+| TELEMARKETING_CONTACT_V1 | 0.498830 | 154 |
+| PAID_SOCIAL_AUDIENCE_V1 | 0.638233 | 409 |
+| PAID_SEARCH_AUDIENCE_V1 | 0.499300 | 409 |
+| MOBILE_PUSH_CONTACT_V1 | 0.556281 | 126 |
+| DISPLAY_AUDIENCE_V1 | 0.547198 | 189 |
+| WEBSITE_AUDIENCE_V1 | 0.547652 | 187 |
 
 The export fixture contains governed deterministic identifiers for gated
 profiles so their streaming path can be measured. Separate availability tests
@@ -88,11 +88,17 @@ present; identifiers are never invented at export time.
 
 ## Optional atomic-segment comparison
 
-Not applicable. Step 10 correctly refused a new benchmark/index because no
-current Phase 11 generation met its prerequisite. No optional index was added,
-so there is no legitimate before/after comparison to invent. Exact-result reuse
-and the existing Phase 10 intelligence reuse remain the chosen optimization
-layers.
+No additional candidate was implemented, so a candidate before/after comparison
+is not applicable. After Step 20 created current generation 1/scoring run 3,
+Step 10 reran all seven required shapes against the current schema-18 5M source.
+All repeated results were stable; p50-like medians ranged from 1.612901 seconds
+to 10.889234 seconds. The evidence-backed decision retained the existing indexed
+Audience Engine because no additional atomic structure demonstrated a net
+runtime/storage benefit without adding generation-specific build, invalidation,
+and recovery cost. Exact-result reuse remains the zero-rescan optimization.
+
+Current machine evidence is in `10_atomic_segment_benchmark.json`; the earlier
+schema-15 file remains historical reference only.
 
 ## Test execution
 
@@ -120,7 +126,7 @@ Bounded performance gate:
 PHASE11_STEP17_METRICS=docs/evidence/phase11/17_performance_metrics.json \
 python -m pytest tests/test_phase11_performance_gates.py -q
 
-1 passed in 31.36s
+1 passed in 66.77s
 ```
 
 Retained Phase 1–10 bounded regression:
