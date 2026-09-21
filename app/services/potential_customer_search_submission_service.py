@@ -34,6 +34,22 @@ PHASE11_SEARCH_EXECUTOR: SearchExecutor | None = None
 PHASE11_CAMPAIGN_CONTEXT_CONTRACT_VERSION = "PHASE11_1"
 
 
+def configure_phase11_search_executor(executor: SearchExecutor) -> None:
+    """Configure the production runtime handoff during application startup."""
+
+    if not callable(executor):
+        raise TypeError("Phase 11 search executor must be callable.")
+    global PHASE11_SEARCH_EXECUTOR
+    PHASE11_SEARCH_EXECUTOR = executor
+
+
+def reset_phase11_search_executor() -> None:
+    """Disconnect the runtime handoff during application shutdown."""
+
+    global PHASE11_SEARCH_EXECUTOR
+    PHASE11_SEARCH_EXECUTOR = None
+
+
 def normalize_search_context(raw_context: dict, allowed_values: dict) -> dict:
     """Reuse all five Phase 9 reference/list rules, but keep Phase 11 delivery separate.
 

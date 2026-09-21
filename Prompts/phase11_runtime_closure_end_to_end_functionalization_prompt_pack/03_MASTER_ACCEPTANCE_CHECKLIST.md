@@ -1,0 +1,30 @@
+# Master Acceptance Checklist
+
+- [ ] app.main creates Phase11 coordinator
+- [ ] app.main creates real ResultSnapshotMaterializer
+- [ ] submission executor connected at startup
+- [ ] workflow_available=true in normal runtime
+- [ ] POST search no longer auto-BLOCKS because executor is missing
+- [ ] bounded coordinator
+- [ ] duplicate search-ID suppression
+- [ ] safe polling
+- [ ] clean shutdown
+- [ ] QUEUED resume
+- [ ] PROCESSING resume
+- [ ] COMPLETED not reprocessed
+- [ ] no duplicate snapshots/heavy jobs
+- [ ] exact-result reuse through normal app
+- [ ] intelligence reuse through normal app
+- [ ] new-intelligence build through normal app
+- [ ] filter/profile change no 5M rescore
+- [ ] Results UI updates
+- [ ] all 10 profiles download through normal app
+- [ ] paid media hash-only
+- [ ] browser certification via real uvicorn app.main
+- [ ] restart recovery browser/integration proof
+- [ ] full 5M real-app certification
+- [ ] README runtime/navigation corrected
+- [ ] FastAPI description current
+- [ ] full regression green
+- [ ] exact-SHA CI green
+- [ ] final GO

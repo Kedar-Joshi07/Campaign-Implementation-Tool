@@ -67,10 +67,13 @@ def test_create_get_status_and_history_share_one_safe_status_contract(client):
     assert created.status_code == 201, created.text
     payload = created.json()
     run_id = payload["search_run_id"]
-    assert client.get(f"{RUNS}/{run_id}").json() == payload
-    assert client.get(f"{RUNS}/{run_id}/status").json() == payload
-    assert client.get(RUNS).json() == [payload]
-    assert set(payload) == {
+    projections = [
+        payload,
+        client.get(f"{RUNS}/{run_id}").json(),
+        client.get(f"{RUNS}/{run_id}/status").json(),
+        client.get(RUNS).json()[0],
+    ]
+    expected_fields = {
         "search_run_id",
         "campaign_name",
         "status",
@@ -81,6 +84,16 @@ def test_create_get_status_and_history_share_one_safe_status_contract(client):
         "export_profile",
         "safe_message",
     }
+    state_order = {"QUEUED": 0, "PROCESSING": 1, "COMPLETED": 2, "BLOCKED": 2, "FAILED": 2}
+    assert all(set(item) == expected_fields for item in projections)
+    assert all(item["search_run_id"] == run_id for item in projections)
+    assert all(item["campaign_name"] == payload["campaign_name"] for item in projections)
+    assert all(item["created_at"] == payload["created_at"] for item in projections)
+    assert all(item["delivery_channel"] == payload["delivery_channel"] for item in projections)
+    assert all(item["export_profile"] == payload["export_profile"] for item in projections)
+    assert [state_order[item["status"]] for item in projections] == sorted(
+        state_order[item["status"]] for item in projections
+    )
 
 
 def test_repeated_intentional_identical_posts_are_distinct_but_synchronous(
@@ -187,4 +200,3 @@ def test_phase11_json_contracts_do_not_return_contact_pii_or_raw_paths(client):
             "select *",
         ):
             assert value not in lowered
-

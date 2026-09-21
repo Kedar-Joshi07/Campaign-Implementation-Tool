@@ -12,7 +12,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import APP_ENV, APP_NAME, APP_VERSION, DATABASE_PATH
+from app.database.schema import initialize_database
 from app.jobs.executor import shutdown_model_training_executor
+from app.jobs.phase11_search_coordinator import Phase11SearchCoordinator
 from app.logging_config import configure_logging
 from app.routers.data import router as data_router
 from app.routers.campaigns import router as campaign_router
@@ -29,6 +31,11 @@ from app.services.phase10_orchestration_service import (
     reconcile_phase10_orchestrations,
 )
 from app.services.phase11_export_service import reconcile_stale_result_export_events
+from app.services.phase11_result_snapshot_service import ResultSnapshotMaterializer
+from app.services.potential_customer_search_submission_service import (
+    configure_phase11_search_executor,
+    reset_phase11_search_executor,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -46,6 +53,29 @@ async def lifespan(_: FastAPI):
         APP_VERSION,
         APP_ENV,
     )
+    phase11_coordinator: Phase11SearchCoordinator | None = None
+    try:
+        initialized_path = initialize_database(DATABASE_PATH)
+        phase11_materializer = ResultSnapshotMaterializer(PROJECT_ROOT)
+        phase11_coordinator = Phase11SearchCoordinator(
+            initialized_path,
+            materializer=phase11_materializer,
+            project_root=PROJECT_ROOT,
+        )
+        configure_phase11_search_executor(phase11_coordinator.submit)
+        logger.info(
+            "Phase 11 runtime composition completed | workers=%s poll_seconds=%s",
+            phase11_coordinator.max_workers,
+            phase11_coordinator.poll_interval_seconds,
+        )
+    except Exception:
+        reset_phase11_search_executor()
+        if phase11_coordinator is not None:
+            phase11_coordinator.shutdown(wait=True)
+            phase11_coordinator = None
+        logger.exception(
+            "Phase 11 runtime composition failed; workflow is unavailable"
+        )
     try:
         stale_failed = reconcile_stale_model_training_jobs(DATABASE_PATH)
         logger.info(
@@ -66,6 +96,18 @@ async def lifespan(_: FastAPI):
     except Exception:
         logger.exception("Phase 10 startup reconciliation failed")
     try:
+        resumed_phase11 = (
+            phase11_coordinator.resume_durable_searches()
+            if phase11_coordinator is not None
+            else 0
+        )
+        logger.info(
+            "Phase 11 startup reconciliation completed | scheduled_searches=%s",
+            resumed_phase11,
+        )
+    except Exception:
+        logger.exception("Phase 11 startup reconciliation failed")
+    try:
         stale_campaign_exports = reconcile_stale_campaign_export_events(DATABASE_PATH)
         logger.info(
             "Campaign export startup reconciliation completed | reconciled_stale_exports=%s",
@@ -84,6 +126,9 @@ async def lifespan(_: FastAPI):
     try:
         yield
     finally:
+        reset_phase11_search_executor()
+        if phase11_coordinator is not None:
+            phase11_coordinator.shutdown(wait=True)
         shutdown_model_training_executor(wait=False)
         logger.info("Application stopping | name=%s", APP_NAME)
 

@@ -1,7 +1,8 @@
 """Step 8: isolated real API + intercepted system-Chrome form integration.
 
 No canonical database, imports, training, scoring, or invented ready snapshots.
-The executor hook is tested separately; the default run truthfully stays BLOCKED.
+Disconnected behavior is covered explicitly; lifespan-backed form tests exercise
+the production runtime coordinator composition.
 """
 from copy import deepcopy
 import json
@@ -39,6 +40,9 @@ def counts(path):
 
 
 def test_options_are_live_registry_owned_and_executor_boundary_is_explicit(client):
+    # This service-boundary test intentionally disconnects the production
+    # lifespan seam. Real app composition is covered by the runtime tests.
+    service.reset_phase11_search_executor()
     payload = client.get(OPTIONS).json()
     assert payload["workflow_available"] is False
     assert payload["context"]["products"][0]["product_id"] == "PRD-1"
@@ -51,6 +55,8 @@ def test_options_are_live_registry_owned_and_executor_boundary_is_explicit(clien
 
 
 def test_submission_persists_exact_lineage_and_default_blocked_status(client, database_path):
+    # Preserve explicit coverage of the fail-closed disconnected boundary.
+    service.reset_phase11_search_executor()
     before = counts(database_path)
     payload = request_payload()
     response = client.post(RUNS, json=payload)
@@ -75,6 +81,8 @@ def test_submission_persists_exact_lineage_and_default_blocked_status(client, da
 
 
 def test_repeated_intentional_submissions_are_independent_and_profile_filters_do_not_retrain(client, database_path):
+    # This test owns submission/history semantics, not production composition.
+    service.reset_phase11_search_executor()
     original = request_payload()
     first = client.post(RUNS, json=original).json()
     changed = deepcopy(original)
@@ -236,7 +244,7 @@ def test_single_business_form_live_options_default_disclosure_and_no_wizard(form
     assert browser.locator("#business-search-form button[type=submit]:visible").all_text_contents() == ["Find Potential Customers"]
     assert browser.locator("#business-more-fields").is_hidden()
     assert browser.locator("#business-target-count").is_disabled()
-    assert browser.locator("#business-search-workflow-note").is_visible()
+    assert browser.locator("#business-search-workflow-note").is_hidden()
     assert bodies == [] and errors == []
     assert not any(method != "GET" for method, _ in requests)
     assert all(not path.startswith(("/api/models", "/api/intelligence/prepare", "/api/audience")) for _, path in requests)
@@ -266,7 +274,10 @@ def test_form_real_submission_exact_preferences_status_history_and_reload(form_p
     browser.locator("#business-target-count").fill("250")
     browser.locator("#business-search-submit").click()
     browser.wait_for_url("**/#results/1")
-    browser.wait_for_function("document.querySelector('#result-detail-status').textContent.includes('not connected')")
+    # The production coordinator is connected under the real app lifespan. This
+    # isolated database has no completed import provenance, so it must fail
+    # closed with the public safe message rather than remain BLOCKED.
+    browser.wait_for_function("document.querySelector('#result-detail-status').textContent.includes('could not be completed')")
     expected = deepcopy(payload)
     expected["criteria"]["match_strength"] = "STRONG"
     expected["criteria"]["states"] = ["Ohio", "Texas"]

@@ -1,0 +1,119 @@
+{
+  "pack_name": "Phase 11 Runtime Closure & End-to-End Functionalization Prompt Pack",
+  "version": "1.0",
+  "repository": "https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool.git",
+  "baseline_sha": "9009e23b750000d3f3d29e09204281f3d301e640",
+  "step_count": 14,
+  "files": [
+    {
+      "file": "00_README.md",
+      "bytes": 1559,
+      "sha256": "2f95b95edde6da857183712c35d7a461659b55714f2e00c0a3661ed946dba58d"
+    },
+    {
+      "file": "01_MASTER_GUARDRAILS.md",
+      "bytes": 937,
+      "sha256": "d19b7bf15ecbb328f4728c63c7ecc8b7c8640b7f768afaee9ed4dd85d63d0f38"
+    },
+    {
+      "file": "01_STEP_01_REPRODUCE_RUNTIME_GAP_ON_REAL_APP.md",
+      "bytes": 947,
+      "sha256": "74545cb58dbc854b09f15514b3f14b1f499ee0945a4c9011a35c4443f04df6d5"
+    },
+    {
+      "file": "02_RUNTIME_ARCHITECTURE_CONTRACT.md",
+      "bytes": 1161,
+      "sha256": "eb6405239b943727cd0a3d5e5956b1c3211edd2196c2174c4253ac4b64bf58b1"
+    },
+    {
+      "file": "02_STEP_02_DESIGN_BOUNDED_PHASE11_RUNTIME_COORDINATOR.md",
+      "bytes": 912,
+      "sha256": "14c15e41b1b874218efbbf8b2341df7895e1b5b163db68a15b881791b1735320"
+    },
+    {
+      "file": "03_MASTER_ACCEPTANCE_CHECKLIST.md",
+      "bytes": 1076,
+      "sha256": "11c786d084f4e573a5e1a17dea7dfd84b5b4ae5c3820fafdf0fb7d5c9d27ec32"
+    },
+    {
+      "file": "03_STEP_03_IMPLEMENT_RUNTIME_COORDINATOR_AND_APP_COMPOSITION.md",
+      "bytes": 1059,
+      "sha256": "2b3c2823b3c402008b72723589e16de0dd4cee58622c04143fbab6ab640a11a8"
+    },
+    {
+      "file": "04_RUNTIME_TEST_MATRIX.md",
+      "bytes": 762,
+      "sha256": "d99d6908c5af86a085eccd4e7b0364924bf4d7e92c7d8824ab6ef0a0c2d6eac4"
+    },
+    {
+      "file": "04_STEP_04_STARTUP_RECONCILIATION_AND_RESTART_RECOVERY.md",
+      "bytes": 1030,
+      "sha256": "d417291f1421f09d97ef5b05c1761b53377a04881fda66f44e89ee21dd00e0af"
+    },
+    {
+      "file": "05_FINAL_FREEZE_REPORT_TEMPLATE.md",
+      "bytes": 878,
+      "sha256": "10d860dd8a035d5fa740c04d475944c834a4fdec465e528ca9a9a9d791f4ecf8"
+    },
+    {
+      "file": "05_STEP_05_SUBMISSION_IDEMPOTENCY_AND_CONCURRENCY_SAFETY.md",
+      "bytes": 949,
+      "sha256": "1a77b4ab504b3c69dfeb8351abbdf23b1a302107deefa733d1b176e085c090de"
+    },
+    {
+      "file": "06_SELF_REVIEW_CHECKLIST.md",
+      "bytes": 618,
+      "sha256": "d04fbb7aead112b5a9d771af563c3f95a1d0a19be41b508eb84a5dd1b33c19b1"
+    },
+    {
+      "file": "06_STEP_06_RESULT_SNAPSHOT_AND_EXPORT_RUNTIME_WIRING.md",
+      "bytes": 988,
+      "sha256": "677b5fef6635aefd38ac3117cd654e454fd3f43571e8596fbb4fa67ed183b7dc"
+    },
+    {
+      "file": "07_STEP_07_REAL_APP_API_INTEGRATION_TESTS.md",
+      "bytes": 921,
+      "sha256": "e05620fa87c5d4fa2f0a84ebb53a865ff03e986f1b7217b2952c9519d27d5182"
+    },
+    {
+      "file": "08_STEP_08_REAL_UVICORN_BROWSER_SMOKE_AND_REUSE_TESTS.md",
+      "bytes": 1139,
+      "sha256": "5801823c608858159385fbc832eaa06a0b8a4e0255c9a07ffaf4fc6b43217bf7"
+    },
+    {
+      "file": "09_STEP_09_REAL_UVICORN_FULL_5M_CERTIFICATION.md",
+      "bytes": 1363,
+      "sha256": "3c082cd937e8d7c6a1eb44713d8ddefa46cdc80a4c51e8b58ed00ff9e1bb7e2d"
+    },
+    {
+      "file": "10_STEP_10_FAILURE_RETRY_RESTART_AND_SHUTDOWN_CERTIFICATION.md",
+      "bytes": 966,
+      "sha256": "b370172504a9148d8c3981b0573ff97609b8cb1e607174bf149571b0ed3573a8"
+    },
+    {
+      "file": "11_STEP_11_DOCUMENTATION_RUNTIME_CONTRACT_CLEANUP.md",
+      "bytes": 1130,
+      "sha256": "16baf8120bf57f1b7ab266d201446cbcedaf9e2f3544e7ab587f4cd70a0d1dc8"
+    },
+    {
+      "file": "12_STEP_12_BRANCH_GOVERNANCE_AND_RELEASE_READINESS.md",
+      "bytes": 867,
+      "sha256": "0cbaf7197dbdf3a06e1ae612666da6db3b13708a3a8445276fd7ca102834807e"
+    },
+    {
+      "file": "13_STEP_13_FULL_REGRESSION_AND_HYGIENE.md",
+      "bytes": 900,
+      "sha256": "8689943339b3c6e1d6221a3073490db56f5c84e78839f7b3cc59c81fa0614485"
+    },
+    {
+      "file": "14_STEP_14_EXACT_SHA_CI_AND_FINAL_FREEZE.md",
+      "bytes": 1257,
+      "sha256": "fa7d4c972d5ef11695d1e6f29883c6d569be9b57f14e9b3f93919a2ca30c7803"
+    },
+    {
+      "file": "15_SINGLE_MASTER_RUNTIME_CLOSURE_PROMPT.md",
+      "bytes": 1218,
+      "sha256": "4df7ea24a2831f00bedb07c1fbe2d4e1c0b0449455d93b868e3ba36d58f687b5"
+    }
+  ]
+}
