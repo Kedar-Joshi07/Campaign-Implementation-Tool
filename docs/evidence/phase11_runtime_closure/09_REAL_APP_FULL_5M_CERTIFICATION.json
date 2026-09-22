@@ -298,5 +298,60 @@
     "export_profile": "EMAIL_CONTACT_V1",
     "export_status": "COMPLETED",
     "export_csv_sha256": "6567c5165b018b5182ba70eaa5c90f6b5fe26771718fe6f68d14b72209c49192"
+  },
+  "step14_corrected_projection_sha_recertification": {
+    "certification_date": "2026-09-22",
+    "implementation_sha": "b00946dbfcbda463b81fa3717dbf2dad0598c113",
+    "commit_subject": "fix: correct phase11 blocked result projections",
+    "clean_at_launch": true,
+    "pushed_to_origin_main": true,
+    "runtime_command": "python -m uvicorn app.main:app",
+    "browser": {
+      "name": "system_chrome",
+      "product_version": "153.0.8010.53",
+      "execution_mode": "headed"
+    },
+    "workflow_available": true,
+    "search_run_id": 27,
+    "status": "COMPLETED",
+    "result_source": "EXACT_RESULT_REUSE",
+    "processing_seconds": 1155.0,
+    "orchestration_id": 18,
+    "reuse_plan": {
+      "analysis": "REUSE",
+      "model": "REUSE",
+      "scoring": "REUSE",
+      "rank": "REUSE"
+    },
+    "generation_id": 2,
+    "analysis_run_id": 5,
+    "model_run_id": 4,
+    "scoring_run_id": 4,
+    "result_snapshot_id": 5,
+    "snapshot_sha256": "d3c86e8b094bf886f711d059dbe2075062022aab1f72f6850e6386fd1f5c03cc",
+    "demographic_rows": 5000000,
+    "distinct_demographic_people": 5000000,
+    "score_rows": 5000000,
+    "distinct_scored_people": 5000000,
+    "rank_boundary_count": 100,
+    "browser_result_verified": true,
+    "download_http_status": 200,
+    "export_event_ids": [22, 23],
+    "export_profile": "EMAIL_CONTACT_V1",
+    "export_status": "COMPLETED",
+    "export_csv_sha256": "6567c5165b018b5182ba70eaa5c90f6b5fe26771718fe6f68d14b72209c49192",
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": [],
+    "registry_counts": {
+      "campaign_search_runs": 27,
+      "campaign_result_snapshots": 5,
+      "phase10_intelligence_generations": 2,
+      "historical_analysis_runs": 5,
+      "model_runs": 4,
+      "scoring_runs": 4,
+      "phase10_orchestration_runs": 18,
+      "campaign_result_export_events": 23
+    }
   }
 }

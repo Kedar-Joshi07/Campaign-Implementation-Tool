@@ -17,10 +17,10 @@ result history, and governed omnichannel export.
 
 | Authority | Exact value |
 |---|---|
-| Runtime implementation SHA | `986dea0e861e8b3941deb7a964d667bfc5397e49` |
-| Browser/full-5M-tested SHA | `986dea0e861e8b3941deb7a964d667bfc5397e49` |
-| Implementation commit | `fix: wire phase11 search runtime and close end-to-end execution gap` |
-| Implementation exact-SHA CI | Run `#24`, ID `35719232639`, SUCCESS |
+| Runtime implementation SHA | `b00946dbfcbda463b81fa3717dbf2dad0598c113` |
+| Browser/full-5M-tested SHA | `b00946dbfcbda463b81fa3717dbf2dad0598c113` |
+| Implementation commit | `fix: correct phase11 blocked result projections` |
+| Implementation exact-SHA CI | Run `#26`, ID `35753254573`, SUCCESS |
 | Final documentation/freeze SHA | The commit containing this report; recorded by repository history and the final handoff to avoid an impossible self-reference |
 
 The real-app browser/full-5M recertification ran from a clean checkout of the
@@ -31,16 +31,16 @@ between that runtime evidence and this freeze record.
 
 | Criterion | Result |
 |---|---|
-| Real `app.main` executes searches | PASS - Chrome search 26 completed through normal Uvicorn composition |
+| Real `app.main` executes searches | PASS - Chrome search 27 completed through normal Uvicorn composition |
 | `workflow_available=true` | PASS - production `/api/potential-customer-search/options` returned true |
 | Restart recovery works | PASS - Step 4 durable reconciliation and Step 10 restart/failure certification |
-| Exact reuse path works | PASS - search 26 reused snapshot 5 without a new membership artifact |
+| Exact reuse path works | PASS - search 27 reused snapshot 5 without a new membership artifact |
 | Intelligence reuse path works | PASS - Step 9 search 24 reused generation 2 and created only snapshot 5 |
 | New-build path works | PASS - Step 9 search 22 built analysis 5/model 4/scoring 4/generation 2 |
-| Omnichannel downloads work | PASS - ten-profile certification retained; exact-SHA Email export event 21 completed |
+| Omnichannel downloads work | PASS - ten-profile certification retained; corrected-SHA Email export events 22 and 23 completed |
 | Full 5M real-app certification | PASS - 5,000,000 rows/distinct people, scoring run 4, 100 rank boundaries |
 | Phase 1-11 regression | PASS - Step 13 exhaustive 992-test partition, clean rooms, targeted runtime/browser suites |
-| Exact implementation-SHA CI | PASS - run `#24`, five required jobs successful |
+| Exact implementation-SHA CI | PASS - run `#26`, five required jobs successful |
 | Documentation consistency | PASS - Step 9 evidence extended to the final implementation SHA; prior Phase 11 freeze marked superseded |
 
 ## Steps 1-13 closure
@@ -63,7 +63,7 @@ between that runtime evidence and this freeze record.
 
 ## Exact-SHA browser/full-5M recertification
 
-Chrome submitted search 26 through **Home -> Find Potential Customers -> Result
+Chrome submitted search 27 through **Home -> Find Potential Customers -> Result
 Detail** using product `PRD008`, Texas, `BROAD`, `TOP_N=100`, and Email. The
 unmodified production server was launched with:
 
@@ -75,21 +75,27 @@ The completed durable record is:
 
 | Field | Value |
 |---|---|
-| Search | 26 / `COMPLETED` / 1,296 seconds |
+| Search | 27 / `COMPLETED` / 1,155 seconds |
 | Result source | `EXACT_RESULT_REUSE` |
-| Phase 10 orchestration | 17 / `READY` / all layers `REUSE` |
+| Phase 10 orchestration | 18 / `READY` / all layers `REUSE` |
 | Generation / analysis / model / scoring | 2 / 5 / 4 / 4 |
 | Snapshot | 5 / `CURRENT` / zero selected members |
 | Snapshot SHA-256 | `d3c86e8b094bf886f711d059dbe2075062022aab1f72f6850e6386fd1f5c03cc` |
 | Scored population | 5,000,000 rows / 5,000,000 distinct people |
 | Rank boundaries | 100 |
-| Email export | Event 21 / `COMPLETED` / HTTP 200 |
+| Email export | Events 22 and 23 / `COMPLETED` / HTTP 200 |
 | Export SHA-256 | `6567c5165b018b5182ba70eaa5c90f6b5fe26771718fe6f68d14b72209c49192` |
 
 Chrome visibly displayed `Completed`, `Current`, `Reused previous exact result`,
 the 5,000,000 scored population, snapshot 5, lineage 2/5/4/4, and the ready
 governed Email download. This recertification produced no new analysis, model,
 scoring run, generation, or result snapshot.
+
+The decisive final capture used headed system Google Chrome `153.0.8010.53`.
+It reported no console errors, page errors, or request failures. Focused closure
+validation for the corrected Results projection passed nine cases: the real
+lifespan integration, five non-browser result projections, two installed-browser
+Results/Detail cases, and the executor-lifespan check.
 
 ## Regression and hygiene authority
 
@@ -108,20 +114,20 @@ Playwright named-pipe errors from product failures. The completed matrix was:
 ## Exact implementation-SHA CI
 
 - Workflow: `CI`
-- Run: `#24`
-- Run ID: `35719232639`
-- Head SHA: `986dea0e861e8b3941deb7a964d667bfc5397e49`
-- Created/completed: `2026-09-22T11:02:22Z` / `2026-09-22T11:07:37Z`
-- URL: <https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/35719232639>
+- Run: `#26`
+- Run ID: `35753254573`
+- Head SHA: `b00946dbfcbda463b81fa3717dbf2dad0598c113`
+- Created/completed: `2026-09-22T16:18:37Z` / `2026-09-22T16:24:15Z`
+- URL: <https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/35753254573>
 - Conclusion: `success`
 
 | Required job | Job ID | Result |
 |---|---:|---|
-| Repository Hygiene | `106717947634` | SUCCESS |
-| Python Validation | `106718141672` | SUCCESS |
-| Tests | `106718325544` | SUCCESS |
-| Clean-Room Phase1-7 | `106718325652` | SUCCESS |
-| Frontend Contract / bounded Phase 9+10+11+runtime | `106718325516` | SUCCESS |
+| Repository Hygiene | `106832520150` | SUCCESS |
+| Python Validation | `106832712135` | SUCCESS |
+| Tests | `106833033952` | SUCCESS |
+| Clean-Room Phase1-7 | `106833034014` | SUCCESS |
+| Frontend Contract / bounded Phase 9+10+11+runtime | `106833033925` | SUCCESS |
 
 The run and jobs were selected through GitHub's Actions API by the exact head
 SHA, not inferred from the latest branch state.

@@ -9,7 +9,7 @@ Prompt: `14_STEP_14_EXACT_SHA_CI_AND_FINAL_FREEZE.md`
 `GO`
 
 Phase 11 is frozen on corrected trusted runtime implementation SHA
-`986dea0e861e8b3941deb7a964d667bfc5397e49`. The same clean implementation SHA
+`b00946dbfcbda463b81fa3717dbf2dad0598c113`. The same clean implementation SHA
 was exercised by installed Chrome against the real Uvicorn application and the
 current 5,000,000-person intelligence generation, then passed all five required
 GitHub Actions jobs.
@@ -20,15 +20,16 @@ GitHub Actions jobs.
 |---|---|---|
 | Prior Phase 11 product freeze | `feb18146499bf5a2856b1680b3f658d27db34482` | Historical only; superseded because production runtime composition was incomplete |
 | Runtime composition implementation | `db3ceabc492ec17759dfdf6f6ae1186ac86ca77e` | Real full-5M build and reuse evidence source |
-| Corrected trusted implementation and browser/full-5M baseline | `986dea0e861e8b3941deb7a964d667bfc5397e49` | Clean-head Chrome recertification and exact-SHA CI `#24` SUCCESS |
+| Initial corrected runtime/browser baseline | `986dea0e861e8b3941deb7a964d667bfc5397e49` | Historical clean-head Chrome recertification and exact-SHA CI `#24` SUCCESS |
+| Corrected blocked-result projection and current browser/full-5M baseline | `b00946dbfcbda463b81fa3717dbf2dad0598c113` | Clean-head Chrome recertification and exact-SHA CI `#26` SUCCESS |
 | Final documentation/freeze milestone | Commit containing this report | Exact SHA is recorded by repository history and the final handoff; the document does not make a self-referential hash claim |
 
-The diff from the original runtime/full-5M baseline to the corrected trusted
-implementation contains one application file change: the truthful OpenAPI
-description in `app/main.py`. No coordinator, orchestration, filtering,
-materialization, export, data-generation, or frontend runtime logic changed.
-The final implementation was nevertheless recertified end to end to remove any
-ambiguity.
+The current baseline retains the truthful OpenAPI description correction in
+`app/main.py` and corrects the stale blocked Results history/detail projection
+in `app/services/phase11_results_service.py`, with real-lifespan regression
+coverage. No coordinator, orchestration, filtering, materialization, export,
+data-generation, or frontend runtime logic changed. The final implementation
+was nevertheless recertified end to end to remove any ambiguity.
 
 ## Freeze criteria
 
@@ -44,7 +45,7 @@ ambiguity.
 | Current governed omnichannel export | PASS |
 | Phase 1-11 regression and clean rooms | PASS |
 | Repository/database/LFS hygiene | PASS |
-| Exact implementation-SHA CI | PASS - run `#24`, ID `35719232639` |
+| Exact implementation-SHA CI | PASS - run `#26`, ID `35753254573` |
 | Prior frozen status replaced | PASS |
 
 ## Trusted full-scale lineage
@@ -59,25 +60,26 @@ ambiguity.
 | Model/scoring artifact SHA-256 | `c3bb696963416cb70e3bb1cfb04d681cf8e0e09f69bbeea0430b02c4672bfc6e` |
 | Intelligence key SHA-256 | `987bed9bbb1681129ceda9065e2581d589173876201a85c20beefda92c42aabb` |
 | Modeling context SHA-256 | `8cab3bbfb6238e0f92932ed2d28d2058f6b98b52af611a77fc5d1876e6e54f16` |
-| Corrected-SHA search | 26 / `EXACT_RESULT_REUSE` / snapshot 5 |
+| Corrected-SHA search | 27 / `EXACT_RESULT_REUSE` / snapshot 5 / 1,155 seconds |
 | Snapshot currentness/SHA | `CURRENT` / `d3c86e8b094bf886f711d059dbe2075062022aab1f72f6850e6386fd1f5c03cc` |
-| Corrected-SHA governed export | Event 21 / `EMAIL_CONTACT_V1` / `COMPLETED` |
+| Corrected-SHA governed export | Events 22 and 23 / `EMAIL_CONTACT_V1` / `COMPLETED` |
+| Decisive browser capture | Headed system Chrome `153.0.8010.53`; zero console/page/request failures |
 
 ## Exact-SHA CI authority
 
-- Workflow/run: `CI` `#24`
-- Run ID: `35719232639`
-- Head SHA: `986dea0e861e8b3941deb7a964d667bfc5397e49`
-- URL: <https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/35719232639>
+- Workflow/run: `CI` `#26`
+- Run ID: `35753254573`
+- Head SHA: `b00946dbfcbda463b81fa3717dbf2dad0598c113`
+- URL: <https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/35753254573>
 - Conclusion: `success`
 
 | Required job | Job ID | Result |
 |---|---:|---|
-| Repository Hygiene | `106717947634` | SUCCESS |
-| Python Validation | `106718141672` | SUCCESS |
-| Tests | `106718325544` | SUCCESS |
-| Clean-Room Phase1-7 | `106718325652` | SUCCESS |
-| Frontend Contract / bounded Phase 9+10+11+runtime | `106718325516` | SUCCESS |
+| Repository Hygiene | `106832520150` | SUCCESS |
+| Python Validation | `106832712135` | SUCCESS |
+| Tests | `106833033952` | SUCCESS |
+| Clean-Room Phase1-7 | `106833034014` | SUCCESS |
+| Frontend Contract / bounded Phase 9+10+11+runtime | `106833033925` | SUCCESS |
 
 Normal CI intentionally excludes the full 5M rerun. That release-scale work was
 performed through the real app, and the clean-head exact-reuse recertification
