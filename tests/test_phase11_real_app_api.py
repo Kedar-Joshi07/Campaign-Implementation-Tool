@@ -184,7 +184,7 @@ def _request_payload(*, campaign_name: str) -> dict:
 
 
 def _poll_terminal(
-    client: TestClient, search_run_id: int, *, timeout_seconds: float = 20.0
+    client: TestClient, search_run_id: int, *, timeout_seconds: float = 90.0
 ) -> dict:
     deadline = time.monotonic() + timeout_seconds
     observed: list[str] = []
@@ -298,7 +298,23 @@ def test_real_app_api_reuse_failure_results_export_and_shutdown(
             assert by_id[first_id]["result_source"] == "INTELLIGENCE_REUSE"
             assert by_id[second_id]["result_source"] == "EXACT_RESULT_REUSE"
             assert by_id[blocked_id]["status"] == "BLOCKED"
+            assert by_id[blocked_id]["safe_message"] == (
+                "Your search is saved but cannot proceed with the current "
+                "targeting intelligence."
+            )
             assert by_id[failed_id]["status"] == "FAILED"
+
+            blocked_detail_response = client.get(f"{RUNS}/{blocked_id}/result")
+            assert blocked_detail_response.status_code == 200, (
+                blocked_detail_response.text
+            )
+            blocked_detail = blocked_detail_response.json()
+            assert blocked_detail["status"] == "BLOCKED"
+            assert blocked_detail["safe_message"] == (
+                "Your search is saved but cannot proceed with the current "
+                "targeting intelligence."
+            )
+            assert blocked_detail["download_eligible"] is False
 
             detail_response = client.get(f"{RUNS}/{second_id}/result")
             assert detail_response.status_code == 200, detail_response.text

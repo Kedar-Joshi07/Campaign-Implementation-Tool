@@ -135,7 +135,7 @@ def _safe_message(run: Mapping[str, Any]) -> str:
         "QUEUED": "Saved and waiting to prepare targeting intelligence.",
         "PROCESSING": "Preparing potential-customer results. You can leave and return later.",
         "COMPLETED": "Potential-customer results are ready.",
-        "BLOCKED": "This search is saved. Targeting intelligence preparation is not connected in this release yet.",
+        "BLOCKED": "Your search is saved but cannot proceed with the current targeting intelligence.",
         "FAILED": "This search could not be completed. Review it before trying again.",
     }
     return messages[str(run["status"])]
