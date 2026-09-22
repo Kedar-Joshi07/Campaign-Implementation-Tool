@@ -1,8 +1,14 @@
 # Phase 11 Final Acceptance
 
+> **Superseded on 2026-09-22.** This file preserves the original Phase 11
+> product acceptance history, but it is no longer the trusted runtime baseline.
+> The authoritative decision is
+> [`../phase11_runtime_closure/PHASE11_RUNTIME_FINAL_ACCEPTANCE.md`](../phase11_runtime_closure/PHASE11_RUNTIME_FINAL_ACCEPTANCE.md)
+> on implementation SHA `986dea0e861e8b3941deb7a964d667bfc5397e49`.
+
 Generated: 2026-09-20
 
-## Final decision
+## Historical final decision (superseded)
 
 `GO`
 
@@ -110,6 +116,9 @@ No application, frontend, data, or generator file changed between the clean Step
 
 ## Final acceptance result
 
-`PHASE_11_FROZEN_GO`
+`SUPERSEDED_BY_PHASE_11_RUNTIME_FROZEN_GO`
 
-This evidence-integrity update records the already tested documentation milestone. Its own commit is documentation-only and is identified by repository history and the final handoff rather than by an impossible self-referential SHA inside the commit.
+This historical evidence-integrity update records the previously tested
+documentation milestone. The corrected runtime-closure acceptance and freeze
+reports replace this status after real `app.main` composition, restart recovery,
+and exact-SHA full-5M browser recertification were completed.

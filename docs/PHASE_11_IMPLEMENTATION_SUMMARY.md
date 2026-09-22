@@ -86,6 +86,10 @@ The view contract preserves a future role-aware navigation seam, but Phase 11 do
 - Bounded clean-room A/B: all 10 scenarios passed with identical canonical result SHA.
 - Installed Chrome end-to-end: all required business flows, all 10 profiles, 549 dynamic control/state observations, five responsive viewports, and zero browser/network errors passed.
 - Full 5M: 5,000,000 distinct valid scores, exact reuse, intelligence reuse, delivery-profile reuse, deterministic source regeneration, governed downloads, SQLite integrity, and Phase 1–10 regression passed.
-- Exact implementation-SHA GitHub CI: run `#20`, ID `35330170690`, all five required jobs successful for `feb18146499bf5a2856b1680b3f658d27db34482`.
+- Corrected runtime implementation/full-5M browser SHA: `986dea0e861e8b3941deb7a964d667bfc5397e49`.
+- Exact implementation-SHA GitHub CI: run `#24`, ID `35719232639`, all five required jobs successful.
 
-Authoritative final status is recorded in `evidence/phase11/PHASE11_FINAL_ACCEPTANCE.md` and `evidence/phase11/PHASE11_FINAL_FREEZE_REPORT.md`.
+Authoritative final status is recorded in
+`evidence/phase11_runtime_closure/PHASE11_RUNTIME_FINAL_ACCEPTANCE.md` and
+`evidence/phase11_runtime_closure/PHASE11_RUNTIME_FINAL_FREEZE_REPORT.md`. The
+earlier `evidence/phase11` freeze remains historical and is marked superseded.

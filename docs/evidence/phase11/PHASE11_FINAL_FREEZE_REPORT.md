@@ -1,10 +1,15 @@
 # Phase 11 Final Freeze Report
 
+> **Superseded on 2026-09-22.** This report is retained as historical evidence.
+> The authoritative corrected freeze is
+> [`../phase11_runtime_closure/PHASE11_RUNTIME_FINAL_FREEZE_REPORT.md`](../phase11_runtime_closure/PHASE11_RUNTIME_FINAL_FREEZE_REPORT.md)
+> on implementation SHA `986dea0e861e8b3941deb7a964d667bfc5397e49`.
+
 Generated: 2026-09-20
 
 Prompt: `21_STEP_21_CI_DOCUMENTATION_AND_PHASE11_FREEZE.md`
 
-## Final decision
+## Historical final decision (superseded)
 
 `GO`
 
@@ -171,6 +176,9 @@ added zero membership-source calls.
 
 ## Freeze result
 
-`PHASE_11_FROZEN_GO`
+`SUPERSEDED_BY_PHASE_11_RUNTIME_FROZEN_GO`
 
-Phase 11 is frozen on trusted implementation SHA `feb18146499bf5a2856b1680b3f658d27db34482`. The tested documentation/freeze milestone is `b0ff7777f897ff062f758b7f91dc46603809e08f`, certified by run `#21`, ID `35502790834`. This later evidence-integrity correction changes only final acceptance/freeze text; its exact commit is identified by repository history and the final handoff, avoiding a self-referential SHA claim.
+This was the pre-runtime-closure freeze. It is superseded by the corrected
+runtime baseline documented under `docs/evidence/phase11_runtime_closure/`,
+which certifies normal application composition and a clean-head exact-SHA
+browser/full-5M run.

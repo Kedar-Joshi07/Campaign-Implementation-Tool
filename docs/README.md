@@ -56,9 +56,13 @@ This folder contains implementation summaries and evidence indexes for the Phase
 - evidence/phase11/README.md
   - Phase 11 evidence authority, reading order, and final certification references.
 - evidence/phase11/PHASE11_FINAL_ACCEPTANCE.md
-  - Final business workflow, reuse, privacy, browser, full-5M, compatibility, and CI acceptance.
+  - Historical business workflow acceptance, superseded by the runtime-closure baseline.
 - evidence/phase11/PHASE11_FINAL_FREEZE_REPORT.md
-  - Exact implementation/documentation SHA chain, exact-SHA GitHub Actions results, and Phase 11 freeze decision.
+  - Historical Phase 11 freeze, retained for lineage.
+- evidence/phase11_runtime_closure/PHASE11_RUNTIME_FINAL_ACCEPTANCE.md
+  - Current runtime, recovery, browser, full-5M, regression, and exact-SHA acceptance.
+- evidence/phase11_runtime_closure/PHASE11_RUNTIME_FINAL_FREEZE_REPORT.md
+  - Corrected trusted SHA chain, exact-SHA GitHub Actions results, and final freeze decision.
 
 ## Historical phase records
 

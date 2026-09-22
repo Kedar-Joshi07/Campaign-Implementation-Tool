@@ -260,5 +260,43 @@
     "direct_mail_download_http_status": 200,
     "email_download_http_status": 200,
     "browser_console_warnings_or_errors": []
+  },
+  "step14_exact_sha_recertification": {
+    "certification_date": "2026-09-22",
+    "implementation_sha": "986dea0e861e8b3941deb7a964d667bfc5397e49",
+    "commit_subject": "fix: wire phase11 search runtime and close end-to-end execution gap",
+    "clean_at_launch": true,
+    "pushed_to_origin_main": true,
+    "runtime_command": "python -m uvicorn app.main:app",
+    "browser": "installed Google Chrome",
+    "workflow_available": true,
+    "available_profile_count": 10,
+    "search_run_id": 26,
+    "status": "COMPLETED",
+    "result_source": "EXACT_RESULT_REUSE",
+    "processing_seconds": 1296.0,
+    "orchestration_id": 17,
+    "reuse_plan": {
+      "analysis": "REUSE",
+      "model": "REUSE",
+      "scoring": "REUSE",
+      "rank": "REUSE"
+    },
+    "generation_id": 2,
+    "analysis_run_id": 5,
+    "model_run_id": 4,
+    "scoring_run_id": 4,
+    "result_snapshot_id": 5,
+    "snapshot_sha256": "d3c86e8b094bf886f711d059dbe2075062022aab1f72f6850e6386fd1f5c03cc",
+    "demographic_rows": 5000000,
+    "score_rows": 5000000,
+    "distinct_scored_people": 5000000,
+    "rank_boundary_count": 100,
+    "browser_result_verified": true,
+    "download_http_status": 200,
+    "export_event_id": 21,
+    "export_profile": "EMAIL_CONTACT_V1",
+    "export_status": "COMPLETED",
+    "export_csv_sha256": "6567c5165b018b5182ba70eaa5c90f6b5fe26771718fe6f68d14b72209c49192"
   }
 }

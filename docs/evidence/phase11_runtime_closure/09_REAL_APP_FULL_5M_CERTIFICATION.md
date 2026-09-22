@@ -122,3 +122,33 @@ The real Uvicorn access log recorded successful `200` responses for result detai
 | `campaign_result_export_events` | 20 |
 
 All Step 9 requirements are satisfied. Step 10 was not started.
+
+## Step 14 exact-SHA clean-head recertification
+
+The Step 9 full-build lineage above was recertified on the final runtime
+implementation SHA after the only later application change (the OpenAPI
+description cleanup) had been committed. This closes the requirement that the
+real-app full-5M evidence reference an implementation SHA with no later
+application-code changes.
+
+- Exact implementation/browser-tested SHA: `986dea0e861e8b3941deb7a964d667bfc5397e49`
+- Commit: `fix: wire phase11 search runtime and close end-to-end execution gap`
+- Git state at launch: clean; branch `main`; pushed to `origin/main`
+- Runtime: unmodified `python -m uvicorn app.main:app`
+- Browser: installed Google Chrome through the real business UI
+- Options boundary: `workflow_available=true`; all ten profiles available
+- Search 26: `COMPLETED`, `EXACT_RESULT_REUSE`, 1,296 seconds
+- Phase 10 orchestration 17: `READY`; analysis/model/scoring/rank all `REUSE`
+- Retained lineage: generation 2 / analysis 5 / model 4 / scoring 4 / snapshot 5
+- Full population reverified: 5,000,000 demographic rows, 5,000,000 score rows,
+  5,000,000 distinct scored people, and 100 rank boundaries
+- Chrome visibly showed `Completed`, `Current`, `Reused previous exact result`,
+  the 5,000,000 scored population, snapshot 5, and lineage IDs 2/5/4/4
+- Governed Email download: HTTP 200; export event 21; `COMPLETED`; CSV SHA-256
+  `6567c5165b018b5182ba70eaa5c90f6b5fe26771718fe6f68d14b72209c49192`
+
+Search 26 reused the same current snapshot and full-5M intelligence created by
+the decisive Step 9 build. It created no model, scoring run, generation, or
+membership artifact. The trusted implementation SHA is therefore both the
+runtime implementation baseline and the clean-head browser/full-5M-tested
+baseline for final freeze.

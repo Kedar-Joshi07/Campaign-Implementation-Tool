@@ -6,8 +6,8 @@ This directory is the authoritative evidence set for Phase 11 Business Workflow,
 
 | Artifact | Scope |
 |---|---|
-| `PHASE11_FINAL_ACCEPTANCE.md` | Consolidated functional, privacy, browser, full-5M, regression, compatibility, and CI acceptance |
-| `PHASE11_FINAL_FREEZE_REPORT.md` | Exact implementation/documentation SHA chain, CI jobs, and freeze decision |
+| `PHASE11_FINAL_ACCEPTANCE.md` | Historical Phase 11 acceptance; superseded by the runtime-closure acceptance |
+| `PHASE11_FINAL_FREEZE_REPORT.md` | Historical Phase 11 freeze; superseded by the runtime-closure freeze |
 | `20_FULL_5M_CERTIFICATION.md` | Human-readable full-5M new-build and reuse certification |
 | `20_FULL_5M_CERTIFICATION.json` | Machine-readable full-scale identities, counts, hashes, downloads, and gates |
 | `19_SYSTEM_BROWSER_CERTIFICATION.md` | Installed-Chrome business-flow certification |
@@ -53,8 +53,8 @@ This directory is the authoritative evidence set for Phase 11 Business Workflow,
 
 1. Start with `../../PHASE_11_IMPLEMENTATION_SUMMARY.md`.
 2. Use `../../PHASE_11_API_AND_SCHEMA.md`, `../../PHASE_11_OMNICHANNEL_PROFILES.md`, `../../PHASE_11_RESULT_SNAPSHOTS_AND_SMART_REUSE.md`, and `../../PHASE_11_BUSINESS_UI.md` for current contracts.
-3. Read `PHASE11_FINAL_ACCEPTANCE.md` for consolidated GO criteria.
-4. Read `PHASE11_FINAL_FREEZE_REPORT.md` for exact SHA/CI authority.
+3. Read `../phase11_runtime_closure/PHASE11_RUNTIME_FINAL_ACCEPTANCE.md` for the current consolidated GO criteria.
+4. Read `../phase11_runtime_closure/PHASE11_RUNTIME_FINAL_FREEZE_REPORT.md` for current exact SHA/CI authority.
 5. Use numbered evidence for design reasoning and step-specific results.
 
 Phase 11 evidence is additive. It does not replace the Phase 8 release-assurance, Phase 9 closure/interoperability, or Phase 10 orchestration freeze evidence for behavior those phases own.
