@@ -8,6 +8,8 @@ Normal navigation is exactly:
 
 Result Detail is a child route under Results. It reopens exact context, criteria, branches, selection, counts, currentness, aggregate profile, result-source explanation, and optional collapsed technical lineage. It never renders contact PII or artifact paths.
 
+Smart reuse and automatic Phase 10 preparation run behind the submitted search. They are status/progress behavior, not additional navigation destinations. Runtime ownership and restart behavior are documented in `PHASE_11_RUNTIME_ARCHITECTURE.md`.
+
 `frontend/js/view-contract.js` owns route groups and canonical aliases. Empty/unknown/hidden routes redirect to Home; `#overview` maps to Home and `#campaign-planner` maps to Find Potential Customers without adding redirect history. Legacy views and modules remain in source and DOM behind hidden boundaries for backward compatibility.
 
 The group labels `BUSINESS_USER_VISIBLE`, `ANALYST_HIDDEN`, and `ADMIN_HIDDEN` are presentation metadata and a future RBAC seam only. Phase 11 does not implement authentication, authorization, tenant isolation, or API enforcement based on these labels.

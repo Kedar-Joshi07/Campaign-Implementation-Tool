@@ -137,12 +137,15 @@ app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
     description=(
-        "Campaign Implementation Tool POC with Phase 1-7 capabilities, including "
-        "Phase 2 aggregate historical campaign analysis, across data foundation, "
-        "aggregate historical analysis, governed PU model training and prospect scoring, "
-        "audience exploration, immutable saved audiences, and Campaign Builder workflows "
-        "for draft, finalize, currentness, and deterministic target-list export. "
-        "This POC stops at export and does not include activation or outbound delivery workflows."
+        "Campaign Implementation Intelligence POC with Phase 1-11 data, including "
+        "Phase 2 aggregate historical campaign analysis, governed PU modeling, full "
+        "prospect scoring, audience, Campaign, "
+        "and business-search capabilities. Phase 10 automatically resolves exact "
+        "intelligence compatibility and reuses or builds only the required analytical "
+        "layers. The automatically initialized Phase 11 coordinator provides durable "
+        "search execution, smart result reuse, immutable membership snapshots, and "
+        "governed omnichannel downloads. The POC stops at governed export and does not "
+        "integrate outbound activation or send platforms."
     ),
     lifespan=lifespan,
 )

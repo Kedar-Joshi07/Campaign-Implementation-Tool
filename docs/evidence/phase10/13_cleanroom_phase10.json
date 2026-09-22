@@ -1,6 +1,6 @@
 {
   "deterministic_match": true,
-  "duration_seconds": 312.09,
+  "duration_seconds": 349.707,
   "generated_at": "2026-09-14",
   "overall_status": "PASS",
   "report_contract_version": "1",
@@ -116,7 +116,7 @@
         }
       },
       "canonical_result_sha256": "a2f3230abf6945e8cdccad1bcfd317ac98e5bed0d3c63ccc184bb85c282ef5b7",
-      "duration_seconds": 156.427,
+      "duration_seconds": 175.172,
       "label": "A",
       "scenarios": {
         "1_full_new_build": {
@@ -306,7 +306,7 @@
         }
       },
       "canonical_result_sha256": "a2f3230abf6945e8cdccad1bcfd317ac98e5bed0d3c63ccc184bb85c282ef5b7",
-      "duration_seconds": 155.662,
+      "duration_seconds": 174.534,
       "label": "B",
       "scenarios": {
         "1_full_new_build": {

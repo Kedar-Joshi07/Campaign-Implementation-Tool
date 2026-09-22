@@ -54,3 +54,5 @@ Each `campaign_search_runs` row is a distinct intentional submission with exact 
 - Existing audience filter, selection, rank, feature, Campaign, Phase 9, and Phase 10 contracts remain unchanged.
 
 The retained Phase 1–10 routes remain registered. UI hiding does not remove or authorize APIs, and the legacy finalized-Campaign Email/Direct Mail export endpoint remains separate and unchanged.
+
+Runtime ownership, automatic coordinator composition, restart recovery, and shutdown behavior are documented in [Phase 11 Runtime Architecture](PHASE_11_RUNTIME_ARCHITECTURE.md).

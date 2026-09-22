@@ -1,17 +1,19 @@
 # Campaign Implementation Intelligence
 
-Campaign Implementation Intelligence is a local FastAPI + SQLite proof of concept that implements the frozen Phase 1 to Phase 11 synthetic marketing workflow:
+Campaign Implementation Intelligence is a local FastAPI + SQLite proof of concept that implements the Phase 1 to Phase 11 synthetic marketing workflow:
 
 1. Synthetic source data generation and ingestion.
 2. Phase 1 data foundation and reconciliation.
 3. Phase 2 historical cohort analysis at aggregate-only grain.
 4. Phase 3 governed positive-unlabeled (PU) model training.
-5. Phase 5 asynchronous 5M demographic prospect scoring.
-6. Phase 6 Audience Explorer filtering, search, profile, and saved audiences.
-7. Phase 7 Campaign Builder draft/finalize/currentness and deterministic target-list export.
-8. Phase 9 business-friendly campaign context, targeting, exact Target Group preview, and draft creation.
-9. Phase 10 automatic compatibility-driven intelligence reuse/build orchestration.
-10. Phase 11 simplified business search, durable smart result reuse, and governed omnichannel download.
+5. Phase 4 durable model/scoring job orchestration.
+6. Phase 5 asynchronous 5M demographic prospect scoring.
+7. Phase 6 Audience Explorer filtering, search, profile, and saved audiences.
+8. Phase 7 Campaign Builder draft/finalize/currentness and deterministic target-list export.
+9. Phase 8 system-browser release assurance, reproducibility, and repository freeze.
+10. Phase 9 business-friendly campaign context, targeting, exact Target Group preview, and draft creation.
+11. Phase 10 automatic compatibility-driven intelligence reuse/build orchestration.
+12. Phase 11 simplified business search, durable smart result reuse, and governed omnichannel download.
 
 All source data in this repository is synthetic. The historical customer universe and the demographic prospect universe are intentionally independent.
 
@@ -31,7 +33,7 @@ All source data in this repository is synthetic. The historical customer univers
 8. Explore audiences, estimate/select cohorts, and save immutable audience definitions.
 9. Build campaigns from current saved audiences, finalize, and export EMAIL or DIRECT_MAIL target lists.
 10. Use Create Campaign for a guided business workflow that captures campaign context, applies explicit business targeting, compares exact match-strength counts, saves an immutable Target Group, and creates a Campaign Draft.
-11. Use the three-tab business workflow: Home → Find Potential Customers → Smart Reuse → Result.
+11. Use the three-tab business workflow: Home → Find Potential Customers → Results → Result Detail. Smart reuse runs automatically behind the submitted search; it is not a visible tab.
 12. Download the immutable result through its saved governed omnichannel profile; contact PII is joined only at this boundary.
 
 ## Technology stack
@@ -51,6 +53,8 @@ The runtime follows Router -> Schema -> Service -> Repository -> SQLite layering
 - Services implement domain logic, currentness checks, and workflow rules.
 - Repositories own SQL reads/writes and persistence boundaries.
 - Schema initialization/migrations are additive and idempotent.
+
+The Phase 11 runtime ownership path is HTTP → bounded Phase 11 coordinator → durable Phase 10 compatibility/reuse/build → immutable result snapshot → governed export. Application startup initializes the coordinator automatically, reconciles Phase 10 work, resumes durable `QUEUED`/`PROCESSING` Phase 11 searches, and reconciles stale export audits. Shutdown disconnects new submissions before closing the coordinator and existing model/scoring executor. See [Phase 11 runtime architecture](docs/PHASE_11_RUNTIME_ARCHITECTURE.md).
 
 ## Current versions and frozen contracts
 
@@ -94,7 +98,7 @@ app/                     FastAPI routers, schemas, services, repositories, DB co
 artifacts/models/        Local model artifacts (ignored in git)
 data/                    Canonical synthetic sources, references, and local SQLite file
 data_generation_scripts/ Deterministic synthetic data generators
-frontend/                Static UI for overview, analysis, modeling, audience, campaigns
+frontend/                Three-tab business UI plus retained hidden legacy/analyst modules
 docs/                    Phase implementation summaries and evidence indexes
 logs/                    Local runtime logs
 Prompts/                 Prompt packs and freeze workflows
@@ -208,19 +212,17 @@ Default configured expected counts:
 - OpenAPI docs: http://127.0.0.1:8000/docs
 - Health: http://127.0.0.1:8000/api/health
 
+The normal application command automatically initializes the Phase 11 coordinator and result materializer. No test-only executor configuration is required. After a restart, durable `QUEUED` and `PROCESSING` searches are discovered and rescheduled without rewriting terminal history.
+
 ## UI navigation
 
-Current UI sections in frontend/index.html:
+Normal business navigation contains exactly:
 
-- Overview
-- Create Campaign
-- Saved Target Groups
-- Insights
-- Data Status
-- Historical Analysis
-- Model Training & Prospect Scoring
-- Audience Explorer
-- Campaigns
+- Home
+- Find Potential Customers
+- Results
+
+Result Detail is a child of Results, not a fourth top-level tab. The implemented legacy/analyst surfaces—including Overview/Create Campaign, Saved Target Groups, Insights, Data Status, Historical Analysis, Model Training and Prospect Scoring, Audience Explorer, and Campaigns—remain in the codebase for backward compatibility but are not visible in normal navigation. Hiding these views is a presentation boundary only; authentication, authorization, and RBAC are not implemented.
 
 ## API surface
 
@@ -343,7 +345,7 @@ The normal business path automatically prepares intelligence between Campaign Co
 
 ## Phase 11 business search and smart reuse
 
-The default Phase 11 path is **Home → Find Potential Customers → Smart Reuse → Result → Download**. Every submission is a durable history event. The system reuses a fully validated exact result when possible, otherwise filters compatible Phase 10 intelligence, otherwise builds only missing intelligence layers and materializes the requested result. Search history is distinct from snapshot identity, so repeated requests remain auditable without duplicating valid membership.
+The visible Phase 11 path is **Home → Find Potential Customers → Results → Result Detail → Download**. Smart reuse is automatic runtime behavior after submission, not a separate page or tab. Every submission is a durable history event. The system reuses a fully validated exact result when possible, otherwise filters compatible Phase 10 intelligence, otherwise builds only missing intelligence layers and materializes the requested result. Search history is distinct from snapshot identity, so repeated requests remain auditable without duplicating valid membership.
 
 All ten omnichannel profiles are backend-owned and source-truthful. Membership snapshots and JSON/UI projections contain no contact PII. At download time, the engine revalidates lineage/currentness, joins only the profile-required fields in bounded chunks, enforces consent/contactability/targetability, and persists aggregate audit metadata. Paid-media profiles emit only SHA-256 match keys. See `docs/PHASE_11_IMPLEMENTATION_SUMMARY.md` and `docs/evidence/phase11/README.md`.
 
@@ -478,6 +480,8 @@ See .env.example for supported variables:
 
 - Single-node SQLite runtime and bounded single-worker compute execution profile.
 - No customer-person identity resolution.
+- No authentication, authorization, tenant isolation, or RBAC.
 - No activation/send channel integrations.
+- No provider feedback ingestion, automated outcome labeling, or retraining loop.
 - Local artifact storage and local operational posture, not a multi-tenant deployment profile.
 - Timing evidence is environment-dependent and not an SLA.

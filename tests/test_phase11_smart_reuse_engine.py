@@ -355,6 +355,78 @@ def test_safe_wrapper_never_persists_collaborator_exception_text(case):
     assert "example" not in run["safe_error_message"] and "private" not in run["safe_error_message"]
 
 
+@pytest.mark.parametrize("phase10_status", ("BLOCKED", "FAILED"))
+def test_phase10_terminal_state_propagates_safely_without_fake_result(
+    case, phase10_status,
+):
+    path, _, _, repository = case
+    search = _search(case, campaign_name=f"Phase10 {phase10_status}")
+
+    outcome = execute_phase11_search(
+        path,
+        search,
+        materializer=DeterministicMaterializer(path.parent, repository),
+        project_root=path.parent,
+        phase10_reader=fixed_reader(
+            {"status": phase10_status, "is_ready": False}
+        ),
+    )
+
+    assert outcome.status == phase10_status
+    run = repository.fetch_search_run(search)
+    assert run["status"] == phase10_status
+    assert run["result_snapshot_id"] is None
+    assert run["selected_count"] is None
+    assert run["safe_error_message"]
+    assert "phase10" not in run["safe_error_message"].lower()
+
+
+def test_materializer_failure_fails_closed_and_new_run_retries_cleanly(case):
+    path, _, _, repository = case
+    current = generation(case)
+    failed_search = _search(case, campaign_name="Materializer failure")
+
+    def fail_materialization(*_args, **_kwargs):
+        raise RuntimeError("private@example.test must never be persisted")
+
+    failed = execute_phase11_search_safely(
+        path,
+        failed_search,
+        materializer=fail_materialization,
+        project_root=path.parent,
+        phase10_reader=fixed_reader(ready_response(current)),
+        membership_source=fixed_membership_source,
+    )
+    failed_run = repository.fetch_search_run(failed_search)
+    assert failed.status == "FAILED"
+    assert failed_run["status"] == "FAILED"
+    assert failed_run["result_snapshot_id"] is None
+    assert failed_run["selected_count"] is None
+    assert "private@" not in str(failed_run)
+    with get_connection(path) as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM campaign_result_snapshots"
+        ).fetchone()[0] == 0
+
+    retry_search = _search(case, campaign_name="Materializer retry")
+    retried = execute_phase11_search_safely(
+        path,
+        retry_search,
+        materializer=DeterministicMaterializer(path.parent, repository),
+        project_root=path.parent,
+        phase10_reader=fixed_reader(ready_response(current)),
+        membership_source=fixed_membership_source,
+    )
+    retry_run = repository.fetch_search_run(retry_search)
+    assert retried.status == "COMPLETED"
+    assert retry_run["status"] == "COMPLETED"
+    assert retry_run["result_snapshot_id"] is not None
+    with get_connection(path) as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM campaign_result_snapshots"
+        ).fetchone()[0] == 1
+
+
 def test_audience_engine_branches_are_or_merged_in_global_rank_order_and_top_n_stops(case):
     current = generation(case)
     run = case[3].fetch_search_run(_search(

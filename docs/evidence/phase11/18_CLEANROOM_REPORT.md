@@ -60,7 +60,7 @@ only below the dedicated runtime directory.
 
 ## Verification
 
-- A/B certification: PASS in 368.901 seconds.
+- A/B certification: PASS in 383.492 seconds.
 - Clean-room runner contract tests: 3 passed.
 - Focused Phase 10/Phase 11 regression: 100 passed, 19 browser cases deferred to Step 19.
 - Python compilation, evidence integrity, whitespace and runtime cleanup: PASS.

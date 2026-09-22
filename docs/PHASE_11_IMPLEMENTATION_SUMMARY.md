@@ -1,6 +1,6 @@
 # Phase 11 Implementation Summary
 
-Phase 11 delivers a simplified business workflow over the frozen Phase 9 targeting and Phase 10 intelligence layers. A business user moves through **Home → Find Potential Customers → Smart Reuse → Result → Download** while legacy analytical screens and APIs remain retained but hidden from normal navigation.
+Phase 11 delivers a simplified business workflow over the frozen Phase 9 targeting and Phase 10 intelligence layers. A business user moves through **Home → Find Potential Customers → Results → Result Detail → Download** while legacy analytical screens and APIs remain retained but hidden from normal navigation. Smart reuse is automatic coordinator behavior after submission, not a visible route.
 
 ## Business flow
 
@@ -16,6 +16,8 @@ flowchart LR
 Home presents bounded business metrics and recent searches. Find Potential Customers is one validated form with searchable accessible multi-select controls. Every intentional submission creates its own immutable search-history record. Result detail reopens the exact saved context, criteria, selection, membership snapshot, currentness, and analytical lineage without exposing contact PII. Download applies the saved backend-owned channel profile at stream time.
 
 Normal navigation contains exactly **Home**, **Find Potential Customers**, and **Results**. Result Detail is a child of Results. Legacy views, modules, and APIs are hidden, not removed. This presentation boundary is not authentication, authorization, or RBAC; the immutable view-group contract is the future RBAC seam.
+
+Normal runtime ownership is HTTP → Phase 11 coordinator → Phase 10 compatibility/reuse/build → result snapshot → governed export. The coordinator is composed automatically by the FastAPI lifespan, and durable active searches are rescheduled after restart. See `PHASE_11_RUNTIME_ARCHITECTURE.md` for ownership, startup, restart, failure, and shutdown contracts.
 
 ## Smart reuse flow
 
@@ -63,11 +65,14 @@ Phase 11 adds business overview, search submission/status/history, result detail
 
 ## Recovery and lifecycle
 
+- Normal `app.main:app` startup initializes the bounded coordinator and result materializer automatically.
+- Phase 10 reconciliation runs before Phase 11 active-search reconciliation.
 - `QUEUED` and `PROCESSING` searches can resume after restart.
 - Equivalent active Phase 10 work is joined through the existing durable orchestration layer.
 - Exact snapshots fail closed on stale generation/source identity, missing files, schema/count/order mismatch, manifest mismatch, or checksum mismatch.
 - Orphan cleanup is bounded, age-gated, symlink-safe, and limited to known result artifact names.
 - Stale `RUNNING` export audits are reconciled to `ABORTED` without contact-row persistence.
+- Shutdown stops accepting new Phase 11 work, wakes pollers, preserves durable state, and retains the existing model/scoring executor shutdown path.
 
 ## Future seams
 

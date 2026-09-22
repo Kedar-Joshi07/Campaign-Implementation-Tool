@@ -46,7 +46,7 @@ file was read as an execution input or modified.
 
 ## Verification
 
-- Final A/B certification: PASS in 312.09 seconds.
+- Final A/B certification: PASS in 349.707 seconds.
 - Affected scoring/lifecycle/orchestration regression: PASS - 14 tests.
 - Ruff, Python compilation and diff checks: PASS.
 

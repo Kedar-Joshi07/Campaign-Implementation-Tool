@@ -49,8 +49,12 @@ def _keys(value):
 
 
 def test_result_api_is_additive_newest_first_bounded_and_preserves_each_submission(
-    client, database_path,
+    client, database_path, monkeypatch,
 ):
+    # This compatibility test owns immutable submission/history projection rather
+    # than production execution. Keep both submissions queued so asynchronous
+    # coordinator completion cannot race the byte-for-field status assertion.
+    monkeypatch.setattr(submission, "PHASE11_SEARCH_EXECUTOR", lambda *_: None)
     first_payload = request_payload()
     first = client.post(RUNS, json=first_payload).json()
     second_payload = deepcopy(first_payload)
@@ -78,11 +82,13 @@ def test_result_api_is_additive_newest_first_bounded_and_preserves_each_submissi
     assert history[0]["campaign_categories"] == ["Lifecycle"]
     assert history[0]["offer_types"] == ["Loyalty"]
     assert history[0]["match_strength"] == "STRONG"
-    assert history[0]["status"] == "BLOCKED"
+    assert history[0]["status"] == "QUEUED"
     assert history[0]["result_source_label"] == "Not available until completion"
     assert history[0]["currentness"] == "NOT_AVAILABLE"
     assert history[0]["download_eligible"] is False
-    assert "not connected" in history[0]["safe_message"]
+    assert history[0]["safe_message"] == (
+        "Saved and waiting to prepare targeting intelligence."
+    )
     assert not PROHIBITED.intersection(_keys(history))
 
     page_one = client.get(RESULTS, params={"limit": 1}).json()
