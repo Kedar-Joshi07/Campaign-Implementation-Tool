@@ -109,7 +109,7 @@ def test_fresh_schema_creates_phase9_table_columns_and_indexes(database_path: Pa
             ).fetchall()
         }
 
-    assert schema_version == str(CURRENT_SCHEMA_VERSION) == "18"
+    assert schema_version == str(CURRENT_SCHEMA_VERSION) == "19"
     assert columns == CAMPAIGN_TARGETING_CONTEXT_COLUMNS
     assert saved_target_group_columns == PHASE9_SAVED_TARGET_GROUP_COLUMNS
     assert set(PHASE_NINE_REQUIRED_INDEX_STATEMENTS) <= indexes

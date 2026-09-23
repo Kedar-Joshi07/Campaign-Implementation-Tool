@@ -26,6 +26,20 @@ CAMPAIGN_RESULT_EXPORT_EVENT_COLUMNS = (
     "deliverable_count", "undeliverable_count", "row_count", "csv_sha256",
     "started_at", "completed_at", "currentness_state", "safe_error_message",
 )
+CAMPAIGN_SEARCH_RUN_RUNTIME_COLUMNS = (
+    "search_run_id", "lifecycle_contract_version", "lifecycle_status",
+    "stage_code", "stage_label", "progress_percent", "processed_count",
+    "total_count", "progress_unit", "status_message", "failure_code",
+    "failure_category", "failure_summary", "resolution_steps_json",
+    "retryable", "created_at", "processing_started_at", "updated_at",
+    "heartbeat_at", "state_version",
+)
+
+SEARCH_RUN_LIFECYCLE_STATUSES = (
+    "QUEUED", "PROCESSING", "PAUSE_REQUESTED", "PAUSED",
+    "STOP_REQUESTED", "STOPPED", "RESTART_REQUESTED",
+    "COMPLETED", "BLOCKED", "FAILED",
+)
 
 
 def _digest(name: str) -> str:
@@ -145,6 +159,134 @@ PHASE_ELEVEN_REQUIRED_INDEX_STATEMENTS = {
     "idx_campaign_result_export_events_snapshot": "CREATE INDEX IF NOT EXISTS idx_campaign_result_export_events_snapshot ON campaign_result_export_events(snapshot_id, started_at DESC, export_event_id DESC)",
     "idx_campaign_result_export_events_status": "CREATE INDEX IF NOT EXISTS idx_campaign_result_export_events_status ON campaign_result_export_events(status, started_at DESC, export_event_id DESC)",
 }
+
+
+PHASE_ELEVEN_RUNTIME_CREATE_TABLE_STATEMENT = """
+    CREATE TABLE IF NOT EXISTS campaign_search_run_runtime (
+        search_run_id INTEGER PRIMARY KEY REFERENCES campaign_search_runs(search_run_id) ON DELETE RESTRICT,
+        lifecycle_contract_version TEXT NOT NULL CHECK (lifecycle_contract_version = '1'),
+        lifecycle_status TEXT NOT NULL CHECK (lifecycle_status IN (
+            'QUEUED', 'PROCESSING', 'PAUSE_REQUESTED', 'PAUSED',
+            'STOP_REQUESTED', 'STOPPED', 'RESTART_REQUESTED',
+            'COMPLETED', 'BLOCKED', 'FAILED'
+        )),
+        stage_code TEXT NOT NULL CHECK (length(stage_code) BETWEEN 1 AND 80),
+        stage_label TEXT NOT NULL CHECK (length(stage_label) BETWEEN 1 AND 200),
+        progress_percent INTEGER NOT NULL CHECK (progress_percent BETWEEN 0 AND 100),
+        processed_count INTEGER NOT NULL DEFAULT 0 CHECK (processed_count >= 0),
+        total_count INTEGER CHECK (total_count IS NULL OR total_count >= 0),
+        progress_unit TEXT NOT NULL CHECK (length(progress_unit) BETWEEN 1 AND 40),
+        status_message TEXT NOT NULL CHECK (length(status_message) BETWEEN 1 AND 1000),
+        failure_code TEXT CHECK (failure_code IS NULL OR length(failure_code) BETWEEN 1 AND 80),
+        failure_category TEXT CHECK (failure_category IS NULL OR length(failure_category) BETWEEN 1 AND 80),
+        failure_summary TEXT CHECK (failure_summary IS NULL OR length(failure_summary) BETWEEN 1 AND 1000),
+        resolution_steps_json TEXT NOT NULL DEFAULT '[]'
+            CHECK (json_valid(resolution_steps_json) AND json_type(resolution_steps_json) = 'array'
+                AND json_array_length(resolution_steps_json) <= 8),
+        retryable INTEGER NOT NULL DEFAULT 0 CHECK (retryable IN (0, 1)),
+        created_at TEXT NOT NULL,
+        processing_started_at TEXT,
+        updated_at TEXT NOT NULL,
+        heartbeat_at TEXT,
+        state_version INTEGER NOT NULL DEFAULT 1 CHECK (state_version >= 1),
+        CHECK (total_count IS NULL OR processed_count <= total_count),
+        CHECK (lifecycle_status != 'COMPLETED' OR progress_percent = 100),
+        CHECK (lifecycle_status NOT IN ('BLOCKED', 'FAILED') OR
+            (failure_code IS NOT NULL AND failure_category IS NOT NULL
+             AND failure_summary IS NOT NULL AND json_array_length(resolution_steps_json) >= 1))
+    )
+"""
+
+PHASE_ELEVEN_RUNTIME_INDEX_STATEMENTS = {
+    "idx_campaign_search_run_runtime_status": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_search_run_runtime_status "
+        "ON campaign_search_run_runtime(lifecycle_status, updated_at DESC, search_run_id DESC)"
+    ),
+    "idx_campaign_search_run_runtime_heartbeat": (
+        "CREATE INDEX IF NOT EXISTS idx_campaign_search_run_runtime_heartbeat "
+        "ON campaign_search_run_runtime(heartbeat_at, search_run_id) "
+        "WHERE heartbeat_at IS NOT NULL"
+    ),
+}
+
+PHASE_ELEVEN_RUNTIME_TRIGGER_STATEMENTS = (
+    """CREATE TRIGGER IF NOT EXISTS campaign_search_run_runtime_create
+        AFTER INSERT ON campaign_search_runs
+        BEGIN
+            INSERT INTO campaign_search_run_runtime (
+                search_run_id, lifecycle_contract_version, lifecycle_status,
+                stage_code, stage_label, progress_percent, processed_count,
+                total_count, progress_unit, status_message,
+                failure_code, failure_category, failure_summary,
+                resolution_steps_json, retryable, created_at,
+                processing_started_at, updated_at,
+                state_version
+            ) VALUES (
+                NEW.search_run_id, '1', NEW.status, NEW.status,
+                CASE NEW.status
+                    WHEN 'QUEUED' THEN 'Waiting to start'
+                    WHEN 'PROCESSING' THEN 'Recovering saved work'
+                    WHEN 'COMPLETED' THEN 'Result ready'
+                    WHEN 'BLOCKED' THEN 'Search blocked'
+                    ELSE 'Search failed'
+                END,
+                CASE NEW.status WHEN 'COMPLETED' THEN 100
+                    WHEN 'PROCESSING' THEN 2 ELSE 0 END,
+                COALESCE(NEW.selected_count, 0),
+                CASE WHEN NEW.selection_mode='TOP_N' THEN NEW.target_count
+                    ELSE NEW.selected_count END,
+                'potential customers',
+                CASE NEW.status
+                    WHEN 'QUEUED' THEN 'Saved and waiting to prepare targeting intelligence.'
+                    WHEN 'PROCESSING' THEN 'Recovering this search from durable state.'
+                    WHEN 'COMPLETED' THEN 'Potential-customer results are ready.'
+                    WHEN 'BLOCKED' THEN 'This search cannot proceed with the current targeting intelligence.'
+                    ELSE 'The search could not be completed. Please try again.'
+                END,
+                CASE WHEN NEW.status='BLOCKED' THEN 'LEGACY_BLOCKED'
+                    WHEN NEW.status='FAILED' THEN 'LEGACY_FAILED' END,
+                CASE WHEN NEW.status='BLOCKED' THEN 'TARGETING_INTELLIGENCE'
+                    WHEN NEW.status='FAILED' THEN 'PROCESSING_FAILURE' END,
+                CASE WHEN NEW.status IN ('BLOCKED','FAILED')
+                    THEN NEW.safe_error_message END,
+                CASE WHEN NEW.status='BLOCKED'
+                    THEN '["Review the saved targeting criteria and available campaign history."]'
+                    WHEN NEW.status='FAILED'
+                    THEN '["Try the search again after the system is available."]'
+                    ELSE '[]' END,
+                CASE WHEN NEW.status IN ('BLOCKED','FAILED') THEN 1 ELSE 0 END,
+                NEW.created_at,
+                CASE WHEN NEW.status != 'QUEUED' THEN NEW.started_at END,
+                COALESCE(NEW.completed_at, NEW.started_at, NEW.created_at), 1
+            );
+        END""",
+    """CREATE TRIGGER IF NOT EXISTS campaign_search_run_runtime_identity
+        BEFORE UPDATE ON campaign_search_run_runtime
+        WHEN NEW.search_run_id IS NOT OLD.search_run_id
+          OR NEW.lifecycle_contract_version IS NOT OLD.lifecycle_contract_version
+          OR NEW.created_at IS NOT OLD.created_at
+        BEGIN SELECT RAISE(ABORT, 'immutable search runtime identity'); END""",
+    """CREATE TRIGGER IF NOT EXISTS campaign_search_run_runtime_transition
+        BEFORE UPDATE ON campaign_search_run_runtime
+        WHEN NEW.lifecycle_status != OLD.lifecycle_status AND NOT (
+            (OLD.lifecycle_status = 'QUEUED' AND NEW.lifecycle_status IN
+                ('PROCESSING','PAUSE_REQUESTED','STOP_REQUESTED','STOPPED','BLOCKED','FAILED')) OR
+            (OLD.lifecycle_status = 'PROCESSING' AND NEW.lifecycle_status IN
+                ('PAUSE_REQUESTED','STOP_REQUESTED','RESTART_REQUESTED','COMPLETED','BLOCKED','FAILED')) OR
+            (OLD.lifecycle_status = 'PAUSE_REQUESTED' AND NEW.lifecycle_status IN
+                ('PROCESSING','PAUSED','STOP_REQUESTED','STOPPED','FAILED')) OR
+            (OLD.lifecycle_status = 'PAUSED' AND NEW.lifecycle_status IN
+                ('PROCESSING','STOP_REQUESTED','RESTART_REQUESTED','STOPPED','FAILED')) OR
+            (OLD.lifecycle_status = 'STOP_REQUESTED' AND NEW.lifecycle_status IN
+                ('STOPPED','FAILED')) OR
+            (OLD.lifecycle_status = 'RESTART_REQUESTED' AND NEW.lifecycle_status IN
+                ('STOPPED','FAILED'))
+        )
+        BEGIN SELECT RAISE(ABORT, 'invalid search runtime transition'); END""",
+    """CREATE TRIGGER IF NOT EXISTS campaign_search_run_runtime_no_delete
+        BEFORE DELETE ON campaign_search_run_runtime
+        BEGIN SELECT RAISE(ABORT, 'search runtime history cannot be deleted'); END""",
+)
 
 
 def _immutable_trigger(table: str, columns: tuple[str, ...], mutable: set[str]) -> str:

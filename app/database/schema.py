@@ -18,6 +18,10 @@ from app.database.phase11_schema import (
     CAMPAIGN_RESULT_EXPORT_EVENT_COLUMNS,
     PHASE_ELEVEN_CREATE_TABLE_STATEMENTS,
     PHASE_ELEVEN_REQUIRED_INDEX_STATEMENTS,
+    CAMPAIGN_SEARCH_RUN_RUNTIME_COLUMNS,
+    PHASE_ELEVEN_RUNTIME_CREATE_TABLE_STATEMENT,
+    PHASE_ELEVEN_RUNTIME_INDEX_STATEMENTS,
+    PHASE_ELEVEN_RUNTIME_TRIGGER_STATEMENTS,
     PHASE_ELEVEN_TRIGGER_STATEMENTS,
 )
 from app.database.phase11_feedback_schema import (
@@ -30,7 +34,7 @@ from app.database.phase11_feedback_schema import (
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 18
+CURRENT_SCHEMA_VERSION = 19
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -58,6 +62,7 @@ EXPECTED_TABLES = (
     "campaign_result_snapshots",
     "campaign_result_export_events",
     "campaign_search_future_lineage",
+    "campaign_search_run_runtime",
 )
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
@@ -896,6 +901,7 @@ REQUIRED_INDEX_STATEMENTS = {
     **PHASE_NINE_REQUIRED_INDEX_STATEMENTS,
     **PHASE_TEN_REQUIRED_INDEX_STATEMENTS,
     **PHASE_ELEVEN_REQUIRED_INDEX_STATEMENTS,
+    **PHASE_ELEVEN_RUNTIME_INDEX_STATEMENTS,
 }
 
 
@@ -2671,6 +2677,75 @@ def _migrate_to_version_18(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_19(connection: sqlite3.Connection) -> None:
+    """Add durable Phase 11 lifecycle, progress, and safe issue state."""
+
+    if not _table_exists(connection, "campaign_search_runs"):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 19 because campaign_search_runs does not exist."
+        )
+    connection.execute(PHASE_ELEVEN_RUNTIME_CREATE_TABLE_STATEMENT)
+    connection.execute(
+        """
+        INSERT OR IGNORE INTO campaign_search_run_runtime (
+            search_run_id, lifecycle_contract_version, lifecycle_status,
+            stage_code, stage_label, progress_percent, processed_count,
+            total_count, progress_unit, status_message, failure_code,
+            failure_category, failure_summary, resolution_steps_json,
+            retryable, created_at, processing_started_at, updated_at,
+            heartbeat_at, state_version
+        )
+        SELECT
+            search_run_id, '1', status,
+            CASE status
+                WHEN 'QUEUED' THEN 'QUEUED'
+                WHEN 'PROCESSING' THEN 'RECOVERING'
+                WHEN 'COMPLETED' THEN 'COMPLETED'
+                ELSE status
+            END,
+            CASE status
+                WHEN 'QUEUED' THEN 'Waiting to start'
+                WHEN 'PROCESSING' THEN 'Recovering saved work'
+                WHEN 'COMPLETED' THEN 'Result ready'
+                WHEN 'BLOCKED' THEN 'Search blocked'
+                ELSE 'Search failed'
+            END,
+            CASE status WHEN 'COMPLETED' THEN 100 WHEN 'PROCESSING' THEN 2 ELSE 0 END,
+            COALESCE(selected_count, 0),
+            CASE WHEN selection_mode = 'TOP_N' THEN target_count ELSE selected_count END,
+            'potential customers',
+            CASE status
+                WHEN 'QUEUED' THEN 'Saved and waiting to prepare targeting intelligence.'
+                WHEN 'PROCESSING' THEN 'Recovering this search from durable state.'
+                WHEN 'COMPLETED' THEN 'Potential-customer results are ready.'
+                WHEN 'BLOCKED' THEN 'This search cannot proceed with the current targeting intelligence.'
+                ELSE 'The search could not be completed. Please try again.'
+            END,
+            CASE WHEN status = 'BLOCKED' THEN 'LEGACY_BLOCKED'
+                 WHEN status = 'FAILED' THEN 'LEGACY_FAILED' END,
+            CASE WHEN status = 'BLOCKED' THEN 'TARGETING_INTELLIGENCE'
+                 WHEN status = 'FAILED' THEN 'PROCESSING_FAILURE' END,
+            CASE WHEN status IN ('BLOCKED','FAILED') THEN safe_error_message END,
+            CASE WHEN status = 'BLOCKED'
+                 THEN '["Review the saved targeting criteria and available campaign history.","Try a broader search after the source data is updated."]'
+                 WHEN status = 'FAILED'
+                 THEN '["Try the search again after the system is available.","Use the saved search details when requesting support if the problem continues."]'
+                 ELSE '[]' END,
+            CASE WHEN status IN ('BLOCKED','FAILED') THEN 1 ELSE 0 END,
+            created_at,
+            CASE WHEN status != 'QUEUED' THEN started_at END,
+            COALESCE(completed_at, started_at, created_at),
+            CASE WHEN status = 'PROCESSING' THEN COALESCE(started_at, created_at) END,
+            1
+        FROM campaign_search_runs
+        """
+    )
+    for statement in PHASE_ELEVEN_RUNTIME_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+    for statement in PHASE_ELEVEN_RUNTIME_TRIGGER_STATEMENTS:
+        connection.execute(statement)
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -2689,6 +2764,7 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     16: _migrate_to_version_16,
     17: _migrate_to_version_17,
     18: _migrate_to_version_18,
+    19: _migrate_to_version_19,
 }
 
 

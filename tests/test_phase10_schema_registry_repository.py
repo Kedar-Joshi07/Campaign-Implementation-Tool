@@ -259,7 +259,7 @@ def test_fresh_v15_schema_has_exact_tables_columns_and_indexes(tmp_path: Path) -
         assert _columns(connection, "phase10_context_bindings") == (
             PHASE10_CONTEXT_BINDING_COLUMNS
         )
-    assert version == str(CURRENT_SCHEMA_VERSION) == "18"
+    assert version == str(CURRENT_SCHEMA_VERSION) == "19"
     assert set(PHASE_TEN_REQUIRED_INDEX_STATEMENTS) <= indexes
 
 

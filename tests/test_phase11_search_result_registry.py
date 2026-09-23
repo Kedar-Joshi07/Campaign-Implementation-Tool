@@ -12,6 +12,7 @@ from app.database.schema import (
     CURRENT_SCHEMA_VERSION, DEMOGRAPHIC_COLUMNS, EXPECTED_TABLES, MIGRATIONS,
     CAMPAIGN_SEARCH_RUN_COLUMNS, CAMPAIGN_RESULT_SNAPSHOT_COLUMNS,
     CAMPAIGN_RESULT_EXPORT_EVENT_COLUMNS, PHASE_ELEVEN_REQUIRED_INDEX_STATEMENTS,
+    CAMPAIGN_SEARCH_RUN_RUNTIME_COLUMNS,
     initialize_database,
 )
 from app.repositories.campaign_result_registry_repository import CampaignResultRegistryRepository
@@ -30,6 +31,7 @@ TABLES = {
     "campaign_search_runs": CAMPAIGN_SEARCH_RUN_COLUMNS,
     "campaign_result_snapshots": CAMPAIGN_RESULT_SNAPSHOT_COLUMNS,
     "campaign_result_export_events": CAMPAIGN_RESULT_EXPORT_EVENT_COLUMNS,
+    "campaign_search_run_runtime": CAMPAIGN_SEARCH_RUN_RUNTIME_COLUMNS,
 }
 
 
@@ -79,7 +81,7 @@ def test_fresh_schema_has_exact_non_pii_columns_indexes_and_foreign_keys(tmp_pat
         MIGRATIONS[17](connection)
         MIGRATIONS[17](connection)
     with get_connection(path) as connection:
-        assert connection.execute("SELECT value FROM app_metadata WHERE key='schema_version'").fetchone()[0] == "18"
+        assert connection.execute("SELECT value FROM app_metadata WHERE key='schema_version'").fetchone()[0] == "19"
         tables = {r["name"] for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")}
         assert tables == set(EXPECTED_TABLES)
         for table, columns in TABLES.items():

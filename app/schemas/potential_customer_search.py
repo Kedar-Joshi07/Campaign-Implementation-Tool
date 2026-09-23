@@ -41,6 +41,44 @@ class SearchSubmissionStatus(BaseModel):
     safe_message: str
 
 
+class SearchRunProgress(BaseModel):
+    """Durable lifecycle facts and a bounded, qualified completion estimate."""
+
+    model_config = ConfigDict(extra="forbid")
+    contract_version: Literal["1"]
+    lifecycle_status: Literal[
+        "QUEUED", "PROCESSING", "PAUSE_REQUESTED", "PAUSED",
+        "STOP_REQUESTED", "STOPPED", "RESTART_REQUESTED",
+        "COMPLETED", "BLOCKED", "FAILED",
+    ]
+    stage_code: str = Field(min_length=1, max_length=80)
+    stage_label: str = Field(min_length=1, max_length=200)
+    progress_percent: int = Field(ge=0, le=100)
+    processed_count: int = Field(ge=0)
+    total_count: int | None = Field(default=None, ge=0)
+    progress_unit: str = Field(min_length=1, max_length=40)
+    status_message: str = Field(min_length=1, max_length=1000)
+    updated_at: str
+    heartbeat_at: str | None
+    state_version: int = Field(ge=1)
+    estimated_seconds_remaining_low: int | None = Field(default=None, ge=0)
+    estimated_seconds_remaining_high: int | None = Field(default=None, ge=0)
+    estimated_completion_at: str | None
+    estimate_confidence: Literal["UNAVAILABLE", "LOW", "MEDIUM", "HIGH"]
+    estimate_basis: str = Field(min_length=1, max_length=80)
+
+
+class SearchRunIssue(BaseModel):
+    """Safe reason and recovery guidance for a blocked or failed search."""
+
+    model_config = ConfigDict(extra="forbid")
+    code: str = Field(min_length=1, max_length=80)
+    category: str = Field(min_length=1, max_length=80)
+    summary: str = Field(min_length=1, max_length=1000)
+    resolution_steps: list[str] = Field(min_length=1, max_length=8)
+    retryable: bool
+
+
 class SearchResultProduct(BaseModel):
     model_config = ConfigDict(extra="forbid")
     product_id: str
@@ -71,6 +109,8 @@ class SearchResultHistoryItem(BaseModel):
     currentness: Literal["CURRENT", "STALE", "UNVERIFIED", "NOT_AVAILABLE"]
     download_eligible: bool
     safe_message: str
+    progress: SearchRunProgress
+    issue: SearchRunIssue | None = None
 
 
 class SearchResultDetail(SearchResultHistoryItem):

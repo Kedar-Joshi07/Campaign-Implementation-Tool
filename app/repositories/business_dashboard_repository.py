@@ -48,10 +48,19 @@ class BusinessDashboardRepository:
         with get_connection(self.database_path) as connection:
             rows = connection.execute(
                 """
-                SELECT search_run_id, campaign_name, created_at, completed_at,
-                       status, selected_count, delivery_channel
-                FROM campaign_search_runs
-                ORDER BY created_at DESC, search_run_id DESC
+                SELECT r.search_run_id, r.campaign_name, r.created_at,
+                       r.started_at, r.completed_at, r.status, r.selected_count,
+                       r.delivery_channel, rt.lifecycle_status, rt.stage_code,
+                       rt.stage_label, rt.progress_percent, rt.processed_count,
+                       rt.total_count, rt.progress_unit, rt.status_message,
+                       rt.failure_code, rt.failure_category, rt.failure_summary,
+                       rt.resolution_steps_json, rt.retryable,
+                       rt.processing_started_at, rt.updated_at,
+                       rt.heartbeat_at, rt.state_version
+                FROM campaign_search_runs AS r
+                LEFT JOIN campaign_search_run_runtime AS rt
+                  ON rt.search_run_id = r.search_run_id
+                ORDER BY r.created_at DESC, r.search_run_id DESC
                 LIMIT ?
                 """,
                 (limit,),

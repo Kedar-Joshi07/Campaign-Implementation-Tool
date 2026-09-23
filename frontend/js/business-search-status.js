@@ -1,8 +1,8 @@
 import { getJSON } from "./api.js";
+import { createRunIssue, createRunProgress, isRunActive } from "./run-progress.js";
 
 export const RESULT_REFRESH_INTERVAL_MS = 5000;
 export const RESULT_REFRESH_MAX_CYCLES = 60;
-const ACTIVE = new Set(["QUEUED", "PROCESSING"]);
 const rows = new Map();
 let token = 0;
 let timer = null;
@@ -72,7 +72,8 @@ function resultCard(run) {
     make("p", "eyebrow", `Search #${run.search_run_id}`),
     make("h3", null, run.campaign_name),
   );
-  header.append(identity, statusBadge(run.status));
+  const lifecycleStatus = run.progress?.lifecycle_status || run.status;
+  header.append(identity, statusBadge(lifecycleStatus));
 
   const products = run.selected_products
     .map((product) => product.product_name || product.product_id).join(", ");
@@ -108,7 +109,10 @@ function resultCard(run) {
     download.setAttribute("download", "");
     actions.append(download);
   }
-  article.append(header, facts, targeting, message, actions);
+  const issue = createRunIssue(run);
+  article.append(header, facts, targeting, createRunProgress(run, { compact: true }), message);
+  if (issue) article.append(issue);
+  article.append(actions);
   item.append(article);
   return item;
 }
@@ -125,7 +129,7 @@ function renderHistory() {
 
 function scheduleHistoryRefresh(ordered, request) {
   clearTimer();
-  const active = ordered.some((run) => ACTIVE.has(run.status));
+  const active = ordered.some(isRunActive);
   if (!active || refreshCycles >= RESULT_REFRESH_MAX_CYCLES) return;
   refreshCycles += 1;
   timer = window.setTimeout(() => {
@@ -156,7 +160,7 @@ export async function loadSearchHistory({ older = false, automated = false } = {
     for (const run of runs) rows.set(run.search_run_id, run);
     const ordered = renderHistory();
     find("business-history-more").hidden = runs.length < 20;
-    const activeCount = ordered.filter((run) => ACTIVE.has(run.status)).length;
+    const activeCount = ordered.filter(isRunActive).length;
     find("results-status").textContent = activeCount
       ? `${activeCount} search${activeCount === 1 ? " is" : "es are"} still active. Results refresh every ${RESULT_REFRESH_INTERVAL_MS / 1000} seconds.`
       : `${ordered.length.toLocaleString()} saved search${ordered.length === 1 ? "" : "es"}, newest first.`;
@@ -194,6 +198,10 @@ function renderDetail(run) {
     ["Processing Duration", durationText(run.processing_seconds)],
     ["Planned Launch", run.planned_launch_date],
   ]);
+  find("result-detail-progress").replaceChildren(createRunProgress(run));
+  const issue = createRunIssue(run);
+  find("result-detail-issue").replaceChildren(...(issue ? [issue] : []));
+  find("result-detail-issue").hidden = !issue;
   const products = run.selected_products.map(
     (product) => `${product.product_name} (${product.product_id})`,
   );
@@ -275,7 +283,7 @@ export async function loadSearchStatus(runId) {
       );
       if (request !== token || window.location.hash !== `#results/${runId}`) return;
       renderDetail(run);
-      if (ACTIVE.has(run.status) && refreshCycles < RESULT_REFRESH_MAX_CYCLES) {
+      if (isRunActive(run) && refreshCycles < RESULT_REFRESH_MAX_CYCLES) {
         refreshCycles += 1;
         timer = window.setTimeout(poll, RESULT_REFRESH_INTERVAL_MS);
       }
@@ -301,6 +309,10 @@ export function initializeSearchStatus() {
     loadSearchHistory();
   });
   find("result-detail-retry").addEventListener("click", () => {
+    refreshCycles = 0;
+    loadSearchStatus(find("result-detail-view").dataset.searchRunId);
+  });
+  find("result-detail-refresh").addEventListener("click", () => {
     refreshCycles = 0;
     loadSearchStatus(find("result-detail-view").dataset.searchRunId);
   });

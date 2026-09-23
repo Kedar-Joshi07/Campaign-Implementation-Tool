@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.potential_customer_search import SearchRunIssue, SearchRunProgress
+
 
 class BusinessOverviewResponse(BaseModel):
     """Bounded aggregate counts shown on the business Home screen."""
@@ -29,3 +31,5 @@ class BusinessRecentResult(BaseModel):
     selected_count: int | None = Field(default=None, ge=0)
     delivery_profile_label: str
     safe_message: str
+    progress: SearchRunProgress
+    issue: SearchRunIssue | None = None

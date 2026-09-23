@@ -161,7 +161,7 @@ If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs
 .\.venv\Scripts\python.exe scripts\init_db.py --inspect
 ```
 
-Initialization is idempotent and creates/verifies schema version 18. The 15-to-16 migration appends source fields with false/null defaults. The 16-to-17 migration adds separate `campaign_search_runs`, `campaign_result_snapshots`, and `campaign_result_export_events` registries without modifying Phase 1–10 rows or legacy Campaign export semantics. The 17-to-18 migration adds a nullable, write-once future activation and outcome-lineage seam without implementing delivery, feedback ingestion, or retraining.
+Initialization is idempotent and creates/verifies schema version 19. The 15-to-16 migration appends source fields with false/null defaults. The 16-to-17 migration adds separate `campaign_search_runs`, `campaign_result_snapshots`, and `campaign_result_export_events` registries without modifying Phase 1–10 rows or legacy Campaign export semantics. The 17-to-18 migration adds a nullable, write-once future activation and outcome-lineage seam. The 18-to-19 migration adds one durable lifecycle/progress row per search, including monotonic progress, processed counts, heartbeat, safe issue guidance, and a guarded future control-state contract.
 
 Phase 11 persists immutable business submissions separately from reusable, contact-PII-free result snapshots. Exact hits reuse a validated snapshot; otherwise the system reuses compatible Phase 10 intelligence or builds only missing layers, then atomically materializes one requested membership. Search-result exports have their own count/checksum/currentness audit records. See [smart reuse and snapshot contracts](docs/PHASE_11_RESULT_SNAPSHOTS_AND_SMART_REUSE.md).
 
@@ -171,7 +171,7 @@ Phase 11 progressively enhances campaign-context and targeting multi-selects usi
 
 **Find Potential Customers** is one business form while the hidden legacy planner and frozen Phase 9/10 semantics remain intact. Each valid intentional request durably records fresh context/criteria lineage and an immutable search run before execution. Results can rediscover and reopen the request after navigation, reload, or restart. Delivery/profile and prospect-filter changes do not alter Modeling Context.
 
-The smart-reuse engine follows exact result → compatible Phase 10 intelligence → minimum new Phase 10 build. It validates exact cache hits without scanning scores, streams exact OR-branch Audience Engine membership in global rank order on a miss, and publishes an immutable snapshot atomically. Durable `PROCESSING` searches can resume after Phase 10 work or restart. There is no all-permutation precompute.
+The smart-reuse engine follows exact result → compatible Phase 10 intelligence → minimum new Phase 10 build. It validates exact cache hits without scanning scores, streams exact OR-branch Audience Engine membership in global rank order on a miss, and publishes an immutable snapshot atomically. Durable `PROCESSING` searches can resume after Phase 10 work or restart. Results expose persisted stage/percentage/count progress, a bounded and confidence-qualified ETA when measurable, and structured safe guidance for blocked or failed work. There is no all-permutation precompute.
 
 ## Import data (enforced order)
 

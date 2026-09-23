@@ -1,5 +1,6 @@
 import { getCachedJSON } from "./api.js";
 import { formatExactInteger, hideError, setButtonLoading } from "./ui.js";
+import { createRunIssue, createRunProgress } from "./run-progress.js";
 
 const metricIds = [
   "home-potential-customers",
@@ -77,7 +78,10 @@ function resultCard(run) {
   }
   const action = make("a", "button button-secondary", "View Result");
   action.href = `#results/${run.search_run_id}`;
-  item.append(header, facts, make("p", "panel-note", run.safe_message), action);
+  item.append(header, facts, createRunProgress(run, { compact: true }), make("p", "panel-note", run.safe_message));
+  const issue = createRunIssue(run);
+  if (issue) item.append(issue);
+  item.append(action);
   return item;
 }
 

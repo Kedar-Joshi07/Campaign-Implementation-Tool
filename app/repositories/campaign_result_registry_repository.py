@@ -25,6 +25,15 @@ from app.services.phase11_result_contracts import (
 )
 
 _READY_LIFECYCLES = {"CURRENT", "REUSABLE", "PROTECTED"}
+_ACTIVE_SEARCH_LIFECYCLES = {"QUEUED", "PROCESSING"}
+_DEFAULT_BLOCKED_RESOLUTION_STEPS = (
+    "Review the saved targeting criteria and available campaign history.",
+    "Try a broader search after the source data is updated.",
+)
+_DEFAULT_FAILED_RESOLUTION_STEPS = (
+    "Try the search again after the system is available.",
+    "Use the saved search details when requesting support if the problem continues.",
+)
 
 
 def _now() -> str:
@@ -92,6 +101,11 @@ class CampaignResultRegistryRepository:
     def fetch_search_run(self, search_run_id: int) -> dict[str, Any] | None:
         return self._fetch("campaign_search_runs", "search_run_id", search_run_id)
 
+    def fetch_search_runtime(self, search_run_id: int) -> dict[str, Any] | None:
+        return self._fetch(
+            "campaign_search_run_runtime", "search_run_id", search_run_id
+        )
+
     def fetch_snapshot(self, result_snapshot_id: int) -> dict[str, Any] | None:
         return self._fetch("campaign_result_snapshots", "result_snapshot_id", result_snapshot_id)
 
@@ -141,12 +155,104 @@ class CampaignResultRegistryRepository:
 
     def mark_processing(self, search_run_id: int) -> None:
         with get_connection(self.database_path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
             cursor = connection.execute(
                 "UPDATE campaign_search_runs SET status = 'PROCESSING' WHERE search_run_id = ? AND status = 'QUEUED'",
                 (_integer(search_run_id),),
             )
             if cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Search is missing or no longer queued.")
+            timestamp = _now()
+            runtime = connection.execute(
+                "SELECT * FROM campaign_search_run_runtime WHERE search_run_id = ?",
+                (search_run_id,),
+            ).fetchone()
+            if runtime is None or runtime["lifecycle_status"] != "QUEUED":
+                raise Phase11RegistryStateError("Search runtime is missing or no longer queued.")
+            runtime_cursor = connection.execute(
+                """
+                UPDATE campaign_search_run_runtime
+                SET lifecycle_status='PROCESSING', stage_code='CHECKING_INTELLIGENCE',
+                    stage_label='Checking targeting intelligence', progress_percent=2,
+                    status_message='Checking available targeting intelligence.',
+                    processing_started_at=COALESCE(processing_started_at, ?),
+                    updated_at=?, heartbeat_at=?, state_version=state_version+1
+                WHERE search_run_id=? AND lifecycle_status='QUEUED'
+                """,
+                (timestamp, timestamp, timestamp, search_run_id),
+            )
+            if runtime_cursor.rowcount != 1:
+                raise Phase11RegistryStateError("Search runtime could not start.")
+
+    def update_search_progress(
+        self,
+        search_run_id: int,
+        *,
+        stage_code: str,
+        stage_label: str,
+        progress_percent: int,
+        status_message: str,
+        processed_count: int | None = None,
+        total_count: int | None = None,
+        timestamp: str | None = None,
+    ) -> None:
+        """Persist monotonic, business-safe progress for one active search."""
+
+        identifier = _integer(search_run_id)
+        if (
+            not isinstance(progress_percent, int)
+            or isinstance(progress_percent, bool)
+            or not 0 <= progress_percent <= 99
+        ):
+            raise Phase11RegistryValidationError(
+                "Active search progress must be between 0 and 99."
+            )
+        code = _text(stage_code, 80)
+        if re.fullmatch(r"[A-Z][A-Z0-9_]*", code or "") is None:
+            raise Phase11RegistryValidationError("Invalid search progress stage.")
+        label = _text(stage_label, 200)
+        message = _text(status_message, 1000)
+        processed = None if processed_count is None else _integer(processed_count, zero=True)
+        total = None if total_count is None else _integer(total_count, zero=True)
+        if processed is not None and total is not None and processed > total:
+            raise Phase11RegistryValidationError("Processed count exceeds total count.")
+        moment = _timestamp(timestamp)
+        with get_connection(self.database_path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            current = connection.execute(
+                "SELECT * FROM campaign_search_run_runtime WHERE search_run_id=?",
+                (identifier,),
+            ).fetchone()
+            if current is None or current["lifecycle_status"] not in _ACTIVE_SEARCH_LIFECYCLES:
+                raise Phase11RegistryStateError("Search runtime is missing or not active.")
+            if progress_percent < int(current["progress_percent"]):
+                raise Phase11RegistryValidationError("Search progress cannot decrease.")
+            next_processed = (
+                int(current["processed_count"])
+                if processed is None
+                else processed
+            )
+            if next_processed < int(current["processed_count"]):
+                raise Phase11RegistryValidationError("Processed count cannot decrease.")
+            next_total = current["total_count"] if total is None else total
+            if next_total is not None and next_processed > int(next_total):
+                raise Phase11RegistryValidationError("Processed count exceeds total count.")
+            cursor = connection.execute(
+                """
+                UPDATE campaign_search_run_runtime
+                SET stage_code=?, stage_label=?, progress_percent=?,
+                    processed_count=?, total_count=?, status_message=?,
+                    updated_at=?, heartbeat_at=?, state_version=state_version+1
+                WHERE search_run_id=? AND lifecycle_status IN ('QUEUED','PROCESSING')
+                  AND progress_percent <= ?
+                """,
+                (
+                    code, label, progress_percent, next_processed, next_total,
+                    message, moment, moment, identifier, progress_percent,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise Phase11RegistryStateError("Search progress update was rejected.")
 
     def complete_search_run(
         self, search_run_id: int, *, result_snapshot_id: int, result_source: str,
@@ -174,6 +280,25 @@ class CampaignResultRegistryRepository:
                  result_snapshot_id, result_source, snapshot["resolved_count"], timestamp, seconds, search_run_id),
             )
             connection.execute("UPDATE campaign_result_snapshots SET last_used_at=? WHERE result_snapshot_id=?", (timestamp, result_snapshot_id))
+            runtime_cursor = connection.execute(
+                """
+                UPDATE campaign_search_run_runtime
+                SET lifecycle_status='COMPLETED', stage_code='COMPLETED',
+                    stage_label='Result ready', progress_percent=100,
+                    processed_count=?, total_count=?,
+                    status_message='Potential-customer results are ready.',
+                    failure_code=NULL, failure_category=NULL, failure_summary=NULL,
+                    resolution_steps_json='[]', retryable=0,
+                    updated_at=?, heartbeat_at=?, state_version=state_version+1
+                WHERE search_run_id=? AND lifecycle_status='PROCESSING'
+                """,
+                (
+                    int(snapshot["resolved_count"]), int(snapshot["resolved_count"]),
+                    timestamp, timestamp, search_run_id,
+                ),
+            )
+            if runtime_cursor.rowcount != 1:
+                raise Phase11RegistryStateError("Search runtime could not complete.")
 
     @staticmethod
     def _elapsed(started: str, completed: str) -> float:
@@ -182,11 +307,42 @@ class CampaignResultRegistryRepository:
             raise Phase11RegistryValidationError("Completion precedes start.")
         return elapsed
 
-    def fail_search_run(self, search_run_id: int, *, blocked: bool = False, timestamp: str | None = None) -> None:
+    def fail_search_run(
+        self,
+        search_run_id: int,
+        *,
+        blocked: bool = False,
+        failure_code: str | None = None,
+        failure_category: str | None = None,
+        failure_summary: str | None = None,
+        resolution_steps: tuple[str, ...] | list[str] | None = None,
+        retryable: bool = True,
+        timestamp: str | None = None,
+    ) -> None:
         # Store a fixed safe message, never caller exceptions/paths/PII.
         timestamp = _timestamp(timestamp)
         status = "BLOCKED" if blocked else "FAILED"
         message = "This search cannot proceed with the current intelligence." if blocked else "The search could not be completed. Please try again."
+        code = _text(
+            failure_code or ("TARGETING_INTELLIGENCE_BLOCKED" if blocked else "SEARCH_PROCESSING_FAILED"),
+            80,
+        )
+        category = _text(
+            failure_category or ("TARGETING_INTELLIGENCE" if blocked else "PROCESSING_FAILURE"),
+            80,
+        )
+        summary = _text(failure_summary or message, 1000)
+        steps = tuple(
+            resolution_steps
+            or (_DEFAULT_BLOCKED_RESOLUTION_STEPS if blocked else _DEFAULT_FAILED_RESOLUTION_STEPS)
+        )
+        if not 1 <= len(steps) <= 8:
+            raise Phase11RegistryValidationError("Expected one to eight resolution steps.")
+        normalized_steps = [_text(step, 500) for step in steps]
+        resolution_json = json.dumps(
+            normalized_steps, ensure_ascii=True, allow_nan=False,
+            separators=(",", ":"),
+        )
         with get_connection(self.database_path, write=True) as connection:
             connection.execute("BEGIN IMMEDIATE")
             run = connection.execute("SELECT * FROM campaign_search_runs WHERE search_run_id=?", (_integer(search_run_id),)).fetchone()
@@ -196,6 +352,24 @@ class CampaignResultRegistryRepository:
                 "UPDATE campaign_search_runs SET status=?, completed_at=?, processing_seconds=?, safe_error_message=? WHERE search_run_id=?",
                 (status, timestamp, self._elapsed(run["started_at"], timestamp), message, search_run_id),
             )
+            cursor = connection.execute(
+                """
+                UPDATE campaign_search_run_runtime
+                SET lifecycle_status=?, stage_code=?, stage_label=?,
+                    status_message=?, failure_code=?, failure_category=?,
+                    failure_summary=?, resolution_steps_json=?, retryable=?,
+                    updated_at=?, heartbeat_at=?, state_version=state_version+1
+                WHERE search_run_id=? AND lifecycle_status IN ('QUEUED','PROCESSING')
+                """,
+                (
+                    status, status,
+                    "Search blocked" if blocked else "Search failed",
+                    message, code, category, summary, resolution_json,
+                    int(bool(retryable)), timestamp, timestamp, search_run_id,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise Phase11RegistryStateError("Search runtime could not become terminal.")
 
     def register_snapshot(
         self, *, generation_id: int, targeting_criteria_sha256: str, filter_branches_sha256: str,

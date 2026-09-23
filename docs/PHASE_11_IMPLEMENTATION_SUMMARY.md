@@ -41,13 +41,16 @@ There is no all-permutation precompute. Phase 11 first validates an exact snapsh
 
 ## Durable search and result model
 
-Schema version 18 adds, in order:
+Schema version 19 adds, in order:
 
 - governed contactability, consent, and activation identifier columns on demographics;
 - immutable `campaign_search_runs` business submissions;
 - immutable `campaign_result_snapshots` metadata for contact-PII-free membership artifacts;
 - append-only `campaign_result_export_events` aggregate download audits; and
-- `campaign_search_future_lineage`, a nullable write-once seam for future activation, provider, feedback-batch, and outcome-dataset references.
+- `campaign_search_future_lineage`, a nullable write-once seam for future activation, provider, feedback-batch, and outcome-dataset references; and
+- `campaign_search_run_runtime`, a one-to-one durable lifecycle/progress record with stage, percentage, counts, heartbeat, state version, and structured safe issue guidance.
+
+Results and Result Detail poll this runtime projection every five seconds. Phase 10 progress is mapped into the first 90 percent and Phase 11 result selection/materialization reports persisted real row counts through completion. ETA is bounded, confidence-qualified, and unavailable when no defensible estimate exists. The schema reserves guarded pause/stop/restart states, but action endpoints for those controls are intentionally not part of this implementation slice.
 
 Search history and result snapshots are different objects. Identical intentional submissions create distinct search rows but can share one validated snapshot. Snapshot membership is a deterministic gzip CSV containing only analytical fields (`person_id`, score, percentile bucket, decile, rank band) plus a complete immutable manifest. Contact fields are joined only during governed download and are never persisted in the snapshot.
 

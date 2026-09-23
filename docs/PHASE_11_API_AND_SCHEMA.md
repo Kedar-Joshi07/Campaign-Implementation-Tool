@@ -18,7 +18,7 @@
 
 Validation errors use 422, missing lineage uses 404, incomplete/stale/conflicting state uses 409, and unexpected errors return a sanitized 500. JSON APIs never return contact identifiers, local artifact paths, SQL text, or stack traces. Contact data can appear only in the authorized CSV projection for the run's immutable saved profile.
 
-## Schema version 18
+## Schema version 19
 
 The migration chain is additive and idempotent:
 
@@ -27,10 +27,17 @@ The migration chain is additive and idempotent:
 | 16 | Twelve governed demographic contactability/consent/activation fields |
 | 17 | `campaign_search_runs`, `campaign_result_snapshots`, `campaign_result_export_events` |
 | 18 | `campaign_search_future_lineage` nullable write-once future seam |
+| 19 | `campaign_search_run_runtime` durable lifecycle, progress, heartbeat, and safe issue state |
 
 ### Search runs
 
 Each `campaign_search_runs` row is a distinct intentional submission with exact context, canonical targeting criteria/branches and hashes, selection mode/count, delivery profile, analytical lineage, result source, status, counts, timestamps, and safe error state. Statuses are `QUEUED`, `PROCESSING`, `COMPLETED`, `BLOCKED`, and `FAILED`. Result sources are `EXACT_RESULT_REUSE`, `INTELLIGENCE_REUSE`, and `NEW_INTELLIGENCE_BUILD`.
+
+### Search runtime progress
+
+`campaign_search_run_runtime` is one-to-one with a search run. It stores the current lifecycle stage, monotonic percentage, processed/total counts when knowable, business-safe status copy, heartbeat, state version, and structured blocked/failed guidance. Results APIs return this as nested `progress` and optional `issue` objects. ETA is derived from persisted progress and observed elapsed time, bounded to 24 hours, and labeled with its confidence/basis; queued or otherwise unmeasurable work returns no invented ETA.
+
+The lifecycle contract reserves `PAUSE_REQUESTED`, `PAUSED`, `STOP_REQUESTED`, `STOPPED`, and `RESTART_REQUESTED` with guarded database transitions. This release does not expose action endpoints that enter those states.
 
 ### Result snapshots
 
@@ -51,6 +58,7 @@ Each `campaign_search_runs` row is a distinct intentional submission with exact 
 - Result membership: `1`
 - Result export: `1`
 - Omnichannel export profile: `1`
+- Search lifecycle/progress: `1`
 - Existing audience filter, selection, rank, feature, Campaign, Phase 9, and Phase 10 contracts remain unchanged.
 
 The retained Phase 1–10 routes remain registered. UI hiding does not remove or authorize APIs, and the legacy finalized-Campaign Email/Direct Mail export endpoint remains separate and unchanged.

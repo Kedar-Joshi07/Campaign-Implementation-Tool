@@ -111,6 +111,7 @@ def test_business_dashboard_uses_metadata_counts_and_bounded_newest_results(
     assert set(recent.json()[0]) == {
         "search_run_id", "campaign_name", "created_at", "completed_at",
         "status", "selected_count", "delivery_profile_label", "safe_message",
+        "progress", "issue",
     }
     assert client.get(RECENT, params={"limit": 4}).status_code == 422
     assert client.get(RECENT, params={"limit": 11}).status_code == 422

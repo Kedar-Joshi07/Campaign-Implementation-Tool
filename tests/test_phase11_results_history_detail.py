@@ -89,6 +89,10 @@ def test_result_api_is_additive_newest_first_bounded_and_preserves_each_submissi
     assert history[0]["safe_message"] == (
         "Saved and waiting to prepare targeting intelligence."
     )
+    assert history[0]["progress"]["lifecycle_status"] == "QUEUED"
+    assert history[0]["progress"]["progress_percent"] == 0
+    assert history[0]["progress"]["estimate_confidence"] == "UNAVAILABLE"
+    assert history[0]["issue"] is None
     assert not PROHIBITED.intersection(_keys(history))
 
     page_one = client.get(RESULTS, params={"limit": 1}).json()
@@ -194,6 +198,19 @@ def test_completed_result_detail_validates_materialized_snapshot_and_lineage(
 
 
 def _history_item(run_id, *, status="COMPLETED", name=None, eligible=False):
+    progress_percent = {
+        "QUEUED": 0, "PROCESSING": 68, "COMPLETED": 100,
+        "BLOCKED": 22, "FAILED": 54,
+    }[status]
+    issue = None
+    if status in {"BLOCKED", "FAILED"}:
+        issue = {
+            "code": "FIXTURE_BLOCKED" if status == "BLOCKED" else "FIXTURE_FAILED",
+            "category": "TARGETING_INTELLIGENCE" if status == "BLOCKED" else "PROCESSING_FAILURE",
+            "summary": "More verified campaign history is required." if status == "BLOCKED" else "The governed result could not be prepared.",
+            "resolution_steps": ["Review the saved criteria.", "Submit again after correcting the condition."],
+            "retryable": True,
+        }
     return {
         "search_run_id": run_id,
         "campaign_name": name or f"Campaign {run_id}",
@@ -212,6 +229,23 @@ def _history_item(run_id, *, status="COMPLETED", name=None, eligible=False):
         "currentness": "CURRENT" if status == "COMPLETED" else "NOT_AVAILABLE",
         "download_eligible": eligible,
         "safe_message": "Potential-customer results are ready." if status == "COMPLETED" else "Preparing potential-customer results.",
+        "progress": {
+            "contract_version": "1", "lifecycle_status": status,
+            "stage_code": status, "stage_label": "Matching potential customers" if status == "PROCESSING" else status.title(),
+            "progress_percent": progress_percent,
+            "processed_count": 340 if status == "PROCESSING" else (125 if status == "COMPLETED" else 0),
+            "total_count": 500 if status == "PROCESSING" else (125 if status == "COMPLETED" else None),
+            "progress_unit": "potential customers",
+            "status_message": "Matching the ranked potential-customer universe." if status == "PROCESSING" else "Saved lifecycle state.",
+            "updated_at": "2026-09-16T10:00:30Z", "heartbeat_at": None,
+            "state_version": 3,
+            "estimated_seconds_remaining_low": 30 if status == "PROCESSING" else (0 if status == "COMPLETED" else None),
+            "estimated_seconds_remaining_high": 90 if status == "PROCESSING" else (0 if status == "COMPLETED" else None),
+            "estimated_completion_at": "2026-09-16T10:02:00Z" if status == "PROCESSING" else None,
+            "estimate_confidence": "MEDIUM" if status == "PROCESSING" else ("HIGH" if status == "COMPLETED" else "UNAVAILABLE"),
+            "estimate_basis": "CURRENT_RUN_OBSERVED_RATE" if status == "PROCESSING" else ("COMPLETED" if status == "COMPLETED" else "NOT_APPLICABLE"),
+        },
+        "issue": issue,
     }
 
 
@@ -288,7 +322,15 @@ def test_results_history_renders_deduplicates_paginates_and_only_polls_active(pa
     assert browser.locator('[data-search-run-id="22"]').get_by_text(
         "Preparing potential-customer results.", exact=True,
     ).is_visible()
+    active = browser.locator('[data-search-run-id="22"]')
+    assert active.locator('[role="progressbar"]').get_attribute("aria-valuenow") == "68"
+    assert active.get_by_text("Matching potential customers", exact=True).is_visible()
+    assert active.get_by_text("340 of 500 potential customers processed", exact=True).is_visible()
+    assert active.get_by_text("Approximately 30 sec to 2 min remaining", exact=True).is_visible()
     assert browser.locator('[data-search-run-id="21"] [data-status="BLOCKED"]').is_visible()
+    assert browser.locator('[data-search-run-id="21"]').get_by_text(
+        "Why this search is blocked", exact=True,
+    ).is_visible()
     assert browser.locator('[data-search-run-id="20"] [data-status="FAILED"]').is_visible()
     assert browser.locator('[data-search-run-id="19"] a[download]').get_attribute("href") == "/api/potential-customer-search/runs/19/download"
     browser.wait_for_timeout(5200)
@@ -312,6 +354,8 @@ def test_result_detail_is_responsive_progressively_disclosed_and_has_no_contact_
     browser.set_viewport_size({"width": 390, "height": 844})
     open_route(browser, "#results/42")
     browser.get_by_text("Autumn savings", exact=True).wait_for()
+    assert browser.locator("#result-detail-progress [role='progressbar']").get_attribute("aria-valuenow") == "100"
+    assert browser.locator("#result-detail-refresh").is_visible()
     assert browser.get_by_text("Reused previous exact result", exact=True).is_visible()
     assert browser.get_by_text("Contact information is never shown here.", exact=False).is_visible()
     assert browser.locator("#result-technical-disclosure").get_attribute("open") is None
@@ -331,7 +375,9 @@ def test_step12_frontend_uses_bounded_active_only_refresh_and_safe_dom_rendering
     source = (ROOT / "frontend/js/business-search-status.js").read_text(encoding="utf-8")
     assert "RESULT_REFRESH_INTERVAL_MS = 5000" in source
     assert "RESULT_REFRESH_MAX_CYCLES = 60" in source
-    assert 'new Set(["QUEUED", "PROCESSING"])' in source
+    assert "isRunActive" in source
+    progress_source = (ROOT / "frontend/js/run-progress.js").read_text(encoding="utf-8")
+    assert '"QUEUED", "PROCESSING", "PAUSE_REQUESTED", "PAUSED"' in progress_source
     assert "new Map()" in source and "rows.set(run.search_run_id, run)" in source
     assert "before_search_run_id" in source
     assert "textContent" in source and ".innerHTML" not in source

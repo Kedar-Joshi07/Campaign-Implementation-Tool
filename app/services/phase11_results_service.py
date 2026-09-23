@@ -24,6 +24,10 @@ from app.schemas.campaign_targeting import (
 )
 from app.schemas.potential_customer_search import Phase11SavedCampaignContext
 from app.services.phase11_result_snapshot_service import validate_result_snapshot
+from app.services.phase11_run_lifecycle_service import (
+    project_run_issue,
+    project_run_progress,
+)
 
 
 RESULT_SOURCE_LABELS = {
@@ -203,6 +207,7 @@ def _base_projection(
     database_path: Path, run: Mapping[str, Any], context: Mapping[str, Any],
     criteria: Mapping[str, Any], snapshot: Mapping[str, Any] | None,
     generation: Mapping[str, Any] | None,
+    repository: CampaignResultRegistryRepository,
 ) -> dict[str, Any]:
     source = run.get("result_source")
     products = _product_summaries(database_path, list(context["product_ids"]))
@@ -212,6 +217,7 @@ def _base_projection(
         _demographic_source_is_current(database_path, generation),
     )
     channel = str(run["delivery_channel"])
+    runtime = repository.fetch_search_runtime(int(run["search_run_id"]))
     return {
         "search_run_id": int(run["search_run_id"]),
         "campaign_name": str(run["campaign_name"]),
@@ -240,6 +246,8 @@ def _base_projection(
             and currentness == "CURRENT"
         ),
         "safe_message": _safe_message(run),
+        "progress": project_run_progress(run, runtime),
+        "issue": project_run_issue(runtime),
     }
 
 
@@ -272,7 +280,9 @@ def list_result_history(
             path, run, repository
         )
         result.append(
-            _base_projection(path, run, context, criteria, snapshot, generation)
+            _base_projection(
+                path, run, context, criteria, snapshot, generation, repository
+            )
         )
     _assert_no_forbidden_keys(result)
     return result
@@ -321,7 +331,9 @@ def get_result_detail(
     context, criteria, branches, snapshot, generation = _load_run_projection(
         path, run, repository
     )
-    base = _base_projection(path, run, context, criteria, snapshot, generation)
+    base = _base_projection(
+        path, run, context, criteria, snapshot, generation, repository
+    )
     currentness = base["currentness"]
     if snapshot is not None and generation is not None:
         validation = validate_result_snapshot(

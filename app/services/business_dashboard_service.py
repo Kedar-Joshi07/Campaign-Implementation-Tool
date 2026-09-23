@@ -8,6 +8,10 @@ from typing import Any
 from app.repositories.business_dashboard_repository import (
     BusinessDashboardRepository,
 )
+from app.services.phase11_run_lifecycle_service import (
+    project_run_issue,
+    project_run_progress,
+)
 
 
 _STATUS_MESSAGES = {
@@ -59,6 +63,12 @@ def get_recent_results(
             .replace("_", " ")
             .title(),
             "safe_message": _STATUS_MESSAGES[str(row["status"])],
+            "progress": project_run_progress(
+                row, row if row.get("lifecycle_status") is not None else None
+            ),
+            "issue": project_run_issue(
+                row if row.get("lifecycle_status") is not None else None
+            ),
         }
         for row in rows
     ]

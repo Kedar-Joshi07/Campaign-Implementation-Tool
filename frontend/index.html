@@ -1750,6 +1750,7 @@
         <section id="result-detail-view" class="view" data-view="result-detail" aria-labelledby="result-detail-title" hidden>
           <div class="result-detail-toolbar">
             <button id="result-detail-back" class="button button-secondary" type="button" data-view-target="results">Back to Results</button>
+            <button id="result-detail-refresh" class="button button-secondary" type="button">Refresh Progress</button>
             <a id="result-detail-download" class="button button-primary" href="#" hidden>Download Potential Customers</a>
           </div>
           <p id="result-detail-status" class="results-live-status" role="status" aria-live="polite">Loading saved result…</p>
@@ -1767,6 +1768,8 @@
               <span id="result-detail-badge" class="result-status-badge"></span>
             </header>
             <dl id="result-detail-overview" class="result-overview-grid"></dl>
+            <div id="result-detail-progress"></div>
+            <div id="result-detail-issue" hidden></div>
             <div class="result-detail-grid">
               <section class="result-detail-panel" aria-labelledby="result-context-title"><h3 id="result-context-title">Campaign Context</h3><dl id="result-context-details" class="result-definition-list"></dl></section>
               <section class="result-detail-panel" aria-labelledby="result-targeting-title"><h3 id="result-targeting-title">Targeting Criteria</h3><dl id="result-targeting-details" class="result-definition-list"></dl></section>

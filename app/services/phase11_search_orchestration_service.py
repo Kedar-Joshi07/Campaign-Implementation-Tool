@@ -12,6 +12,7 @@ import json
 import logging
 import heapq
 import math
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -440,18 +441,91 @@ def execute_phase11_search(
         run = repository.fetch_search_run(search_run_id)
         assert run is not None
 
+    runtime = repository.fetch_search_runtime(search_run_id)
+    if runtime is None or int(runtime["progress_percent"]) <= 3:
+        repository.update_search_progress(
+            search_run_id,
+            stage_code="CHECKING_INTELLIGENCE",
+            stage_label="Checking targeting intelligence",
+            progress_percent=3,
+            status_message="Checking current and reusable targeting intelligence.",
+        )
+
     state, generation, response = _phase10_state(
         path, run, project_root=root,
         reader=phase10_reader, preparer=phase10_preparer,
+    )
+    phase10_progress = response.get("progress_percent", 0)
+    if isinstance(phase10_progress, bool) or not isinstance(phase10_progress, int):
+        phase10_progress = 0
+    mapped_progress = min(
+        90,
+        max(
+            int(runtime["progress_percent"]) if runtime is not None else 0,
+            5,
+            5 + int(phase10_progress * 0.85),
+        ),
+    )
+    stage_code = str(
+        response.get("stage") or "PREPARING_INTELLIGENCE"
+    ).upper()
+    if not stage_code.replace("_", "").isalnum():
+        stage_code = "PREPARING_INTELLIGENCE"
+    stage_label = str(
+        response.get("business_message")
+        or "Preparing targeting intelligence"
+    )[:200]
+    repository.update_search_progress(
+        search_run_id,
+        stage_code=stage_code,
+        stage_label=stage_label,
+        progress_percent=mapped_progress,
+        status_message=stage_label,
     )
     if state == "WAITING":
         return SearchOrchestrationOutcome(
             search_run_id, "PROCESSING", waiting_on="PHASE10_INTELLIGENCE"
         )
     if state in {"BLOCKED", "FAILED"}:
-        repository.fail_search_run(search_run_id, blocked=state == "BLOCKED")
+        blocked = state == "BLOCKED"
+        repository.fail_search_run(
+            search_run_id,
+            blocked=blocked,
+            failure_code=(
+                "TARGETING_INTELLIGENCE_BLOCKED"
+                if blocked else "TARGETING_INTELLIGENCE_FAILED"
+            ),
+            failure_category="TARGETING_INTELLIGENCE",
+            failure_summary=str(
+                response.get("business_message")
+                or (
+                    "The saved targeting request does not have enough verified campaign history."
+                    if blocked
+                    else "Targeting intelligence could not be prepared safely."
+                )
+            )[:1000],
+            resolution_steps=(
+                (
+                    "Review whether the selected products and historical campaign filters have enough completed history.",
+                    "Broaden the historical criteria or load additional verified campaign history, then submit the search again.",
+                )
+                if blocked
+                else (
+                    "Wait until the application and source data are available, then submit the saved search again.",
+                    "Use the search number when requesting support if the failure continues.",
+                )
+            ),
+        )
         return SearchOrchestrationOutcome(search_run_id, state)
     assert generation is not None
+
+    repository.update_search_progress(
+        search_run_id,
+        stage_code="CHECKING_RESULT_CACHE",
+        stage_label="Checking for a reusable result",
+        progress_percent=91,
+        status_message="Checking whether this exact potential-customer result already exists.",
+    )
 
     cache_key = build_result_cache_key(run, generation)
     snapshot = repository.find_snapshot_by_cache_key(cache_key)
@@ -460,6 +534,15 @@ def execute_phase11_search(
     ):
         repository.update_snapshot_currentness(
             int(snapshot["result_snapshot_id"]), state="CURRENT"
+        )
+        repository.update_search_progress(
+            search_run_id,
+            stage_code="VERIFYING_RESULT",
+            stage_label="Verifying the reusable result",
+            progress_percent=99,
+            status_message="Verifying the reused result before making it available.",
+            processed_count=int(snapshot["resolved_count"]),
+            total_count=int(snapshot["resolved_count"]),
         )
         repository.complete_search_run(
             search_run_id,
@@ -481,9 +564,46 @@ def execute_phase11_search(
             waiting_on="RESULT_MATERIALIZER",
         )
 
+    repository.update_search_progress(
+        search_run_id,
+        stage_code="SELECTING_POTENTIAL_CUSTOMERS",
+        stage_label="Selecting potential customers",
+        progress_percent=92,
+        status_message="Applying the saved targeting criteria to the ranked customer universe.",
+    )
     members = membership_source(path, run, generation)
+    expected_total = (
+        int(run["target_count"])
+        if run.get("selection_mode") == "TOP_N" and run.get("target_count") is not None
+        else None
+    )
+
+    def tracked_members():
+        processed = 0
+        last_update = time.monotonic()
+        for member in members:
+            processed += 1
+            current = time.monotonic()
+            if processed == 1 or processed % 1000 == 0 or current - last_update >= 1.0:
+                progress = 94
+                if expected_total:
+                    progress = min(97, 92 + int(processed * 5 / expected_total))
+                repository.update_search_progress(
+                    search_run_id,
+                    stage_code="MATERIALIZING_RESULT",
+                    stage_label="Building the result snapshot",
+                    progress_percent=progress,
+                    status_message=(
+                        f"Processed {processed:,} potential customers into the governed result snapshot."
+                    ),
+                    processed_count=processed,
+                    total_count=expected_total,
+                )
+                last_update = current
+            yield member
+
     snapshot_id = materializer(
-        path, run, generation, cache_key, snapshot, members
+        path, run, generation, cache_key, snapshot, tracked_members()
     )
     created = repository.fetch_snapshot(snapshot_id)
     if created is None or not validate_exact_snapshot(
@@ -492,6 +612,15 @@ def execute_phase11_search(
         raise Phase11SearchOrchestrationError(
             "Materialized result snapshot failed validation."
         )
+    repository.update_search_progress(
+        search_run_id,
+        stage_code="VERIFYING_RESULT",
+        stage_label="Verifying the completed result",
+        progress_percent=99,
+        status_message="Verifying result counts, lineage, and currentness.",
+        processed_count=int(created["resolved_count"]),
+        total_count=int(created["resolved_count"]),
+    )
     source = _result_source(response)
     repository.complete_search_run(
         search_run_id, result_snapshot_id=snapshot_id, result_source=source
@@ -515,13 +644,32 @@ def execute_phase11_search_safely(
     except Phase11SearchBlockedError:
         current = repository.fetch_search_run(search_run_id)
         if current is not None and current["status"] in {"QUEUED", "PROCESSING"}:
-            repository.fail_search_run(search_run_id, blocked=True)
+            repository.fail_search_run(
+                search_run_id,
+                blocked=True,
+                failure_code="SAVED_SEARCH_NO_LONGER_VALID",
+                failure_category="SAVED_TARGETING_CRITERIA",
+                failure_summary="The saved targeting criteria can no longer be applied safely.",
+                resolution_steps=(
+                    "Review the saved criteria against the currently available campaign choices.",
+                    "Create a new search with current choices after correcting unavailable criteria.",
+                ),
+            )
         return SearchOrchestrationOutcome(search_run_id, "BLOCKED")
     except Exception:
         logger.exception("Phase 11 search orchestration failed | search_run_id=%s", search_run_id)
         current = repository.fetch_search_run(search_run_id)
         if current is not None and current["status"] in {"QUEUED", "PROCESSING"}:
-            repository.fail_search_run(search_run_id)
+            repository.fail_search_run(
+                search_run_id,
+                failure_code="UNEXPECTED_SEARCH_PROCESSING_FAILURE",
+                failure_category="PROCESSING_FAILURE",
+                failure_summary="The search stopped while preparing a governed result.",
+                resolution_steps=(
+                    "Wait until the application and source data are available, then submit the saved search again.",
+                    "Use the search number when requesting support if the failure continues.",
+                ),
+            )
         return SearchOrchestrationOutcome(search_run_id, "FAILED")
 
 

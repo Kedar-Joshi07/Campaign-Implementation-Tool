@@ -2,7 +2,7 @@
 
 ## Scope
 
-This document describes the normal Phase 11 runtime in schema version 18. The production entry point is:
+This document describes the normal Phase 11 runtime in schema version 19. The production entry point is:
 
 ```powershell
 python -m uvicorn app.main:app --reload
@@ -49,6 +49,10 @@ The application creates one coordinator with the initialized database, productio
 - one active loop per search ID;
 - durable statuses `QUEUED`, `PROCESSING`, `COMPLETED`, `BLOCKED`, and `FAILED`.
 
+Each immutable search has a separate durable runtime row. It records lifecycle stage, monotonic progress, processed/total counts where the total is knowable, heartbeat, state version, and safe issue guidance. Phase 10's existing stage percentage maps to the first 90 percent; exact-cache checks and result materialization own the remaining progress. `ALL_MATCHING` materialization reports actual processed rows without inventing a final total. Results polling projects a bounded ETA only after measurable work begins and identifies the estimate basis and confidence.
+
+The runtime schema reserves pause/stop/restart-request states and guards their allowed transitions. No pause, stop, restart, or rerun action endpoint is implemented in this release.
+
 The submission service's compatibility seam is configured to `coordinator.submit` during startup and reset during shutdown. A repeated submit or startup/request race attaches to the already tracked search instead of creating a second loop. Terminal searches are never resubmitted automatically.
 
 Each worker runs one bounded orchestration pass. A search waiting on Phase 10 remains durably `PROCESSING`; the worker waits on the coordinator shutdown event before polling again. A terminal outcome releases the in-memory reservation. Unexpected exceptions are logged server-side, converted to a stable safe `FAILED` record when the run is still active, and do not terminate the application.
@@ -93,7 +97,7 @@ A client disconnect or closed consumer records `ABORTED`; source/currentness con
 
 The `app.main` lifespan performs this order:
 
-1. initialize or verify schema version 18;
+1. initialize or verify schema version 19;
 2. create the result materializer and bounded Phase 11 coordinator;
 3. connect the HTTP submission seam to the coordinator;
 4. reconcile stale model/scoring jobs;
