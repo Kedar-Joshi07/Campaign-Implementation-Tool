@@ -1,0 +1,341 @@
+{
+  "captured_at_utc": "2026-09-24T10:32:59.673428+00:00",
+  "source_sha": "d9ba1f777538fe832b5551d9a59630fbc4ef8a80",
+  "base_url": "http://127.0.0.1:8000",
+  "requested_count": 33,
+  "captured_count": 33,
+  "all_technical_details_open": true,
+  "page_errors": [],
+  "records": [
+    {
+      "search_run_id": 1,
+      "campaign_name": "ABC",
+      "status": "BLOCKED",
+      "url": "http://127.0.0.1:8000/#results/1",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_001_blocked_abc.png",
+      "bytes": 369034
+    },
+    {
+      "search_run_id": 2,
+      "campaign_name": "ABC1",
+      "status": "BLOCKED",
+      "url": "http://127.0.0.1:8000/#results/2",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_002_blocked_abc1.png",
+      "bytes": 422911
+    },
+    {
+      "search_run_id": 3,
+      "campaign_name": "Step 20 Full 5M New Build",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/3",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_003_completed_step_20_full_5m_new_build.png",
+      "bytes": 343252
+    },
+    {
+      "search_run_id": 4,
+      "campaign_name": "Step 20 Exact Repeat",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/4",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_004_completed_step_20_exact_repeat.png",
+      "bytes": 342643
+    },
+    {
+      "search_run_id": 5,
+      "campaign_name": "Step 20 Filter Change",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/5",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_005_completed_step_20_filter_change.png",
+      "bytes": 340638
+    },
+    {
+      "search_run_id": 6,
+      "campaign_name": "Step 20 Delivery SMS_CONTACT_V1",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/6",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_006_completed_step_20_delivery_sms_contact_v1.png",
+      "bytes": 342382
+    },
+    {
+      "search_run_id": 7,
+      "campaign_name": "Step 20 Delivery WHATSAPP_CONTACT_V1",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/7",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_007_completed_step_20_delivery_whatsapp_contact_v1.png",
+      "bytes": 345349
+    },
+    {
+      "search_run_id": 8,
+      "campaign_name": "Step 20 Delivery PAID_SOCIAL_AUDIENCE_V1",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/8",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_008_completed_step_20_delivery_paid_social_audience_v1.png",
+      "bytes": 344693
+    },
+    {
+      "search_run_id": 9,
+      "campaign_name": "ABC2",
+      "status": "BLOCKED",
+      "url": "http://127.0.0.1:8000/#results/9",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_009_blocked_abc2.png",
+      "bytes": 426333
+    },
+    {
+      "search_run_id": 10,
+      "campaign_name": "ABC4",
+      "status": "BLOCKED",
+      "url": "http://127.0.0.1:8000/#results/10",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_010_blocked_abc4.png",
+      "bytes": 329684
+    },
+    {
+      "search_run_id": 11,
+      "campaign_name": "Runtime gap reproduction 2026-09-20",
+      "status": "BLOCKED",
+      "url": "http://127.0.0.1:8000/#results/11",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_011_blocked_runtime_gap_reproduction_2026_09_20.png",
+      "bytes": 389868
+    },
+    {
+      "search_run_id": 12,
+      "campaign_name": "Runtime Step6 DIRECT_MAIL",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/12",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_012_completed_runtime_step6_direct_mail.png",
+      "bytes": 341872
+    },
+    {
+      "search_run_id": 13,
+      "campaign_name": "Runtime Step6 TELEMARKETING",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/13",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_013_completed_runtime_step6_telemarketing.png",
+      "bytes": 343139
+    },
+    {
+      "search_run_id": 14,
+      "campaign_name": "Runtime Step6 PAID_SEARCH",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/14",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_014_completed_runtime_step6_paid_search.png",
+      "bytes": 343030
+    },
+    {
+      "search_run_id": 15,
+      "campaign_name": "Runtime Step6 MOBILE_PUSH",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/15",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_015_completed_runtime_step6_mobile_push.png",
+      "bytes": 342897
+    },
+    {
+      "search_run_id": 16,
+      "campaign_name": "Runtime Step6 DISPLAY",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/16",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_016_completed_runtime_step6_display.png",
+      "bytes": 341655
+    },
+    {
+      "search_run_id": 17,
+      "campaign_name": "Runtime Step6 WEBSITE_ONSITE",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/17",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_017_completed_runtime_step6_website_onsite.png",
+      "bytes": 343179
+    },
+    {
+      "search_run_id": 18,
+      "campaign_name": "Phase11 Step8 Exact Repeat",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/18",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_018_completed_phase11_step8_exact_repeat.png",
+      "bytes": 343109
+    },
+    {
+      "search_run_id": 19,
+      "campaign_name": "Phase11 Step8 Filter Change",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/19",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_019_completed_phase11_step8_filter_change.png",
+      "bytes": 342515
+    },
+    {
+      "search_run_id": 20,
+      "campaign_name": "Phase11 Step8 Delivery Profile Change",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/20",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_020_completed_phase11_step8_delivery_profile_change.png",
+      "bytes": 342946
+    },
+    {
+      "search_run_id": 21,
+      "campaign_name": "Phase11 Runtime Step9 Full 5M Build",
+      "status": "FAILED",
+      "url": "http://127.0.0.1:8000/#results/21",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_021_failed_phase11_runtime_step9_full_5m_build.png",
+      "bytes": 316725
+    },
+    {
+      "search_run_id": 22,
+      "campaign_name": "Phase11 Runtime Step9 Full 5M Scoring",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/22",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_022_completed_phase11_runtime_step9_full_5m_scoring.png",
+      "bytes": 322703
+    },
+    {
+      "search_run_id": 23,
+      "campaign_name": "Phase11 Runtime Step9 Exact Repeat",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/23",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_023_completed_phase11_runtime_step9_exact_repeat.png",
+      "bytes": 322577
+    },
+    {
+      "search_run_id": 24,
+      "campaign_name": "Phase11 Runtime Step9 Targeting Filter Change",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/24",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_024_completed_phase11_runtime_step9_targeting_filter_change.png",
+      "bytes": 322586
+    },
+    {
+      "search_run_id": 25,
+      "campaign_name": "Phase11 Runtime Step9 Delivery Profile Change",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/25",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_025_completed_phase11_runtime_step9_delivery_profile_change.png",
+      "bytes": 321391
+    },
+    {
+      "search_run_id": 26,
+      "campaign_name": "Phase11 Runtime Step14 Exact SHA Repeat",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/26",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_026_completed_phase11_runtime_step14_exact_sha_repeat.png",
+      "bytes": 320657
+    },
+    {
+      "search_run_id": 27,
+      "campaign_name": "Phase11 Runtime Step14 Corrected SHA Repeat",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/27",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_027_completed_phase11_runtime_step14_corrected_sha_repeat.png",
+      "bytes": 321264
+    },
+    {
+      "search_run_id": 28,
+      "campaign_name": "ABC",
+      "status": "FAILED",
+      "url": "http://127.0.0.1:8000/#results/28",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_028_failed_abc.png",
+      "bytes": 368851
+    },
+    {
+      "search_run_id": 29,
+      "campaign_name": "DEMO S01 \u2014 Working-Age Mainstream",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/29",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_029_completed_demo_s01_working_age_mainstream.png",
+      "bytes": 334490
+    },
+    {
+      "search_run_id": 30,
+      "campaign_name": "DEMO S02 \u2014 CA + TX Younger Professionals",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/30",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_030_completed_demo_s02_ca_tx_younger_professionals.png",
+      "bytes": 335303
+    },
+    {
+      "search_run_id": 31,
+      "campaign_name": "DEMO S03 \u2014 NY/NJ/FL Mature Middle Income",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/31",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_031_completed_demo_s03_ny_nj_fl_mature_middle_income.png",
+      "bytes": 337969
+    },
+    {
+      "search_run_id": 32,
+      "campaign_name": "DEMO S04 \u2014 Midwest Value Market",
+      "status": "COMPLETED",
+      "url": "http://127.0.0.1:8000/#results/32",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_032_completed_demo_s04_midwest_value_market.png",
+      "bytes": 336340
+    },
+    {
+      "search_run_id": 33,
+      "campaign_name": "ABC",
+      "status": "BLOCKED",
+      "url": "http://127.0.0.1:8000/#results/33",
+      "technical_details_open": true,
+      "technical_detail_rows": 16,
+      "filename": "search_033_blocked_abc.png",
+      "bytes": 372642
+    }
+  ]
+}
