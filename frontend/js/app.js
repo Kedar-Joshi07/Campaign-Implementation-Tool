@@ -10,6 +10,7 @@ import { initializeSavedTargetGroups, loadSavedTargetGroups } from "./saved-targ
 import { applyViewContract, resolveBusinessRoute, VIEW_DEFINITIONS, VIEW_GROUPS } from "./view-contract.js";
 import { initializeBusinessSearchForm, loadBusinessSearchForm } from "./business-search-form.js";
 import { initializeSearchStatus, loadSearchStatus, loadSearchHistory, stopSearchStatus } from "./business-search-status.js";
+import { initializeSidebar } from "./sidebar.js?v=sidebar-layout-2";
 
 // Explicit retained-wizard harness seam. Never enables the shell in normal routing.
 export function initializeLegacyCampaignPlannerForHarness() {
@@ -100,6 +101,7 @@ function initializeNavigation() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initializeSidebar();
   applyViewContract();
   initializeOverview();
   initializeBusinessSearchForm();

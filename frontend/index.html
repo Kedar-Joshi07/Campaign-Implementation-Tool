@@ -6,19 +6,24 @@
     <meta name="description" content="Find potential customers and review campaign targeting results">
     <title>Home | Campaign Implementation Intelligence</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/static/css/main.css?v=phase11-14">
+    <link rel="stylesheet" href="/static/css/main.css?v=sidebar-layout-2">
     <link rel="stylesheet" href="/static/css/components.css?v=phase11-14">
   </head>
   <body>
     <div class="app-shell">
-      <aside class="sidebar" aria-label="Primary navigation">
-        <a class="brand" href="#home" data-view-target="home" aria-label="Campaign Implementation Intelligence home">
-          <span class="brand-mark" aria-hidden="true">CI</span>
-          <span class="brand-copy">
-            <strong>Campaign</strong>
-            <small>Implementation Intelligence</small>
-          </span>
-        </a>
+      <aside id="primary-sidebar" class="sidebar" aria-label="Primary navigation">
+        <div class="sidebar-header">
+          <a class="brand" href="#home" data-view-target="home" aria-label="Campaign Implementation Intelligence home">
+            <span class="brand-mark" aria-hidden="true">CI</span>
+            <span class="brand-copy">
+              <strong>Campaign</strong>
+              <small>Implementation Intelligence</small>
+            </span>
+          </a>
+          <button id="sidebar-collapse" class="sidebar-toggle sidebar-collapse" type="button" aria-controls="primary-sidebar" aria-expanded="true" aria-label="Hide navigation sidebar" title="Hide navigation sidebar">
+            <span aria-hidden="true">&#x2039;</span>
+          </button>
+        </div>
 
         <nav id="business-navigation" class="navigation" aria-label="Primary business navigation">
           <button id="nav-home" class="navigation-item is-active" type="button" data-view-target="home" aria-current="page">
@@ -39,7 +44,12 @@
           </div>
           <p>Find Potential Customers and review your results. Downloads do not activate or send campaigns.</p>
         </div>
+        <div id="sidebar-resize-handle" class="sidebar-resize-handle" role="separator" aria-label="Resize navigation sidebar" aria-orientation="vertical" aria-controls="primary-sidebar" aria-valuemin="216" aria-valuemax="420" aria-valuenow="264" tabindex="0" title="Drag horizontally to resize the navigation sidebar"></div>
       </aside>
+
+      <button id="sidebar-expand" class="sidebar-toggle sidebar-expand" type="button" aria-controls="primary-sidebar" aria-expanded="false" aria-label="Show navigation sidebar" title="Show navigation sidebar" hidden>
+        <span aria-hidden="true">&#x203A;</span>
+      </button>
 
       <main class="main-content" id="main-content">
         <header class="topbar">
@@ -2022,6 +2032,6 @@
       </main>
     </div>
 
-    <script type="module" src="/static/js/app.js"></script>
+    <script type="module" src="/static/js/app.js?v=sidebar-layout-2"></script>
   </body>
 </html>

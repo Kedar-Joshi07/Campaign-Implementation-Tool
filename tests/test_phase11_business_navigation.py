@@ -29,6 +29,27 @@ def test_navigation_source_preserves_legacy_views_without_security_claim() -> No
     assert "UI hiding is not security" in app
 
 
+def test_sidebar_layout_source_has_accessible_resize_and_visibility_controls() -> None:
+    html = (ROOT / "frontend/index.html").read_text(encoding="utf-8")
+    css = (ROOT / "frontend/css/main.css").read_text(encoding="utf-8")
+    script = (ROOT / "frontend/js/sidebar.js").read_text(encoding="utf-8")
+    app = (ROOT / "frontend/js/app.js").read_text(encoding="utf-8")
+
+    for control_id in (
+        "primary-sidebar", "sidebar-collapse", "sidebar-expand", "sidebar-resize-handle",
+    ):
+        assert f'id="{control_id}"' in html
+    assert 'role="separator"' in html
+    assert 'aria-orientation="vertical"' in html
+    assert '/static/js/app.js?v=sidebar-layout-2' in html
+    assert "grid-template-columns: var(--sidebar-width) minmax(0, 1fr)" in css
+    assert ".app-shell.sidebar-is-hidden" in css
+    assert 'setPointerCapture(activePointerId)' in script
+    assert 'event.key === "ArrowLeft"' in script
+    assert 'window.localStorage.setItem(STORAGE_KEY' in script
+    assert 'from "./sidebar.js?v=sidebar-layout-2"' in app
+
+
 def test_legacy_api_contracts_remain_registered() -> None:
     from app.main import app
 
@@ -162,6 +183,53 @@ def test_click_hash_history_detail_and_redirect_without_extra_history(page):
     browser.locator("#nav-home").click()
     assert browser.evaluate("history.length") == before
     assert browser.locator("#home-find-potential-customers").get_attribute("aria-current") is None
+    assert errors == []
+
+
+@pytest.mark.browser
+def test_sidebar_drag_keyboard_hide_unhide_and_persistence(page):
+    browser, errors, _ = page
+    open_route(browser)
+    shell = browser.locator(".app-shell")
+    sidebar = browser.locator("#primary-sidebar")
+    handle = browser.locator("#sidebar-resize-handle")
+
+    initial_width = sidebar.evaluate("element => Math.round(element.getBoundingClientRect().width)")
+    box = handle.bounding_box()
+    assert box is not None
+    browser.mouse.move(box["x"] + box["width"] / 2, box["y"] + 120)
+    browser.mouse.down()
+    browser.mouse.move(box["x"] + 82, box["y"] + 120, steps=5)
+    browser.mouse.up()
+    dragged_width = sidebar.evaluate("element => Math.round(element.getBoundingClientRect().width)")
+    assert dragged_width >= initial_width + 60
+    assert int(handle.get_attribute("aria-valuenow")) == dragged_width
+
+    handle.focus()
+    browser.keyboard.press("ArrowLeft")
+    browser.wait_for_timeout(220)
+    keyboard_width = sidebar.evaluate("element => Math.round(element.getBoundingClientRect().width)")
+    assert keyboard_width == dragged_width - 16
+
+    browser.locator("#sidebar-collapse").click()
+    browser.wait_for_timeout(220)
+    assert "sidebar-is-hidden" in (shell.get_attribute("class") or "")
+    assert sidebar.get_attribute("aria-hidden") == "true"
+    assert browser.locator("#sidebar-expand").is_visible()
+    assert shell.evaluate("element => getComputedStyle(element).gridTemplateColumns.split(' ')[0]") == "0px"
+
+    browser.locator("#sidebar-expand").click()
+    browser.wait_for_timeout(220)
+    assert "sidebar-is-hidden" not in (shell.get_attribute("class") or "")
+    assert sidebar.get_attribute("aria-hidden") == "false"
+    assert browser.locator("#sidebar-expand").is_hidden()
+    assert sidebar.evaluate("element => Math.round(element.getBoundingClientRect().width)") == keyboard_width
+
+    browser.reload(wait_until="networkidle")
+    browser.wait_for_function("location.hash.length > 1")
+    assert browser.locator("#primary-sidebar").evaluate(
+        "element => Math.round(element.getBoundingClientRect().width)"
+    ) == keyboard_width
     assert errors == []
 
 

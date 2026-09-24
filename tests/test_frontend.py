@@ -62,6 +62,7 @@ def test_frontend_contains_functional_phase_one_views(client: TestClient) -> Non
         "/static/js/business-search-form.js",
         "/static/js/business-search-status.js",
         "/static/js/saved-target-groups.js",
+        "/static/js/sidebar.js",
     ),
 )
 def test_frontend_assets_are_served(client: TestClient, asset_path: str) -> None:
