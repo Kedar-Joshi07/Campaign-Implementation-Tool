@@ -1293,7 +1293,7 @@
             </fieldset>
             <fieldset class="panel"><legend>Campaign Context</legend><div id="business-context-fields" class="analysis-form-grid"></div></fieldset>
             <fieldset class="panel"><legend>Targeting Preferences</legend>
-              <fieldset class="planner-strength-fieldset"><legend>Match Strength</legend><div id="business-match-strength" class="planner-strength-options"></div></fieldset>
+              <fieldset class="planner-strength-fieldset"><legend>Calibrated Purchase Propensity</legend><div id="business-match-strength" class="planner-strength-options"></div></fieldset>
               <div id="business-targeting-fields" class="analysis-form-grid"></div>
               <details class="planner-targeting-more"><summary>More options</summary><div id="business-more-fields" class="analysis-form-grid"></div>
                 <div class="analysis-form-grid">
@@ -1311,7 +1311,11 @@
               <div class="form-field"><label for="business-export-profile">Delivery Channel / Download Profile</label><select id="business-export-profile" name="export_profile" required aria-describedby="business-profile-help"></select></div>
               <p id="business-profile-help">Delivery choice does not retrain targeting intelligence. Downloads use profile-specific identifiers and contact permissions; not every selected person is necessarily deliverable. This tool does not activate or send campaigns.</p>
             </fieldset>
-            <button id="business-search-submit" class="button button-primary" type="submit" disabled>Find Potential Customers</button>
+            <div class="result-card-actions">
+              <button id="business-search-preflight" class="button button-secondary" type="button" disabled>Check Exact Count</button>
+              <button id="business-search-submit" class="button button-primary" type="submit" disabled>Find Potential Customers</button>
+            </div>
+            <p id="business-search-preflight-result" class="panel-note" role="status" aria-live="polite"></p>
             <p id="business-search-status" role="status" aria-live="polite"></p>
           </form>
           <div id="legacy-campaign-planner-shell" hidden>
@@ -1787,6 +1791,28 @@
               <section class="result-detail-panel" aria-labelledby="result-profile-title"><h3 id="result-profile-title">Score and Demographic Summary</h3><dl id="result-profile-details" class="result-definition-list"></dl></section>
               <section class="result-detail-panel" aria-labelledby="result-provenance-title"><h3 id="result-provenance-title">Snapshot Provenance</h3><dl id="result-provenance-details" class="result-definition-list"></dl></section>
               <section class="result-detail-panel" aria-labelledby="result-download-title"><h3 id="result-download-title">Download Profile</h3><dl id="result-download-details" class="result-definition-list"></dl><p id="result-download-help" class="panel-note"></p></section>
+              <section id="result-feedback-panel" class="result-detail-panel" aria-labelledby="result-feedback-title" hidden>
+                <h3 id="result-feedback-title">Outcome Feedback</h3>
+                <p class="panel-note">Upload verified campaign outcomes only after the response window has closed. Feedback is validated against this immutable result and never changes its membership.</p>
+                <div class="analysis-form-actions result-feedback-template-actions" aria-label="Feedback format templates">
+                  <a id="result-feedback-csv-template" class="button button-secondary" href="/api/potential-customer-search/feedback-template.csv" download>Download CSV Template</a>
+                  <a id="result-feedback-json-template" class="button button-secondary" href="/api/potential-customer-search/feedback-template.json" download>Download JSON Template</a>
+                </div>
+                <details id="result-feedback-format-guide" class="feedback-format-guide">
+                  <summary>View accepted CSV and JSON formats</summary>
+                  <p><strong>Required:</strong> <code>person_id</code>, <code>outcome</code>, and <code>outcome_at</code>. <strong>Optional:</strong> <code>outcome_value</code>.</p>
+                  <ul class="feedback-format-rules">
+                    <li>Use a person ID from this exact downloaded result.</li>
+                    <li>Use <code>1</code> for purchase and <code>0</code> for no purchase.</li>
+                    <li>Use an ISO 8601 timestamp with timezone, for example <code>2026-01-31T23:59:59Z</code>.</li>
+                    <li>CSV must be UTF-8. JSON must contain a <code>rows</code> array. Direct API requests also require an <code>Idempotency-Key</code> header; the web upload supplies it automatically.</li>
+                  </ul>
+                  <p class="panel-note">The downloaded files contain placeholders only. Replace them with verified outcomes before uploading or sending the API request.</p>
+                </details>
+                <div class="form-field"><label for="result-feedback-file">Purchase outcome CSV or JSON</label><input id="result-feedback-file" type="file" accept=".csv,.json,text/csv,application/csv,application/json"></div>
+                <button id="result-feedback-upload" class="button button-secondary" type="button">Upload Feedback</button>
+                <p id="result-feedback-status" class="panel-note" role="status" aria-live="polite"></p>
+              </section>
             </div>
             <details id="result-technical-disclosure" class="result-technical-disclosure">
               <summary>View technical details</summary>

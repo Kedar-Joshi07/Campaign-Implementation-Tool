@@ -32,10 +32,36 @@ const timeText = (value) => value ? new Date(value).toLocaleString() : "Not comp
 const durationText = (value) => value === null || value === undefined
   ? "Not completed"
   : `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })} seconds`;
+const feedbackIdempotencyKey = (runId) => {
+  if (typeof crypto.randomUUID === "function") {
+    return `browser-feedback-${runId}-${crypto.randomUUID()}`;
+  }
+  const entropy = new Uint32Array(4);
+  crypto.getRandomValues(entropy);
+  return `browser-feedback-${runId}-${Array.from(entropy, (value) => value.toString(16).padStart(8, "0")).join("")}`;
+};
 
 function clearTimer() {
   if (timer) window.clearTimeout(timer);
   timer = null;
+}
+
+async function retryRun(runId, button) {
+  button.disabled = true;
+  const original = button.textContent;
+  button.textContent = "Scheduling retry...";
+  try {
+    await getJSON(`/api/potential-customer-search/runs/${runId}/retry`, {
+      method: "POST",
+      headers: { "Idempotency-Key": `browser-${runId}-${crypto.randomUUID()}` },
+    });
+    refreshCycles = 0;
+    if (window.location.hash === `#results/${runId}`) await loadSearchStatus(runId);
+    else await loadSearchHistory();
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = error.message || original;
+  }
 }
 
 export function stopSearchStatus() {
@@ -109,6 +135,16 @@ function resultCard(run) {
     download.setAttribute("download", "");
     actions.append(download);
   }
+  if (run.issue?.retryable) {
+    const retry = make("button", "button button-primary", "Retry Search");
+    retry.type = "button";
+    retry.addEventListener("click", () => retryRun(run.search_run_id, retry));
+    actions.append(retry);
+  } else if (run.status === "COMPLETED") {
+    const again = make("a", "button button-secondary", "Run Again");
+    again.href = "#find-potential-customers";
+    actions.append(again);
+  }
   const issue = createRunIssue(run);
   article.append(header, facts, targeting, createRunProgress(run, { compact: true }), message);
   if (issue) article.append(issue);
@@ -130,7 +166,16 @@ function renderHistory() {
 function scheduleHistoryRefresh(ordered, request) {
   clearTimer();
   const active = ordered.some(isRunActive);
-  if (!active || refreshCycles >= RESULT_REFRESH_MAX_CYCLES) return;
+  if (!active) return;
+  if (refreshCycles >= RESULT_REFRESH_MAX_CYCLES) {
+    const status = find("results-status");
+    status.textContent = "Live updates paused after five minutes. The searches continue in the background.";
+    const resume = make("button", "button button-secondary", "Resume Updates");
+    resume.type = "button";
+    resume.addEventListener("click", () => { refreshCycles = 0; loadSearchHistory(); });
+    status.append(" ", resume);
+    return;
+  }
   refreshCycles += 1;
   timer = window.setTimeout(() => {
     if (request === token && window.location.hash === "#results") {
@@ -202,6 +247,12 @@ function renderDetail(run) {
   const issue = createRunIssue(run);
   find("result-detail-issue").replaceChildren(...(issue ? [issue] : []));
   find("result-detail-issue").hidden = !issue;
+  if (run.issue?.retryable) {
+    const retry = make("button", "button button-primary", "Retry Search");
+    retry.type = "button";
+    retry.addEventListener("click", () => retryRun(run.search_run_id, retry));
+    find("result-detail-issue").append(retry);
+  }
   const products = run.selected_products.map(
     (product) => `${product.product_name} (${product.product_id})`,
   );
@@ -268,6 +319,50 @@ function renderDetail(run) {
     download.removeAttribute("download");
   }
   find("result-detail-status").textContent = run.safe_message;
+  const feedbackPanel = find("result-feedback-panel");
+  feedbackPanel.hidden = run.status !== "COMPLETED";
+  find("result-feedback-file").value = "";
+  find("result-feedback-status").textContent = "";
+}
+
+async function uploadFeedback() {
+  const runId = find("result-detail-view").dataset.searchRunId;
+  const input = find("result-feedback-file");
+  const status = find("result-feedback-status");
+  const button = find("result-feedback-upload");
+  if (!input.files?.length) {
+    status.textContent = "Choose a CSV or JSON file first.";
+    return;
+  }
+  const file = input.files[0];
+  const lowerName = file.name.toLowerCase();
+  const contentType = lowerName.endsWith(".json") || file.type === "application/json"
+    ? "application/json"
+    : lowerName.endsWith(".csv") || ["text/csv", "application/csv", ""].includes(file.type)
+      ? "text/csv"
+      : null;
+  if (!contentType) {
+    status.textContent = "Use the downloadable CSV or JSON template.";
+    return;
+  }
+  button.disabled = true;
+  status.textContent = "Validating governed outcome feedback...";
+  try {
+    const result = await getJSON(`/api/potential-customer-search/runs/${runId}/feedback`, {
+      method: "POST",
+      headers: {
+        "Content-Type": contentType,
+        "Idempotency-Key": feedbackIdempotencyKey(runId),
+        "X-Feedback-Source": file.name,
+      },
+      body: await file.arrayBuffer(),
+    });
+    status.textContent = `${result.row_count.toLocaleString()} outcomes accepted. ${result.retraining_reason}`;
+  } catch (error) {
+    status.textContent = error.message || "Feedback could not be accepted.";
+  } finally {
+    button.disabled = false;
+  }
 }
 
 export async function loadSearchStatus(runId) {
@@ -286,6 +381,12 @@ export async function loadSearchStatus(runId) {
       if (isRunActive(run) && refreshCycles < RESULT_REFRESH_MAX_CYCLES) {
         refreshCycles += 1;
         timer = window.setTimeout(poll, RESULT_REFRESH_INTERVAL_MS);
+      } else if (isRunActive(run)) {
+        const resume = make("button", "button button-secondary", "Resume Updates");
+        resume.type = "button";
+        resume.addEventListener("click", () => { refreshCycles = 0; loadSearchStatus(runId); });
+        find("result-detail-status").textContent = "Live updates paused; the search continues in the background. ";
+        find("result-detail-status").append(resume);
       }
     } catch (error) {
       if (request === token) {
@@ -316,4 +417,5 @@ export function initializeSearchStatus() {
     refreshCycles = 0;
     loadSearchStatus(find("result-detail-view").dataset.searchRunId);
   });
+  find("result-feedback-upload").addEventListener("click", uploadFeedback);
 }

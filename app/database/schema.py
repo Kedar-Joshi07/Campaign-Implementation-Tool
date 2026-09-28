@@ -14,27 +14,31 @@ from app.config import APP_VERSION, DATABASE_PATH
 from app.database.connection import get_connection
 from app.database.phase11_schema import (
     CAMPAIGN_SEARCH_RUN_COLUMNS,
-    CAMPAIGN_RESULT_SNAPSHOT_COLUMNS,
-    CAMPAIGN_RESULT_EXPORT_EVENT_COLUMNS,
+    CAMPAIGN_RESULT_SNAPSHOT_COLUMNS as CAMPAIGN_RESULT_SNAPSHOT_COLUMNS,
+    CAMPAIGN_RESULT_EXPORT_EVENT_COLUMNS as CAMPAIGN_RESULT_EXPORT_EVENT_COLUMNS,
     PHASE_ELEVEN_CREATE_TABLE_STATEMENTS,
     PHASE_ELEVEN_REQUIRED_INDEX_STATEMENTS,
-    CAMPAIGN_SEARCH_RUN_RUNTIME_COLUMNS,
+    CAMPAIGN_SEARCH_RUN_RUNTIME_COLUMNS as CAMPAIGN_SEARCH_RUN_RUNTIME_COLUMNS,
     PHASE_ELEVEN_RUNTIME_CREATE_TABLE_STATEMENT,
     PHASE_ELEVEN_RUNTIME_INDEX_STATEMENTS,
     PHASE_ELEVEN_RUNTIME_TRIGGER_STATEMENTS,
     PHASE_ELEVEN_TRIGGER_STATEMENTS,
 )
 from app.database.phase11_feedback_schema import (
-    CAMPAIGN_SEARCH_FUTURE_LINEAGE_COLUMNS,
+    CAMPAIGN_SEARCH_FUTURE_LINEAGE_COLUMNS as CAMPAIGN_SEARCH_FUTURE_LINEAGE_COLUMNS,
     PHASE_ELEVEN_FEEDBACK_CREATE_TABLE_STATEMENT,
     PHASE_ELEVEN_FEEDBACK_INDEX_STATEMENTS,
     PHASE_ELEVEN_FEEDBACK_TRIGGER_STATEMENTS,
+)
+from app.database.search_recovery_schema import (
+    SEARCH_RECOVERY_INDEX_STATEMENTS,
+    SEARCH_RECOVERY_TABLE_STATEMENTS,
 )
 
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 19
+CURRENT_SCHEMA_VERSION = 21
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -63,6 +67,19 @@ EXPECTED_TABLES = (
     "campaign_result_export_events",
     "campaign_search_future_lineage",
     "campaign_search_run_runtime",
+    "campaign_search_attempts",
+    "campaign_search_progress_events",
+    "targeting_option_catalogs",
+    "targeting_product_catalog",
+    "score_calibration_artifacts",
+    "calibrated_propensity_scores",
+    "calibration_score_stage",
+    "calibration_distribution_bins",
+    "intelligence_verification_attestations",
+    "search_preflight_cache",
+    "campaign_feedback_batches",
+    "campaign_feedback_outcomes",
+    "feedback_retraining_decisions",
 )
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
@@ -2746,6 +2763,171 @@ def _migrate_to_version_19(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_20(connection: sqlite3.Connection) -> None:
+    """Add retry attempts, calibrated selection, fast catalogs, and feedback."""
+
+    for statement in SEARCH_RECOVERY_TABLE_STATEMENTS:
+        connection.execute(statement)
+    for statement in SEARCH_RECOVERY_INDEX_STATEMENTS:
+        connection.execute(statement)
+    run_columns = {
+        row["name"] for row in connection.execute("PRAGMA table_info(campaign_search_runs)")
+    }
+    additions = (
+        ("current_attempt_number", "INTEGER NOT NULL DEFAULT 1 CHECK (current_attempt_number > 0)"),
+        ("selection_contract_version", "TEXT NOT NULL DEFAULT '1' CHECK (selection_contract_version IN ('1','2'))"),
+        ("propensity_bucket", "TEXT CHECK (propensity_bucket IN ('0.90','0.80','0.70','0.60','0.50'))"),
+        ("catalog_version", "TEXT"),
+        ("calibration_artifact_id", "INTEGER REFERENCES score_calibration_artifacts(calibration_artifact_id) ON DELETE RESTRICT"),
+    )
+    for name, definition in additions:
+        if name not in run_columns:
+            connection.execute(f'ALTER TABLE campaign_search_runs ADD COLUMN "{name}" {definition}')
+    runtime_columns = {
+        row["name"] for row in connection.execute("PRAGMA table_info(campaign_search_run_runtime)")
+    }
+    if "stage_started_at" not in runtime_columns:
+        connection.execute("ALTER TABLE campaign_search_run_runtime ADD COLUMN stage_started_at TEXT")
+        connection.execute(
+            "UPDATE campaign_search_run_runtime SET stage_started_at=updated_at WHERE stage_started_at IS NULL"
+        )
+    if "failure_stage_code" not in runtime_columns:
+        connection.execute("ALTER TABLE campaign_search_run_runtime ADD COLUMN failure_stage_code TEXT")
+    snapshot_columns = {
+        row["name"] for row in connection.execute("PRAGMA table_info(campaign_result_snapshots)")
+    }
+    snapshot_additions = (
+        ("selection_contract_version", "TEXT NOT NULL DEFAULT '1' CHECK (selection_contract_version IN ('1','2'))"),
+        ("propensity_bucket", "TEXT CHECK (propensity_bucket IN ('0.90','0.80','0.70','0.60','0.50'))"),
+        ("calibration_artifact_id", "INTEGER REFERENCES score_calibration_artifacts(calibration_artifact_id) ON DELETE RESTRICT"),
+    )
+    for name, definition in snapshot_additions:
+        if name not in snapshot_columns:
+            connection.execute(f'ALTER TABLE campaign_result_snapshots ADD COLUMN "{name}" {definition}')
+    connection.execute(
+        """
+        INSERT OR IGNORE INTO campaign_search_attempts (
+            search_run_id, attempt_number, attempt_contract_version,
+            selection_contract_version, status, generation_id, scoring_run_id,
+            created_at, started_at, completed_at, failure_stage_code,
+            failure_summary, retryable
+        )
+        SELECT search_run_id, 1, '1', '1', status, generation_id, scoring_run_id,
+               created_at, started_at, completed_at,
+               CASE WHEN status IN ('BLOCKED','FAILED') THEN status END,
+               safe_error_message,
+               CASE WHEN status IN ('BLOCKED','FAILED') THEN 1 ELSE 0 END
+        FROM campaign_search_runs
+        """
+    )
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_runs_terminal")
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_runs_immutable_identity")
+    retry_mutable = {
+        "generation_id", "analysis_run_id", "model_run_id", "scoring_run_id",
+        "result_snapshot_id", "result_source", "status", "selected_count",
+        "started_at", "completed_at", "processing_seconds", "safe_error_message",
+        "current_attempt_number", "calibration_artifact_id",
+    }
+    immutable_condition = " OR ".join(
+        f"NEW.{column} IS NOT OLD.{column}"
+        for column in CAMPAIGN_SEARCH_RUN_COLUMNS
+        if column not in retry_mutable
+    )
+    connection.execute(
+        "CREATE TRIGGER campaign_search_runs_immutable_identity "
+        "BEFORE UPDATE ON campaign_search_runs WHEN " + immutable_condition
+        + " BEGIN SELECT RAISE(ABORT, 'immutable registry identity'); END"
+    )
+    connection.execute(
+        """
+        CREATE TRIGGER campaign_search_runs_terminal BEFORE UPDATE ON campaign_search_runs
+        WHEN (OLD.status='COMPLETED')
+          OR (OLD.status IN ('BLOCKED','FAILED') AND NEW.status != 'QUEUED')
+          OR (OLD.status='PROCESSING' AND NEW.status='QUEUED')
+        BEGIN SELECT RAISE(ABORT, 'invalid search transition or terminal mutation'); END
+        """
+    )
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_run_runtime_transition")
+    connection.execute(
+        """
+        CREATE TRIGGER campaign_search_run_runtime_transition
+        BEFORE UPDATE ON campaign_search_run_runtime
+        WHEN NEW.lifecycle_status != OLD.lifecycle_status AND NOT (
+            (OLD.lifecycle_status='QUEUED' AND NEW.lifecycle_status IN
+                ('PROCESSING','PAUSE_REQUESTED','STOP_REQUESTED','STOPPED','BLOCKED','FAILED')) OR
+            (OLD.lifecycle_status='PROCESSING' AND NEW.lifecycle_status IN
+                ('PAUSE_REQUESTED','STOP_REQUESTED','RESTART_REQUESTED','COMPLETED','BLOCKED','FAILED')) OR
+            (OLD.lifecycle_status='PAUSE_REQUESTED' AND NEW.lifecycle_status IN
+                ('PROCESSING','PAUSED','STOP_REQUESTED','STOPPED','FAILED')) OR
+            (OLD.lifecycle_status='PAUSED' AND NEW.lifecycle_status IN
+                ('PROCESSING','STOP_REQUESTED','RESTART_REQUESTED','STOPPED','FAILED')) OR
+            (OLD.lifecycle_status='STOP_REQUESTED' AND NEW.lifecycle_status IN ('STOPPED','FAILED')) OR
+            (OLD.lifecycle_status='RESTART_REQUESTED' AND NEW.lifecycle_status IN ('STOPPED','FAILED')) OR
+            (OLD.lifecycle_status IN ('BLOCKED','FAILED') AND NEW.lifecycle_status='QUEUED')
+        )
+        BEGIN SELECT RAISE(ABORT, 'invalid search runtime transition'); END
+        """
+    )
+    connection.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS campaign_search_attempt_create
+        AFTER INSERT ON campaign_search_runs
+        BEGIN
+            INSERT INTO campaign_search_attempts (
+                search_run_id, attempt_number, attempt_contract_version,
+                selection_contract_version, propensity_bucket,
+                bucket_minimum, bucket_maximum, bucket_maximum_inclusive,
+                status, created_at, started_at
+            ) VALUES (
+                NEW.search_run_id, NEW.current_attempt_number, '1',
+                NEW.selection_contract_version, NEW.propensity_bucket,
+                CASE NEW.propensity_bucket
+                    WHEN '0.90' THEN 0.90 WHEN '0.80' THEN 0.80
+                    WHEN '0.70' THEN 0.70 WHEN '0.60' THEN 0.60
+                    WHEN '0.50' THEN 0.50 END,
+                CASE NEW.propensity_bucket
+                    WHEN '0.90' THEN 1.00 WHEN '0.80' THEN 0.90
+                    WHEN '0.70' THEN 0.80 WHEN '0.60' THEN 0.70
+                    WHEN '0.50' THEN 0.60 END,
+                CASE WHEN NEW.propensity_bucket='0.90' THEN 1
+                     WHEN NEW.propensity_bucket IS NOT NULL THEN 0 END,
+                NEW.status, NEW.created_at, NEW.started_at
+            );
+        END
+        """
+    )
+    connection.execute(
+        """CREATE TRIGGER IF NOT EXISTS campaign_search_attempts_terminal
+           BEFORE UPDATE ON campaign_search_attempts
+           WHEN OLD.status IN ('COMPLETED','BLOCKED','FAILED')
+           BEGIN SELECT RAISE(ABORT, 'terminal search attempt is immutable'); END"""
+    )
+    connection.execute(
+        """CREATE TRIGGER IF NOT EXISTS campaign_search_attempts_no_delete
+           BEFORE DELETE ON campaign_search_attempts
+           BEGIN SELECT RAISE(ABORT, 'search attempt history cannot be deleted'); END"""
+    )
+    connection.execute(
+        """CREATE TRIGGER IF NOT EXISTS campaign_search_progress_events_no_update
+           BEFORE UPDATE ON campaign_search_progress_events
+           BEGIN SELECT RAISE(ABORT, 'search progress history is immutable'); END"""
+    )
+    connection.execute(
+        """CREATE TRIGGER IF NOT EXISTS campaign_search_progress_events_no_delete
+           BEFORE DELETE ON campaign_search_progress_events
+           BEGIN SELECT RAISE(ABORT, 'search progress history cannot be deleted'); END"""
+    )
+
+
+def _migrate_to_version_21(connection: sqlite3.Connection) -> None:
+    """Add the normalized compact product catalog used by business history."""
+
+    for statement in SEARCH_RECOVERY_TABLE_STATEMENTS:
+        connection.execute(statement)
+    for statement in SEARCH_RECOVERY_INDEX_STATEMENTS:
+        connection.execute(statement)
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -2765,6 +2947,8 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     17: _migrate_to_version_17,
     18: _migrate_to_version_18,
     19: _migrate_to_version_19,
+    20: _migrate_to_version_20,
+    21: _migrate_to_version_21,
 }
 
 

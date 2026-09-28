@@ -226,3 +226,34 @@ def test_different_searches_share_generation_without_duplicate_scoring(case) -> 
         assert sorted(calls["ids"]) == sorted([ohio_id, texas_id])
     finally:
         coordinator.shutdown()
+
+
+def test_heavy_intelligence_wait_emits_live_heartbeat(case) -> None:
+    path, _ids, _values, repository = case
+    search_run_id = _search(case, campaign_name="Heartbeat certification")
+    current_generation = generation(case)
+    response = ready_response(current_generation)
+
+    def slow_reader(*_args, **_kwargs):
+        time.sleep(10.5)
+        return response
+
+    outcome = execute_phase11_search_safely(
+        path,
+        search_run_id,
+        materializer=ResultSnapshotMaterializer(path.parent),
+        project_root=path.parent,
+        phase10_reader=slow_reader,
+        membership_source=lambda *_args: fixed_membership_source(),
+    )
+
+    assert outcome.status == "COMPLETED"
+    assert repository.fetch_search_run(search_run_id)["status"] == "COMPLETED"
+    with get_connection(path) as connection:
+        heartbeats = connection.execute(
+            """SELECT COUNT(*) FROM campaign_search_progress_events
+               WHERE search_run_id=?
+                 AND status_message LIKE 'Still checking compatible%'""",
+            (search_run_id,),
+        ).fetchone()[0]
+    assert heartbeats >= 1

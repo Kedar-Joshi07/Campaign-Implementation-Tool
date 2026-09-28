@@ -1,0 +1,59 @@
+{
+  "database": "C:\\POCs\\Campaign Implementation Tool\\data\\campaign_poc.db",
+  "repetitions": 3,
+  "read_only": true,
+  "measurements": {
+    "targeting_options": {
+      "minimum_seconds": 0.326013799989596,
+      "median_seconds": 0.41512819996569306,
+      "maximum_seconds": 0.5344244000152685
+    },
+    "results_history": {
+      "minimum_seconds": 0.3784944000071846,
+      "median_seconds": 0.3877768000238575,
+      "maximum_seconds": 0.44144059997051954
+    },
+    "status_detail": {
+      "minimum_seconds": 0.21995909995166585,
+      "median_seconds": 0.25838460004888475,
+      "maximum_seconds": 0.27460180001799017
+    },
+    "exact_reuse_lookup": {
+      "minimum_seconds": 0.04384629998821765,
+      "median_seconds": 0.04403599997749552,
+      "maximum_seconds": 0.05058490001829341
+    },
+    "snapshot_validation": {
+      "minimum_seconds": 0.008376200043130666,
+      "median_seconds": 0.019319099956192076,
+      "maximum_seconds": 0.02787630003876984
+    }
+  },
+  "budgets_seconds": {
+    "targeting_options": 2.0,
+    "results_history": 2.0,
+    "status_detail": 0.5,
+    "exact_reuse_lookup": 0.5,
+    "snapshot_validation": 2.0
+  },
+  "checks": {
+    "targeting_options": true,
+    "results_history": true,
+    "status_detail": true,
+    "exact_reuse_lookup": true,
+    "snapshot_validation": true
+  },
+  "all_executed_checks_passed": true,
+  "observed": {
+    "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+    "history_count": 20,
+    "detail_search_run_id": 33,
+    "reuse_snapshot_id": 9,
+    "snapshot_valid": true,
+    "snapshot_row_count": 0
+  },
+  "not_executed": {
+    "search_creation_acknowledgement": "Requires creating a search; blocked while zero scenarios meet the approved 10,000-customer qualification gate.",
+    "new_result_materialization": "Requires executing a qualifying new search; exact reuse lookup and immutable snapshot validation were measured instead."
+  }
+}

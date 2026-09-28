@@ -1,7 +1,7 @@
 import { getJSON } from "./api.js";
 import { enhanceMultiSelect, refreshMultiSelect, setMultiSelectState } from "./components/multi-select-dropdown.js";
 
-const DRAFT_KEY = "phase11-business-search-draft-v1";
+const DRAFT_KEY = "phase11-business-search-draft-v2";
 const CONTEXT_FIELDS = {
   product_ids: ["Products", "products"], campaign_types: ["Campaign Types", "campaign_types"],
   campaign_categories: ["Campaign Categories", "campaign_categories"], offer_types: ["Offer Types", "offer_types"],
@@ -44,8 +44,10 @@ function capture() {
   const profile = options?.profiles.find((item) => item.export_profile === find("business-export-profile").value);
   const context = { campaign_channel: profile?.channel_code || "" };
   for (const field of Object.keys(CONTEXT_FIELDS)) context[field] = selections(field);
+  const propensityBucket = document.querySelector('input[name="business_propensity_bucket"]:checked')?.value || "";
+  const legacyStrength = { "0.90": "VERY_STRONG", "0.80": "STRONG", "0.70": "GOOD", "0.60": "BROAD", "0.50": "BROAD" }[propensityBucket] || "GOOD";
   const criteria = {
-    match_strength: document.querySelector('input[name="business_match_strength"]:checked')?.value || "",
+    match_strength: legacyStrength,
     family_member_count_min: number("business-family-min"), family_member_count_max: number("business-family-max"),
     top_matching_percent: number("business-top-percent"), selection_mode: find("business-selection-mode").value,
     target_count: find("business-selection-mode").value === "TOP_N" ? number("business-target-count") : null,
@@ -53,12 +55,13 @@ function capture() {
   for (const field of Object.keys(TARGET_FIELDS)) if (field !== "regions") criteria[field] = selections(field);
   return { campaign_name: find("business-campaign-name").value.trim(), description: find("business-description").value.trim() || null,
     planned_launch_date: find("business-launch-date").value || null, context, criteria,
-    export_profile: find("business-export-profile").value };
+    export_profile: find("business-export-profile").value,
+    propensity_bucket: propensityBucket, catalog_version: options?.catalog_version };
 }
 
 function saveDraft() {
   if (!options) return;
-  draft = { contractVersion: "1", request: capture(), regions: selections("regions") };
+  draft = { contractVersion: "2", request: capture(), regions: selections("regions") };
   try { window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* Session storage is optional. */ }
 }
 
@@ -93,10 +96,10 @@ function populate(payload) {
     component.setOptions(values); component.setValues(selected);
   }
   const strengths = find("business-match-strength"); strengths.replaceChildren();
-  for (const strength of payload.targeting.match_strengths) {
+  for (const strength of payload.targeting.propensity_buckets) {
     const label = make("label"); label.className = "planner-strength-choice";
-    const radio = make("input"); radio.type = "radio"; radio.name = "business_match_strength"; radio.value = strength.value; radio.required = true;
-    radio.checked = strength.value === (request.criteria?.match_strength || payload.targeting.default_match_strength);
+    const radio = make("input"); radio.type = "radio"; radio.name = "business_propensity_bucket"; radio.value = strength.value; radio.required = true;
+    radio.checked = strength.value === (request.propensity_bucket || payload.targeting.default_propensity_bucket);
     label.append(radio, make("span", `${strength.label}${strength.recommended ? " — Recommended" : ""}`)); strengths.append(label);
   }
   const profiles = find("business-export-profile"); profiles.replaceChildren();
@@ -138,6 +141,7 @@ async function loadOptions() {
     for (const select of fields.values()) setMultiSelectState(select, { loading: false, error: "" });
     find("business-search-form").hidden = false;
     find("business-search-submit").disabled = submitting || payload.context.products.length === 0;
+    find("business-search-preflight").disabled = payload.context.products.length === 0;
     if (!payload.context.products.length) showError("No products are currently available. Reload choices after product data is available.");
   } catch (error) {
     for (const select of fields.values()) setMultiSelectState(select, { loading: false, error: "Choices could not be loaded. Try again." });
@@ -186,6 +190,28 @@ async function submit(event) {
     selectionMode();
     for (const select of fields.values()) setMultiSelectState(select, { disabled: false });
     find("business-search-submit").disabled = options.context.products.length === 0;
+    find("business-search-preflight").disabled = options.context.products.length === 0;
+  }
+}
+
+async function preflight() {
+  if (!options || !valid()) return;
+  const button = find("business-search-preflight");
+  const output = find("business-search-preflight-result");
+  const request = capture();
+  button.disabled = true;
+  output.textContent = "Checking the exact calibrated audience...";
+  try {
+    const result = await getJSON("/api/potential-customer-search/preflight", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ context: request.context, criteria: request.criteria,
+        propensity_bucket: request.propensity_bucket, catalog_version: request.catalog_version }),
+    });
+    output.textContent = `${result.intersection_count.toLocaleString()} exact potential customers. ${result.safe_message} Demographic pool: ${result.demographic_count.toLocaleString()}; propensity bucket: ${result.bucket_count.toLocaleString()}.`;
+  } catch (error) {
+    output.textContent = error.message || "The exact count could not be checked.";
+  } finally {
+    button.disabled = false;
   }
 }
 
@@ -193,7 +219,7 @@ export function initializeBusinessSearchForm() {
   if (initialized) return; initialized = true;
   try {
     const saved = JSON.parse(window.sessionStorage.getItem(DRAFT_KEY));
-    if (saved?.contractVersion === "1" && saved.request && typeof saved.request === "object"
+    if (saved?.contractVersion === "2" && saved.request && typeof saved.request === "object"
         && saved.request.context && saved.request.criteria
         && [...Object.keys(CONTEXT_FIELDS), ...Object.keys(TARGET_FIELDS)].every((field) => {
           const value = field === "regions" ? saved.regions : (Object.hasOwn(CONTEXT_FIELDS, field) ? saved.request.context : saved.request.criteria)[field];
@@ -207,7 +233,11 @@ export function initializeBusinessSearchForm() {
     selectionMode(); saveDraft();
   });
   form.addEventListener("input", saveDraft);
+  find("business-search-preflight").addEventListener("click", preflight);
   find("business-search-retry").addEventListener("click", () => { loadPromise = loadOptions(); });
-  loadPromise = loadOptions();
+  loadPromise = null;
 }
-export function loadBusinessSearchForm() { return loadPromise; }
+export function loadBusinessSearchForm() {
+  if (!loadPromise) loadPromise = loadOptions();
+  return loadPromise;
+}

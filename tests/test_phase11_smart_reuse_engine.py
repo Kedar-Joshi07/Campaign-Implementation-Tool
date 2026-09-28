@@ -490,5 +490,6 @@ def test_persisted_identity_reopens_canonical_hashes_and_selection(case):
 def test_engine_source_has_no_permutation_precompute_or_score_count_proof():
     source = (Path(__file__).parents[1] / "app/services/phase11_search_orchestration_service.py").read_text("utf-8")
     assert "product(" not in source and "permutation" not in source.lower()
-    assert "propensity_scores" not in source
+    assert "FROM propensity_scores" not in source
+    assert "calibrated_propensity_scores" in source
     assert "count_generation_score_rows" not in source

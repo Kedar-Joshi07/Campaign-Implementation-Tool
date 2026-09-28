@@ -61,12 +61,35 @@ def test_result_api_is_additive_newest_first_bounded_and_preserves_each_submissi
     second_payload["campaign_name"] = "Second intentional submission"
     second = client.post(RUNS, json=second_payload).json()
 
-    # The Step 8 status contract remains byte-for-field compatible.
+    # Lifecycle recovery metadata is additive and stable across create/list/status.
     assert client.get(RUNS).json() == [second, first]
     assert set(first) == {
         "search_run_id", "campaign_name", "status", "created_at", "completed_at",
         "selected_count", "delivery_channel", "export_profile", "safe_message",
+        "selection_contract_version", "attempt_number", "queue_position",
+        "propensity_bucket", "progress", "issue", "retry_eligible",
     }
+
+    bulk_queue_calls: list[list[int]] = []
+    real_queue_positions = CampaignResultRegistryRepository.queue_positions
+
+    def record_bulk_queue_positions(repository, identifiers):
+        bulk_queue_calls.append(list(identifiers))
+        return real_queue_positions(repository, identifiers)
+
+    def forbid_single_queue_position(*_args, **_kwargs):
+        raise AssertionError("Result history must use the bulk queue-position projection.")
+
+    monkeypatch.setattr(
+        CampaignResultRegistryRepository,
+        "queue_positions",
+        record_bulk_queue_positions,
+    )
+    monkeypatch.setattr(
+        CampaignResultRegistryRepository,
+        "queue_position",
+        forbid_single_queue_position,
+    )
 
     response = client.get(RESULTS)
     assert response.status_code == 200, response.text
@@ -104,6 +127,11 @@ def test_result_api_is_additive_newest_first_bounded_and_preserves_each_submissi
     assert [row["search_run_id"] for row in page_two] == [first["search_run_id"]]
     assert client.get(RESULTS, params={"limit": 101}).status_code == 422
     assert client.get(RESULTS, params={"before_search_run_id": 987654}).status_code == 404
+    assert bulk_queue_calls == [
+        [second["search_run_id"], first["search_run_id"]],
+        [second["search_run_id"]],
+        [first["search_run_id"]],
+    ]
 
 
 def test_result_source_business_labels_are_exact():
@@ -210,6 +238,9 @@ def _history_item(run_id, *, status="COMPLETED", name=None, eligible=False):
             "summary": "More verified campaign history is required." if status == "BLOCKED" else "The governed result could not be prepared.",
             "resolution_steps": ["Review the saved criteria.", "Submit again after correcting the condition."],
             "retryable": True,
+            "affected_stage": "CHECKING_INTELLIGENCE",
+            "technical_reference": "FIXTURE-BLOCKED-001",
+            "user_action_required": status == "BLOCKED",
         }
     return {
         "search_run_id": run_id,
@@ -249,8 +280,8 @@ def _history_item(run_id, *, status="COMPLETED", name=None, eligible=False):
     }
 
 
-def _detail_payload(run_id=42):
-    return _history_item(run_id, name="Autumn savings") | {
+def _detail_payload(run_id=42, *, status="COMPLETED"):
+    return _history_item(run_id, name="Autumn savings", status=status) | {
         "description": "Retention campaign", "planned_launch_date": "2026-10-01",
         "campaign_context": {
             "product_ids": ["PRD-1"], "campaign_types": ["Retention"],
@@ -331,7 +362,16 @@ def test_results_history_renders_deduplicates_paginates_and_only_polls_active(pa
     assert browser.locator('[data-search-run-id="21"]').get_by_text(
         "Why this search is blocked", exact=True,
     ).is_visible()
+    assert browser.locator('[data-search-run-id="21"]').get_by_role(
+        "button", name="Retry Search",
+    ).is_visible()
     assert browser.locator('[data-search-run-id="20"] [data-status="FAILED"]').is_visible()
+    assert browser.locator('[data-search-run-id="20"]').get_by_role(
+        "button", name="Retry Search",
+    ).is_visible()
+    assert browser.locator('[data-search-run-id="19"]').get_by_role(
+        "link", name="Run Again",
+    ).is_visible()
     assert browser.locator('[data-search-run-id="19"] a[download]').get_attribute("href") == "/api/potential-customer-search/runs/19/download"
     browser.wait_for_timeout(5200)
     assert len(calls) >= 2
@@ -341,6 +381,116 @@ def test_results_history_renders_deduplicates_paginates_and_only_polls_active(pa
     browser.get_by_text("Older result", exact=True).wait_for()
     assert browser.locator(".result-card").count() == 21
     assert "before_search_run_id" in calls[-1]
+    assert errors == []
+
+
+@pytest.mark.browser
+def test_result_detail_pauses_and_resumes_bounded_live_updates(page):
+    browser, errors, _requests = page
+    calls = []
+    browser.add_init_script(
+        """
+        (() => {
+          const nativeSetTimeout = window.setTimeout.bind(window);
+          window.setTimeout = (callback, delay, ...args) =>
+            nativeSetTimeout(callback, delay === 5000 ? 1 : delay, ...args);
+        })();
+        """
+    )
+
+    def active_detail(route):
+        calls.append(route.request.url)
+        route.fulfill(status=200, json=_detail_payload(status="PROCESSING"))
+
+    browser.route(
+        "**/api/potential-customer-search/runs/42/result",
+        active_detail,
+    )
+    open_route(browser, "#results/42")
+    resume = browser.get_by_role("button", name="Resume Updates")
+    resume.wait_for(timeout=10_000)
+    first_cycle_calls = len(calls)
+    assert first_cycle_calls >= 61
+    assert "Live updates paused" in browser.locator("#result-detail-status").inner_text()
+
+    resume.click()
+    resume.wait_for(timeout=10_000)
+    assert len(calls) >= first_cycle_calls + 61
+    assert errors == []
+
+
+@pytest.mark.browser
+def test_result_detail_uploads_csv_and_json_feedback_with_governed_headers(page):
+    browser, errors, _requests = page
+    uploads = []
+    browser.route(
+        "**/api/potential-customer-search/runs/42/result",
+        lambda route: route.fulfill(status=200, json=_detail_payload()),
+    )
+
+    def accept_feedback(route):
+        uploads.append({
+            "headers": route.request.headers,
+            "body": route.request.post_data or "",
+        })
+        route.fulfill(
+            status=201,
+            json={
+                "feedback_batch_id": len(uploads),
+                "search_run_id": 42,
+                "attempt_number": 1,
+                "source_name": "browser-test",
+                "row_count": 2 if len(uploads) == 1 else 1,
+                "positive_count": 1,
+                "negative_count": 1 if len(uploads) == 1 else 0,
+                "status": "ACCEPTED",
+                "created_at": "2026-09-28T10:00:00Z",
+                "retraining_status": "WAITING_FOR_DATA",
+                "retraining_reason": "Waiting for governed feedback.",
+            },
+        )
+
+    browser.route(
+        "**/api/potential-customer-search/runs/42/feedback",
+        accept_feedback,
+    )
+    open_route(browser, "#results/42")
+    feedback_file = browser.locator("#result-feedback-file")
+
+    feedback_file.set_input_files({
+        "name": "feedback.csv",
+        "mimeType": "text/csv",
+        "buffer": (
+            b"person_id,outcome,outcome_at,outcome_value\n"
+            b"P-1,1,2026-09-27T10:00:00Z,10\n"
+            b"P-2,0,2026-09-27T10:00:00Z,\n"
+        ),
+    })
+    browser.locator("#result-feedback-upload").click()
+    browser.wait_for_timeout(1_000)
+    feedback_status = browser.locator("#result-feedback-status").inner_text()
+    assert uploads, feedback_status
+    assert "2 outcomes accepted." in feedback_status
+
+    feedback_file.set_input_files({
+        "name": "feedback.json",
+        "mimeType": "application/json",
+        "buffer": (
+            b'{"source_name":"browser-test","rows":['
+            b'{"person_id":"P-3","outcome":1,'
+            b'"outcome_at":"2026-09-27T10:00:00Z"}]}'
+        ),
+    })
+    browser.locator("#result-feedback-upload").click()
+    browser.wait_for_timeout(1_000)
+    assert "1 outcomes accepted." in browser.locator("#result-feedback-status").inner_text()
+
+    assert len(uploads) == 2
+    assert uploads[0]["headers"]["content-type"] == "text/csv"
+    assert uploads[1]["headers"]["content-type"] == "application/json"
+    assert all(item["headers"]["idempotency-key"].startswith("browser-feedback-42-") for item in uploads)
+    assert "person_id,outcome,outcome_at,outcome_value" in uploads[0]["body"]
+    assert '"rows"' in uploads[1]["body"]
     assert errors == []
 
 
@@ -381,10 +531,19 @@ def test_step12_frontend_uses_bounded_active_only_refresh_and_safe_dom_rendering
     assert "new Map()" in source and "rows.set(run.search_run_id, run)" in source
     assert "before_search_run_id" in source
     assert "textContent" in source and ".innerHTML" not in source
-    assert "if (!active || refreshCycles >= RESULT_REFRESH_MAX_CYCLES) return" in source
+    assert "Resume Updates" in source
+    assert "refreshCycles >= RESULT_REFRESH_MAX_CYCLES" in source
+    assert "crypto.getRandomValues" in source
     html = (ROOT / "frontend/index.html").read_text(encoding="utf-8")
     for identifier in (
         "business-search-history", "business-history-more", "result-detail-overview",
         "result-targeting-details", "result-provenance-details", "result-technical-disclosure",
+        "result-feedback-csv-template", "result-feedback-json-template",
+        "result-feedback-format-guide",
     ):
         assert f'id="{identifier}"' in html
+    assert "/api/potential-customer-search/feedback-template.csv" in html
+    assert "/api/potential-customer-search/feedback-template.json" in html
+    assert "Idempotency-Key" in html
+    assert "Purchase outcome CSV or JSON" in html
+    assert '"application/json"' in source

@@ -13,6 +13,44 @@ class PotentialCustomerSearchRequest(BaseModel):
     context: dict[str, Any]
     criteria: dict[str, Any]
     export_profile: str
+    propensity_bucket: Literal["0.90", "0.80", "0.70", "0.60", "0.50"] | None = None
+    catalog_version: str | None = Field(default=None, min_length=64, max_length=64)
+
+
+class PotentialCustomerPreflightRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    context: dict[str, Any]
+    criteria: dict[str, Any]
+    propensity_bucket: Literal["0.90", "0.80", "0.70", "0.60", "0.50"]
+    catalog_version: str | None = Field(default=None, min_length=64, max_length=64)
+
+
+class PotentialCustomerPreflightResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    demographic_count: int = Field(ge=0)
+    bucket_count: int = Field(ge=0)
+    intersection_count: int = Field(ge=0)
+    demo_ready: bool
+    generation_id: int | None = Field(default=None, gt=0)
+    scoring_run_id: int | None = Field(default=None, gt=0)
+    calibration_artifact_id: int | None = Field(default=None, gt=0)
+    calibration_currentness: Literal["CURRENT", "NOT_AVAILABLE", "STALE", "UNVERIFIED"]
+    safe_message: str
+    criteria_sha256: str = Field(min_length=64, max_length=64)
+
+
+class FeedbackBatchResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    feedback_batch_id: int = Field(gt=0)
+    search_run_id: int = Field(gt=0)
+    attempt_number: int = Field(gt=0)
+    status: Literal["ACCEPTED", "REJECTED"]
+    row_count: int = Field(gt=0)
+    positive_count: int = Field(ge=0)
+    negative_count: int = Field(ge=0)
+    created_at: str
+    retraining_status: str
+    retraining_reason: str
 
 
 class Phase11SavedCampaignContext(BaseModel):
@@ -26,19 +64,6 @@ class Phase11SavedCampaignContext(BaseModel):
     campaign_channel: str = Field(min_length=1, max_length=40)
     historical_campaign_channels: list[str] = Field(max_length=50)
     campaign_targeting_context_contract_version: str
-
-
-class SearchSubmissionStatus(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    search_run_id: int = Field(gt=0)
-    campaign_name: str
-    status: Literal["QUEUED", "PROCESSING", "COMPLETED", "BLOCKED", "FAILED"]
-    created_at: str
-    completed_at: str | None
-    selected_count: int | None
-    delivery_channel: str
-    export_profile: str
-    safe_message: str
 
 
 class SearchRunProgress(BaseModel):
@@ -77,6 +102,34 @@ class SearchRunIssue(BaseModel):
     summary: str = Field(min_length=1, max_length=1000)
     resolution_steps: list[str] = Field(min_length=1, max_length=8)
     retryable: bool
+    affected_stage: str
+    technical_reference: str
+    user_action_required: bool
+
+
+class SearchSubmissionStatus(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    search_run_id: int = Field(gt=0)
+    campaign_name: str
+    status: Literal["QUEUED", "PROCESSING", "COMPLETED", "BLOCKED", "FAILED"]
+    created_at: str
+    completed_at: str | None
+    selected_count: int | None
+    delivery_channel: str
+    export_profile: str
+    safe_message: str
+    selection_contract_version: Literal["1", "2"] = "1"
+    attempt_number: int = Field(default=1, gt=0)
+    queue_position: int | None = Field(default=None, gt=0)
+    propensity_bucket: Literal["0.90", "0.80", "0.70", "0.60", "0.50"] | None = None
+    progress: SearchRunProgress
+    issue: SearchRunIssue | None = None
+    retry_eligible: bool
+
+
+class SearchSubmissionV2Status(SearchSubmissionStatus):
+    selection_contract_version: Literal["2"]
+    propensity_bucket: Literal["0.90", "0.80", "0.70", "0.60", "0.50"]
 
 
 class SearchResultProduct(BaseModel):
@@ -111,6 +164,11 @@ class SearchResultHistoryItem(BaseModel):
     safe_message: str
     progress: SearchRunProgress
     issue: SearchRunIssue | None = None
+    retry_eligible: bool
+    attempt_number: int = Field(default=1, gt=0)
+    queue_position: int | None = Field(default=None, gt=0)
+    propensity_bucket: str | None = None
+    selection_contract_version: str = "1"
 
 
 class SearchResultDetail(SearchResultHistoryItem):

@@ -6,6 +6,7 @@ the production runtime coordinator composition.
 """
 from copy import deepcopy
 import json
+import time
 from urllib.parse import urlsplit
 
 import pytest
@@ -39,7 +40,39 @@ def counts(path):
                              "campaign_result_export_events", "model_runs", "scoring_runs")}
 
 
-def test_options_are_live_registry_owned_and_executor_boundary_is_explicit(client):
+@pytest.mark.performance
+def test_warm_search_api_response_budgets(client, monkeypatch):
+    monkeypatch.setattr(service, "PHASE11_SEARCH_EXECUTOR", lambda *_: None)
+
+    # Prime schema/catalog and connection setup before enforcing warm budgets.
+    assert client.get(OPTIONS).status_code == 200
+
+    started = time.perf_counter()
+    options = client.get(OPTIONS)
+    options_seconds = time.perf_counter() - started
+
+    started = time.perf_counter()
+    created = client.post(RUNS, json=request_payload())
+    acknowledgement_seconds = time.perf_counter() - started
+    assert created.status_code == 201
+    search_run_id = created.json()["search_run_id"]
+
+    started = time.perf_counter()
+    history = client.get("/api/potential-customer-search/results?limit=20")
+    history_seconds = time.perf_counter() - started
+
+    started = time.perf_counter()
+    status = client.get(f"{RUNS}/{search_run_id}/status")
+    status_seconds = time.perf_counter() - started
+
+    assert options.status_code == history.status_code == status.status_code == 200
+    assert options_seconds < 2.0
+    assert history_seconds < 2.0
+    assert acknowledgement_seconds < 1.0
+    assert status_seconds < 0.5
+
+
+def test_options_are_live_registry_owned_and_executor_boundary_is_explicit(client, database_path):
     # This service-boundary test intentionally disconnects the production
     # lifespan seam. Real app composition is covered by the runtime tests.
     service.reset_phase11_search_executor()
@@ -52,6 +85,12 @@ def test_options_are_live_registry_owned_and_executor_boundary_is_explicit(clien
     assert len(profiles) == 10
     assert all(p["availability"] == "AVAILABLE" for p in profiles)
     assert not any("email" in p or "phone" in p for p in profiles)
+    with get_connection(database_path) as connection:
+        products = connection.execute(
+            """SELECT product_id,product_name,product_category
+               FROM targeting_product_catalog ORDER BY product_id"""
+        ).fetchall()
+    assert [tuple(row) for row in products] == [("PRD-1", "Savings", "Banking")]
 
 
 def test_submission_persists_exact_lineage_and_default_blocked_status(client, database_path):
@@ -76,8 +115,71 @@ def test_submission_persists_exact_lineage_and_default_blocked_status(client, da
     assert row["description"] == payload["description"] and row["planned_launch_date"] == payload["planned_launch_date"]
     after = counts(database_path)
     assert after == before | {"campaign_search_runs": 1, "campaign_targeting_contexts": 1}
-    assert set(status) == {"search_run_id", "campaign_name", "status", "created_at", "completed_at", "selected_count",
-                           "delivery_channel", "export_profile", "safe_message"}
+    assert set(status) == {
+        "search_run_id", "campaign_name", "status", "created_at", "completed_at",
+        "selected_count", "delivery_channel", "export_profile", "safe_message",
+        "selection_contract_version", "attempt_number", "queue_position",
+        "propensity_bucket", "progress", "issue", "retry_eligible",
+    }
+
+
+def test_calibrated_submission_and_retry_expose_v2_attempt_contract(client, database_path):
+    service.reset_phase11_search_executor()
+    options = client.get(OPTIONS).json()
+    assert len(options["catalog_version"]) == 64
+    assert [item["value"] for item in options["targeting"]["propensity_buckets"]] == [
+        "0.90", "0.80", "0.70", "0.60", "0.50",
+    ]
+    payload = request_payload() | {
+        "propensity_bucket": "0.70",
+        "catalog_version": options["catalog_version"],
+    }
+    created = client.post(RUNS, json=payload)
+    assert created.status_code == 201, created.text
+    first = created.json()
+    assert first["selection_contract_version"] == "2"
+    assert first["propensity_bucket"] == "0.70"
+    assert first["attempt_number"] == 1
+    assert first["status"] == "BLOCKED"
+
+    retried = client.post(
+        f"{RUNS}/{first['search_run_id']}/retry",
+        headers={"Idempotency-Key": "browser-retry-contract-0001"},
+    )
+    assert retried.status_code == 202, retried.text
+    assert retried.json()["search_run_id"] == first["search_run_id"]
+    assert retried.json()["attempt_number"] == 2
+    assert retried.json()["status"] == "BLOCKED"
+    with get_connection(database_path) as connection:
+        attempts = connection.execute(
+            "SELECT attempt_number,status FROM campaign_search_attempts WHERE search_run_id=? ORDER BY attempt_number",
+            (first["search_run_id"],),
+        ).fetchall()
+    assert [tuple(row) for row in attempts] == [(1, "BLOCKED"), (2, "BLOCKED")]
+
+
+def test_exact_preflight_api_is_read_only_and_reports_missing_intelligence(client, database_path):
+    options = client.get(OPTIONS).json()
+    before = counts(database_path)
+    payload = request_payload()
+    response = client.post(
+        "/api/potential-customer-search/preflight",
+        json={
+            "context": payload["context"],
+            "criteria": payload["criteria"],
+            "propensity_bucket": "0.70",
+            "catalog_version": options["catalog_version"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["calibration_currentness"] == "NOT_AVAILABLE"
+    assert result["generation_id"] is None
+    assert result["bucket_count"] == result["intersection_count"] == 0
+    assert result["demo_ready"] is False
+    assert len(result["criteria_sha256"]) == 64
+    assert counts(database_path) == before
 
 
 def test_repeated_intentional_submissions_are_independent_and_profile_filters_do_not_retrain(client, database_path):
@@ -104,6 +206,54 @@ def test_repeated_intentional_submissions_are_independent_and_profile_filters_do
     assert [r["search_run_id"] for r in client.get(RUNS).json()] == [two["search_run_id"], one["search_run_id"]]
     assert client.get(RUNS, params={"limit": 1, "before_search_run_id": two["search_run_id"]}).json() == [first]
     assert counts(database_path)["scoring_runs"] == 0 and counts(database_path)["model_runs"] == 0
+
+
+def test_saved_search_history_uses_bulk_runtime_and_queue_projection(
+    client, database_path, monkeypatch,
+):
+    monkeypatch.setattr(service, "PHASE11_SEARCH_EXECUTOR", lambda *_: None)
+    first = client.post(RUNS, json=request_payload()).json()
+    second_payload = request_payload() | {"campaign_name": "Second bulk search"}
+    second = client.post(RUNS, json=second_payload).json()
+    real_runtimes = CampaignResultRegistryRepository.fetch_search_runtimes
+    real_positions = CampaignResultRegistryRepository.queue_positions
+    calls = {"runtimes": 0, "positions": 0}
+
+    def bulk_runtimes(repository, identifiers):
+        calls["runtimes"] += 1
+        return real_runtimes(repository, identifiers)
+
+    def bulk_positions(repository, identifiers):
+        calls["positions"] += 1
+        return real_positions(repository, identifiers)
+
+    monkeypatch.setattr(
+        CampaignResultRegistryRepository, "fetch_search_runtimes", bulk_runtimes,
+    )
+    monkeypatch.setattr(
+        CampaignResultRegistryRepository, "queue_positions", bulk_positions,
+    )
+    monkeypatch.setattr(
+        CampaignResultRegistryRepository,
+        "fetch_search_runtime",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("Saved-search history must use bulk runtimes.")
+        ),
+    )
+    monkeypatch.setattr(
+        CampaignResultRegistryRepository,
+        "queue_position",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("Saved-search history must use bulk queue positions.")
+        ),
+    )
+
+    response = client.get(RUNS)
+    assert response.status_code == 200
+    assert [item["search_run_id"] for item in response.json()] == [
+        second["search_run_id"], first["search_run_id"],
+    ]
+    assert calls == {"runtimes": 1, "positions": 1}
 
 
 @pytest.mark.parametrize("section,field,value", [
@@ -263,7 +413,7 @@ def test_form_real_submission_exact_preferences_status_history_and_reload(form_p
         choose(browser, field, payload["criteria"][field])
     choose(browser, "regions", ["SOUTH"])
     choose(browser, "states", ["Ohio", "Texas"])
-    browser.locator("input[name=business_match_strength][value=STRONG]").check()
+    browser.locator("input[name=business_propensity_bucket][value='0.80']").check()
     browser.locator("#business-search-form details summary").click()
     for field in ("marital_statuses", "education_levels", "employment_statuses", "resident_statuses", "resident_types", "employment_types"):
         choose(browser, field, payload["criteria"][field])
@@ -283,13 +433,22 @@ def test_form_real_submission_exact_preferences_status_history_and_reload(form_p
     expected["criteria"]["states"] = ["Ohio", "Texas"]
     expected["criteria"]["age_groups"] = ["18-24", "35-44"]
     expected["criteria"]["income_groups"] = ["<25K", "50K-74,999"]
+    expected["propensity_bucket"] = "0.80"
+    expected["catalog_version"] = bodies[0]["catalog_version"]
+    assert len(expected["catalog_version"]) == 64
     assert bodies == [expected]
     browser.locator("#result-detail-back").click()
     browser.locator("#business-search-history a").wait_for()
     assert browser.locator("#business-search-history h3").inner_text() == "Savings outreach"
+    assert browser.evaluate(
+        "JSON.parse(sessionStorage.getItem('phase11-business-search-draft-v2')).request.campaign_name"
+    ) == "Savings outreach"
     browser.reload(wait_until="networkidle")
     assert browser.locator("#business-search-history a").get_attribute("href") == "#results/1"
     browser.locator("#nav-find-potential-customers").click()
+    browser.wait_for_function(
+        "document.querySelector('#business-campaign-name').value === 'Savings outreach'"
+    )
     assert browser.locator("#business-campaign-name").input_value() == "Savings outreach"
     assert browser.locator("#business-target-count").input_value() == "250"
     assert counts(database_path)["campaign_search_runs"] == 1
@@ -361,7 +520,7 @@ def test_unavailable_draft_choices_are_explicit_and_prevent_silent_submission(fo
     browser, errors, _, bodies = form_page
     fill_minimum(browser)
     browser.evaluate("""() => {
-      const key='phase11-business-search-draft-v1'; const draft=JSON.parse(sessionStorage.getItem(key));
+      const key='phase11-business-search-draft-v2'; const draft=JSON.parse(sessionStorage.getItem(key));
       draft.request.context.product_ids=['removed-product']; sessionStorage.setItem(key,JSON.stringify(draft));
     }""")
     browser.reload(wait_until="networkidle")

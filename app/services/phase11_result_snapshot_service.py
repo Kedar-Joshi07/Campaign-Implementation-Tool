@@ -90,10 +90,14 @@ def _sha256(path: Path) -> str:
 
 def _safe_results_root(project_root: str | Path) -> tuple[Path, Path]:
     root = Path(project_root).resolve()
-    results = (root / "artifacts" / "results").resolve()
+    # Create the candidate before resolving it. On Windows, resolving the same
+    # not-yet-created nested path concurrently can transiently produce different
+    # device-qualified forms and fail the containment check.
+    candidate = root / "artifacts" / "results"
+    candidate.mkdir(parents=True, exist_ok=True)
+    results = candidate.resolve()
     if not results.is_relative_to(root):
         raise ResultSnapshotPublicationError("Result artifact root is unsafe.")
-    results.mkdir(parents=True, exist_ok=True)
     return root, results
 
 
@@ -187,7 +191,7 @@ def _manifest(
     run: Mapping[str, Any], generation: Mapping[str, Any], cache_key: str,
     created_at: str,
 ) -> dict[str, Any]:
-    return {
+    payload = {
         "result_snapshot_manifest_contract_version": "1",
         "snapshot_id": snapshot_id,
         "result_membership_contract_version": RESULT_MEMBERSHIP_CONTRACT_VERSION,
@@ -206,6 +210,13 @@ def _manifest(
         "storage_format": RESULT_SNAPSHOT_STORAGE_FORMAT,
         "storage_schema": list(RESULT_MEMBERSHIP_SCHEMA),
     }
+    if run.get("selection_contract_version") == "2":
+        payload.update({
+            "selection_contract_version": "2",
+            "propensity_bucket": run.get("propensity_bucket"),
+            "calibration_artifact_id": run.get("calibration_artifact_id"),
+        })
+    return payload
 
 
 def _write_manifest(path: Path, payload: Mapping[str, Any]) -> None:
@@ -260,6 +271,12 @@ def validate_result_snapshot(
             "storage_format": RESULT_SNAPSHOT_STORAGE_FORMAT,
             "currentness_state": "CURRENT",
         }
+        if run.get("selection_contract_version") == "2":
+            expected_metadata.update({
+                "selection_contract_version": "2",
+                "propensity_bucket": run.get("propensity_bucket"),
+                "calibration_artifact_id": run.get("calibration_artifact_id"),
+            })
         if any(snapshot.get(key) != value for key, value in expected_metadata.items()):
             return ResultSnapshotValidation(False, "METADATA_MISMATCH")
         if (
@@ -541,6 +558,9 @@ def materialize_result_snapshot(
                 "snapshot_sha256": file_sha256,
                 "created_at": created_at,
                 "currentness_state": "CURRENT",
+                "selection_contract_version": run.get("selection_contract_version", "1"),
+                "propensity_bucket": run.get("propensity_bucket"),
+                "calibration_artifact_id": run.get("calibration_artifact_id"),
             }
             validation = validate_result_snapshot(
                 candidate, run, generation, cache_key, project_root=root
@@ -563,6 +583,9 @@ def materialize_result_snapshot(
                 target_count=run.get("target_count"),
                 timestamp=created_at,
                 expected_snapshot_id=snapshot_id,
+                selection_contract_version=str(run.get("selection_contract_version", "1")),
+                propensity_bucket=run.get("propensity_bucket"),
+                calibration_artifact_id=run.get("calibration_artifact_id"),
             )
         return registered_id
     except Exception:

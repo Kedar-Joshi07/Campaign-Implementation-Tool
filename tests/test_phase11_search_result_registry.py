@@ -81,7 +81,7 @@ def test_fresh_schema_has_exact_non_pii_columns_indexes_and_foreign_keys(tmp_pat
         MIGRATIONS[17](connection)
         MIGRATIONS[17](connection)
     with get_connection(path) as connection:
-        assert connection.execute("SELECT value FROM app_metadata WHERE key='schema_version'").fetchone()[0] == "19"
+        assert connection.execute("SELECT value FROM app_metadata WHERE key='schema_version'").fetchone()[0] == str(CURRENT_SCHEMA_VERSION)
         tables = {r["name"] for r in connection.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")}
         assert tables == set(EXPECTED_TABLES)
         for table, columns in TABLES.items():

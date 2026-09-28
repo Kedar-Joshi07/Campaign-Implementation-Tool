@@ -47,8 +47,8 @@ def _timestamp() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
-def _load_options(repository: CampaignTargetingContextRepository) -> dict[str, Any]:
-    values = repository.fetch_context_options()
+def decorate_context_options(values: dict[str, Any]) -> dict[str, Any]:
+    values = dict(values)
     values.update(
         {
             "campaign_targeting_context_contract_version": (
@@ -64,6 +64,10 @@ def _load_options(repository: CampaignTargetingContextRepository) -> dict[str, A
         }
     )
     return values
+
+
+def _load_options(repository: CampaignTargetingContextRepository) -> dict[str, Any]:
+    return decorate_context_options(repository.fetch_context_options())
 
 
 def _allowed_values(options: dict[str, Any]) -> dict[str, set[str]]:
@@ -127,10 +131,8 @@ def _band_payload(band) -> dict[str, Any]:
     }
 
 
-def _load_targeting_options(
-    repository: CampaignTargetingContextRepository,
-) -> dict[str, Any]:
-    values = repository.fetch_targeting_options()
+def decorate_targeting_options(values: dict[str, Any]) -> dict[str, Any]:
+    values = dict(values)
     current_states = set(values["states"])
     values.update(
         {
@@ -164,6 +166,12 @@ def _load_targeting_options(
         }
     )
     return values
+
+
+def _load_targeting_options(
+    repository: CampaignTargetingContextRepository,
+) -> dict[str, Any]:
+    return decorate_targeting_options(repository.fetch_targeting_options())
 
 
 def _targeting_allowed_values(options: dict[str, Any]) -> dict[str, set[str]]:

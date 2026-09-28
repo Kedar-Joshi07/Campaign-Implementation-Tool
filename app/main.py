@@ -36,6 +36,9 @@ from app.services.potential_customer_search_submission_service import (
     configure_phase11_search_executor,
     reset_phase11_search_executor,
 )
+from app.services.phase11_feedback_service import configure_feedback_retraining_executor
+from app.jobs.feedback_retraining_worker import FeedbackRetrainingWorker
+from app.services.targeting_option_catalog_service import get_or_build_targeting_catalog
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -54,8 +57,14 @@ async def lifespan(_: FastAPI):
         APP_ENV,
     )
     phase11_coordinator: Phase11SearchCoordinator | None = None
+    feedback_worker: FeedbackRetrainingWorker | None = None
     try:
         initialized_path = initialize_database(DATABASE_PATH)
+        catalog = get_or_build_targeting_catalog(initialized_path)
+        logger.info(
+            "Targeting option catalog ready | catalog_version=%s",
+            catalog["catalog_version"],
+        )
         phase11_materializer = ResultSnapshotMaterializer(PROJECT_ROOT)
         phase11_coordinator = Phase11SearchCoordinator(
             initialized_path,
@@ -63,10 +72,14 @@ async def lifespan(_: FastAPI):
             project_root=PROJECT_ROOT,
         )
         configure_phase11_search_executor(phase11_coordinator.submit)
+        feedback_worker = FeedbackRetrainingWorker()
+        configure_feedback_retraining_executor(feedback_worker.submit)
+        resumed_feedback = feedback_worker.resume_durable_decisions(initialized_path)
         logger.info(
-            "Phase 11 runtime composition completed | workers=%s poll_seconds=%s",
+            "Phase 11 runtime composition completed | workers=%s poll_seconds=%s resumed_feedback=%s",
             phase11_coordinator.max_workers,
             phase11_coordinator.poll_interval_seconds,
+            resumed_feedback,
         )
     except Exception:
         reset_phase11_search_executor()
@@ -127,8 +140,11 @@ async def lifespan(_: FastAPI):
         yield
     finally:
         reset_phase11_search_executor()
+        configure_feedback_retraining_executor(None)
         if phase11_coordinator is not None:
             phase11_coordinator.shutdown(wait=True)
+        if feedback_worker is not None:
+            feedback_worker.shutdown(wait=False)
         shutdown_model_training_executor(wait=False)
         logger.info("Application stopping | name=%s", APP_NAME)
 

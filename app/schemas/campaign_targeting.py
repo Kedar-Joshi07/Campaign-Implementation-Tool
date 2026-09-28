@@ -361,6 +361,8 @@ class CanonicalBusinessTargetingCriteria(BusinessTargetingCriteriaContract):
     age_bucket_contract_version: str
     income_group_contract_version: str
     audience_filter_contract_version: str
+    propensity_bucket: Literal["0.90", "0.80", "0.70", "0.60", "0.50"] | None = None
+    selection_contract_version: Literal["1", "2"] | None = None
 
 
 class BusinessTargetingCriteriaResponse(BaseModel):

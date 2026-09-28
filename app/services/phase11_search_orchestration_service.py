@@ -13,6 +13,7 @@ import logging
 import heapq
 import math
 import time
+from threading import Event, Lock, Thread
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +25,7 @@ from app.repositories.campaign_result_registry_repository import (
 from app.repositories.phase10_intelligence_repository import (
     Phase10IntelligenceRepository,
 )
+from app.database.connection import get_connection
 from app.services.audience_query_service import (
     AUDIENCE_FILTER_CONTRACT_VERSION,
     AUDIENCE_RANK_CONTRACT_VERSION,
@@ -40,13 +42,15 @@ from app.services.phase11_result_contracts import (
     canonical_metadata_json,
 )
 from app.services.phase11_result_snapshot_service import validate_result_snapshot
+from app.services.intelligence_attestation_service import has_current_attestation
 
 logger = logging.getLogger(__name__)
 
-RESULT_CACHE_KEY_CONTRACT_VERSION = "1"
+RESULT_CACHE_KEY_CONTRACT_VERSION = "2"
 DEFAULT_PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _REUSABLE_LIFECYCLES = frozenset({"CURRENT", "REUSABLE", "PROTECTED"})
 _TERMINAL_SEARCH_STATES = frozenset({"COMPLETED", "BLOCKED", "FAILED"})
+_PHASE10_HEAVY_GATE = Lock()
 
 Phase10Reader = Callable[..., dict[str, Any]]
 Phase10Preparer = Callable[..., dict[str, Any]]
@@ -129,8 +133,13 @@ def build_result_cache_key(
         raise Phase11SearchBlockedError(
             "Search and READY intelligence Modeling Context differ."
         )
+    selection_contract_version = str(run.get("selection_contract_version") or "1")
     payload = {
-        "result_cache_key_contract_version": RESULT_CACHE_KEY_CONTRACT_VERSION,
+        "result_cache_key_contract_version": (
+            RESULT_CACHE_KEY_CONTRACT_VERSION
+            if selection_contract_version == "2"
+            else "1"
+        ),
         "generation_id": generation["generation_id"],
         "generation_fingerprint_sha256": build_generation_fingerprint(generation),
         "targeting_criteria_sha256": run["targeting_criteria_sha256"],
@@ -142,6 +151,12 @@ def build_result_cache_key(
         "audience_rank_contract_version": AUDIENCE_RANK_CONTRACT_VERSION,
         "result_membership_contract_version": RESULT_MEMBERSHIP_CONTRACT_VERSION,
     }
+    if selection_contract_version == "2":
+        payload.update(
+            selection_contract_version=selection_contract_version,
+            propensity_bucket=run.get("propensity_bucket"),
+            calibration_artifact_id=run.get("calibration_artifact_id"),
+        )
     return _sha256_json(payload)
 
 
@@ -247,6 +262,64 @@ def _branch_members(
         cursor = next_cursor
 
 
+def _calibrated_branch_members(
+    database_path: Path,
+    calibration_artifact_id: int,
+    branch: Mapping[str, Any],
+):
+    """Stream one calibrated branch from a single prepared SQL cursor."""
+
+    predicates = ["p.calibration_artifact_id=?"]
+    parameters: list[Any] = [calibration_artifact_id]
+    numeric = {
+        "score_min": ("p.calibrated_probability >= ?",),
+        "score_max": ("p.calibrated_probability <= ?",),
+        "age_min": ("d.age >= ?",), "age_max": ("d.age <= ?",),
+        "individual_yearly_income_min": ("d.individual_yearly_income >= ?",),
+        "individual_yearly_income_max": ("d.individual_yearly_income <= ?",),
+        "family_member_count_min": ("d.family_member_count >= ?",),
+        "family_member_count_max": ("d.family_member_count <= ?",),
+        "top_percentile_max": ("p.percentile_bucket <= ?",),
+    }
+    for key, (predicate,) in numeric.items():
+        if branch.get(key) is not None:
+            predicates.append(predicate)
+            parameters.append(branch[key])
+    if branch.get("deciles"):
+        marks = ",".join("?" for _ in branch["deciles"])
+        predicates.append(f"p.decile IN ({marks})")
+        parameters.extend(branch["deciles"])
+    if branch.get("rank_bands"):
+        marks = ",".join("?" for _ in branch["rank_bands"])
+        predicates.append(f"p.rank_band IN ({marks})")
+        parameters.extend(branch["rank_bands"])
+    for field in (
+        "gender", "state", "marital_status", "education", "employment_status",
+        "resident_status", "resident_type", "type_of_employment",
+    ):
+        values = branch.get(field) or []
+        if values:
+            marks = ",".join("?" for _ in values)
+            predicates.append(
+                f"COALESCE(NULLIF(TRIM(CAST(d.{field} AS TEXT)),''),'Unknown/Other') IN ({marks})"
+            )
+            parameters.extend(values)
+    sql = f"""SELECT p.person_id,p.calibrated_probability AS propensity_score,
+                     p.percentile_bucket,p.decile,p.rank_band
+              FROM calibrated_propensity_scores AS p
+              JOIN demographics AS d ON d.person_id=p.person_id
+              WHERE {' AND '.join(predicates)}
+              ORDER BY p.calibrated_probability DESC,p.person_id"""
+    with get_connection(database_path) as connection:
+        cursor = connection.execute(sql, tuple(parameters))
+        while True:
+            rows = cursor.fetchmany(5_000)
+            if not rows:
+                return
+            for row in rows:
+                yield _validated_member(row)
+
+
 def iter_selected_members(
     database_path: Path,
     run: Mapping[str, Any],
@@ -269,13 +342,22 @@ def iter_selected_members(
     if not isinstance(branches, list) or not 1 <= len(branches) <= 49:
         raise Phase11SearchBlockedError("Persisted filter branches are invalid.")
     scoring_run_id = int(generation["scoring_run_id"])
-    iterators = [
-        iter(_branch_members(
-            database_path, scoring_run_id, branch,
-            audience_search=audience_search,
-        ))
-        for branch in branches
-    ]
+    if run.get("selection_contract_version") == "2":
+        calibration_id = run.get("calibration_artifact_id")
+        if isinstance(calibration_id, bool) or not isinstance(calibration_id, int):
+            raise Phase11SearchBlockedError("A promoted probability calibration is required.")
+        iterators = [
+            iter(_calibrated_branch_members(database_path, calibration_id, branch))
+            for branch in branches
+        ]
+    else:
+        iterators = [
+            iter(_branch_members(
+                database_path, scoring_run_id, branch,
+                audience_search=audience_search,
+            ))
+            for branch in branches
+        ]
     heap: list[tuple[float, str, int, dict[str, Any]]] = []
     for index, iterator in enumerate(iterators):
         try:
@@ -383,6 +465,32 @@ def _phase10_state(
     reader: Phase10Reader,
     preparer: Phase10Preparer,
 ) -> tuple[str, dict[str, Any] | None, dict[str, Any]]:
+    # The modeling-context registry is the cheapest exact reuse path and avoids
+    # reconstructing historical cohorts merely to rediscover an existing READY asset.
+    candidates = Phase10IntelligenceRepository(database_path).find_generations_by_modeling_context(
+        str(run["modeling_context_sha256"]), limit=10,
+    )
+    direct = next(
+        (candidate for candidate in candidates
+         if candidate["generation_status"] == "READY"
+         and candidate["lifecycle_state"] in _REUSABLE_LIFECYCLES
+         and has_current_attestation(database_path, candidate)),
+        None,
+    )
+    if direct is not None:
+        return "READY", direct, {
+            "status": "READY", "progress_percent": 100,
+            "stage": "EXACT_INTELLIGENCE_REUSE",
+            "business_message": "Reusing compatible targeting intelligence.",
+            "reuse_summary": {name: "REUSE" for name in ("analysis", "model", "scoring", "rank")},
+            "technical_details": {
+                key: direct[key] for key in (
+                    "generation_id", "modeling_context_sha256", "analysis_run_id",
+                    "model_run_id", "scoring_run_id",
+                )
+            },
+            "is_ready": True,
+        }
     response = reader(
         database_path, int(run["targeting_context_id"]), project_root=project_root
     )
@@ -451,10 +559,31 @@ def execute_phase11_search(
             status_message="Checking current and reusable targeting intelligence.",
         )
 
-    state, generation, response = _phase10_state(
-        path, run, project_root=root,
-        reader=phase10_reader, preparer=phase10_preparer,
-    )
+    heartbeat_stop = Event()
+    def heartbeat() -> None:
+        while not heartbeat_stop.wait(10.0):
+            try:
+                repository.update_search_progress(
+                    search_run_id,
+                    stage_code="CHECKING_INTELLIGENCE",
+                    stage_label="Checking targeting intelligence",
+                    progress_percent=3,
+                    status_message="Still checking compatible targeting intelligence; the search is active.",
+                )
+            except Exception:
+                logger.exception("Search heartbeat failed | search_run_id=%s", search_run_id)
+                return
+    heartbeat_thread = Thread(target=heartbeat, name=f"phase11-heartbeat-{search_run_id}", daemon=True)
+    heartbeat_thread.start()
+    try:
+        with _PHASE10_HEAVY_GATE:
+            state, generation, response = _phase10_state(
+                path, run, project_root=root,
+                reader=phase10_reader, preparer=phase10_preparer,
+            )
+    finally:
+        heartbeat_stop.set()
+        heartbeat_thread.join(timeout=2.0)
     phase10_progress = response.get("progress_percent", 0)
     if isinstance(phase10_progress, bool) or not isinstance(phase10_progress, int):
         phase10_progress = 0
@@ -518,6 +647,38 @@ def execute_phase11_search(
         )
         return SearchOrchestrationOutcome(search_run_id, state)
     assert generation is not None
+
+    calibration_artifact_id = None
+    if run.get("selection_contract_version") == "2":
+        with get_connection(path) as connection:
+            calibration = connection.execute(
+                """SELECT calibration_artifact_id FROM score_calibration_artifacts
+                   WHERE scoring_run_id=? AND status='PROMOTED'
+                   ORDER BY promoted_at DESC,calibration_artifact_id DESC LIMIT 1""",
+                (int(generation["scoring_run_id"]),),
+            ).fetchone()
+        if calibration is None:
+            repository.fail_search_run(
+                search_run_id,
+                blocked=True,
+                failure_code="CALIBRATED_PROPENSITY_NOT_READY",
+                failure_category="CALIBRATION",
+                failure_summary="Calibrated purchase probabilities are not ready for this targeting intelligence.",
+                resolution_steps=(
+                    "Prepare and promote a held-out probability calibration for the current scoring generation.",
+                    "Retry this saved search after calibration completes.",
+                ),
+            )
+            return SearchOrchestrationOutcome(search_run_id, "BLOCKED")
+        calibration_artifact_id = int(calibration["calibration_artifact_id"])
+    repository.bind_current_attempt_lineage(
+        search_run_id,
+        generation_id=int(generation["generation_id"]),
+        scoring_run_id=int(generation["scoring_run_id"]),
+        calibration_artifact_id=calibration_artifact_id,
+    )
+    run = repository.fetch_search_run(search_run_id)
+    assert run is not None
 
     repository.update_search_progress(
         search_run_id,

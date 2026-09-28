@@ -110,7 +110,7 @@ def test_fresh_schema_has_nullable_write_once_future_foreign_key_seam(
     assert len(foreign_keys) == 1
     assert foreign_keys[0]["table"] == "campaign_search_runs"
     assert set(PHASE_ELEVEN_FEEDBACK_INDEX_STATEMENTS) <= indexes
-    assert CURRENT_SCHEMA_VERSION == 19
+    assert CURRENT_SCHEMA_VERSION == 21
 
 
 def test_version_17_upgrade_backfills_existing_search_without_changing_it(
@@ -164,7 +164,12 @@ def test_version_17_upgrade_backfills_existing_search_without_changing_it(
         version = connection.execute(
             "SELECT value FROM app_metadata WHERE key='schema_version'"
         ).fetchone()[0]
-    assert after == before
+    assert {key: after[key] for key in before} == before
+    assert after["current_attempt_number"] == 1
+    assert after["selection_contract_version"] == "1"
+    assert after["propensity_bucket"] is None
+    assert after["catalog_version"] is None
+    assert after["calibration_artifact_id"] is None
     assert future == {
         "search_run_id": before["search_run_id"],
         "activation_id": None,
@@ -174,7 +179,7 @@ def test_version_17_upgrade_backfills_existing_search_without_changing_it(
         "created_at": NOW,
         "updated_at": NOW,
     }
-    assert version == "19"
+    assert version == "21"
 
 
 def test_failed_version_18_migration_rolls_back_table_and_version(

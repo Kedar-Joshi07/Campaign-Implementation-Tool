@@ -11,7 +11,7 @@ import math
 import json
 import re
 import sqlite3
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -106,6 +106,21 @@ class CampaignResultRegistryRepository:
             "campaign_search_run_runtime", "search_run_id", search_run_id
         )
 
+    def fetch_search_runtimes(self, search_run_ids: list[int]) -> dict[int, dict[str, Any]]:
+        """Fetch several runtime records with one bounded primary-key query."""
+
+        identifiers = list(dict.fromkeys(_integer(value) for value in search_run_ids))
+        if not identifiers:
+            return {}
+        marks = ",".join("?" for _ in identifiers)
+        with get_connection(self.database_path) as connection:
+            rows = connection.execute(
+                f"""SELECT * FROM campaign_search_run_runtime
+                    WHERE search_run_id IN ({marks})""",
+                tuple(identifiers),
+            ).fetchall()
+        return {int(row["search_run_id"]): dict(row) for row in rows}
+
     def fetch_snapshot(self, result_snapshot_id: int) -> dict[str, Any] | None:
         return self._fetch("campaign_result_snapshots", "result_snapshot_id", result_snapshot_id)
 
@@ -118,6 +133,9 @@ class CampaignResultRegistryRepository:
         selection_mode: str = "ALL_MATCHING", target_count: int | None = None,
         export_profile: str | None = None, description: str | None = None,
         planned_launch_date: str | None = None, created_by_user_id: str | None = None,
+        selection_contract_version: str = "1", propensity_bucket: str | None = None,
+        catalog_version: str | None = None,
+        connection: sqlite3.Connection | None = None,
         timestamp: str | None = None,
     ) -> int:
         _selection(selection_mode, target_count)
@@ -138,6 +156,14 @@ class CampaignResultRegistryRepository:
             except (TypeError, ValueError) as exc:
                 raise Phase11RegistryValidationError("Invalid planned launch date.") from exc
         timestamp = _timestamp(timestamp)
+        if selection_contract_version not in {"1", "2"}:
+            raise Phase11RegistryValidationError("Invalid selection contract version.")
+        if selection_contract_version == "2" and propensity_bucket not in {
+            "0.90", "0.80", "0.70", "0.60", "0.50",
+        }:
+            raise Phase11RegistryValidationError("Choose a supported propensity bucket.")
+        if selection_contract_version == "1" and propensity_bucket is not None:
+            raise Phase11RegistryValidationError("Legacy searches cannot store a propensity bucket.")
         values = dict(
             search_run_contract_version=SEARCH_RUN_CONTRACT_VERSION,
             campaign_name=_text(campaign_name, 200), description=_text(description, 2000, optional=True),
@@ -148,10 +174,18 @@ class CampaignResultRegistryRepository:
             delivery_channel=profile.channel_code, export_profile=profile.export_profile,
             status="QUEUED", created_at=timestamp, started_at=timestamp,
             created_by_user_id=_text(created_by_user_id, 200, optional=True),
+            current_attempt_number=1,
+            selection_contract_version=selection_contract_version,
+            propensity_bucket=propensity_bucket,
+            catalog_version=_text(catalog_version, 128, optional=True),
         )
-        with get_connection(self.database_path, write=True) as connection:
-            connection.execute("BEGIN IMMEDIATE")
+        if connection is not None:
+            if not connection.in_transaction:
+                raise Phase11RegistryStateError("Shared search creation requires an active transaction.")
             return self._insert(connection, "campaign_search_runs", values)
+        with get_connection(self.database_path, write=True) as active:
+            active.execute("BEGIN IMMEDIATE")
+            return self._insert(active, "campaign_search_runs", values)
 
     def mark_processing(self, search_run_id: int) -> None:
         with get_connection(self.database_path, write=True) as connection:
@@ -176,13 +210,23 @@ class CampaignResultRegistryRepository:
                     stage_label='Checking targeting intelligence', progress_percent=2,
                     status_message='Checking available targeting intelligence.',
                     processing_started_at=COALESCE(processing_started_at, ?),
-                    updated_at=?, heartbeat_at=?, state_version=state_version+1
+                    updated_at=?, heartbeat_at=?, stage_started_at=?, state_version=state_version+1
                 WHERE search_run_id=? AND lifecycle_status='QUEUED'
                 """,
-                (timestamp, timestamp, timestamp, search_run_id),
+                (timestamp, timestamp, timestamp, timestamp, search_run_id),
             )
             if runtime_cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Search runtime could not start.")
+            connection.execute(
+                """UPDATE campaign_search_attempts
+                   SET status='PROCESSING', started_at=COALESCE(started_at, ?)
+                   WHERE search_run_id=? AND attempt_number=? AND status='QUEUED'""",
+                (timestamp, search_run_id, int(run_attempt["current_attempt_number"]))
+                if (run_attempt := connection.execute(
+                    "SELECT current_attempt_number FROM campaign_search_runs WHERE search_run_id=?",
+                    (search_run_id,),
+                ).fetchone()) is not None else (timestamp, search_run_id, 1),
+            )
 
     def update_search_progress(
         self,
@@ -242,17 +286,31 @@ class CampaignResultRegistryRepository:
                 UPDATE campaign_search_run_runtime
                 SET stage_code=?, stage_label=?, progress_percent=?,
                     processed_count=?, total_count=?, status_message=?,
-                    updated_at=?, heartbeat_at=?, state_version=state_version+1
+                    updated_at=?, heartbeat_at=?,
+                    stage_started_at=CASE WHEN stage_code != ? THEN ? ELSE stage_started_at END,
+                    state_version=state_version+1
                 WHERE search_run_id=? AND lifecycle_status IN ('QUEUED','PROCESSING')
                   AND progress_percent <= ?
                 """,
                 (
                     code, label, progress_percent, next_processed, next_total,
-                    message, moment, moment, identifier, progress_percent,
+                    message, moment, moment, code, moment, identifier, progress_percent,
                 ),
             )
             if cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Search progress update was rejected.")
+            attempt_number = connection.execute(
+                "SELECT current_attempt_number FROM campaign_search_runs WHERE search_run_id=?",
+                (identifier,),
+            ).fetchone()["current_attempt_number"]
+            connection.execute(
+                """INSERT INTO campaign_search_progress_events (
+                       search_run_id,attempt_number,stage_code,stage_label,
+                       progress_percent,processed_count,total_count,status_message,recorded_at
+                   ) VALUES (?,?,?,?,?,?,?,?,?)""",
+                (identifier, int(attempt_number), code, label, progress_percent,
+                 next_processed, next_total, message, moment),
+            )
 
     def complete_search_run(
         self, search_run_id: int, *, result_snapshot_id: int, result_source: str,
@@ -299,6 +357,14 @@ class CampaignResultRegistryRepository:
             )
             if runtime_cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Search runtime could not complete.")
+            connection.execute(
+                """UPDATE campaign_search_attempts
+                   SET status='COMPLETED', generation_id=?, scoring_run_id=?,
+                       completed_at=?, retryable=0
+                   WHERE search_run_id=? AND attempt_number=? AND status='PROCESSING'""",
+                (snapshot["generation_id"], snapshot["scoring_run_id"], timestamp,
+                 search_run_id, int(run["current_attempt_number"])),
+            )
 
     @staticmethod
     def _elapsed(started: str, completed: str) -> float:
@@ -348,6 +414,15 @@ class CampaignResultRegistryRepository:
             run = connection.execute("SELECT * FROM campaign_search_runs WHERE search_run_id=?", (_integer(search_run_id),)).fetchone()
             if run is None or run["status"] not in {"QUEUED", "PROCESSING"}:
                 raise Phase11RegistryStateError("Search is missing or terminal.")
+            active_runtime = connection.execute(
+                "SELECT stage_code FROM campaign_search_run_runtime WHERE search_run_id=?",
+                (search_run_id,),
+            ).fetchone()
+            failure_stage = (
+                str(active_runtime["stage_code"])
+                if active_runtime is not None
+                else status
+            )
             connection.execute(
                 "UPDATE campaign_search_runs SET status=?, completed_at=?, processing_seconds=?, safe_error_message=? WHERE search_run_id=?",
                 (status, timestamp, self._elapsed(run["started_at"], timestamp), message, search_run_id),
@@ -357,25 +432,249 @@ class CampaignResultRegistryRepository:
                 UPDATE campaign_search_run_runtime
                 SET lifecycle_status=?, stage_code=?, stage_label=?,
                     status_message=?, failure_code=?, failure_category=?,
-                    failure_summary=?, resolution_steps_json=?, retryable=?,
+                    failure_summary=?, failure_stage_code=?, resolution_steps_json=?, retryable=?,
                     updated_at=?, heartbeat_at=?, state_version=state_version+1
                 WHERE search_run_id=? AND lifecycle_status IN ('QUEUED','PROCESSING')
                 """,
                 (
                     status, status,
                     "Search blocked" if blocked else "Search failed",
-                    message, code, category, summary, resolution_json,
+                    message, code, category, summary, failure_stage, resolution_json,
                     int(bool(retryable)), timestamp, timestamp, search_run_id,
                 ),
             )
             if cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Search runtime could not become terminal.")
+            connection.execute(
+                """UPDATE campaign_search_attempts
+                   SET status=?, completed_at=?, failure_code=?, failure_stage_code=?,
+                       failure_summary=?, retryable=?
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND status IN ('QUEUED','PROCESSING')""",
+                (status, timestamp, code, failure_stage, summary, int(bool(retryable)), search_run_id,
+                 int(run["current_attempt_number"])),
+            )
+
+    def retry_search_run(
+        self,
+        search_run_id: int,
+        *,
+        idempotency_key: str,
+        stale_after_seconds: int = 120,
+        timestamp: str | None = None,
+    ) -> dict[str, Any]:
+        """Create an immutable next attempt while retaining the visible run ID."""
+
+        identifier = _integer(search_run_id)
+        key = _text(idempotency_key, 200)
+        if stale_after_seconds < 30:
+            raise Phase11RegistryValidationError("Stale threshold is too short.")
+        moment = _timestamp(timestamp)
+        now = datetime.fromisoformat(moment.replace("Z", "+00:00"))
+        with get_connection(self.database_path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            run = connection.execute(
+                "SELECT * FROM campaign_search_runs WHERE search_run_id=?", (identifier,)
+            ).fetchone()
+            runtime = connection.execute(
+                "SELECT * FROM campaign_search_run_runtime WHERE search_run_id=?", (identifier,)
+            ).fetchone()
+            if run is None or runtime is None:
+                raise Phase11RegistryStateError("Search was not found.")
+            existing = connection.execute(
+                "SELECT attempt_number FROM campaign_search_attempts WHERE search_run_id=? AND idempotency_key=?",
+                (identifier, key),
+            ).fetchone()
+            if existing is not None:
+                return dict(connection.execute(
+                    "SELECT * FROM campaign_search_runs WHERE search_run_id=?", (identifier,)
+                ).fetchone())
+            status = str(run["status"])
+            if status == "PROCESSING":
+                heartbeat = runtime["heartbeat_at"] or runtime["updated_at"]
+                heartbeat_at = datetime.fromisoformat(str(heartbeat).replace("Z", "+00:00"))
+                if now - heartbeat_at < timedelta(seconds=stale_after_seconds):
+                    raise Phase11RegistryStateError("The search is still active and cannot be retried.")
+                connection.execute(
+                    "UPDATE campaign_search_runs SET status='FAILED',completed_at=?,processing_seconds=?,safe_error_message=? WHERE search_run_id=?",
+                    (moment, self._elapsed(run["started_at"], moment),
+                     "The previous attempt stopped sending progress updates.", identifier),
+                )
+                connection.execute(
+                    """UPDATE campaign_search_run_runtime SET lifecycle_status='FAILED',
+                       stage_code='FAILED',stage_label='Search became unresponsive',
+                       status_message='The previous attempt stopped sending progress updates.',
+                       failure_code='STALE_PROCESSING_ATTEMPT',failure_category='PROCESSING_FAILURE',
+                       failure_stage_code=?,
+                       failure_summary='The previous attempt stopped sending progress updates.',
+                       resolution_steps_json='["Retry the saved search."]',retryable=1,
+                       updated_at=?,heartbeat_at=?,state_version=state_version+1
+                       WHERE search_run_id=?""",
+                    (str(runtime["stage_code"]), moment, moment, identifier),
+                )
+                connection.execute(
+                    """UPDATE campaign_search_attempts SET status='FAILED',completed_at=?,
+                       failure_code='STALE_PROCESSING_ATTEMPT',failure_stage_code=?,
+                       failure_summary='The previous attempt stopped sending progress updates.',retryable=1
+                       WHERE search_run_id=? AND attempt_number=?""",
+                    (moment, str(runtime["stage_code"]), identifier, int(run["current_attempt_number"])),
+                )
+                status = "FAILED"
+                retry_allowed = True
+            else:
+                retry_allowed = bool(runtime["retryable"])
+            if status not in {"BLOCKED", "FAILED"} or not retry_allowed:
+                raise Phase11RegistryStateError("This search is not eligible for retry.")
+            next_attempt = int(run["current_attempt_number"]) + 1
+            connection.execute(
+                """INSERT INTO campaign_search_attempts (
+                       search_run_id,attempt_number,attempt_contract_version,
+                       selection_contract_version,propensity_bucket,bucket_minimum,
+                       bucket_maximum,bucket_maximum_inclusive,status,idempotency_key,
+                       created_at,started_at
+                   ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (identifier, next_attempt, "1", run["selection_contract_version"],
+                 run["propensity_bucket"],
+                 float(run["propensity_bucket"]) if run["propensity_bucket"] else None,
+                 ({"0.90": 1.0, "0.80": .9, "0.70": .8, "0.60": .7, "0.50": .6}.get(run["propensity_bucket"])),
+                 1 if run["propensity_bucket"] == "0.90" else (0 if run["propensity_bucket"] else None),
+                 "QUEUED", key, moment, moment),
+            )
+            connection.execute(
+                """UPDATE campaign_search_runs SET status='QUEUED',current_attempt_number=?,
+                   started_at=?,completed_at=NULL,processing_seconds=NULL,safe_error_message=NULL,
+                   generation_id=NULL,analysis_run_id=NULL,model_run_id=NULL,scoring_run_id=NULL,
+                   result_snapshot_id=NULL,result_source=NULL,selected_count=NULL
+                   WHERE search_run_id=?""",
+                (next_attempt, moment, identifier),
+            )
+            connection.execute(
+                """UPDATE campaign_search_run_runtime SET lifecycle_status='QUEUED',
+                   stage_code='QUEUED',stage_label='Waiting to retry',progress_percent=0,
+                   processed_count=0,total_count=NULL,
+                   status_message='Retry saved and waiting for processing capacity.',
+                   failure_code=NULL,failure_category=NULL,failure_summary=NULL,
+                   failure_stage_code=NULL,
+                   resolution_steps_json='[]',retryable=0,processing_started_at=NULL,
+                   updated_at=?,heartbeat_at=NULL,stage_started_at=?,state_version=state_version+1
+                   WHERE search_run_id=?""",
+                (moment, moment, identifier),
+            )
+            connection.execute(
+                """INSERT INTO campaign_search_progress_events (
+                       search_run_id,attempt_number,stage_code,stage_label,
+                       progress_percent,processed_count,total_count,status_message,recorded_at
+                   ) VALUES (?,?,'QUEUED','Waiting to retry',0,0,NULL,
+                       'Retry saved and waiting for processing capacity.',?)""",
+                (identifier, next_attempt, moment),
+            )
+            return dict(connection.execute(
+                "SELECT * FROM campaign_search_runs WHERE search_run_id=?", (identifier,)
+            ).fetchone())
+
+    def queue_position(self, search_run_id: int) -> int | None:
+        return self.queue_positions([search_run_id]).get(_integer(search_run_id))
+
+    def queue_positions(self, search_run_ids: list[int]) -> dict[int, int]:
+        """Return FIFO positions for several queued runs in one indexed query."""
+
+        identifiers = list(dict.fromkeys(_integer(value) for value in search_run_ids))
+        if not identifiers:
+            return {}
+        marks = ",".join("?" for _ in identifiers)
+        with get_connection(self.database_path) as connection:
+            rows = connection.execute(
+                f"""WITH queued AS (
+                        SELECT search_run_id,
+                               ROW_NUMBER() OVER (
+                                   ORDER BY created_at,search_run_id
+                               ) AS queue_position
+                        FROM campaign_search_runs
+                        WHERE status='QUEUED'
+                    )
+                    SELECT search_run_id,queue_position FROM queued
+                    WHERE search_run_id IN ({marks})""",
+                tuple(identifiers),
+            ).fetchall()
+        return {
+            int(row["search_run_id"]): int(row["queue_position"])
+            for row in rows
+        }
+
+    def stage_duration_history(self, *, limit_per_stage: int = 30) -> dict[str, list[float]]:
+        """Return bounded completed-stage durations for qualified ETA ranges."""
+
+        if not 3 <= limit_per_stage <= 100:
+            raise Phase11RegistryValidationError("Invalid stage history limit.")
+        with get_connection(self.database_path) as connection:
+            rows = connection.execute(
+                """
+                WITH starts AS (
+                    SELECT search_run_id,attempt_number,stage_code,
+                           MIN(recorded_at) AS started_at
+                    FROM campaign_search_progress_events
+                    GROUP BY search_run_id,attempt_number,stage_code
+                ), transitions AS (
+                    SELECT stage_code,started_at,
+                           LEAD(started_at) OVER (
+                               PARTITION BY search_run_id,attempt_number
+                               ORDER BY started_at,stage_code
+                           ) AS ended_at
+                    FROM starts
+                ), ranked AS (
+                    SELECT stage_code,
+                           (julianday(ended_at)-julianday(started_at))*86400.0 AS seconds,
+                           ROW_NUMBER() OVER (PARTITION BY stage_code ORDER BY started_at DESC) AS position
+                    FROM transitions WHERE ended_at IS NOT NULL
+                )
+                SELECT stage_code,seconds FROM ranked
+                WHERE position <= ? AND seconds >= 0
+                ORDER BY stage_code,position
+                """,
+                (limit_per_stage,),
+            ).fetchall()
+        result: dict[str, list[float]] = {}
+        for row in rows:
+            result.setdefault(str(row["stage_code"]), []).append(float(row["seconds"]))
+        return result
+
+    def bind_current_attempt_lineage(
+        self, search_run_id: int, *, generation_id: int, scoring_run_id: int,
+        calibration_artifact_id: int | None,
+    ) -> None:
+        """Bind the active immutable attempt to the exact intelligence assets."""
+
+        with get_connection(self.database_path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            run = connection.execute(
+                "SELECT current_attempt_number,selection_contract_version,status FROM campaign_search_runs WHERE search_run_id=?",
+                (_integer(search_run_id),),
+            ).fetchone()
+            if run is None or run["status"] != "PROCESSING":
+                raise Phase11RegistryStateError("Active search attempt was not found.")
+            if run["selection_contract_version"] == "2" and calibration_artifact_id is None:
+                raise Phase11RegistryStateError("Calibrated selection requires a promoted calibration.")
+            connection.execute(
+                "UPDATE campaign_search_runs SET calibration_artifact_id=? WHERE search_run_id=?",
+                (calibration_artifact_id, search_run_id),
+            )
+            cursor = connection.execute(
+                """UPDATE campaign_search_attempts
+                   SET generation_id=?,scoring_run_id=?,calibration_artifact_id=?
+                   WHERE search_run_id=? AND attempt_number=? AND status='PROCESSING'""",
+                (generation_id, scoring_run_id, calibration_artifact_id, search_run_id,
+                 int(run["current_attempt_number"])),
+            )
+            if cursor.rowcount != 1:
+                raise Phase11RegistryStateError("Active search attempt lineage could not be recorded.")
 
     def register_snapshot(
         self, *, generation_id: int, targeting_criteria_sha256: str, filter_branches_sha256: str,
         result_cache_key_sha256: str, resolved_count: int, storage_format: str,
         storage_uri: str, snapshot_sha256: str, selection_mode: str = "ALL_MATCHING",
         target_count: int | None = None, timestamp: str | None = None,
+        selection_contract_version: str = "1", propensity_bucket: str | None = None,
+        calibration_artifact_id: int | None = None,
     ) -> int:
         """Record an already validated artifact; does not certify its contents."""
         with get_connection(self.database_path, write=True) as connection:
@@ -393,6 +692,9 @@ class CampaignResultRegistryRepository:
                 selection_mode=selection_mode,
                 target_count=target_count,
                 timestamp=timestamp,
+                selection_contract_version=selection_contract_version,
+                propensity_bucket=propensity_bucket,
+                calibration_artifact_id=calibration_artifact_id,
             )
 
     def register_snapshot_in_transaction(
@@ -402,6 +704,8 @@ class CampaignResultRegistryRepository:
         storage_uri: str, snapshot_sha256: str,
         selection_mode: str = "ALL_MATCHING", target_count: int | None = None,
         timestamp: str | None = None, expected_snapshot_id: int | None = None,
+        selection_contract_version: str = "1", propensity_bucket: str | None = None,
+        calibration_artifact_id: int | None = None,
     ) -> int:
         """Insert through a caller-owned write transaction after artifact publication.
 
@@ -429,6 +733,9 @@ class CampaignResultRegistryRepository:
             resolved_count=resolved_count, storage_format=storage_format, storage_uri=storage_uri,
             snapshot_sha256=_sha(snapshot_sha256), created_at=timestamp, last_verified_at=timestamp,
             last_used_at=timestamp, currentness_state="CURRENT",
+            selection_contract_version=selection_contract_version,
+            propensity_bucket=propensity_bucket,
+            calibration_artifact_id=calibration_artifact_id,
         )
         generation = connection.execute(
             "SELECT generation_status,lifecycle_state FROM phase10_intelligence_generations WHERE generation_id=?", (generation_id,)

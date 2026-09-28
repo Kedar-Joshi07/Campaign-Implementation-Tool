@@ -28,6 +28,7 @@ from app.services.phase11_run_lifecycle_service import (
     project_run_issue,
     project_run_progress,
 )
+from app.services.targeting_option_catalog_service import get_product_catalog_entries
 
 
 RESULT_SOURCE_LABELS = {
@@ -82,20 +83,24 @@ def _product_summaries(
 ) -> list[dict[str, str]]:
     if not product_ids:
         return []
-    placeholders = ",".join("?" for _ in product_ids)
+    catalog = get_product_catalog_entries(database_path, product_ids)
+    missing = [product_id for product_id in product_ids if product_id not in catalog]
+    if not missing:
+        return [catalog[product_id] for product_id in product_ids]
+    placeholders = ",".join("?" for _ in missing)
     with get_connection(database_path) as connection:
         rows = connection.execute(
             f"""
-            SELECT TRIM(product_id) AS product_id,
-                   COALESCE(MIN(NULLIF(TRIM(product_name),'')), TRIM(product_id)) AS product_name,
-                   COALESCE(MIN(NULLIF(TRIM(product_category),'')), '') AS product_category
+            SELECT product_id AS product_id,
+                   COALESCE(MIN(NULLIF(product_name,'')), product_id) AS product_name,
+                   COALESCE(MIN(NULLIF(product_category,'')), '') AS product_category
             FROM campaign_sales
-            WHERE TRIM(product_id) IN ({placeholders})
-            GROUP BY TRIM(product_id)
+            WHERE product_id IN ({placeholders})
+            GROUP BY product_id
             """,
-            tuple(product_ids),
+            tuple(missing),
         ).fetchall()
-    known = {str(row["product_id"]): dict(row) for row in rows}
+    known = catalog | {str(row["product_id"]): dict(row) for row in rows}
     return [
         known.get(product_id, {
             "product_id": product_id,
@@ -208,16 +213,31 @@ def _base_projection(
     criteria: Mapping[str, Any], snapshot: Mapping[str, Any] | None,
     generation: Mapping[str, Any] | None,
     repository: CampaignResultRegistryRepository,
+    stage_history: Mapping[str, list[float]] | None = None,
+    product_catalog: Mapping[str, dict[str, str]] | None = None,
+    demographic_source_current: bool | None = None,
+    runtime_override: Mapping[str, Any] | None = None,
+    queue_positions: Mapping[int, int] | None = None,
 ) -> dict[str, Any]:
     source = run.get("result_source")
-    products = _product_summaries(database_path, list(context["product_ids"]))
+    product_ids = list(context["product_ids"])
+    products = (
+        [product_catalog.get(product_id, {
+            "product_id": product_id, "product_name": product_id,
+            "product_category": "",
+        }) for product_id in product_ids]
+        if product_catalog is not None
+        else _product_summaries(database_path, product_ids)
+    )
     currentness = _recorded_currentness(
         snapshot,
         generation,
-        _demographic_source_is_current(database_path, generation),
+        _demographic_source_is_current(database_path, generation)
+        if demographic_source_current is None else demographic_source_current,
     )
     channel = str(run["delivery_channel"])
-    runtime = repository.fetch_search_runtime(int(run["search_run_id"]))
+    runtime = runtime_override or repository.fetch_search_runtime(int(run["search_run_id"]))
+    issue = project_run_issue(runtime)
     return {
         "search_run_id": int(run["search_run_id"]),
         "campaign_name": str(run["campaign_name"]),
@@ -246,8 +266,22 @@ def _base_projection(
             and currentness == "CURRENT"
         ),
         "safe_message": _safe_message(run),
-        "progress": project_run_progress(run, runtime),
-        "issue": project_run_issue(runtime),
+        "progress": project_run_progress(
+            run, runtime,
+            stage_duration_samples=(stage_history or {}).get(str(runtime["stage_code"])) if runtime else None,
+        ),
+        "issue": issue,
+        "retry_eligible": bool(issue and issue.get("retryable")),
+        "attempt_number": int(run.get("current_attempt_number") or 1),
+        "queue_position": (
+            queue_positions.get(int(run["search_run_id"]))
+            if queue_positions is not None and run["status"] == "QUEUED"
+            else repository.queue_position(int(run["search_run_id"]))
+            if run["status"] == "QUEUED"
+            else None
+        ),
+        "propensity_bucket": run.get("propensity_bucket"),
+        "selection_contract_version": str(run.get("selection_contract_version") or "1"),
     }
 
 
@@ -274,14 +308,65 @@ def list_result_history(
     runs = repository.list_search_runs(
         limit=limit, before_search_run_id=before_search_run_id
     )
+    stage_history = repository.stage_duration_history()
+    if not runs:
+        return []
+    context_ids = [int(run["targeting_context_id"]) for run in runs]
+    snapshot_ids = [int(run["result_snapshot_id"]) for run in runs if run.get("result_snapshot_id") is not None]
+    generation_ids = [int(run["generation_id"]) for run in runs if run.get("generation_id") is not None]
+    run_ids = [int(run["search_run_id"]) for run in runs]
+    queue_positions = repository.queue_positions(
+        [int(run["search_run_id"]) for run in runs if run["status"] == "QUEUED"]
+    )
+    def bulk(table: str, key: str, identifiers: list[int]) -> dict[int, dict[str, Any]]:
+        if not identifiers:
+            return {}
+        marks = ",".join("?" for _ in identifiers)
+        with get_connection(path) as connection:
+            rows = connection.execute(
+                f"SELECT * FROM {table} WHERE {key} IN ({marks})", tuple(identifiers)
+            ).fetchall()
+        return {int(row[key]): dict(row) for row in rows}
+    contexts = bulk("campaign_targeting_contexts", "targeting_context_id", context_ids)
+    snapshots = bulk("campaign_result_snapshots", "result_snapshot_id", snapshot_ids)
+    generations = bulk("phase10_intelligence_generations", "generation_id", generation_ids)
+    runtimes = bulk("campaign_search_run_runtime", "search_run_id", run_ids)
+    decoded: list[tuple[dict[str, Any], dict[str, Any], dict[str, Any], list[dict[str, Any]]]] = []
+    all_product_ids: set[str] = set()
+    for run in runs:
+        context_row = contexts.get(int(run["targeting_context_id"]))
+        if context_row is None:
+            raise Phase11ResultProjectionError("Saved campaign context is unavailable.")
+        context, criteria, branches = _decode_contracts(context_row, run)
+        all_product_ids.update(context["product_ids"])
+        decoded.append((run, context, criteria, branches))
+    product_rows = _product_summaries(path, sorted(all_product_ids))
+    product_catalog = {row["product_id"]: row for row in product_rows}
+    with get_connection(path) as connection:
+        latest_demographic = connection.execute(
+            """SELECT import_id,source_checksum FROM data_import_runs
+               WHERE dataset_name='demographics' AND status='COMPLETED'
+               ORDER BY import_id DESC LIMIT 1"""
+        ).fetchone()
     result = []
     for run in runs:
-        context, criteria, _branches, snapshot, generation = _load_run_projection(
-            path, run, repository
+        _saved_run, context, criteria, _branches = next(
+            item for item in decoded if item[0]["search_run_id"] == run["search_run_id"]
+        )
+        snapshot = snapshots.get(int(run["result_snapshot_id"])) if run.get("result_snapshot_id") is not None else None
+        generation = generations.get(int(run["generation_id"])) if run.get("generation_id") is not None else None
+        demographic_current = bool(
+            generation is not None and latest_demographic is not None
+            and int(latest_demographic["import_id"]) == generation.get("demographic_import_id")
+            and str(latest_demographic["source_checksum"]) == generation.get("demographic_source_checksum")
         )
         result.append(
             _base_projection(
-                path, run, context, criteria, snapshot, generation, repository
+                path, run, context, criteria, snapshot, generation, repository,
+                stage_history,
+                product_catalog, demographic_current,
+                runtimes.get(int(run["search_run_id"])),
+                queue_positions,
             )
         )
     _assert_no_forbidden_keys(result)
@@ -332,7 +417,8 @@ def get_result_detail(
         path, run, repository
     )
     base = _base_projection(
-        path, run, context, criteria, snapshot, generation, repository
+        path, run, context, criteria, snapshot, generation, repository,
+        repository.stage_duration_history(),
     )
     currentness = base["currentness"]
     if snapshot is not None and generation is not None:

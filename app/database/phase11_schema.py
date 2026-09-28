@@ -12,6 +12,8 @@ CAMPAIGN_SEARCH_RUN_COLUMNS = (
     "scoring_run_id", "result_snapshot_id", "result_source", "status",
     "selected_count", "created_at", "started_at", "completed_at",
     "processing_seconds", "created_by_user_id", "safe_error_message",
+    "current_attempt_number", "selection_contract_version", "propensity_bucket",
+    "catalog_version", "calibration_artifact_id",
 )
 CAMPAIGN_RESULT_SNAPSHOT_COLUMNS = (
     "result_snapshot_id", "result_membership_contract_version", "generation_id",
@@ -19,6 +21,7 @@ CAMPAIGN_RESULT_SNAPSHOT_COLUMNS = (
     "target_count", "result_cache_key_sha256", "resolved_count", "storage_format",
     "storage_uri", "snapshot_sha256", "created_at", "last_verified_at",
     "last_used_at", "currentness_state",
+    "selection_contract_version", "propensity_bucket", "calibration_artifact_id",
 )
 CAMPAIGN_RESULT_EXPORT_EVENT_COLUMNS = (
     "export_event_id", "search_run_id", "snapshot_id", "export_contract_version",
@@ -33,6 +36,7 @@ CAMPAIGN_SEARCH_RUN_RUNTIME_COLUMNS = (
     "failure_category", "failure_summary", "resolution_steps_json",
     "retryable", "created_at", "processing_started_at", "updated_at",
     "heartbeat_at", "state_version",
+    "stage_started_at", "failure_stage_code",
 )
 
 SEARCH_RUN_LIFECYCLE_STATUSES = (

@@ -681,6 +681,25 @@ def _stream_sources(
             batch.clear()
 
 
+def _refresh_targeting_catalog_after_import(database_path: Path) -> None:
+    """Refresh compact business catalogs after an authoritative import commits."""
+
+    try:
+        from app.services.targeting_option_catalog_service import (
+            get_or_build_targeting_catalog,
+        )
+
+        catalog = get_or_build_targeting_catalog(database_path)
+        logger.info(
+            "Targeting catalog refreshed after import | catalog_version=%s",
+            catalog["catalog_version"],
+        )
+    except Exception:
+        # The authoritative import is already committed. Startup performs the
+        # same idempotent refresh, so catalog failure cannot rewrite import truth.
+        logger.exception("Post-import targeting catalog refresh failed")
+
+
 def _import_dataset(
     spec: DatasetSpec,
     source_paths: Sequence[str | Path],
@@ -810,6 +829,7 @@ def _import_dataset(
         f"{progress.rows_inserted:,}",
         duration,
     )
+    _refresh_targeting_catalog_after_import(path)
     return ImportResult(
         import_id=import_id,
         dataset_name=spec.dataset_name,

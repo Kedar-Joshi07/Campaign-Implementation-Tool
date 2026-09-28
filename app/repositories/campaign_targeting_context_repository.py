@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -23,18 +25,18 @@ class CampaignTargetingContextRepository:
                 for row in connection.execute(
                     """
                     SELECT
-                        TRIM(product_id) AS product_id,
+                        product_id AS product_id,
                         COALESCE(
-                            MIN(NULLIF(TRIM(product_name), '')),
-                            TRIM(product_id)
+                            MIN(NULLIF(product_name, '')),
+                            product_id
                         ) AS product_name,
                         COALESCE(
-                            MIN(NULLIF(TRIM(product_category), '')),
+                            MIN(NULLIF(product_category, '')),
                             ''
                         ) AS product_category
                     FROM campaign_sales
-                    WHERE NULLIF(TRIM(product_id), '') IS NOT NULL
-                    GROUP BY TRIM(product_id)
+                    WHERE product_id != ''
+                    GROUP BY product_id
                     ORDER BY product_id COLLATE NOCASE, product_id
                     LIMIT ?
                     """,
@@ -67,6 +69,33 @@ class CampaignTargetingContextRepository:
             "employment_types": "type_of_employment",
         }
         with get_connection(self.database_path) as connection:
+            snapshot = connection.execute(
+                """SELECT options_json FROM audience_analytics_snapshots
+                   ORDER BY scoring_run_id DESC LIMIT 1"""
+            ).fetchone()
+            if snapshot is not None:
+                try:
+                    options = json.loads(str(snapshot["options_json"]))
+                    categorical = options["categorical_options"]
+                    numeric = options["numeric_ranges"]["family_member_count"]
+                    mapping = {
+                        "genders": "gender", "states": "state",
+                        "marital_statuses": "marital_status",
+                        "education_levels": "education",
+                        "employment_statuses": "employment_status",
+                        "resident_statuses": "resident_status",
+                        "resident_types": "resident_type",
+                        "employment_types": "type_of_employment",
+                    }
+                    values = {
+                        target: [str(item["value"]) for item in categorical[source]]
+                        for target, source in mapping.items()
+                    }
+                    values["family_size_minimum"] = int(numeric["min"])
+                    values["family_size_maximum"] = int(numeric["max"])
+                    return values
+                except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+                    pass
             values = {
                 response_field: self._demographic_values(connection, column)
                 for response_field, column in fields.items()
@@ -145,9 +174,10 @@ class CampaignTargetingContextRepository:
         targeting_criteria_json: str,
         targeting_criteria_sha256: str,
         timestamp: str,
+        connection: sqlite3.Connection | None = None,
     ) -> int:
-        with get_connection(self.database_path, write=True) as connection:
-            cursor = connection.execute(
+        def insert(active: sqlite3.Connection) -> int:
+            cursor = active.execute(
                 """
                 INSERT INTO campaign_targeting_contexts (
                     campaign_targeting_context_contract_version,
@@ -175,6 +205,12 @@ class CampaignTargetingContextRepository:
                 ),
             )
             return int(cursor.lastrowid)
+        if connection is not None:
+            if not connection.in_transaction:
+                raise ValueError("Shared context creation requires an active transaction.")
+            return insert(connection)
+        with get_connection(self.database_path, write=True) as active:
+            return insert(active)
 
     def update_context(
         self,

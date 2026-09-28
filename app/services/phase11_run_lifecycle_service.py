@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import statistics
 from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -23,6 +24,7 @@ TERMINAL_LIFECYCLE_STATUSES = frozenset(
     {"COMPLETED", "STOPPED", "BLOCKED", "FAILED"}
 )
 MAX_ESTIMATE_SECONDS = 24 * 60 * 60
+STALE_HEARTBEAT_SECONDS = 120
 
 
 def _parse_timestamp(value: Any) -> datetime | None:
@@ -48,6 +50,7 @@ def _bounded_eta(
     runtime: Mapping[str, Any],
     *,
     now: datetime,
+    stage_duration_samples: list[float] | None = None,
 ) -> dict[str, Any]:
     status = str(runtime["lifecycle_status"])
     progress = int(runtime["progress_percent"])
@@ -70,32 +73,31 @@ def _bounded_eta(
             ),
         }
 
-    started = _parse_timestamp(
-        runtime.get("processing_started_at")
-        or run.get("started_at")
-        or run.get("created_at")
+    samples = sorted(
+        float(value) for value in (stage_duration_samples or [])
+        if isinstance(value, (int, float)) and math.isfinite(float(value)) and value >= 0
     )
-    if started is None:
+    started = _parse_timestamp(runtime.get("stage_started_at"))
+    if started is None or len(samples) < 3:
         return {
             "estimated_seconds_remaining_low": None,
             "estimated_seconds_remaining_high": None,
             "estimated_completion_at": None,
             "estimate_confidence": "UNAVAILABLE",
-            "estimate_basis": "INSUFFICIENT_TIMING_DATA",
+            "estimate_basis": "INSUFFICIENT_STAGE_HISTORY",
         }
     elapsed = max(1.0, (now - started).total_seconds())
-    remaining = elapsed * (100 - progress) / max(progress, 1)
-    if not math.isfinite(remaining) or remaining < 0:
-        remaining = float(MAX_ESTIMATE_SECONDS)
-    remaining = min(remaining, float(MAX_ESTIMATE_SECONDS))
-    low = max(1, min(MAX_ESTIMATE_SECONDS, math.ceil(remaining * 0.65)))
-    high = max(low, min(MAX_ESTIMATE_SECONDS, math.ceil(remaining * 1.75)))
+    low_duration = statistics.median(samples)
+    p90_index = min(len(samples) - 1, math.ceil(len(samples) * .9) - 1)
+    high_duration = samples[p90_index]
+    low = max(0, min(MAX_ESTIMATE_SECONDS, math.ceil(low_duration - elapsed)))
+    high = max(low, min(MAX_ESTIMATE_SECONDS, math.ceil(high_duration - elapsed)))
     return {
         "estimated_seconds_remaining_low": low,
         "estimated_seconds_remaining_high": high,
         "estimated_completion_at": _timestamp(now + timedelta(seconds=high)),
-        "estimate_confidence": "MEDIUM" if progress >= 25 else "LOW",
-        "estimate_basis": "CURRENT_RUN_OBSERVED_RATE",
+        "estimate_confidence": "HIGH" if len(samples) >= 10 else "MEDIUM",
+        "estimate_basis": "HISTORICAL_STAGE_P50_P90",
     }
 
 
@@ -104,6 +106,7 @@ def project_run_progress(
     runtime: Mapping[str, Any] | None,
     *,
     now: datetime | None = None,
+    stage_duration_samples: list[float] | None = None,
 ) -> dict[str, Any]:
     """Project persisted facts plus a bounded, explicitly qualified ETA."""
 
@@ -124,7 +127,9 @@ def project_run_progress(
             "state_version": 1,
         }
     current = now or datetime.now(timezone.utc)
-    eta = _bounded_eta(run, runtime, now=current)
+    eta = _bounded_eta(
+        run, runtime, now=current, stage_duration_samples=stage_duration_samples,
+    )
     return {
         "contract_version": "1",
         "lifecycle_status": str(runtime["lifecycle_status"]),
@@ -145,10 +150,33 @@ def project_run_progress(
     } | eta
 
 
-def project_run_issue(runtime: Mapping[str, Any] | None) -> dict[str, Any] | None:
+def project_run_issue(
+    runtime: Mapping[str, Any] | None,
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any] | None:
     """Return allowlisted user guidance without exposing internal exceptions."""
 
-    if runtime is None or runtime.get("failure_code") is None:
+    if runtime is None:
+        return None
+    if runtime.get("failure_code") is None:
+        heartbeat = _parse_timestamp(runtime.get("heartbeat_at") or runtime.get("updated_at"))
+        current = now or datetime.now(timezone.utc)
+        if (
+            runtime.get("lifecycle_status") == "PROCESSING"
+            and heartbeat is not None
+            and current - heartbeat >= timedelta(seconds=STALE_HEARTBEAT_SECONDS)
+        ):
+            return {
+                "code": "STALE_PROCESSING_ATTEMPT",
+                "category": "PROCESSING_FAILURE",
+                "summary": "This search stopped sending progress updates and can be retried safely.",
+                "resolution_steps": ["Retry the saved search."],
+                "retryable": True,
+                "affected_stage": str(runtime.get("stage_code") or "PROCESSING"),
+                "technical_reference": "STALE_PROCESSING_ATTEMPT",
+                "user_action_required": False,
+            }
         return None
     try:
         steps = json.loads(str(runtime["resolution_steps_json"]))
@@ -162,12 +190,20 @@ def project_run_issue(runtime: Mapping[str, Any] | None) -> dict[str, Any] | Non
         "summary": str(runtime["failure_summary"]),
         "resolution_steps": [str(step) for step in steps[:8]],
         "retryable": bool(runtime["retryable"]),
+        "affected_stage": str(
+            runtime.get("failure_stage_code") or runtime.get("stage_code") or "UNKNOWN"
+        ),
+        "technical_reference": str(runtime["failure_code"]),
+        "user_action_required": str(runtime.get("failure_category")) in {
+            "SAVED_TARGETING_CRITERIA", "TARGETING_INTELLIGENCE", "CALIBRATION",
+        },
     }
 
 
 __all__ = (
     "ACTIVE_LIFECYCLE_STATUSES",
     "MAX_ESTIMATE_SECONDS",
+    "STALE_HEARTBEAT_SECONDS",
     "TERMINAL_LIFECYCLE_STATUSES",
     "project_run_issue",
     "project_run_progress",

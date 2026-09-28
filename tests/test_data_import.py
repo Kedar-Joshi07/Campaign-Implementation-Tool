@@ -334,6 +334,27 @@ def test_successful_customer_gzip_import(tmp_path: Path, database_path: Path) ->
         assert connection.execute("SELECT COUNT(*) FROM customers").fetchone()[0] == 2
 
 
+def test_successful_import_refreshes_compact_targeting_catalog(
+    tmp_path: Path, database_path: Path, monkeypatch,
+) -> None:
+    source = _write_source(
+        tmp_path / "catalog_customers.csv",
+        CUSTOMER_COLUMNS,
+        [_customer_row()],
+    )
+    refreshed: list[Path] = []
+    monkeypatch.setattr(
+        data_import_service_module,
+        "_refresh_targeting_catalog_after_import",
+        lambda path: refreshed.append(Path(path)),
+    )
+
+    result = import_customers(source, database_path=database_path, batch_size=2)
+
+    assert result.status == "COMPLETED"
+    assert refreshed == [database_path]
+
+
 def test_campaign_import_with_valid_customer(tmp_path: Path, database_path: Path) -> None:
     customer_file = _write_source(
         tmp_path / "customers.csv", CUSTOMER_COLUMNS, [_customer_row()]
