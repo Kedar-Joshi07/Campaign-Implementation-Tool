@@ -60,7 +60,7 @@ def completed_analysis(tmp_path: Path) -> tuple[Path, int]:
             (
                 f"CS_FIXTURE_{index:03d}",
                 customer_id,
-                "CMP_MODEL",
+                f"CMP_MODEL_{(index // 2) % 10:02d}",
                 "PRD_MODEL",
                 "2025-06-15",
                 1,
@@ -216,6 +216,9 @@ def test_successful_lifecycle_persists_reloadable_checksummed_artifact(
     assert row["unlabeled_customer_count"] == 30
     assert row["train_customer_count"] + row["validation_customer_count"] == 60
     assert row["train_positive_count"] + row["validation_positive_count"] == 30
+    split_lineage = json.loads(row["split_lineage_json"])
+    assert split_lineage["strategy_version"] == "CAMPAIGN_CONNECTED_THREE_WAY_V1"
+    assert set(split_lineage["overlap_counts"].values()) == {0}
     assert summary["transformed_feature_count"] > len(ORDERED_FEATURES)
     assert set(summary["stage_seconds"]) == {
         "reconstruction",

@@ -22,6 +22,7 @@ class ReconstructedTrainingRows:
 
     frame: pd.DataFrame
     observation_count: int
+    campaign_memberships: dict[str, tuple[str, ...]]
 
 
 class ModelTrainingRepository:
@@ -79,6 +80,15 @@ class ModelTrainingRepository:
                 connection,
                 params=(*parameters, reference_date),
             )
+            membership_rows = connection.execute(
+                f"""{cte}
+                    SELECT customer_id, campaign_id
+                    FROM matching_observations
+                    WHERE campaign_id IS NOT NULL
+                    GROUP BY customer_id, campaign_id
+                    ORDER BY customer_id, campaign_id""",
+                parameters,
+            ).fetchall()
 
         observation_count = int(frame.pop("_matching_observation_count").sum())
         frame = frame.loc[:, RAW_TRAINING_COLUMNS]
@@ -92,7 +102,17 @@ class ModelTrainingRepository:
         for column in CATEGORICAL_FEATURES:
             frame[column] = frame[column].astype("string")
 
+        memberships: dict[str, list[str]] = {}
+        for row in membership_rows:
+            memberships.setdefault(str(row["customer_id"]), []).append(
+                str(row["campaign_id"])
+            )
+
         return ReconstructedTrainingRows(
             frame=frame,
             observation_count=observation_count,
+            campaign_memberships={
+                customer_id: tuple(campaign_ids)
+                for customer_id, campaign_ids in memberships.items()
+            },
         )

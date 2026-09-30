@@ -28,12 +28,18 @@ from app.services.phase11_run_lifecycle_service import (
     project_run_issue,
     project_run_progress,
 )
+from app.services.phase11_dependency_retry_service import (
+    classify_failure_ownership,
+    retry_or_rejoin_phase10_dependency,
+)
+from app.services.phase11_result_contracts import Phase11RegistryStateError
 from app.services.omnichannel_profile_contracts import (
     OMNICHANNEL_PROFILE_REGISTRY, get_omnichannel_profile, get_omnichannel_profile_for_channel, resolve_profile_availability,
 )
 from app.services.targeting_option_catalog_service import (
     get_or_build_targeting_catalog, get_targeting_catalog,
 )
+from app.services.calibrated_selection_contract_service import propensity_bucket_bounds
 
 SearchExecutor = Callable[[Path, int], None]
 # Explicit composition seam. Step 9 owns decisions/filtering and Step 11 owns
@@ -118,7 +124,8 @@ def _project_search_status(
     *,
     repository: CampaignResultRegistryRepository | None,
     runtime: dict | None,
-    stage_history: dict[str, list[float]],
+    attempt: dict | None,
+    stage_history: dict[tuple[str, str], list[float]],
     queue_positions: dict[int, int],
 ) -> dict:
     messages = {
@@ -130,15 +137,22 @@ def _project_search_status(
     }
     if row["status"] == "BLOCKED" and PHASE11_SEARCH_EXECUTOR is None:
         messages["BLOCKED"] = "Your search is saved. Targeting intelligence preparation is not connected in this release yet."
-    issue = project_run_issue(runtime)
-    stage_samples = (
-        stage_history.get(str(runtime["stage_code"])) if runtime is not None else None
-    )
     payload = {key: row[key] for key in (
         "search_run_id", "campaign_name", "status", "created_at", "completed_at",
         "selected_count", "delivery_channel", "export_profile",
     )} | {
         "safe_message": messages[row["status"]],
+    }
+    if str(row.get("selection_contract_version") or "1") != "2":
+        return payload
+
+    issue = project_run_issue(runtime)
+    stage_samples = (
+        stage_history.get((
+            str(runtime["workload_class"]), str(runtime["stage_code"])
+        )) if runtime is not None else None
+    )
+    payload.update({
         "selection_contract_version": str(row.get("selection_contract_version") or "1"),
         "attempt_number": int(row.get("current_attempt_number") or 1),
         "queue_position": (
@@ -150,23 +164,24 @@ def _project_search_status(
         "progress": project_run_progress(
             row,
             runtime,
+            attempt=attempt,
             stage_duration_samples=stage_samples,
         ),
         "issue": issue,
         "retry_eligible": bool(issue and issue.get("retryable")),
-    }
-    if row.get("selection_contract_version") == "2":
-        payload.update({
-            "selection_contract_version": "2",
-            "propensity_bucket": row["propensity_bucket"],
-        })
+    })
     return payload
 
 
 def project_search_status(row: dict, database_path: str | Path | None = None) -> dict:
     repository = CampaignResultRegistryRepository(database_path) if database_path else None
     runtime = repository.fetch_search_runtime(int(row["search_run_id"])) if repository else None
-    stage_history = repository.stage_duration_history() if repository is not None else {}
+    attempt = repository.fetch_current_attempt(int(row["search_run_id"])) if repository else None
+    stage_history = (
+        repository.stage_duration_history()
+        if repository is not None and row["status"] == "PROCESSING"
+        else {}
+    )
     queue_positions = (
         repository.queue_positions([int(row["search_run_id"])])
         if repository is not None and row["status"] == "QUEUED"
@@ -176,6 +191,7 @@ def project_search_status(row: dict, database_path: str | Path | None = None) ->
         row,
         repository=repository,
         runtime=runtime,
+        attempt=attempt,
         stage_history=stage_history,
         queue_positions=queue_positions,
     )
@@ -191,6 +207,7 @@ def project_search_statuses(
     repository = CampaignResultRegistryRepository(database_path)
     identifiers = [int(row["search_run_id"]) for row in rows]
     runtimes = repository.fetch_search_runtimes(identifiers)
+    attempts = repository.fetch_current_attempts(identifiers)
     stage_history = repository.stage_duration_history()
     queue_positions = repository.queue_positions(
         [int(row["search_run_id"]) for row in rows if row["status"] == "QUEUED"]
@@ -200,6 +217,7 @@ def project_search_statuses(
             row,
             repository=repository,
             runtime=runtimes.get(int(row["search_run_id"])),
+            attempt=attempts.get(int(row["search_run_id"])),
             stage_history=stage_history,
             queue_positions=queue_positions,
         )
@@ -214,6 +232,7 @@ def normalize_search_definition(
     raw_criteria: dict,
     propensity_bucket: str | None,
     catalog_version: str | None,
+    require_current_catalog: bool = True,
 ) -> tuple[dict, object, dict]:
     """Validate a search or preflight against one exact catalog snapshot."""
 
@@ -221,7 +240,9 @@ def normalize_search_definition(
         get_targeting_catalog(path, catalog_version)
         if catalog_version else get_or_build_targeting_catalog(path)
     )
-    if catalog is None or not catalog.get("is_current", True):
+    if catalog is None or (
+        require_current_catalog and not catalog.get("is_current", True)
+    ):
         raise ValueError("Reload current campaign choices before submitting.")
     context_options = decorate_context_options(catalog["context"])
     targeting_options = decorate_targeting_options(catalog["targeting"])
@@ -237,13 +258,12 @@ def normalize_search_definition(
         allowed_values=_targeting_allowed_values(targeting_options),
     )
     if propensity_bucket is not None:
-        lower = float(propensity_bucket)
-        upper = {"0.90": 1.0, "0.80": .9, "0.70": .8, "0.60": .7, "0.50": .6}[propensity_bucket]
+        lower, upper, maximum_inclusive = propensity_bucket_bounds(propensity_bucket)
         branches = []
         for branch in criteria.audience_filter_branches:
             branches.append(dict(
                 branch, score_min=lower,
-                score_max=upper if propensity_bucket == "0.90" else math.nextafter(upper, 0.0),
+                score_max=upper if maximum_inclusive else math.nextafter(upper, 0.0),
             ))
         payload = dict(criteria.payload)
         payload["propensity_bucket"] = propensity_bucket
@@ -300,7 +320,22 @@ def submit_potential_customer_search(database_path: str | Path, request: Potenti
             timestamp=timestamp,
         )
     if PHASE11_SEARCH_EXECUTOR is None:
-        repository.fail_search_run(run_id, blocked=True)
+        fence = repository.claim_search_attempt(
+            run_id, lease_owner="phase11-submission-failure"
+        )
+        repository.fail_search_run(
+            run_id,
+            **fence.as_kwargs(),
+            blocked=True,
+            failure_code="SEARCH_RUNTIME_UNAVAILABLE",
+            failure_category="SYSTEM_AVAILABILITY",
+            failure_summary="Search processing is temporarily unavailable.",
+            resolution_steps=(
+                "Wait until the application reports that search processing is available.",
+                "Retry this saved search when the service is available.",
+            ),
+            retryable=True,
+        )
     else:
         try:
             PHASE11_SEARCH_EXECUTOR(path, run_id)
@@ -308,7 +343,10 @@ def submit_potential_customer_search(database_path: str | Path, request: Potenti
             # Preserve the run and a fixed safe failure; never expose executor exceptions.
             current = repository.fetch_search_run(run_id)
             if current["status"] in {"QUEUED", "PROCESSING"}:
-                repository.fail_search_run(run_id)
+                fence = repository.claim_search_attempt(
+                    run_id, lease_owner="phase11-submission-failure"
+                )
+                repository.fail_search_run(run_id, **fence.as_kwargs())
     return project_search_status(repository.fetch_search_run(run_id), path)
 
 
@@ -320,12 +358,33 @@ def retry_potential_customer_search(
 ) -> dict:
     path = initialize_database(database_path)
     repository = CampaignResultRegistryRepository(path)
+    previous_runtime = repository.fetch_search_runtime(search_run_id)
+    ownership = classify_failure_ownership(previous_runtime)
+    if ownership == "PHASE10_BUSINESS":
+        raise Phase11RegistryStateError(
+            "This search needs revised business criteria or additional verified history; retry would repeat the same block."
+        )
+    if ownership == "PERMANENT_VALIDATION":
+        raise Phase11RegistryStateError(
+            "This search has a permanent validation failure and cannot be retried."
+        )
     repository.retry_search_run(
         search_run_id, idempotency_key=idempotency_key,
     )
+    if ownership == "PHASE10_TRANSIENT":
+        fence = repository.claim_search_attempt(
+            search_run_id, lease_owner="phase11-dependency-retry"
+        )
+        run = repository.fetch_search_run(search_run_id)
+        assert run is not None
+        retry_or_rejoin_phase10_dependency(path, run, fence=fence)
     if PHASE11_SEARCH_EXECUTOR is None:
+        fence = repository.claim_search_attempt(
+            search_run_id, lease_owner="phase11-retry-failure"
+        )
         repository.fail_search_run(
             search_run_id,
+            **fence.as_kwargs(),
             blocked=True,
             failure_code="SEARCH_RUNTIME_UNAVAILABLE",
             failure_category="SYSTEM_AVAILABILITY",

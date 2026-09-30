@@ -10,7 +10,9 @@ from __future__ import annotations
 import math
 import json
 import re
+import secrets
 import sqlite3
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -18,14 +20,24 @@ from typing import Any
 from app.database.connection import get_connection
 from app.services.omnichannel_profile_contracts import get_omnichannel_profile_for_channel, get_omnichannel_profile
 from app.services.phase11_result_contracts import (
-    RESULT_CURRENTNESS_STATES, RESULT_EXPORT_STATUSES, RESULT_MEMBERSHIP_CONTRACT_VERSION,
+    RESULT_CURRENTNESS_STATES, RESULT_EXPORT_STATUSES,
     RESULT_EXPORT_CONTRACT_VERSION, RESULT_SOURCES, RESULT_STORAGE_FORMATS,
     SEARCH_RUN_CONTRACT_VERSION, Phase11RegistryStateError, Phase11RegistryValidationError,
     SEARCH_RUN_STATUSES, canonical_metadata_json,
+    result_membership_contract_for_selection,
 )
 
 _READY_LIFECYCLES = {"CURRENT", "REUSABLE", "PROTECTED"}
 _ACTIVE_SEARCH_LIFECYCLES = {"QUEUED", "PROCESSING"}
+_SEARCH_WORKLOAD_CLASSES = {
+    "PENDING_CLASSIFICATION",
+    "DIRECT_INTELLIGENCE_REUSE",
+    "PHASE10_REUSE_WITH_VALIDATION",
+    "NEW_INTELLIGENCE_BUILD",
+    "EXACT_RESULT_REUSE",
+    "NEW_RESULT_MATERIALIZATION",
+    "TOP_N_MATERIALIZATION",
+}
 _DEFAULT_BLOCKED_RESOLUTION_STEPS = (
     "Review the saved targeting criteria and available campaign history.",
     "Try a broader search after the source data is updated.",
@@ -34,6 +46,20 @@ _DEFAULT_FAILED_RESOLUTION_STEPS = (
     "Try the search again after the system is available.",
     "Use the saved search details when requesting support if the problem continues.",
 )
+
+
+@dataclass(frozen=True)
+class AttemptExecutionFence:
+    """Opaque ownership proof for one immutable search attempt."""
+
+    attempt_number: int
+    execution_lease_token: str = field(repr=False)
+
+    def as_kwargs(self) -> dict[str, int | str]:
+        return {
+            "attempt_number": self.attempt_number,
+            "execution_lease_token": self.execution_lease_token,
+        }
 
 
 def _now() -> str:
@@ -105,6 +131,110 @@ class CampaignResultRegistryRepository:
         return self._fetch(
             "campaign_search_run_runtime", "search_run_id", search_run_id
         )
+
+    def fetch_current_attempt(self, search_run_id: int) -> dict[str, Any] | None:
+        """Return the immutable attempt currently named by the visible run."""
+
+        identifier = _integer(search_run_id)
+        with get_connection(self.database_path) as connection:
+            row = connection.execute(
+                """SELECT a.* FROM campaign_search_attempts a
+                   JOIN campaign_search_runs r
+                     ON r.search_run_id=a.search_run_id
+                    AND r.current_attempt_number=a.attempt_number
+                   WHERE r.search_run_id=?""",
+                (identifier,),
+            ).fetchone()
+        return None if row is None else dict(row)
+
+    def fetch_current_attempts(
+        self, search_run_ids: list[int]
+    ) -> dict[int, dict[str, Any]]:
+        """Fetch current attempts for several runs with one bounded query."""
+
+        identifiers = list(dict.fromkeys(_integer(value) for value in search_run_ids))
+        if not identifiers:
+            return {}
+        marks = ",".join("?" for _ in identifiers)
+        with get_connection(self.database_path) as connection:
+            rows = connection.execute(
+                f"""SELECT a.* FROM campaign_search_attempts a
+                     JOIN campaign_search_runs r
+                       ON r.search_run_id=a.search_run_id
+                      AND r.current_attempt_number=a.attempt_number
+                     WHERE r.search_run_id IN ({marks})""",
+                tuple(identifiers),
+            ).fetchall()
+        return {int(row["search_run_id"]): dict(row) for row in rows}
+
+    def claim_search_attempt(
+        self,
+        search_run_id: int,
+        *,
+        lease_owner: str,
+        timestamp: str | None = None,
+    ) -> AttemptExecutionFence:
+        """Return the durable current-attempt fence without minting a second lease."""
+
+        identifier = _integer(search_run_id)
+        owner = _text(lease_owner, 128)
+        moment = _timestamp(timestamp)
+        with get_connection(self.database_path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                """SELECT a.attempt_number,a.execution_lease_token
+                   FROM campaign_search_runs r
+                   JOIN campaign_search_attempts a
+                     ON a.search_run_id=r.search_run_id
+                    AND a.attempt_number=r.current_attempt_number
+                   WHERE r.search_run_id=?
+                     AND r.status IN ('QUEUED','PROCESSING')
+                     AND a.status IN ('QUEUED','PROCESSING')
+                     AND a.execution_lease_token IS NOT NULL""",
+                (identifier,),
+            ).fetchone()
+            if row is None:
+                raise Phase11RegistryStateError(
+                    "Active search attempt execution fence was not found."
+                )
+            cursor = connection.execute(
+                """UPDATE campaign_search_attempts
+                   SET lease_owner=COALESCE(lease_owner,?),
+                       lease_claimed_at=COALESCE(lease_claimed_at,?),
+                       lease_heartbeat_at=?
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=?
+                     AND status IN ('QUEUED','PROCESSING')""",
+                (
+                    owner,
+                    moment,
+                    moment,
+                    identifier,
+                    int(row["attempt_number"]),
+                    str(row["execution_lease_token"]),
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise Phase11RegistryStateError(
+                    "Search attempt execution fence could not be claimed."
+                )
+            return AttemptExecutionFence(
+                attempt_number=int(row["attempt_number"]),
+                execution_lease_token=str(row["execution_lease_token"]),
+            )
+
+    @staticmethod
+    def _validate_fence(
+        attempt_number: int,
+        execution_lease_token: str,
+    ) -> tuple[int, str]:
+        attempt = _integer(attempt_number)
+        if (
+            not isinstance(execution_lease_token, str)
+            or re.fullmatch(r"[0-9a-f]{64}", execution_lease_token) is None
+        ):
+            raise Phase11RegistryValidationError("Invalid attempt execution fence.")
+        return attempt, execution_lease_token
 
     def fetch_search_runtimes(self, search_run_ids: list[int]) -> dict[int, dict[str, Any]]:
         """Fetch several runtime records with one bounded primary-key query."""
@@ -187,62 +317,117 @@ class CampaignResultRegistryRepository:
             active.execute("BEGIN IMMEDIATE")
             return self._insert(active, "campaign_search_runs", values)
 
-    def mark_processing(self, search_run_id: int) -> None:
+    def mark_processing(
+        self,
+        search_run_id: int,
+        *,
+        attempt_number: int,
+        execution_lease_token: str,
+        timestamp: str | None = None,
+    ) -> None:
+        identifier = _integer(search_run_id)
+        attempt, lease = self._validate_fence(
+            attempt_number, execution_lease_token
+        )
+        moment = _timestamp(timestamp)
         with get_connection(self.database_path, write=True) as connection:
             connection.execute("BEGIN IMMEDIATE")
             cursor = connection.execute(
-                "UPDATE campaign_search_runs SET status = 'PROCESSING' WHERE search_run_id = ? AND status = 'QUEUED'",
-                (_integer(search_run_id),),
+                """UPDATE campaign_search_runs SET status='PROCESSING', started_at=?
+                   WHERE search_run_id=? AND current_attempt_number=?
+                     AND status='QUEUED'
+                     AND EXISTS (
+                         SELECT 1 FROM campaign_search_attempts a
+                         WHERE a.search_run_id=campaign_search_runs.search_run_id
+                           AND a.attempt_number=?
+                           AND a.execution_lease_token=?
+                           AND a.status='QUEUED'
+                     )""",
+                (moment, identifier, attempt, attempt, lease),
             )
             if cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Search is missing or no longer queued.")
-            timestamp = _now()
+            timestamp = moment
             runtime = connection.execute(
                 "SELECT * FROM campaign_search_run_runtime WHERE search_run_id = ?",
-                (search_run_id,),
+                (identifier,),
             ).fetchone()
             if runtime is None or runtime["lifecycle_status"] != "QUEUED":
                 raise Phase11RegistryStateError("Search runtime is missing or no longer queued.")
             runtime_cursor = connection.execute(
                 """
                 UPDATE campaign_search_run_runtime
-                SET lifecycle_status='PROCESSING', stage_code='CHECKING_INTELLIGENCE',
-                    stage_label='Checking targeting intelligence', progress_percent=2,
-                    status_message='Checking available targeting intelligence.',
+                SET lifecycle_status='PROCESSING', stage_code='CHECKING_CURRENT_INTELLIGENCE',
+                    stage_label='Checking current intelligence', progress_percent=2,
+                    status_message='Checking current and reusable targeting intelligence.',
                     processing_started_at=COALESCE(processing_started_at, ?),
                     updated_at=?, heartbeat_at=?, stage_started_at=?, state_version=state_version+1
                 WHERE search_run_id=? AND lifecycle_status='QUEUED'
+                  AND EXISTS (
+                      SELECT 1 FROM campaign_search_runs r
+                      JOIN campaign_search_attempts a
+                        ON a.search_run_id=r.search_run_id
+                       AND a.attempt_number=r.current_attempt_number
+                      WHERE r.search_run_id=campaign_search_run_runtime.search_run_id
+                        AND r.current_attempt_number=?
+                        AND a.execution_lease_token=?
+                        AND a.status='QUEUED'
+                  )
                 """,
-                (timestamp, timestamp, timestamp, timestamp, search_run_id),
+                (
+                    timestamp, timestamp, timestamp, timestamp,
+                    identifier, attempt, lease,
+                ),
             )
             if runtime_cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Search runtime could not start.")
-            connection.execute(
+            attempt_cursor = connection.execute(
                 """UPDATE campaign_search_attempts
-                   SET status='PROCESSING', started_at=COALESCE(started_at, ?)
-                   WHERE search_run_id=? AND attempt_number=? AND status='QUEUED'""",
-                (timestamp, search_run_id, int(run_attempt["current_attempt_number"]))
-                if (run_attempt := connection.execute(
-                    "SELECT current_attempt_number FROM campaign_search_runs WHERE search_run_id=?",
-                    (search_run_id,),
-                ).fetchone()) is not None else (timestamp, search_run_id, 1),
+                   SET status='PROCESSING', started_at=COALESCE(started_at, ?),
+                       lease_heartbeat_at=?
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=? AND status='QUEUED'""",
+                (timestamp, timestamp, identifier, attempt, lease),
+            )
+            if attempt_cursor.rowcount != 1:
+                raise Phase11RegistryStateError(
+                    "Search attempt could not start under its execution fence."
+                )
+            connection.execute(
+                """INSERT INTO campaign_search_progress_events (
+                       search_run_id,attempt_number,stage_code,stage_label,
+                       progress_percent,processed_count,total_count,status_message,
+                       workload_class,recorded_at
+                   )
+                   SELECT ?,?,'CHECKING_CURRENT_INTELLIGENCE',
+                          'Checking current intelligence',2,processed_count,total_count,
+                          'Checking current and reusable targeting intelligence.',
+                          workload_class,?
+                   FROM campaign_search_run_runtime WHERE search_run_id=?""",
+                (identifier, attempt, timestamp, identifier),
             )
 
     def update_search_progress(
         self,
         search_run_id: int,
         *,
+        attempt_number: int,
+        execution_lease_token: str,
         stage_code: str,
         stage_label: str,
         progress_percent: int,
         status_message: str,
         processed_count: int | None = None,
         total_count: int | None = None,
+        workload_class: str | None = None,
         timestamp: str | None = None,
     ) -> None:
         """Persist monotonic, business-safe progress for one active search."""
 
         identifier = _integer(search_run_id)
+        attempt, lease = self._validate_fence(
+            attempt_number, execution_lease_token
+        )
         if (
             not isinstance(progress_percent, int)
             or isinstance(progress_percent, bool)
@@ -256,6 +441,11 @@ class CampaignResultRegistryRepository:
             raise Phase11RegistryValidationError("Invalid search progress stage.")
         label = _text(stage_label, 200)
         message = _text(status_message, 1000)
+        workload = (
+            None if workload_class is None else _text(workload_class, 80)
+        )
+        if workload is not None and workload not in _SEARCH_WORKLOAD_CLASSES:
+            raise Phase11RegistryValidationError("Invalid search workload class.")
         processed = None if processed_count is None else _integer(processed_count, zero=True)
         total = None if total_count is None else _integer(total_count, zero=True)
         if processed is not None and total is not None and processed > total:
@@ -264,8 +454,16 @@ class CampaignResultRegistryRepository:
         with get_connection(self.database_path, write=True) as connection:
             connection.execute("BEGIN IMMEDIATE")
             current = connection.execute(
-                "SELECT * FROM campaign_search_run_runtime WHERE search_run_id=?",
-                (identifier,),
+                """SELECT rt.* FROM campaign_search_run_runtime rt
+                   JOIN campaign_search_runs r ON r.search_run_id=rt.search_run_id
+                   JOIN campaign_search_attempts a
+                     ON a.search_run_id=r.search_run_id
+                    AND a.attempt_number=r.current_attempt_number
+                   WHERE rt.search_run_id=? AND r.current_attempt_number=?
+                     AND r.status IN ('QUEUED','PROCESSING')
+                     AND a.attempt_number=? AND a.execution_lease_token=?
+                     AND a.status IN ('QUEUED','PROCESSING')""",
+                (identifier, attempt, attempt, lease),
             ).fetchone()
             if current is None or current["lifecycle_status"] not in _ACTIVE_SEARCH_LIFECYCLES:
                 raise Phase11RegistryStateError("Search runtime is missing or not active.")
@@ -281,47 +479,144 @@ class CampaignResultRegistryRepository:
             next_total = current["total_count"] if total is None else total
             if next_total is not None and next_processed > int(next_total):
                 raise Phase11RegistryValidationError("Processed count exceeds total count.")
+            next_workload = workload or str(current["workload_class"])
+            meaningful = any((
+                code != str(current["stage_code"]),
+                label != str(current["stage_label"]),
+                progress_percent != int(current["progress_percent"]),
+                next_processed != int(current["processed_count"]),
+                next_total != current["total_count"],
+                message != str(current["status_message"]),
+                next_workload != str(current["workload_class"]),
+            ))
             cursor = connection.execute(
                 """
                 UPDATE campaign_search_run_runtime
                 SET stage_code=?, stage_label=?, progress_percent=?,
                     processed_count=?, total_count=?, status_message=?,
-                    updated_at=?, heartbeat_at=?,
-                    stage_started_at=CASE WHEN stage_code != ? THEN ? ELSE stage_started_at END,
+                    workload_class=?, updated_at=?, heartbeat_at=?,
+                    stage_started_at=CASE
+                        WHEN stage_code != ? OR workload_class != ? THEN ?
+                        ELSE stage_started_at
+                    END,
                     state_version=state_version+1
                 WHERE search_run_id=? AND lifecycle_status IN ('QUEUED','PROCESSING')
                   AND progress_percent <= ?
+                  AND EXISTS (
+                      SELECT 1 FROM campaign_search_runs r
+                      JOIN campaign_search_attempts a
+                        ON a.search_run_id=r.search_run_id
+                       AND a.attempt_number=r.current_attempt_number
+                      WHERE r.search_run_id=campaign_search_run_runtime.search_run_id
+                        AND r.current_attempt_number=?
+                        AND r.status IN ('QUEUED','PROCESSING')
+                        AND a.attempt_number=? AND a.execution_lease_token=?
+                        AND a.status IN ('QUEUED','PROCESSING')
+                  )
                 """,
                 (
                     code, label, progress_percent, next_processed, next_total,
-                    message, moment, moment, code, moment, identifier, progress_percent,
+                    message, next_workload, moment, moment,
+                    code, next_workload, moment,
+                    identifier, progress_percent,
+                    attempt, attempt, lease,
                 ),
             )
             if cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Search progress update was rejected.")
-            attempt_number = connection.execute(
-                "SELECT current_attempt_number FROM campaign_search_runs WHERE search_run_id=?",
-                (identifier,),
-            ).fetchone()["current_attempt_number"]
-            connection.execute(
-                """INSERT INTO campaign_search_progress_events (
-                       search_run_id,attempt_number,stage_code,stage_label,
-                       progress_percent,processed_count,total_count,status_message,recorded_at
-                   ) VALUES (?,?,?,?,?,?,?,?,?)""",
-                (identifier, int(attempt_number), code, label, progress_percent,
-                 next_processed, next_total, message, moment),
+            lease_cursor = connection.execute(
+                """UPDATE campaign_search_attempts SET lease_heartbeat_at=?
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=?
+                     AND status IN ('QUEUED','PROCESSING')""",
+                (moment, identifier, attempt, lease),
             )
+            if lease_cursor.rowcount != 1:
+                raise Phase11RegistryStateError("Search attempt heartbeat was rejected.")
+            if meaningful:
+                connection.execute(
+                    """INSERT INTO campaign_search_progress_events (
+                           search_run_id,attempt_number,stage_code,stage_label,
+                           progress_percent,processed_count,total_count,status_message,
+                           workload_class,recorded_at
+                       ) VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                    (identifier, attempt, code, label, progress_percent,
+                     next_processed, next_total, message, next_workload, moment),
+                )
+
+    def heartbeat_search_attempt(
+        self,
+        search_run_id: int,
+        *,
+        attempt_number: int,
+        execution_lease_token: str,
+        timestamp: str | None = None,
+    ) -> None:
+        """Refresh fenced liveness without changing stage or event history."""
+
+        identifier = _integer(search_run_id)
+        attempt, lease = self._validate_fence(
+            attempt_number, execution_lease_token
+        )
+        moment = _timestamp(timestamp)
+        with get_connection(self.database_path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            runtime_cursor = connection.execute(
+                """UPDATE campaign_search_run_runtime
+                   SET heartbeat_at=?,state_version=state_version+1
+                   WHERE search_run_id=?
+                     AND lifecycle_status IN ('QUEUED','PROCESSING')
+                     AND EXISTS (
+                         SELECT 1 FROM campaign_search_runs r
+                         JOIN campaign_search_attempts a
+                           ON a.search_run_id=r.search_run_id
+                          AND a.attempt_number=r.current_attempt_number
+                         WHERE r.search_run_id=campaign_search_run_runtime.search_run_id
+                           AND r.current_attempt_number=?
+                           AND r.status IN ('QUEUED','PROCESSING')
+                           AND a.attempt_number=?
+                           AND a.execution_lease_token=?
+                           AND a.status IN ('QUEUED','PROCESSING')
+                     )""",
+                (moment, identifier, attempt, attempt, lease),
+            )
+            lease_cursor = connection.execute(
+                """UPDATE campaign_search_attempts SET lease_heartbeat_at=?
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=?
+                     AND status IN ('QUEUED','PROCESSING')""",
+                (moment, identifier, attempt, lease),
+            )
+            if runtime_cursor.rowcount != 1 or lease_cursor.rowcount != 1:
+                raise Phase11RegistryStateError(
+                    "Search attempt heartbeat was rejected."
+                )
 
     def complete_search_run(
-        self, search_run_id: int, *, result_snapshot_id: int, result_source: str,
+        self, search_run_id: int, *, attempt_number: int,
+        execution_lease_token: str, result_snapshot_id: int, result_source: str,
         timestamp: str | None = None,
     ) -> None:
         if result_source not in RESULT_SOURCES:
             raise Phase11RegistryValidationError("Invalid result source.")
+        identifier = _integer(search_run_id)
+        attempt, lease = self._validate_fence(
+            attempt_number, execution_lease_token
+        )
         timestamp = _timestamp(timestamp)
         with get_connection(self.database_path, write=True) as connection:
             connection.execute("BEGIN IMMEDIATE")
-            run = connection.execute("SELECT * FROM campaign_search_runs WHERE search_run_id = ?", (_integer(search_run_id),)).fetchone()
+            run = connection.execute(
+                """SELECT r.*,a.started_at AS attempt_started_at
+                   FROM campaign_search_runs r
+                   JOIN campaign_search_attempts a
+                     ON a.search_run_id=r.search_run_id
+                    AND a.attempt_number=r.current_attempt_number
+                   WHERE r.search_run_id=? AND r.current_attempt_number=?
+                     AND r.status='PROCESSING' AND a.attempt_number=?
+                     AND a.execution_lease_token=? AND a.status='PROCESSING'""",
+                (identifier, attempt, attempt, lease),
+            ).fetchone()
             snapshot = connection.execute(
                 "SELECT s.*, g.analysis_run_id, g.model_run_id, g.scoring_run_id, g.generation_status, g.lifecycle_state "
                 "FROM campaign_result_snapshots s JOIN phase10_intelligence_generations g ON g.generation_id = s.generation_id "
@@ -329,14 +624,25 @@ class CampaignResultRegistryRepository:
             ).fetchone()
             if run is None or run["status"] != "PROCESSING" or snapshot is None or snapshot["currentness_state"] != "CURRENT" or snapshot["generation_status"] != "READY" or snapshot["lifecycle_state"] not in _READY_LIFECYCLES:
                 raise Phase11RegistryStateError("Search/snapshot is not ready for completion.")
-            seconds = self._elapsed(run["started_at"], timestamp)
-            connection.execute(
+            runtime_before = connection.execute(
+                "SELECT workload_class FROM campaign_search_run_runtime WHERE search_run_id=?",
+                (identifier,),
+            ).fetchone()
+            if runtime_before is None:
+                raise Phase11RegistryStateError("Search runtime is unavailable.")
+            seconds = self._elapsed(run["attempt_started_at"], timestamp)
+            run_cursor = connection.execute(
                 "UPDATE campaign_search_runs SET status='COMPLETED', generation_id=?, analysis_run_id=?, model_run_id=?, "
                 "scoring_run_id=?, result_snapshot_id=?, result_source=?, selected_count=?, completed_at=?, processing_seconds=? "
-                "WHERE search_run_id=?",
+                "WHERE search_run_id=? AND current_attempt_number=? AND status='PROCESSING' "
+                "AND EXISTS (SELECT 1 FROM campaign_search_attempts a WHERE a.search_run_id=campaign_search_runs.search_run_id "
+                "AND a.attempt_number=? AND a.execution_lease_token=? AND a.status='PROCESSING')",
                 (snapshot["generation_id"], snapshot["analysis_run_id"], snapshot["model_run_id"], snapshot["scoring_run_id"],
-                 result_snapshot_id, result_source, snapshot["resolved_count"], timestamp, seconds, search_run_id),
+                 result_snapshot_id, result_source, snapshot["resolved_count"], timestamp, seconds,
+                 identifier, attempt, attempt, lease),
             )
+            if run_cursor.rowcount != 1:
+                raise Phase11RegistryStateError("Search completion fence was rejected.")
             connection.execute("UPDATE campaign_result_snapshots SET last_used_at=? WHERE result_snapshot_id=?", (timestamp, result_snapshot_id))
             runtime_cursor = connection.execute(
                 """
@@ -349,25 +655,55 @@ class CampaignResultRegistryRepository:
                     resolution_steps_json='[]', retryable=0,
                     updated_at=?, heartbeat_at=?, state_version=state_version+1
                 WHERE search_run_id=? AND lifecycle_status='PROCESSING'
+                  AND EXISTS (
+                      SELECT 1 FROM campaign_search_runs r
+                      JOIN campaign_search_attempts a
+                        ON a.search_run_id=r.search_run_id
+                       AND a.attempt_number=r.current_attempt_number
+                      WHERE r.search_run_id=campaign_search_run_runtime.search_run_id
+                        AND r.current_attempt_number=?
+                        AND a.attempt_number=? AND a.execution_lease_token=?
+                        AND a.status='PROCESSING'
+                  )
                 """,
                 (
                     int(snapshot["resolved_count"]), int(snapshot["resolved_count"]),
-                    timestamp, timestamp, search_run_id,
+                    timestamp, timestamp, identifier, attempt, attempt, lease,
                 ),
             )
             if runtime_cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Search runtime could not complete.")
-            connection.execute(
+            attempt_cursor = connection.execute(
                 """UPDATE campaign_search_attempts
                    SET status='COMPLETED', generation_id=?, scoring_run_id=?,
-                       completed_at=?, retryable=0
-                   WHERE search_run_id=? AND attempt_number=? AND status='PROCESSING'""",
+                       completed_at=?, retryable=0, lease_heartbeat_at=?
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=? AND status='PROCESSING'""",
                 (snapshot["generation_id"], snapshot["scoring_run_id"], timestamp,
-                 search_run_id, int(run["current_attempt_number"])),
+                 timestamp, identifier, attempt, lease),
+            )
+            if attempt_cursor.rowcount != 1:
+                raise Phase11RegistryStateError(
+                    "Search attempt completion fence was rejected."
+                )
+            connection.execute(
+                """INSERT INTO campaign_search_progress_events (
+                       search_run_id,attempt_number,stage_code,stage_label,
+                       progress_percent,processed_count,total_count,status_message,
+                       workload_class,recorded_at
+                   ) VALUES (?,?,'COMPLETED','Result ready',100,?,?,
+                       'Potential-customer results are ready.',?,?)""",
+                (
+                    identifier, attempt, int(snapshot["resolved_count"]),
+                    int(snapshot["resolved_count"]),
+                    str(runtime_before["workload_class"]), timestamp,
+                ),
             )
 
     @staticmethod
-    def _elapsed(started: str, completed: str) -> float:
+    def _elapsed(started: str | None, completed: str) -> float:
+        if started is None:
+            return 0.0
         elapsed = (datetime.fromisoformat(completed.replace("Z", "+00:00")) - datetime.fromisoformat(started.replace("Z", "+00:00"))).total_seconds()
         if not math.isfinite(elapsed) or elapsed < 0:
             raise Phase11RegistryValidationError("Completion precedes start.")
@@ -377,15 +713,22 @@ class CampaignResultRegistryRepository:
         self,
         search_run_id: int,
         *,
+        attempt_number: int,
+        execution_lease_token: str,
         blocked: bool = False,
         failure_code: str | None = None,
         failure_category: str | None = None,
         failure_summary: str | None = None,
+        technical_reference: str | None = None,
         resolution_steps: tuple[str, ...] | list[str] | None = None,
         retryable: bool = True,
         timestamp: str | None = None,
     ) -> None:
         # Store a fixed safe message, never caller exceptions/paths/PII.
+        identifier = _integer(search_run_id)
+        attempt, lease = self._validate_fence(
+            attempt_number, execution_lease_token
+        )
         timestamp = _timestamp(timestamp)
         status = "BLOCKED" if blocked else "FAILED"
         message = "This search cannot proceed with the current intelligence." if blocked else "The search could not be completed. Please try again."
@@ -398,6 +741,7 @@ class CampaignResultRegistryRepository:
             80,
         )
         summary = _text(failure_summary or message, 1000)
+        reference = _text(technical_reference or code, 80)
         steps = tuple(
             resolution_steps
             or (_DEFAULT_BLOCKED_RESOLUTION_STEPS if blocked else _DEFAULT_FAILED_RESOLUTION_STEPS)
@@ -411,48 +755,112 @@ class CampaignResultRegistryRepository:
         )
         with get_connection(self.database_path, write=True) as connection:
             connection.execute("BEGIN IMMEDIATE")
-            run = connection.execute("SELECT * FROM campaign_search_runs WHERE search_run_id=?", (_integer(search_run_id),)).fetchone()
+            run = connection.execute(
+                """SELECT r.*,a.started_at AS attempt_started_at
+                   FROM campaign_search_runs r
+                   JOIN campaign_search_attempts a
+                     ON a.search_run_id=r.search_run_id
+                    AND a.attempt_number=r.current_attempt_number
+                   WHERE r.search_run_id=? AND r.current_attempt_number=?
+                     AND r.status IN ('QUEUED','PROCESSING')
+                     AND a.attempt_number=? AND a.execution_lease_token=?
+                     AND a.status IN ('QUEUED','PROCESSING')""",
+                (identifier, attempt, attempt, lease),
+            ).fetchone()
             if run is None or run["status"] not in {"QUEUED", "PROCESSING"}:
                 raise Phase11RegistryStateError("Search is missing or terminal.")
             active_runtime = connection.execute(
-                "SELECT stage_code FROM campaign_search_run_runtime WHERE search_run_id=?",
-                (search_run_id,),
+                """SELECT stage_code,progress_percent,processed_count,total_count,
+                          workload_class
+                   FROM campaign_search_run_runtime WHERE search_run_id=?""",
+                (identifier,),
             ).fetchone()
             failure_stage = (
                 str(active_runtime["stage_code"])
                 if active_runtime is not None
                 else status
             )
-            connection.execute(
-                "UPDATE campaign_search_runs SET status=?, completed_at=?, processing_seconds=?, safe_error_message=? WHERE search_run_id=?",
-                (status, timestamp, self._elapsed(run["started_at"], timestamp), message, search_run_id),
+            run_cursor = connection.execute(
+                """UPDATE campaign_search_runs
+                   SET status=?,completed_at=?,processing_seconds=?,safe_error_message=?
+                   WHERE search_run_id=? AND current_attempt_number=?
+                     AND status IN ('QUEUED','PROCESSING')
+                     AND EXISTS (
+                         SELECT 1 FROM campaign_search_attempts a
+                         WHERE a.search_run_id=campaign_search_runs.search_run_id
+                           AND a.attempt_number=? AND a.execution_lease_token=?
+                           AND a.status IN ('QUEUED','PROCESSING')
+                     )""",
+                (
+                    status, timestamp, self._elapsed(run["attempt_started_at"], timestamp),
+                    message, identifier, attempt, attempt, lease,
+                ),
             )
+            if run_cursor.rowcount != 1:
+                raise Phase11RegistryStateError("Search failure fence was rejected.")
             cursor = connection.execute(
                 """
                 UPDATE campaign_search_run_runtime
                 SET lifecycle_status=?, stage_code=?, stage_label=?,
                     status_message=?, failure_code=?, failure_category=?,
                     failure_summary=?, failure_stage_code=?, resolution_steps_json=?, retryable=?,
+                    technical_reference=?,
                     updated_at=?, heartbeat_at=?, state_version=state_version+1
                 WHERE search_run_id=? AND lifecycle_status IN ('QUEUED','PROCESSING')
+                  AND EXISTS (
+                      SELECT 1 FROM campaign_search_runs r
+                      JOIN campaign_search_attempts a
+                        ON a.search_run_id=r.search_run_id
+                       AND a.attempt_number=r.current_attempt_number
+                      WHERE r.search_run_id=campaign_search_run_runtime.search_run_id
+                        AND r.current_attempt_number=?
+                        AND a.attempt_number=? AND a.execution_lease_token=?
+                        AND a.status IN ('QUEUED','PROCESSING')
+                  )
                 """,
                 (
                     status, status,
                     "Search blocked" if blocked else "Search failed",
                     message, code, category, summary, failure_stage, resolution_json,
-                    int(bool(retryable)), timestamp, timestamp, search_run_id,
+                    int(bool(retryable)), reference, timestamp, timestamp, identifier,
+                    attempt, attempt, lease,
                 ),
             )
             if cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Search runtime could not become terminal.")
-            connection.execute(
+            attempt_cursor = connection.execute(
                 """UPDATE campaign_search_attempts
                    SET status=?, completed_at=?, failure_code=?, failure_stage_code=?,
-                       failure_summary=?, retryable=?
+                       failure_summary=?, retryable=?, lease_heartbeat_at=?
                    WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=?
                      AND status IN ('QUEUED','PROCESSING')""",
-                (status, timestamp, code, failure_stage, summary, int(bool(retryable)), search_run_id,
-                 int(run["current_attempt_number"])),
+                (
+                    status, timestamp, code, failure_stage, summary,
+                    int(bool(retryable)), timestamp, identifier, attempt, lease,
+                ),
+            )
+            if attempt_cursor.rowcount != 1:
+                raise Phase11RegistryStateError(
+                    "Search attempt failure fence was rejected."
+                )
+            connection.execute(
+                """INSERT INTO campaign_search_progress_events (
+                       search_run_id,attempt_number,stage_code,stage_label,
+                       progress_percent,processed_count,total_count,status_message,
+                       workload_class,recorded_at
+                   ) VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    identifier, attempt, status,
+                    "Search blocked" if blocked else "Search failed",
+                    int(active_runtime["progress_percent"]) if active_runtime else 0,
+                    int(active_runtime["processed_count"]) if active_runtime else 0,
+                    active_runtime["total_count"] if active_runtime else None,
+                    message,
+                    str(active_runtime["workload_class"])
+                    if active_runtime else "PENDING_CLASSIFICATION",
+                    timestamp,
+                ),
             )
 
     def retry_search_run(
@@ -481,6 +889,14 @@ class CampaignResultRegistryRepository:
             ).fetchone()
             if run is None or runtime is None:
                 raise Phase11RegistryStateError("Search was not found.")
+            current_attempt = connection.execute(
+                """SELECT attempt_number,status,execution_lease_token,created_at,started_at
+                   FROM campaign_search_attempts
+                   WHERE search_run_id=? AND attempt_number=?""",
+                (identifier, int(run["current_attempt_number"])),
+            ).fetchone()
+            if current_attempt is None:
+                raise Phase11RegistryStateError("Current search attempt was not found.")
             existing = connection.execute(
                 "SELECT attempt_number FROM campaign_search_attempts WHERE search_run_id=? AND idempotency_key=?",
                 (identifier, key),
@@ -495,12 +911,28 @@ class CampaignResultRegistryRepository:
                 heartbeat_at = datetime.fromisoformat(str(heartbeat).replace("Z", "+00:00"))
                 if now - heartbeat_at < timedelta(seconds=stale_after_seconds):
                     raise Phase11RegistryStateError("The search is still active and cannot be retried.")
-                connection.execute(
-                    "UPDATE campaign_search_runs SET status='FAILED',completed_at=?,processing_seconds=?,safe_error_message=? WHERE search_run_id=?",
-                    (moment, self._elapsed(run["started_at"], moment),
-                     "The previous attempt stopped sending progress updates.", identifier),
+                stale_run_cursor = connection.execute(
+                    """UPDATE campaign_search_runs
+                       SET status='FAILED',completed_at=?,processing_seconds=?,safe_error_message=?
+                       WHERE search_run_id=? AND current_attempt_number=?
+                         AND status='PROCESSING'
+                         AND EXISTS (
+                             SELECT 1 FROM campaign_search_attempts a
+                             WHERE a.search_run_id=campaign_search_runs.search_run_id
+                               AND a.attempt_number=? AND a.execution_lease_token=?
+                               AND a.status='PROCESSING'
+                         )""",
+                    (
+                        moment,
+                        self._elapsed(current_attempt["started_at"], moment),
+                        "The previous attempt stopped sending progress updates.",
+                        identifier,
+                        int(current_attempt["attempt_number"]),
+                        int(current_attempt["attempt_number"]),
+                        str(current_attempt["execution_lease_token"]),
+                    ),
                 )
-                connection.execute(
+                stale_runtime_cursor = connection.execute(
                     """UPDATE campaign_search_run_runtime SET lifecycle_status='FAILED',
                        stage_code='FAILED',stage_label='Search became unresponsive',
                        status_message='The previous attempt stopped sending progress updates.',
@@ -509,15 +941,65 @@ class CampaignResultRegistryRepository:
                        failure_summary='The previous attempt stopped sending progress updates.',
                        resolution_steps_json='["Retry the saved search."]',retryable=1,
                        updated_at=?,heartbeat_at=?,state_version=state_version+1
-                       WHERE search_run_id=?""",
-                    (str(runtime["stage_code"]), moment, moment, identifier),
+                       WHERE search_run_id=?
+                         AND EXISTS (
+                             SELECT 1 FROM campaign_search_runs r
+                             JOIN campaign_search_attempts a
+                               ON a.search_run_id=r.search_run_id
+                              AND a.attempt_number=r.current_attempt_number
+                             WHERE r.search_run_id=campaign_search_run_runtime.search_run_id
+                               AND r.current_attempt_number=?
+                               AND a.attempt_number=? AND a.execution_lease_token=?
+                               AND a.status='PROCESSING'
+                         )""",
+                    (
+                        str(runtime["stage_code"]), moment, moment, identifier,
+                        int(current_attempt["attempt_number"]),
+                        int(current_attempt["attempt_number"]),
+                        str(current_attempt["execution_lease_token"]),
+                    ),
                 )
-                connection.execute(
+                stale_attempt_cursor = connection.execute(
                     """UPDATE campaign_search_attempts SET status='FAILED',completed_at=?,
                        failure_code='STALE_PROCESSING_ATTEMPT',failure_stage_code=?,
                        failure_summary='The previous attempt stopped sending progress updates.',retryable=1
-                       WHERE search_run_id=? AND attempt_number=?""",
-                    (moment, str(runtime["stage_code"]), identifier, int(run["current_attempt_number"])),
+                       WHERE search_run_id=? AND attempt_number=?
+                         AND execution_lease_token=? AND status='PROCESSING'""",
+                    (
+                        moment,
+                        str(runtime["stage_code"]),
+                        identifier,
+                        int(run["current_attempt_number"]),
+                        str(current_attempt["execution_lease_token"]),
+                    ),
+                )
+                if not all(
+                    cursor.rowcount == 1
+                    for cursor in (
+                        stale_run_cursor,
+                        stale_runtime_cursor,
+                        stale_attempt_cursor,
+                    )
+                ):
+                    raise Phase11RegistryStateError(
+                        "Stale search attempt could not be terminalized safely."
+                    )
+                connection.execute(
+                    """INSERT INTO campaign_search_progress_events (
+                           search_run_id,attempt_number,stage_code,stage_label,
+                           progress_percent,processed_count,total_count,status_message,
+                           workload_class,recorded_at
+                       ) VALUES (?,?,'FAILED','Search became unresponsive',?,?,?,?,?,?)""",
+                    (
+                        identifier,
+                        int(current_attempt["attempt_number"]),
+                        int(runtime["progress_percent"]),
+                        int(runtime["processed_count"]),
+                        runtime["total_count"],
+                        "The previous attempt stopped sending progress updates.",
+                        str(runtime["workload_class"]),
+                        moment,
+                    ),
                 )
                 status = "FAILED"
                 retry_allowed = True
@@ -531,14 +1013,14 @@ class CampaignResultRegistryRepository:
                        search_run_id,attempt_number,attempt_contract_version,
                        selection_contract_version,propensity_bucket,bucket_minimum,
                        bucket_maximum,bucket_maximum_inclusive,status,idempotency_key,
-                       created_at,started_at
-                   ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                       execution_lease_token,created_at,started_at
+                   ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (identifier, next_attempt, "1", run["selection_contract_version"],
                  run["propensity_bucket"],
                  float(run["propensity_bucket"]) if run["propensity_bucket"] else None,
                  ({"0.90": 1.0, "0.80": .9, "0.70": .8, "0.60": .7, "0.50": .6}.get(run["propensity_bucket"])),
                  1 if run["propensity_bucket"] == "0.90" else (0 if run["propensity_bucket"] else None),
-                 "QUEUED", key, moment, moment),
+                 "QUEUED", key, secrets.token_hex(32), moment, None),
             )
             connection.execute(
                 """UPDATE campaign_search_runs SET status='QUEUED',current_attempt_number=?,
@@ -554,23 +1036,69 @@ class CampaignResultRegistryRepository:
                    processed_count=0,total_count=NULL,
                    status_message='Retry saved and waiting for processing capacity.',
                    failure_code=NULL,failure_category=NULL,failure_summary=NULL,
-                   failure_stage_code=NULL,
+                   failure_stage_code=NULL,technical_reference=NULL,
                    resolution_steps_json='[]',retryable=0,processing_started_at=NULL,
+                   workload_class='PENDING_CLASSIFICATION',
                    updated_at=?,heartbeat_at=NULL,stage_started_at=?,state_version=state_version+1
                    WHERE search_run_id=?""",
                 (moment, moment, identifier),
             )
-            connection.execute(
-                """INSERT INTO campaign_search_progress_events (
-                       search_run_id,attempt_number,stage_code,stage_label,
-                       progress_percent,processed_count,total_count,status_message,recorded_at
-                   ) VALUES (?,?,'QUEUED','Waiting to retry',0,0,NULL,
-                       'Retry saved and waiting for processing capacity.',?)""",
-                (identifier, next_attempt, moment),
-            )
             return dict(connection.execute(
                 "SELECT * FROM campaign_search_runs WHERE search_run_id=?", (identifier,)
             ).fetchone())
+
+    def bind_phase10_dependency(
+        self,
+        search_run_id: int,
+        *,
+        attempt_number: int,
+        execution_lease_token: str,
+        orchestration_id: int,
+        dependency_status: str,
+        rejoined: bool,
+        timestamp: str | None = None,
+    ) -> None:
+        """Fence one active attempt to its exact Phase 10 dependency."""
+
+        identifier = _integer(search_run_id)
+        attempt, lease = self._validate_fence(
+            attempt_number, execution_lease_token
+        )
+        dependency = _integer(orchestration_id)
+        status = _text(dependency_status, 20).upper()
+        if status not in {
+            "NOT_STARTED", "QUEUED", "RUNNING", "READY", "BLOCKED", "FAILED", "STALE",
+        }:
+            raise Phase11RegistryValidationError(
+                "Invalid Phase 10 dependency status."
+            )
+        moment = _timestamp(timestamp)
+        with get_connection(self.database_path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            cursor = connection.execute(
+                """UPDATE campaign_search_attempts
+                   SET phase10_orchestration_id=?,phase10_dependency_status=?,
+                       phase10_dependency_rejoined=MAX(phase10_dependency_rejoined,?),
+                       phase10_dependency_updated_at=?,lease_heartbeat_at=?
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=?
+                     AND status IN ('QUEUED','PROCESSING')
+                     AND (phase10_orchestration_id IS NULL OR phase10_orchestration_id=?)
+                     AND EXISTS (
+                         SELECT 1 FROM campaign_search_runs r
+                         WHERE r.search_run_id=campaign_search_attempts.search_run_id
+                           AND r.current_attempt_number=campaign_search_attempts.attempt_number
+                           AND r.status IN ('QUEUED','PROCESSING')
+                     )""",
+                (
+                    dependency, status, int(bool(rejoined)), moment, moment,
+                    identifier, attempt, lease, dependency,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise Phase11RegistryStateError(
+                    "Phase 10 dependency lineage fence was rejected."
+                )
 
     def queue_position(self, search_run_id: int) -> int | None:
         return self.queue_positions([search_run_id]).get(_integer(search_run_id))
@@ -585,12 +1113,15 @@ class CampaignResultRegistryRepository:
         with get_connection(self.database_path) as connection:
             rows = connection.execute(
                 f"""WITH queued AS (
-                        SELECT search_run_id,
+                        SELECT r.search_run_id,
                                ROW_NUMBER() OVER (
-                                   ORDER BY created_at,search_run_id
+                                   ORDER BY a.created_at,r.search_run_id
                                ) AS queue_position
-                        FROM campaign_search_runs
-                        WHERE status='QUEUED'
+                        FROM campaign_search_runs r
+                        JOIN campaign_search_attempts a
+                          ON a.search_run_id=r.search_run_id
+                         AND a.attempt_number=r.current_attempt_number
+                        WHERE r.status='QUEUED' AND a.status='QUEUED'
                     )
                     SELECT search_run_id,queue_position FROM queued
                     WHERE search_run_id IN ({marks})""",
@@ -601,8 +1132,10 @@ class CampaignResultRegistryRepository:
             for row in rows
         }
 
-    def stage_duration_history(self, *, limit_per_stage: int = 30) -> dict[str, list[float]]:
-        """Return bounded completed-stage durations for qualified ETA ranges."""
+    def stage_duration_history(
+        self, *, limit_per_stage: int = 30
+    ) -> dict[tuple[str, str], list[float]]:
+        """Return durations isolated by workload class and stage."""
 
         if not 3 <= limit_per_stage <= 100:
             raise Phase11RegistryValidationError("Invalid stage history limit.")
@@ -610,60 +1143,93 @@ class CampaignResultRegistryRepository:
             rows = connection.execute(
                 """
                 WITH starts AS (
-                    SELECT search_run_id,attempt_number,stage_code,
-                           MIN(recorded_at) AS started_at
+                    SELECT search_run_id,attempt_number,workload_class,stage_code,
+                           MIN(recorded_at) AS started_at,
+                           MIN(progress_event_id) AS first_event_id
                     FROM campaign_search_progress_events
-                    GROUP BY search_run_id,attempt_number,stage_code
+                    GROUP BY search_run_id,attempt_number,workload_class,stage_code
                 ), transitions AS (
-                    SELECT stage_code,started_at,
+                    SELECT workload_class,stage_code,started_at,
                            LEAD(started_at) OVER (
                                PARTITION BY search_run_id,attempt_number
-                               ORDER BY started_at,stage_code
+                               ORDER BY started_at,first_event_id
                            ) AS ended_at
                     FROM starts
                 ), ranked AS (
-                    SELECT stage_code,
+                    SELECT workload_class,stage_code,
                            (julianday(ended_at)-julianday(started_at))*86400.0 AS seconds,
-                           ROW_NUMBER() OVER (PARTITION BY stage_code ORDER BY started_at DESC) AS position
+                           ROW_NUMBER() OVER (
+                               PARTITION BY workload_class,stage_code
+                               ORDER BY started_at DESC
+                           ) AS position
                     FROM transitions WHERE ended_at IS NOT NULL
                 )
-                SELECT stage_code,seconds FROM ranked
+                SELECT workload_class,stage_code,seconds FROM ranked
                 WHERE position <= ? AND seconds >= 0
-                ORDER BY stage_code,position
+                ORDER BY workload_class,stage_code,position
                 """,
                 (limit_per_stage,),
             ).fetchall()
-        result: dict[str, list[float]] = {}
+        result: dict[tuple[str, str], list[float]] = {}
         for row in rows:
-            result.setdefault(str(row["stage_code"]), []).append(float(row["seconds"]))
+            key = (str(row["workload_class"]), str(row["stage_code"]))
+            result.setdefault(key, []).append(float(row["seconds"]))
         return result
 
     def bind_current_attempt_lineage(
-        self, search_run_id: int, *, generation_id: int, scoring_run_id: int,
+        self, search_run_id: int, *, attempt_number: int,
+        execution_lease_token: str, generation_id: int, scoring_run_id: int,
         calibration_artifact_id: int | None,
     ) -> None:
         """Bind the active immutable attempt to the exact intelligence assets."""
 
+        identifier = _integer(search_run_id)
+        attempt, lease = self._validate_fence(
+            attempt_number, execution_lease_token
+        )
         with get_connection(self.database_path, write=True) as connection:
             connection.execute("BEGIN IMMEDIATE")
             run = connection.execute(
-                "SELECT current_attempt_number,selection_contract_version,status FROM campaign_search_runs WHERE search_run_id=?",
-                (_integer(search_run_id),),
+                """SELECT r.current_attempt_number,r.selection_contract_version,r.status
+                   FROM campaign_search_runs r
+                   JOIN campaign_search_attempts a
+                     ON a.search_run_id=r.search_run_id
+                    AND a.attempt_number=r.current_attempt_number
+                   WHERE r.search_run_id=? AND r.current_attempt_number=?
+                     AND r.status='PROCESSING' AND a.attempt_number=?
+                     AND a.execution_lease_token=? AND a.status='PROCESSING'""",
+                (identifier, attempt, attempt, lease),
             ).fetchone()
             if run is None or run["status"] != "PROCESSING":
                 raise Phase11RegistryStateError("Active search attempt was not found.")
             if run["selection_contract_version"] == "2" and calibration_artifact_id is None:
                 raise Phase11RegistryStateError("Calibrated selection requires a promoted calibration.")
-            connection.execute(
-                "UPDATE campaign_search_runs SET calibration_artifact_id=? WHERE search_run_id=?",
-                (calibration_artifact_id, search_run_id),
+            run_cursor = connection.execute(
+                """UPDATE campaign_search_runs SET calibration_artifact_id=?
+                   WHERE search_run_id=? AND current_attempt_number=?
+                     AND status='PROCESSING'
+                     AND EXISTS (
+                         SELECT 1 FROM campaign_search_attempts a
+                         WHERE a.search_run_id=campaign_search_runs.search_run_id
+                           AND a.attempt_number=? AND a.execution_lease_token=?
+                           AND a.status='PROCESSING'
+                     )""",
+                (calibration_artifact_id, identifier, attempt, attempt, lease),
             )
+            if run_cursor.rowcount != 1:
+                raise Phase11RegistryStateError(
+                    "Active search run lineage fence was rejected."
+                )
             cursor = connection.execute(
                 """UPDATE campaign_search_attempts
-                   SET generation_id=?,scoring_run_id=?,calibration_artifact_id=?
-                   WHERE search_run_id=? AND attempt_number=? AND status='PROCESSING'""",
-                (generation_id, scoring_run_id, calibration_artifact_id, search_run_id,
-                 int(run["current_attempt_number"])),
+                   SET generation_id=?,scoring_run_id=?,calibration_artifact_id=?,
+                       lease_heartbeat_at=?
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=? AND status='PROCESSING'""",
+                (
+                    generation_id, scoring_run_id, calibration_artifact_id,
+                    _now(), identifier, attempt, lease,
+                ),
             )
             if cursor.rowcount != 1:
                 raise Phase11RegistryStateError("Active search attempt lineage could not be recorded.")
@@ -725,8 +1291,11 @@ class CampaignResultRegistryRepository:
         ) is None:
             raise Phase11RegistryValidationError("Expected a portable, non-PII result artifact URI.")
         timestamp = _timestamp(timestamp)
+        membership_contract = result_membership_contract_for_selection(
+            selection_contract_version
+        )
         values = dict(
-            result_membership_contract_version=RESULT_MEMBERSHIP_CONTRACT_VERSION,
+            result_membership_contract_version=membership_contract,
             generation_id=_integer(generation_id), targeting_criteria_sha256=_sha(targeting_criteria_sha256),
             filter_branches_sha256=_sha(filter_branches_sha256), selection_mode=selection_mode,
             target_count=target_count, result_cache_key_sha256=_sha(result_cache_key_sha256),

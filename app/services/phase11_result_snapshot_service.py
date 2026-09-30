@@ -1,8 +1,9 @@
 """Deterministic, no-contact-PII Phase 11 result snapshot publication.
 
-CSV-GZIP is the frozen POC format.  It is streamable and uses only the Python
-standard library; the locked runtime does not carry pyarrow.  Membership files
-contain only the five version-1 analytical identity fields.
+CSV-GZIP is the frozen POC format. It is streamable and uses only the Python
+standard library; the locked runtime does not carry pyarrow. Membership schema
+version 1 preserves raw-score semantics while version 2 uses explicit calibrated
+purchase-probability semantics.
 """
 
 from __future__ import annotations
@@ -33,22 +34,39 @@ from app.services.audience_preparation_service import (
     classify_rank_band,
 )
 from app.services.phase11_result_contracts import (
-    RESULT_MEMBERSHIP_COLUMNS,
-    RESULT_MEMBERSHIP_CONTRACT_VERSION,
+    RESULT_MEMBERSHIP_V1_CONTRACT_VERSION,
+    RESULT_MEMBERSHIP_V2_CONTRACT_VERSION,
     Phase11RegistryStateError,
+    Phase11RegistryValidationError,
+    result_membership_columns,
+    result_membership_contract_for_selection,
+)
+from app.services.calibrated_selection_contract_service import (
+    propensity_bucket_bounds,
 )
 
 
 RESULT_SNAPSHOT_STORAGE_FORMAT = "CSV_GZIP"
 RESULT_SNAPSHOT_FILE_NAME = "members.csv.gz"
 RESULT_SNAPSHOT_MANIFEST_NAME = "manifest.json"
-RESULT_MEMBERSHIP_SCHEMA = (
+RESULT_MEMBERSHIP_V1_SCHEMA = (
     {"name": "person_id", "type": "string"},
     {"name": "propensity_score", "type": "float64"},
     {"name": "percentile_bucket", "type": "int32"},
     {"name": "decile", "type": "int32"},
     {"name": "rank_band", "type": "string"},
 )
+RESULT_MEMBERSHIP_V2_SCHEMA = (
+    {"name": "person_id", "type": "string"},
+    {"name": "calibrated_purchase_probability", "type": "float64"},
+    {"name": "probability_bucket", "type": "string"},
+    {"name": "raw_propensity_score", "type": "float64"},
+    {"name": "percentile_bucket", "type": "int32"},
+    {"name": "decile", "type": "int32"},
+    {"name": "rank_band", "type": "string"},
+)
+# Frozen compatibility alias for v1 callers.
+RESULT_MEMBERSHIP_SCHEMA = RESULT_MEMBERSHIP_V1_SCHEMA
 DEFAULT_PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _READY_LIFECYCLES = frozenset({"CURRENT", "REUSABLE", "PROTECTED"})
 _SNAPSHOT_DIRECTORY = re.compile(r"result_snapshot_[0-9]+")
@@ -59,7 +77,7 @@ class ResultSnapshotError(RuntimeError):
 
 
 class ResultSnapshotValidationError(ResultSnapshotError):
-    """Membership or manifest content violates contract version 1."""
+    """Membership or manifest content violates its recorded contract."""
 
 
 class ResultSnapshotPublicationError(ResultSnapshotError):
@@ -101,13 +119,26 @@ def _safe_results_root(project_root: str | Path) -> tuple[Path, Path]:
     return root, results
 
 
-def _validated_member(raw: Mapping[str, Any]) -> tuple[str, float, int, int, str]:
-    if set(raw) != set(RESULT_MEMBERSHIP_COLUMNS):
+def _membership_schema(contract_version: str) -> tuple[dict[str, str], ...]:
+    if contract_version == RESULT_MEMBERSHIP_V1_CONTRACT_VERSION:
+        return RESULT_MEMBERSHIP_V1_SCHEMA
+    if contract_version == RESULT_MEMBERSHIP_V2_CONTRACT_VERSION:
+        return RESULT_MEMBERSHIP_V2_SCHEMA
+    raise ResultSnapshotValidationError("Membership contract is invalid.")
+
+
+def _validated_member(
+    raw: Mapping[str, Any],
+    contract_version: str,
+    *,
+    expected_probability_bucket: str | None = None,
+) -> tuple[str, float, tuple[Any, ...]]:
+    columns = result_membership_columns(contract_version)
+    if set(raw) != set(columns):
         raise ResultSnapshotValidationError("Membership schema is invalid.")
     person_id = raw.get("person_id")
     rank_band = raw.get("rank_band")
     try:
-        score = float(raw.get("propensity_score"))
         percentile_bucket = int(raw.get("percentile_bucket"))
         decile = int(raw.get("decile"))
     except (TypeError, ValueError) as exc:
@@ -116,8 +147,6 @@ def _validated_member(raw: Mapping[str, Any]) -> tuple[str, float, int, int, str
         not isinstance(person_id, str)
         or not 1 <= len(person_id) <= 200
         or "\x00" in person_id
-        or not math.isfinite(score)
-        or not 0.0 <= score <= 1.0
         or isinstance(raw.get("percentile_bucket"), bool)
         or not 1 <= percentile_bucket <= 100
         or isinstance(raw.get("decile"), bool)
@@ -126,10 +155,51 @@ def _validated_member(raw: Mapping[str, Any]) -> tuple[str, float, int, int, str
         or rank_band != classify_rank_band(percentile_bucket)
     ):
         raise ResultSnapshotValidationError("Membership values are invalid.")
-    return person_id, score, percentile_bucket, decile, rank_band
+    if contract_version == RESULT_MEMBERSHIP_V1_CONTRACT_VERSION:
+        try:
+            score = float(raw.get("propensity_score"))
+        except (TypeError, ValueError) as exc:
+            raise ResultSnapshotValidationError("Membership values are invalid.") from exc
+        if not math.isfinite(score) or not 0.0 <= score <= 1.0:
+            raise ResultSnapshotValidationError("Membership values are invalid.")
+        return person_id, score, (
+            person_id, repr(score), percentile_bucket, decile, rank_band,
+        )
+
+    try:
+        probability = float(raw.get("calibrated_purchase_probability"))
+        raw_score = float(raw.get("raw_propensity_score"))
+        probability_bucket = str(raw.get("probability_bucket"))
+        lower, upper, upper_inclusive = propensity_bucket_bounds(probability_bucket)
+    except (TypeError, ValueError) as exc:
+        raise ResultSnapshotValidationError("Membership values are invalid.") from exc
+    if (
+        not math.isfinite(probability)
+        or not 0.0 <= probability <= 1.0
+        or not math.isfinite(raw_score)
+        or not 0.0 <= raw_score <= 1.0
+        or (
+            expected_probability_bucket is not None
+            and probability_bucket != expected_probability_bucket
+        )
+        or probability < lower
+        or probability > upper
+        or (not upper_inclusive and probability >= upper)
+    ):
+        raise ResultSnapshotValidationError("Membership values are invalid.")
+    return person_id, probability, (
+        person_id, repr(probability), probability_bucket, repr(raw_score),
+        percentile_bucket, decile, rank_band,
+    )
 
 
-def _write_membership(path: Path, members: Iterable[Mapping[str, Any]]) -> int:
+def _write_membership(
+    path: Path,
+    members: Iterable[Mapping[str, Any]],
+    contract_version: str,
+    *,
+    expected_probability_bucket: str | None = None,
+) -> int:
     count = 0
     previous_order: tuple[float, str] | None = None
     with path.open("xb") as raw:
@@ -140,14 +210,16 @@ def _write_membership(path: Path, members: Iterable[Mapping[str, Any]]) -> int:
                 compressed, encoding="utf-8", newline="", write_through=True
             ) as text:
                 writer = csv.writer(text, lineterminator="\n")
-                writer.writerow(RESULT_MEMBERSHIP_COLUMNS)
+                writer.writerow(result_membership_columns(contract_version))
                 for member in members:
                     if not isinstance(member, Mapping):
                         raise ResultSnapshotValidationError(
                             "Membership rows must be objects."
                         )
-                    person_id, score, percentile, decile, rank_band = _validated_member(
-                        member
+                    person_id, score, values = _validated_member(
+                        member,
+                        contract_version,
+                        expected_probability_bucket=expected_probability_bucket,
                     )
                     order = (-score, person_id)
                     if previous_order is not None and order <= previous_order:
@@ -155,27 +227,35 @@ def _write_membership(path: Path, members: Iterable[Mapping[str, Any]]) -> int:
                             "Membership order or uniqueness is invalid."
                         )
                     previous_order = order
-                    writer.writerow(
-                        (person_id, repr(score), percentile, decile, rank_band)
-                    )
+                    writer.writerow(values)
                     count += 1
         raw.flush()
         os.fsync(raw.fileno())
     return count
 
 
-def _inspect_membership(path: Path) -> tuple[int, str]:
+def _inspect_membership(
+    path: Path,
+    contract_version: str,
+    *,
+    expected_probability_bucket: str | None = None,
+) -> tuple[int, str]:
     digest = _sha256(path)
     count = 0
     previous_order: tuple[float, str] | None = None
     with gzip.open(path, "rt", encoding="utf-8", newline="") as source:
         reader = csv.DictReader(source)
-        if tuple(reader.fieldnames or ()) != RESULT_MEMBERSHIP_COLUMNS:
+        columns = result_membership_columns(contract_version)
+        if tuple(reader.fieldnames or ()) != columns:
             raise ResultSnapshotValidationError("Membership schema is invalid.")
         for raw in reader:
-            if None in raw or set(raw) != set(RESULT_MEMBERSHIP_COLUMNS):
+            if None in raw or set(raw) != set(columns):
                 raise ResultSnapshotValidationError("Membership schema is invalid.")
-            person_id, score, _percentile, _decile, _rank_band = _validated_member(raw)
+            person_id, score, _values = _validated_member(
+                raw,
+                contract_version,
+                expected_probability_bucket=expected_probability_bucket,
+            )
             order = (-score, person_id)
             if previous_order is not None and order <= previous_order:
                 raise ResultSnapshotValidationError(
@@ -191,10 +271,13 @@ def _manifest(
     run: Mapping[str, Any], generation: Mapping[str, Any], cache_key: str,
     created_at: str,
 ) -> dict[str, Any]:
+    membership_contract = result_membership_contract_for_selection(
+        run.get("selection_contract_version")
+    )
     payload = {
-        "result_snapshot_manifest_contract_version": "1",
+        "result_snapshot_manifest_contract_version": membership_contract,
         "snapshot_id": snapshot_id,
-        "result_membership_contract_version": RESULT_MEMBERSHIP_CONTRACT_VERSION,
+        "result_membership_contract_version": membership_contract,
         "row_count": row_count,
         "file_sha256": file_sha256,
         "generation_id": generation["generation_id"],
@@ -208,7 +291,7 @@ def _manifest(
         "target_count": run["target_count"],
         "created_at": created_at,
         "storage_format": RESULT_SNAPSHOT_STORAGE_FORMAT,
-        "storage_schema": list(RESULT_MEMBERSHIP_SCHEMA),
+        "storage_schema": list(_membership_schema(membership_contract)),
     }
     if run.get("selection_contract_version") == "2":
         payload.update({
@@ -260,8 +343,11 @@ def validate_result_snapshot(
     """Verify identity, manifest, exact schema, row values, count and checksum."""
 
     try:
+        expected_membership_contract = result_membership_contract_for_selection(
+            run.get("selection_contract_version")
+        )
         expected_metadata = {
-            "result_membership_contract_version": RESULT_MEMBERSHIP_CONTRACT_VERSION,
+            "result_membership_contract_version": expected_membership_contract,
             "generation_id": generation.get("generation_id"),
             "targeting_criteria_sha256": run.get("targeting_criteria_sha256"),
             "filter_branches_sha256": run.get("filter_branches_sha256"),
@@ -299,7 +385,16 @@ def validate_result_snapshot(
         manifest_path = members_path.parent / RESULT_SNAPSHOT_MANIFEST_NAME
         if not manifest_path.is_file():
             return ResultSnapshotValidation(False, "MANIFEST_MISSING")
-        row_count, digest = _inspect_membership(members_path)
+        row_count, digest = _inspect_membership(
+            members_path,
+            expected_membership_contract,
+            expected_probability_bucket=(
+                str(run["propensity_bucket"])
+                if expected_membership_contract
+                == RESULT_MEMBERSHIP_V2_CONTRACT_VERSION
+                else None
+            ),
+        )
         if digest != snapshot.get("snapshot_sha256"):
             return ResultSnapshotValidation(False, "CHECKSUM_MISMATCH", row_count, digest)
         if row_count != snapshot.get("resolved_count"):
@@ -319,6 +414,7 @@ def validate_result_snapshot(
     except (
         KeyError, OSError, UnicodeError, ValueError, TypeError,
         json.JSONDecodeError, gzip.BadGzipFile, ResultSnapshotValidationError,
+        Phase11RegistryValidationError,
     ):
         return ResultSnapshotValidation(False, "ARTIFACT_INVALID")
 
@@ -420,8 +516,13 @@ def _publish_existing(
             "Only a stale registered snapshot may be deterministically repaired."
         )
     existing = live
+    membership_contract = result_membership_contract_for_selection(
+        run.get("selection_contract_version")
+    )
     if (
         existing.get("result_cache_key_sha256") != cache_key
+        or existing.get("result_membership_contract_version")
+        != membership_contract
         or existing.get("generation_id") != generation.get("generation_id")
         or existing.get("targeting_criteria_sha256") != run.get("targeting_criteria_sha256")
         or existing.get("filter_branches_sha256") != run.get("filter_branches_sha256")
@@ -430,6 +531,11 @@ def _publish_existing(
         or existing.get("resolved_count") != row_count
         or existing.get("snapshot_sha256") != file_sha256
         or existing.get("storage_format") != RESULT_SNAPSHOT_STORAGE_FORMAT
+        or str(existing.get("selection_contract_version") or "1")
+        != str(run.get("selection_contract_version") or "1")
+        or existing.get("propensity_bucket") != run.get("propensity_bucket")
+        or existing.get("calibration_artifact_id")
+        != run.get("calibration_artifact_id")
     ):
         raise ResultSnapshotPublicationError(
             "An immutable snapshot cannot be replaced with different membership."
@@ -482,14 +588,34 @@ def materialize_result_snapshot(
         database_path, project_root=root, minimum_age_seconds=3600.0, limit=100
     )
     repository = CampaignResultRegistryRepository(database_path)
+    membership_contract = result_membership_contract_for_selection(
+        run.get("selection_contract_version")
+    )
     temp_directory = Path(
         tempfile.mkdtemp(prefix=".pending_result_", dir=results_root)
     ).resolve()
     published_directory: Path | None = None
     try:
         members_path = temp_directory / RESULT_SNAPSHOT_FILE_NAME
-        written_count = _write_membership(members_path, members)
-        verified_count, file_sha256 = _inspect_membership(members_path)
+        written_count = _write_membership(
+            members_path,
+            members,
+            membership_contract,
+            expected_probability_bucket=(
+                str(run["propensity_bucket"])
+                if membership_contract == RESULT_MEMBERSHIP_V2_CONTRACT_VERSION
+                else None
+            ),
+        )
+        verified_count, file_sha256 = _inspect_membership(
+            members_path,
+            membership_contract,
+            expected_probability_bucket=(
+                str(run["propensity_bucket"])
+                if membership_contract == RESULT_MEMBERSHIP_V2_CONTRACT_VERSION
+                else None
+            ),
+        )
         if verified_count != written_count:
             raise ResultSnapshotValidationError("Membership count changed after write.")
 
@@ -545,7 +671,7 @@ def materialize_result_snapshot(
             )
             candidate = {
                 "result_snapshot_id": snapshot_id,
-                "result_membership_contract_version": RESULT_MEMBERSHIP_CONTRACT_VERSION,
+                "result_membership_contract_version": membership_contract,
                 "generation_id": generation["generation_id"],
                 "targeting_criteria_sha256": run["targeting_criteria_sha256"],
                 "filter_branches_sha256": run["filter_branches_sha256"],
@@ -619,6 +745,8 @@ class ResultSnapshotMaterializer:
 
 __all__ = (
     "RESULT_MEMBERSHIP_SCHEMA",
+    "RESULT_MEMBERSHIP_V1_SCHEMA",
+    "RESULT_MEMBERSHIP_V2_SCHEMA",
     "RESULT_SNAPSHOT_FILE_NAME",
     "RESULT_SNAPSHOT_MANIFEST_NAME",
     "RESULT_SNAPSHOT_STORAGE_FORMAT",

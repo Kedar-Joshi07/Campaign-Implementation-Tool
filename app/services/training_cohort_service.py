@@ -59,6 +59,7 @@ class TrainingCohort:
     unlabeled_customer_count: int
     approximate_memory_bytes: int
     frame: pd.DataFrame
+    campaign_memberships: dict[str, tuple[str, ...]]
 
 
 def _validate_raw_frame(frame: pd.DataFrame) -> None:
@@ -175,6 +176,14 @@ def reconstruct_training_cohort(
         reference_date=reference_date,
     )
     _validate_raw_frame(reconstructed.frame)
+    customer_ids = set(reconstructed.frame["customer_id"].astype(str))
+    membership_ids = set(reconstructed.campaign_memberships)
+    if customer_ids != membership_ids or any(
+        not campaigns for campaigns in reconstructed.campaign_memberships.values()
+    ):
+        raise TrainingCohortDataError(
+            "Every training customer must have complete campaign membership lineage."
+        )
     selected_count, positive_count, unlabeled_count = _reconcile_counts(
         saved_summary=saved_run["summary"],
         observation_count=reconstructed.observation_count,
@@ -194,6 +203,7 @@ def reconstruct_training_cohort(
             reconstructed.frame.memory_usage(index=True, deep=True).sum()
         ),
         frame=reconstructed.frame,
+        campaign_memberships=reconstructed.campaign_memberships,
     )
 
 

@@ -884,6 +884,9 @@ def get_model_run_detail(database_path: str | Path, model_run_id: int) -> dict[s
     )
     metrics = _decode_json_object(row.get("metrics_json"), field_name="metrics_json")
     governance = _governance_section(metrics)
+    split_lineage = _decode_json_object(
+        row.get("split_lineage_json"), field_name="split_lineage_json"
+    )
 
     return {
         "identity": {
@@ -904,7 +907,7 @@ def get_model_run_detail(database_path: str | Path, model_run_id: int) -> dict[s
             "train_positive_count": int(row["train_positive_count"]),
             "validation_positive_count": int(row["validation_positive_count"]),
         },
-        "governance": governance,
+        "governance": governance | {"split_lineage": split_lineage},
         "candidates": metrics.get("candidate_results", {}),
         "challenger_comparison": metrics.get("challenger_comparison", {}),
         "quality_flags": list(metrics.get("quality_flags", [])),

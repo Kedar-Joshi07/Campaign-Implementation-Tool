@@ -47,8 +47,13 @@ from app.services.omnichannel_profile_contracts import (
     project_profile_row,
     resolve_profile_availability,
 )
-from app.services.phase11_result_contracts import RESULT_MEMBERSHIP_COLUMNS
+from app.services.phase11_result_contracts import (
+    RESULT_MEMBERSHIP_V1_CONTRACT_VERSION,
+    RESULT_MEMBERSHIP_V2_CONTRACT_VERSION,
+    result_membership_columns,
+)
 from app.services.phase11_result_snapshot_service import validate_result_snapshot
+from app.services.source_currentness_service import result_lineage_is_current
 
 
 DEFAULT_PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -196,23 +201,51 @@ def _members_path(
     return path
 
 
-def _membership_chunks(path: Path) -> Iterator[list[dict[str, Any]]]:
+def _membership_chunks(
+    path: Path,
+    membership_contract_version: str,
+) -> Iterator[list[dict[str, Any]]]:
     with gzip.open(path, "rt", encoding="utf-8", newline="") as source:
         reader = csv.DictReader(source)
-        if tuple(reader.fieldnames or ()) != RESULT_MEMBERSHIP_COLUMNS:
+        try:
+            expected_columns = result_membership_columns(
+                membership_contract_version
+            )
+        except ValueError as exc:
+            raise Phase11ExportConflictError(
+                "The result snapshot is unavailable for download."
+            ) from exc
+        if tuple(reader.fieldnames or ()) != expected_columns:
             raise Phase11ExportConflictError(
                 "The result snapshot is unavailable for download."
             )
         chunk: list[dict[str, Any]] = []
         for raw in reader:
             try:
+                if membership_contract_version == RESULT_MEMBERSHIP_V1_CONTRACT_VERSION:
+                    propensity_score = float(raw["propensity_score"])
+                    semantic_fields = {}
+                elif membership_contract_version == RESULT_MEMBERSHIP_V2_CONTRACT_VERSION:
+                    # Frozen V1 omnichannel profiles retain their original raw
+                    # propensity_score column. The calibrated probability is not
+                    # silently placed under that legacy name.
+                    propensity_score = float(raw["raw_propensity_score"])
+                    semantic_fields = {
+                        "calibrated_purchase_probability": float(
+                            raw["calibrated_purchase_probability"]
+                        ),
+                        "probability_bucket": str(raw["probability_bucket"]),
+                        "raw_propensity_score": propensity_score,
+                    }
+                else:
+                    raise ValueError("unsupported membership contract")
                 member = {
                     "person_id": str(raw["person_id"]),
-                    "propensity_score": float(raw["propensity_score"]),
+                    "propensity_score": propensity_score,
                     "percentile_bucket": int(raw["percentile_bucket"]),
                     "decile": int(raw["decile"]),
                     "rank_band": str(raw["rank_band"]),
-                }
+                } | semantic_fields
             except (KeyError, TypeError, ValueError) as exc:
                 raise Phase11ExportConflictError(
                     "The result snapshot is unavailable for download."
@@ -229,10 +262,11 @@ def _joined_profile_rows(
     connection: Any,
     *,
     members_path: Path,
+    membership_contract_version: str,
     profile: OmnichannelExportProfile,
 ) -> Iterator[tuple[dict[str, Any], dict[str, Any] | None]]:
     source_fields = _PROFILE_SOURCE_FIELDS[profile.export_profile]
-    for members in _membership_chunks(members_path):
+    for members in _membership_chunks(members_path, membership_contract_version):
         person_ids = [member["person_id"] for member in members]
         placeholders = ",".join("?" for _ in person_ids)
         columns = ",".join(f'"{field}"' for field in source_fields)
@@ -255,13 +289,17 @@ def _count_deliverability(
     database_path: Path,
     *,
     members_path: Path,
+    membership_contract_version: str,
     profile: OmnichannelExportProfile,
 ) -> tuple[int, int, int]:
     selected = deliverable = 0
     with get_connection(database_path) as connection:
         connection.execute("BEGIN")
         for _member, projected in _joined_profile_rows(
-            connection, members_path=members_path, profile=profile
+            connection,
+            members_path=members_path,
+            membership_contract_version=membership_contract_version,
+            profile=profile,
         ):
             selected += 1
             if projected is not None:
@@ -306,6 +344,22 @@ def _prepare_export(
             "The saved delivery channel and download profile do not match."
         )
 
+    calibration_id = run.get("calibration_artifact_id")
+    if not result_lineage_is_current(
+        path,
+        generation,
+        selection_contract_version=str(run.get("selection_contract_version") or "1"),
+        calibration_artifact_id=(
+            int(calibration_id) if calibration_id is not None else None
+        ),
+    ):
+        repository.update_snapshot_currentness(
+            int(snapshot["result_snapshot_id"]), state="STALE"
+        )
+        raise Phase11ExportConflictError(
+            "The result is not current with the governed intelligence sources."
+        )
+
     validation = validate_result_snapshot(
         snapshot,
         run,
@@ -343,7 +397,12 @@ def _prepare_export(
         )
 
     selected, deliverable, undeliverable = _count_deliverability(
-        path, members_path=members_path, profile=profile
+        path,
+        members_path=members_path,
+        membership_contract_version=str(
+            snapshot["result_membership_contract_version"]
+        ),
+        profile=profile,
     )
     expected = int(run["selected_count"])
     if (
@@ -457,6 +516,9 @@ def stream_phase11_result_export_csv(
                     _joined_profile_rows(
                         connection,
                         members_path=plan.members_path,
+                        membership_contract_version=str(
+                            plan.snapshot["result_membership_contract_version"]
+                        ),
                         profile=plan.profile,
                     )
                 ):
@@ -561,6 +623,10 @@ def stream_phase11_result_export_csv(
             "Cache-Control": "no-store",
             "X-Content-Type-Options": "nosniff",
             "X-Export-Profile": plan.profile.export_profile,
+            "X-Result-Membership-Contract-Version": str(
+                plan.snapshot["result_membership_contract_version"]
+            ),
+            "X-Export-Score-Semantics": "LEGACY_RAW_PROPENSITY_SCORE",
         },
     )
 

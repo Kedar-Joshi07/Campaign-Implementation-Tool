@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import csv
+import gzip
 import hashlib
 import io
 from pathlib import Path
@@ -185,6 +186,8 @@ def test_every_profile_streams_exact_header_counts_checksum_and_privacy(
     rows = list(csv.DictReader(io.StringIO(body.decode("utf-8"), newline="")))
 
     assert response.headers["x-export-profile"] == profile_name
+    assert response.headers["x-result-membership-contract-version"] == "1"
+    assert response.headers["x-export-score-semantics"] == "LEGACY_RAW_PROPENSITY_SCORE"
     assert response.headers["cache-control"] == "no-store"
     assert f"potential_customers_{run_id}_{profile_name.lower()}.csv" in response.headers[
         "content-disposition"
@@ -253,6 +256,29 @@ def test_csv_edge_cases_normalization_and_formula_injection(export_case):
         csv.DictReader(io.StringIO(asyncio.run(_consume(sms)).decode("utf-8")))
     )
     assert sms_rows[0]["phone_number"] == "'+12025550123"
+
+
+def test_v2_membership_keeps_frozen_export_score_column_raw(tmp_path):
+    members_path = tmp_path / "members.csv.gz"
+    with gzip.open(members_path, "wt", encoding="utf-8", newline="") as output:
+        writer = csv.writer(output, lineterminator="\n")
+        writer.writerow((
+            "person_id", "calibrated_purchase_probability", "probability_bucket",
+            "raw_propensity_score", "percentile_bucket", "decile", "rank_band",
+        ))
+        writer.writerow(("P1", "0.55", "0.50", "0.31", "1", "1", "ELITE"))
+
+    chunks = list(export_service._membership_chunks(members_path, "2"))
+    assert chunks == [[{
+        "person_id": "P1",
+        "propensity_score": 0.31,
+        "calibrated_purchase_probability": 0.55,
+        "probability_bucket": "0.50",
+        "raw_propensity_score": 0.31,
+        "percentile_bucket": 1,
+        "decile": 1,
+        "rank_band": "ELITE",
+    }]]
 
 
 def test_disconnect_records_aborted_audit_without_pii_snapshot(export_case):

@@ -1265,13 +1265,29 @@ def validate_completed_scoring_run_provenance(
         if not score_min <= score_mean <= score_max:
             issues.append("score_min/score_mean/score_max ordering is invalid")
 
-    aggregates = scoring_repository.fetch_score_aggregates(scoring_run_id)
+    aggregates = scoring_repository.fetch_phase10_score_integrity(scoring_run_id)
     aggregate_score_count = int(aggregates["score_count"])
     aggregate_distinct_count = int(aggregates["distinct_person_count"])
     if aggregate_score_count != int(row["scored_person_count"]):
         issues.append("persisted score row count does not match scored_person_count")
     if aggregate_distinct_count != aggregate_score_count:
         issues.append("persisted score rows contain duplicate person_id values")
+    if int(aggregates["missing_person_count"]) != 0:
+        issues.append("persisted scores are missing demographic people")
+    if int(aggregates["extra_person_count"]) != 0:
+        issues.append("persisted scores contain people outside demographics")
+    if int(aggregates["invalid_score_count"]) != 0:
+        issues.append("persisted scores contain invalid values")
+    for field in ("score_min", "score_mean", "score_max"):
+        actual = aggregates.get(field)
+        recorded = row.get(field)
+        if actual is None or recorded is None or not math.isclose(
+            float(actual),
+            float(recorded),
+            rel_tol=SCORE_COMPARISON_RELATIVE_TOLERANCE,
+            abs_tol=SCORE_COMPARISON_ABSOLUTE_TOLERANCE,
+        ):
+            issues.append(f"persisted {field} does not match scoring_runs")
 
     demographic_import_id = summary_payload.get("demographic_import_id")
     import_row: dict[str, Any] | None = None
@@ -1382,6 +1398,14 @@ def validate_completed_scoring_run_provenance(
         "is_canonical": len(issues) == 0,
         "demographic_source_verified": len(issues) == 0,
         "historical_source_verified": len(issues) == 0,
+        "score_integrity": {
+            key: aggregates[key]
+            for key in (
+                "score_count", "distinct_person_count", "duplicate_person_count",
+                "invalid_score_count", "missing_person_count", "extra_person_count",
+                "score_min", "score_mean", "score_max",
+            )
+        },
         "issues": issues,
     }
 

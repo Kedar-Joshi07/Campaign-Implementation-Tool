@@ -1,4 +1,4 @@
-"""Governed purchase-outcome ingestion and adaptive retraining eligibility."""
+"""Governed purchase-outcome ingestion and adaptive recalibration eligibility."""
 
 from __future__ import annotations
 
@@ -39,13 +39,23 @@ FEEDBACK_JSON_TEMPLATE = {
         },
     ],
 }
-FeedbackRetrainingExecutor = Callable[[Path, int], None]
-FEEDBACK_RETRAINING_EXECUTOR: FeedbackRetrainingExecutor | None = None
+FeedbackRecalibrationExecutor = Callable[[Path, int], None]
+FEEDBACK_RECALIBRATION_EXECUTOR: FeedbackRecalibrationExecutor | None = None
 
 
-def configure_feedback_retraining_executor(executor: FeedbackRetrainingExecutor | None) -> None:
-    global FEEDBACK_RETRAINING_EXECUTOR
-    FEEDBACK_RETRAINING_EXECUTOR = executor
+def configure_feedback_recalibration_executor(
+    executor: FeedbackRecalibrationExecutor | None,
+) -> None:
+    global FEEDBACK_RECALIBRATION_EXECUTOR
+    FEEDBACK_RECALIBRATION_EXECUTOR = executor
+
+
+def configure_feedback_retraining_executor(
+    executor: FeedbackRecalibrationExecutor | None,
+) -> None:
+    """Backward-compatible internal alias; new callers use recalibration."""
+
+    configure_feedback_recalibration_executor(executor)
 
 
 class FeedbackValidationError(ValueError):
@@ -146,21 +156,212 @@ def evaluate_adaptive_feedback_gate(
     negatives: int,
     runs: int,
     new_label_ratio: float,
-    population_stability_index: float,
+    population_stability_index: float | None,
 ) -> tuple[str, str]:
-    """Apply the version-one governed threshold without database side effects."""
+    """Apply label floors and coherent new-information thresholds."""
 
     floor_met = labels >= 1_000 and positives >= 100 and negatives >= 100 and runs >= 2
-    adaptive_met = new_label_ratio >= .10 or population_stability_index >= .20
+    drift_met = (
+        population_stability_index is not None
+        and math.isfinite(population_stability_index)
+        and population_stability_index >= .20
+    )
+    adaptive_met = new_label_ratio >= .10 or drift_met
     if floor_met and adaptive_met:
-        return "QUEUED", "Adaptive feedback threshold reached; challenger preparation queued."
+        return "QUEUED", "Adaptive feedback threshold reached; recalibration queued."
     return (
         "WAITING_FOR_DATA",
-        "Waiting for 1,000 labels, both outcome classes, two runs, and sufficient new information.",
+        "Waiting for 1,000 labels, both outcome classes, two runs, and sufficient new information for recalibration.",
     )
 
 
-def _adaptive_gate(connection, scoring_run_id: int) -> tuple[str, str, dict[str, float | int]]:
+def calculate_population_stability_index(
+    reference_counts: Mapping[int, int],
+    comparison_counts: Mapping[int, int],
+    *,
+    bin_count: int = 10,
+) -> float:
+    """Calculate deterministic PSI for two like-for-like binned populations."""
+
+    if bin_count <= 1:
+        raise FeedbackValidationError("PSI requires at least two bins.")
+    if any(
+        isinstance(value, bool) or not isinstance(value, int) or value < 0
+        for counts in (reference_counts, comparison_counts)
+        for value in counts.values()
+    ):
+        raise FeedbackValidationError("PSI counts must be nonnegative integers.")
+    reference_total = sum(reference_counts.get(index, 0) for index in range(bin_count))
+    comparison_total = sum(comparison_counts.get(index, 0) for index in range(bin_count))
+    if reference_total <= 0 or comparison_total <= 0:
+        raise FeedbackValidationError("PSI requires nonempty reference and comparison populations.")
+    value = 0.0
+    for bin_number in range(bin_count):
+        reference_share = max(
+            1e-6, reference_counts.get(bin_number, 0) / reference_total
+        )
+        comparison_share = max(
+            1e-6, comparison_counts.get(bin_number, 0) / comparison_total
+        )
+        value += (comparison_share - reference_share) * math.log(
+            comparison_share / reference_share
+        )
+    if not math.isfinite(value):
+        raise FeedbackValidationError("PSI calculation produced a non-finite result.")
+    return float(value)
+
+
+def _selection_basis_sha256(run: Mapping[str, Any]) -> str:
+    basis = {
+        "scoring_run_id": run.get("scoring_run_id"),
+        "generation_id": run.get("generation_id"),
+        "calibration_artifact_id": run.get("calibration_artifact_id"),
+        "selection_contract_version": run.get("selection_contract_version"),
+        "propensity_bucket": run.get("propensity_bucket"),
+        "match_strength": run.get("match_strength"),
+        "selection_mode": run.get("selection_mode"),
+        "target_count": run.get("target_count"),
+        "targeting_criteria_sha256": run.get("targeting_criteria_sha256"),
+        "filter_branches_sha256": run.get("filter_branches_sha256"),
+    }
+    encoded = json.dumps(basis, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _distribution(
+    connection,
+    *,
+    scoring_run_id: int,
+    selection_basis_sha256: str,
+    minimum_batch_id: int | None,
+    maximum_batch_id: int | None,
+) -> dict[int, int]:
+    clauses = [
+        "b.status='ACCEPTED'",
+        "r.scoring_run_id=?",
+        "b.selection_basis_sha256=?",
+        "r.calibration_artifact_id IS NOT NULL",
+    ]
+    parameters: list[Any] = [scoring_run_id, selection_basis_sha256]
+    if minimum_batch_id is not None:
+        clauses.append("b.feedback_batch_id>?")
+        parameters.append(minimum_batch_id)
+    if maximum_batch_id is not None:
+        clauses.append("b.feedback_batch_id<=?")
+        parameters.append(maximum_batch_id)
+    rows = connection.execute(
+        f"""SELECT MIN(9,CAST(p.calibrated_probability*10 AS INTEGER)) AS bin_number,
+                   COUNT(*) AS population_count
+            FROM campaign_feedback_outcomes AS o
+            JOIN campaign_feedback_batches AS b
+              ON b.feedback_batch_id=o.feedback_batch_id
+            JOIN campaign_search_runs AS r ON r.search_run_id=b.search_run_id
+            JOIN calibrated_propensity_scores AS p
+              ON p.calibration_artifact_id=r.calibration_artifact_id
+             AND p.person_id=o.person_id
+            WHERE {' AND '.join(clauses)}
+            GROUP BY bin_number ORDER BY bin_number""",
+        tuple(parameters),
+    ).fetchall()
+    return {
+        int(row["bin_number"]): int(row["population_count"])
+        for row in rows
+    }
+
+
+def _comparable_feedback_drift(
+    connection,
+    *,
+    scoring_run_id: int,
+    reference_decision: Mapping[str, Any] | None,
+    current_batch_id: int,
+) -> tuple[float | None, dict[str, Any]]:
+    if reference_decision is None or reference_decision.get(
+        "latest_feedback_batch_id"
+    ) is None:
+        return None, {
+            "contract_version": "1",
+            "status": "NOT_AVAILABLE",
+            "reason": "No promoted recalibration reference window exists.",
+            "population_basis": "IDENTICAL_SEARCH_SELECTION_BASIS",
+        }
+    cutoff = int(reference_decision["latest_feedback_batch_id"])
+    candidate = connection.execute(
+        """SELECT b.selection_basis_sha256,COUNT(*) AS population_count
+           FROM campaign_feedback_outcomes AS o
+           JOIN campaign_feedback_batches AS b
+             ON b.feedback_batch_id=o.feedback_batch_id
+           JOIN campaign_search_runs AS r ON r.search_run_id=b.search_run_id
+           WHERE b.status='ACCEPTED' AND r.scoring_run_id=?
+             AND b.feedback_batch_id>? AND b.feedback_batch_id<=?
+             AND b.selection_basis_sha256 IS NOT NULL
+           GROUP BY b.selection_basis_sha256
+           ORDER BY population_count DESC,b.selection_basis_sha256
+           LIMIT 1""",
+        (scoring_run_id, cutoff, current_batch_id),
+    ).fetchone()
+    if candidate is None:
+        return None, {
+            "contract_version": "1",
+            "status": "NOT_AVAILABLE",
+            "reason": "No new feedback has a reproducible selection basis.",
+            "population_basis": "IDENTICAL_SEARCH_SELECTION_BASIS",
+            "reference_decision_id": int(reference_decision["retraining_decision_id"]),
+            "reference_batch_cutoff": cutoff,
+        }
+    basis = str(candidate["selection_basis_sha256"])
+    reference = _distribution(
+        connection,
+        scoring_run_id=scoring_run_id,
+        selection_basis_sha256=basis,
+        minimum_batch_id=None,
+        maximum_batch_id=cutoff,
+    )
+    comparison = _distribution(
+        connection,
+        scoring_run_id=scoring_run_id,
+        selection_basis_sha256=basis,
+        minimum_batch_id=cutoff,
+        maximum_batch_id=current_batch_id,
+    )
+    if not reference or not comparison:
+        return None, {
+            "contract_version": "1",
+            "status": "NOT_COMPARABLE",
+            "reason": "Reference and new feedback do not share a scored selection basis.",
+            "population_basis": "IDENTICAL_SEARCH_SELECTION_BASIS",
+            "selection_basis_sha256": basis,
+            "reference_decision_id": int(reference_decision["retraining_decision_id"]),
+            "reference_batch_cutoff": cutoff,
+            "comparison_batch_cutoff": current_batch_id,
+        }
+    psi = calculate_population_stability_index(reference, comparison)
+    distribution_payload = {
+        "reference": [reference.get(index, 0) for index in range(10)],
+        "comparison": [comparison.get(index, 0) for index in range(10)],
+    }
+    return psi, {
+        "contract_version": "1",
+        "status": "COMPARABLE",
+        "population_basis": "IDENTICAL_SEARCH_SELECTION_BASIS",
+        "selection_basis_sha256": basis,
+        "reference_decision_id": int(reference_decision["retraining_decision_id"]),
+        "reference_batch_cutoff": cutoff,
+        "comparison_batch_cutoff": current_batch_id,
+        "reference_population_count": sum(reference.values()),
+        "comparison_population_count": sum(comparison.values()),
+        "distribution_sha256": hashlib.sha256(
+            json.dumps(
+                distribution_payload, sort_keys=True, separators=(",", ":")
+            ).encode("utf-8")
+        ).hexdigest(),
+        "bin_counts": distribution_payload,
+    }
+
+
+def _adaptive_gate(
+    connection, scoring_run_id: int, current_batch_id: int
+) -> tuple[str, str, dict[str, Any]]:
     counts = connection.execute(
         """SELECT COUNT(*) AS labels,
                   SUM(o.outcome) AS positives,
@@ -176,47 +377,40 @@ def _adaptive_gate(connection, scoring_run_id: int) -> tuple[str, str, dict[str,
     positives = int(counts["positives"] or 0)
     negatives = int(counts["negatives"] or 0)
     runs = int(counts["runs"] or 0)
-    previous = connection.execute(
+    baseline = connection.execute(
         """SELECT label_count FROM feedback_retraining_decisions
+           WHERE scoring_run_id=? AND status IN ('PROMOTED','REJECTED','FAILED')
+           ORDER BY retraining_decision_id DESC LIMIT 1""",
+        (scoring_run_id,),
+    ).fetchone()
+    previous_labels = int(baseline["label_count"]) if baseline else 0
+    new_ratio = (
+        1.0
+        if previous_labels == 0
+        else max(0.0, (labels - previous_labels) / previous_labels)
+    )
+    reference_row = connection.execute(
+        """SELECT * FROM feedback_retraining_decisions
            WHERE scoring_run_id=? AND status='PROMOTED'
            ORDER BY retraining_decision_id DESC LIMIT 1""",
         (scoring_run_id,),
     ).fetchone()
-    previous_labels = int(previous["label_count"]) if previous else 0
-    new_ratio = 1.0 if previous_labels == 0 else max(0.0, (labels - previous_labels) / previous_labels)
-    calibration = connection.execute(
-        """SELECT calibration_artifact_id FROM score_calibration_artifacts
-           WHERE scoring_run_id=? AND status='PROMOTED' ORDER BY promoted_at DESC LIMIT 1""",
-        (scoring_run_id,),
-    ).fetchone()
-    psi = 0.0
-    if calibration is not None and labels:
-        calibration_id = int(calibration["calibration_artifact_id"])
-        base_rows = connection.execute(
-            "SELECT bin_number,population_count FROM calibration_distribution_bins WHERE calibration_artifact_id=?",
-            (calibration_id,),
-        ).fetchall()
-        sample_rows = connection.execute(
-            """SELECT MIN(9,CAST(p.calibrated_probability*10 AS INTEGER)) AS bin_number,COUNT(*) AS count
-               FROM campaign_feedback_outcomes AS o
-               JOIN campaign_feedback_batches AS b ON b.feedback_batch_id=o.feedback_batch_id
-               JOIN campaign_search_runs AS r ON r.search_run_id=b.search_run_id
-               JOIN calibrated_propensity_scores AS p
-                 ON p.calibration_artifact_id=? AND p.person_id=o.person_id
-               WHERE b.status='ACCEPTED' AND r.scoring_run_id=? GROUP BY bin_number""",
-            (calibration_id, scoring_run_id),
-        ).fetchall()
-        base = {int(row["bin_number"]): int(row["population_count"]) for row in base_rows}
-        sample = {int(row["bin_number"]): int(row["count"]) for row in sample_rows}
-        base_total = max(1, sum(base.values()))
-        sample_total = max(1, sum(sample.values()))
-        for bin_number in range(10):
-            base_share = max(1e-6, base.get(bin_number, 0) / base_total)
-            sample_share = max(1e-6, sample.get(bin_number, 0) / sample_total)
-            psi += (sample_share - base_share) * math.log(sample_share / base_share)
+    reference = dict(reference_row) if reference_row is not None else None
+    psi, drift_lineage = _comparable_feedback_drift(
+        connection,
+        scoring_run_id=scoring_run_id,
+        reference_decision=reference,
+        current_batch_id=current_batch_id,
+    )
     facts = {
         "labels": labels, "positives": positives, "negatives": negatives,
-        "runs": runs, "new_label_ratio": new_ratio, "population_stability_index": psi,
+        "runs": runs,
+        "new_label_ratio": new_ratio,
+        "population_stability_index": psi,
+        "reference_decision_id": (
+            int(reference["retraining_decision_id"]) if reference else None
+        ),
+        "drift_lineage": drift_lineage,
     }
     status, reason = evaluate_adaptive_feedback_gate(
         labels=labels,
@@ -265,6 +459,7 @@ def ingest_feedback(
             raise FeedbackConflictError("The idempotency key was already used for different feedback.")
         return _project_batch(path, dict(existing))
     requested = {row["person_id"] for row in normalized}
+    selection_basis_sha256 = _selection_basis_sha256(dict(run))
     found = _snapshot_members(root, str(run["storage_uri"]), requested)
     if found != requested:
         raise FeedbackValidationError("Every feedback person must belong to the immutable result snapshot.")
@@ -284,11 +479,13 @@ def ingest_feedback(
         batch_id = int(connection.execute(
             """INSERT INTO campaign_feedback_batches (
                    search_run_id,attempt_number,outcome_definition,source_name,
-                   idempotency_key,payload_sha256,row_count,positive_count,
+                   idempotency_key,payload_sha256,selection_basis_sha256,
+                   row_count,positive_count,
                    negative_count,status,created_at
-               ) VALUES (?,?,'ATTRIBUTED_PURCHASE',?,?,?,?,?,?, 'ACCEPTED',?)""",
+               ) VALUES (?,?,'ATTRIBUTED_PURCHASE',?,?,?,?,?,?,?, 'ACCEPTED',?)""",
             (search_run_id, int(run["current_attempt_number"]), source_name.strip(),
-             idempotency_key.strip(), checksum, len(normalized), positives,
+             idempotency_key.strip(), checksum, selection_basis_sha256,
+             len(normalized), positives,
              len(normalized)-positives, now),
         ).lastrowid)
         connection.executemany(
@@ -305,22 +502,96 @@ def ingest_feedback(
                WHERE search_run_id=?""",
             (str(batch_id), f"feedback:{batch_id}:{checksum}", now, search_run_id),
         )
-        gate_status, gate_reason, facts = _adaptive_gate(connection, int(run["scoring_run_id"]))
-        decision_id = int(connection.execute(
-            """INSERT INTO feedback_retraining_decisions (
-                   decision_contract_version,scoring_run_id,status,label_count,positive_count,
-                   negative_count,distinct_run_count,new_label_ratio,
-                   population_stability_index,trigger_reason,created_at
-               ) VALUES ('1',?,?,?,?,?,?,?,?,?,?)""",
-            (int(run["scoring_run_id"]), gate_status, facts["labels"], facts["positives"], facts["negatives"],
-             facts["runs"], facts["new_label_ratio"], facts["population_stability_index"],
-             gate_reason, now),
-        ).lastrowid)
+        gate_status, gate_reason, facts = _adaptive_gate(
+            connection, int(run["scoring_run_id"]), batch_id
+        )
+        active = connection.execute(
+            """SELECT retraining_decision_id,status
+               FROM feedback_retraining_decisions
+               WHERE scoring_run_id=? AND status IN ('QUEUED','TRAINING')
+               ORDER BY retraining_decision_id DESC LIMIT 1""",
+            (int(run["scoring_run_id"]),),
+        ).fetchone()
+        waiting = connection.execute(
+            """SELECT retraining_decision_id
+               FROM feedback_retraining_decisions
+               WHERE scoring_run_id=? AND status='WAITING_FOR_DATA'
+               ORDER BY retraining_decision_id DESC LIMIT 1""",
+            (int(run["scoring_run_id"]),),
+        ).fetchone()
+        if active is not None:
+            # Never move the feedback boundary of a decision that a worker may
+            # already have claimed. Accumulate later batches in one bounded
+            # successor state; the worker reevaluates it after the active
+            # recalibration reaches a terminal state.
+            gate_status = "WAITING_FOR_DATA"
+            gate_reason = (
+                "A recalibration is already active. This feedback is reserved "
+                "for the next governed evaluation."
+            )
+        if waiting is not None:
+            decision_id = int(waiting["retraining_decision_id"])
+            connection.execute(
+                """UPDATE feedback_retraining_decisions
+                   SET status=?,label_count=?,positive_count=?,negative_count=?,
+                       distinct_run_count=?,new_label_ratio=?,
+                       population_stability_index=?,trigger_reason=?,
+                       latest_feedback_batch_id=?,reference_decision_id=?,
+                       drift_lineage_json=?,completed_at=NULL
+                   WHERE retraining_decision_id=? AND status='WAITING_FOR_DATA'""",
+                (
+                    gate_status,
+                    facts["labels"],
+                    facts["positives"],
+                    facts["negatives"],
+                    facts["runs"],
+                    facts["new_label_ratio"],
+                    facts["population_stability_index"],
+                    gate_reason,
+                    batch_id,
+                    facts["reference_decision_id"],
+                    json.dumps(
+                        facts["drift_lineage"],
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                    decision_id,
+                ),
+            )
+        else:
+            decision_id = int(connection.execute(
+                """INSERT INTO feedback_retraining_decisions (
+                       decision_contract_version,scoring_run_id,status,label_count,
+                       positive_count,negative_count,distinct_run_count,new_label_ratio,
+                       population_stability_index,decision_kind,trigger_reason,
+                       latest_feedback_batch_id,reference_decision_id,
+                       drift_lineage_json,created_at
+                   ) VALUES ('1',?,?,?,?,?,?,?,?,'RECALIBRATION',?,?,?,?,?)""",
+                (
+                    int(run["scoring_run_id"]),
+                    gate_status,
+                    facts["labels"],
+                    facts["positives"],
+                    facts["negatives"],
+                    facts["runs"],
+                    facts["new_label_ratio"],
+                    facts["population_stability_index"],
+                    gate_reason,
+                    batch_id,
+                    facts["reference_decision_id"],
+                    json.dumps(
+                        facts["drift_lineage"],
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                    now,
+                ),
+            ).lastrowid)
         row = dict(connection.execute(
             "SELECT * FROM campaign_feedback_batches WHERE feedback_batch_id=?", (batch_id,)
         ).fetchone())
-    if gate_status == "QUEUED" and FEEDBACK_RETRAINING_EXECUTOR is not None:
-        FEEDBACK_RETRAINING_EXECUTOR(path, decision_id)
+    if gate_status == "QUEUED" and FEEDBACK_RECALIBRATION_EXECUTOR is not None:
+        FEEDBACK_RECALIBRATION_EXECUTOR(path, decision_id)
     return _project_batch(path, row)
 
 
@@ -341,8 +612,32 @@ def _project_batch(path: Path, row: dict[str, Any]) -> dict[str, Any]:
         "attempt_number": int(row["attempt_number"]), "status": str(row["status"]),
         "row_count": int(row["row_count"]), "positive_count": int(row["positive_count"]),
         "negative_count": int(row["negative_count"]), "created_at": str(row["created_at"]),
-        "retraining_status": str(decision["status"]) if decision else "WAITING_FOR_DATA",
-        "retraining_reason": str(decision["trigger_reason"]) if decision else "Waiting for governed feedback.",
+        "recalibration_status": (
+            "CALIBRATING"
+            if decision is not None and str(decision["status"]) == "TRAINING"
+            else str(decision["status"])
+            if decision is not None
+            else "WAITING_FOR_DATA"
+        ),
+        "recalibration_reason": (
+            str(decision["trigger_reason"])
+            if decision
+            else "Waiting for governed feedback for recalibration."
+        ),
+        # Backward-compatible response aliases. New UI and clients use the
+        # truthful recalibration fields above.
+        "retraining_status": (
+            "CALIBRATING"
+            if decision is not None and str(decision["status"]) == "TRAINING"
+            else str(decision["status"])
+            if decision is not None
+            else "WAITING_FOR_DATA"
+        ),
+        "retraining_reason": (
+            str(decision["trigger_reason"])
+            if decision
+            else "Waiting for governed feedback for recalibration."
+        ),
     }
 
 
@@ -359,6 +654,8 @@ def list_feedback(database_path: str | Path, search_run_id: int) -> list[dict[st
 __all__ = (
     "FEEDBACK_CSV_TEMPLATE", "FEEDBACK_JSON_TEMPLATE",
     "FeedbackConflictError", "FeedbackValidationError",
+    "calculate_population_stability_index",
+    "configure_feedback_recalibration_executor",
     "configure_feedback_retraining_executor", "evaluate_adaptive_feedback_gate",
     "ingest_feedback", "list_feedback", "parse_feedback_csv",
 )

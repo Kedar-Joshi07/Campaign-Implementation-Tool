@@ -68,9 +68,15 @@ def _complete_one_result(database_path: Path, client, monkeypatch) -> tuple[int,
         members,
         project_root=database_path.parent,
     )
-    repository.mark_processing(first["search_run_id"])
+    first_fence = repository.claim_search_attempt(
+        first["search_run_id"], lease_owner="home-dashboard-test"
+    )
+    repository.mark_processing(
+        first["search_run_id"], **first_fence.as_kwargs()
+    )
     repository.complete_search_run(
         first["search_run_id"],
+        **first_fence.as_kwargs(),
         result_snapshot_id=snapshot_id,
         result_source="NEW_INTELLIGENCE_BUILD",
     )
@@ -80,7 +86,12 @@ def _complete_one_result(database_path: Path, client, monkeypatch) -> tuple[int,
     second = client.post(
         "/api/potential-customer-search/runs", json=second_payload
     ).json()
-    repository.fail_search_run(second["search_run_id"], blocked=True)
+    second_fence = repository.claim_search_attempt(
+        second["search_run_id"], lease_owner="home-dashboard-test"
+    )
+    repository.fail_search_run(
+        second["search_run_id"], **second_fence.as_kwargs(), blocked=True
+    )
     return first["search_run_id"], second["search_run_id"]
 
 

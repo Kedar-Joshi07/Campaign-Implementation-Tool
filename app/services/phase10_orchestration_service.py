@@ -19,6 +19,7 @@ from app.repositories.campaign_targeting_context_repository import (
 )
 from app.repositories.phase10_intelligence_repository import (
     Phase10IntelligenceRepository,
+    Phase10RepositoryValidationError,
 )
 from app.repositories.prospect_scoring_repository import ProspectScoringRepository
 from app.repositories.scoring_repository import ScoringRepository
@@ -106,9 +107,31 @@ SAFE_FAILURE_MESSAGE = (
     "Targeting intelligence could not be prepared. Please retry this step."
 )
 
+_PERMANENT_PHASE10_MESSAGES = frozenset(
+    {
+        "The campaign context or source identity changed during preparation.",
+        "The persisted reuse plan is invalid.",
+    }
+)
+
 
 class Phase10OrchestrationError(RuntimeError):
     """Raised when the durable parent workflow cannot be safely resolved."""
+
+
+def _failure_ownership(exc: Exception) -> tuple[str, str, bool]:
+    """Map internal failures to bounded durable dependency ownership."""
+
+    if isinstance(exc, Phase10RepositoryValidationError) or (
+        isinstance(exc, Phase10OrchestrationError)
+        and str(exc) in _PERMANENT_PHASE10_MESSAGES
+    ):
+        return (
+            "PHASE10_PERMANENT_VALIDATION_FAILED",
+            "PERMANENT_VALIDATION",
+            False,
+        )
+    return ("PHASE10_TRANSIENT_FAILED", "TRANSIENT_DEPENDENCY", True)
 
 
 @dataclass(frozen=True)
@@ -416,6 +439,9 @@ def prepare_phase10_orchestration(
                 business_message=SAFE_FAILURE_MESSAGE,
                 safe_error_message=SAFE_FAILURE_MESSAGE,
                 technical_message=type(exc).__name__,
+                failure_code="PHASE10_SUBMISSION_FAILED",
+                failure_category="TRANSIENT_INFRASTRUCTURE",
+                retryable=True,
                 completed_at=_utc_timestamp(),
             )
             raise Phase10OrchestrationError(SAFE_FAILURE_MESSAGE) from exc
@@ -534,6 +560,9 @@ def run_phase10_orchestration(
                 status="BLOCKED",
                 business_message=historical.business_message,
                 completed_at=_utc_timestamp(),
+                failure_code="PHASE10_BUSINESS_BLOCKED",
+                failure_category="BUSINESS_DATA_INSUFFICIENCY",
+                retryable=False,
             )
             blocked = repository.fetch_orchestration(orchestration_id)
             assert blocked is not None
@@ -643,6 +672,7 @@ def run_phase10_orchestration(
         )
         failed = repository.fetch_orchestration(orchestration_id)
         if failed is not None and failed["status"] in {"QUEUED", "RUNNING"}:
+            failure_code, failure_category, retryable = _failure_ownership(exc)
             repository.mark_orchestration_terminal(
                 orchestration_id,
                 status="FAILED",
@@ -650,6 +680,9 @@ def run_phase10_orchestration(
                 safe_error_message=SAFE_FAILURE_MESSAGE,
                 technical_message=type(exc).__name__,
                 completed_at=_utc_timestamp(),
+                failure_code=failure_code,
+                failure_category=failure_category,
+                retryable=retryable,
             )
         terminal = repository.fetch_orchestration(orchestration_id)
         assert terminal is not None

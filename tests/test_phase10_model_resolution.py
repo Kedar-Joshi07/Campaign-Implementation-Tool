@@ -70,6 +70,7 @@ def phase10_case(tmp_path: Path):
         (
             f"S{index:03d}",
             f"C{index:03d}",
+                f"CMP{(index - 1) % 10:02d}",
             f"2025-01-{1 + ((index - 1) % 28):02d}",
             1 if index <= 20 else 0,
         )
@@ -97,13 +98,13 @@ def phase10_case(tmp_path: Path):
                 contacted_flag, engagement_flag, response_flag, purchase_flag,
                 campaign_attributed_sale_flag, pu_label
             ) VALUES (
-                ?, ?, 'CMP1', 'P1', 'Campaign', 'Retention', 'Retention',
+                    ?, ?, ?, 'P1', 'Campaign', 'Retention', 'Retention',
                 'Email', 'Loyalty', 'Product', 'Category',
                 '2025-01-01', '2025-12-31', ?, 1, 0, 0, ?, ?, ?
             )
             """,
             [
-                (*row, row[3], row[3])
+                    (*row, row[4], row[4])
                 for row in observations
             ],
         )

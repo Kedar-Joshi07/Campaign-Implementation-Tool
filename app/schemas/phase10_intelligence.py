@@ -340,6 +340,10 @@ class Phase10PreparationTechnicalDetails(Phase10StrictModel):
     training_job_id: int | None = Field(default=None, gt=0)
     scoring_job_id: int | None = Field(default=None, gt=0)
     technical_message: str | None = Field(default=None, max_length=200)
+    failure_code: str | None = Field(default=None, max_length=80)
+    failure_category: str | None = Field(default=None, max_length=80)
+    retryable: bool = False
+    technical_reference: str | None = Field(default=None, max_length=80)
 
 
 class Phase10PreparationResponse(Phase10StrictModel):

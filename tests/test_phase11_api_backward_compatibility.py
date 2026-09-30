@@ -48,9 +48,31 @@ LEGACY_PATHS = {
     "/api/campaigns/{campaign_id}/export.csv",
 }
 
+LEGACY_STATUS_FIELDS = {
+    "search_run_id",
+    "campaign_name",
+    "status",
+    "created_at",
+    "completed_at",
+    "selected_count",
+    "delivery_channel",
+    "export_profile",
+    "safe_message",
+}
+V2_STATUS_FIELDS = LEGACY_STATUS_FIELDS | {
+    "selection_contract_version",
+    "attempt_number",
+    "queue_position",
+    "propensity_bucket",
+    "progress",
+    "issue",
+    "retry_eligible",
+}
+
 
 def test_openapi_exposes_complete_phase11_surface_and_preserves_legacy_paths():
-    paths = app.openapi()["paths"]
+    openapi = app.openapi()
+    paths = openapi["paths"]
     for path, methods in RECOMMENDED_METHODS.items():
         assert path in paths
         assert methods <= set(paths[path])
@@ -60,6 +82,9 @@ def test_openapi_exposes_complete_phase11_surface_and_preserves_legacy_paths():
     ].keys() >= {"201", "422"}
     for path in RECOMMENDED_METHODS:
         assert not path.startswith(("/api/feedback", "/api/activation"))
+    schemas = openapi["components"]["schemas"]
+    assert set(schemas["SearchSubmissionStatus"]["properties"]) == LEGACY_STATUS_FIELDS
+    assert set(schemas["SearchSubmissionV2Status"]["properties"]) == V2_STATUS_FIELDS
 
 
 def test_create_get_status_and_history_share_one_safe_status_contract(client):
@@ -73,19 +98,8 @@ def test_create_get_status_and_history_share_one_safe_status_contract(client):
         client.get(f"{RUNS}/{run_id}/status").json(),
         client.get(RUNS).json()[0],
     ]
-    expected_fields = {
-        "search_run_id",
-        "campaign_name",
-        "status",
-        "created_at",
-        "completed_at",
-        "selected_count",
-        "delivery_channel",
-        "export_profile",
-        "safe_message",
-    }
     state_order = {"QUEUED": 0, "PROCESSING": 1, "COMPLETED": 2, "BLOCKED": 2, "FAILED": 2}
-    assert all(set(item) == expected_fields for item in projections)
+    assert all(set(item) == LEGACY_STATUS_FIELDS for item in projections)
     assert all(item["search_run_id"] == run_id for item in projections)
     assert all(item["campaign_name"] == payload["campaign_name"] for item in projections)
     assert all(item["created_at"] == payload["created_at"] for item in projections)
@@ -93,6 +107,40 @@ def test_create_get_status_and_history_share_one_safe_status_contract(client):
     assert all(item["export_profile"] == payload["export_profile"] for item in projections)
     assert [state_order[item["status"]] for item in projections] == sorted(
         state_order[item["status"]] for item in projections
+    )
+
+
+def test_v2_create_get_status_history_and_detail_use_explicit_additive_contract(
+    client, monkeypatch,
+):
+    monkeypatch.setattr(submission, "PHASE11_SEARCH_EXECUTOR", lambda *_: None)
+    options = client.get("/api/potential-customer-search/options").json()
+    request = request_payload() | {
+        "propensity_bucket": "0.70",
+        "catalog_version": options["catalog_version"],
+    }
+    created = client.post(RUNS, json=request)
+    assert created.status_code == 201, created.text
+    payload = created.json()
+    run_id = payload["search_run_id"]
+    projections = (
+        payload,
+        client.get(f"{RUNS}/{run_id}").json(),
+        client.get(f"{RUNS}/{run_id}/status").json(),
+        client.get(RUNS).json()[0],
+    )
+    assert all(set(item) == V2_STATUS_FIELDS for item in projections)
+    assert all(item["selection_contract_version"] == "2" for item in projections)
+    assert all(item["propensity_bucket"] == "0.70" for item in projections)
+    detail = client.get(f"{RUNS}/{run_id}/result")
+    assert detail.status_code == 200, detail.text
+    assert detail.json()["selection_contract_version"] == "2"
+    assert detail.json()["propensity_bucket"] == "0.70"
+    assert detail.json()["selection_label"] == "Purchase Propensity"
+    assert detail.json()["selection_value"] == "70% to <80%"
+    assert (
+        detail.json()["selection_semantics"]
+        == "CALIBRATED_PURCHASE_PROBABILITY"
     )
 
 

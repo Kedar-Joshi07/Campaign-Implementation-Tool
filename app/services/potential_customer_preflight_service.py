@@ -11,54 +11,59 @@ from typing import Any, Mapping
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.repositories.phase10_intelligence_repository import Phase10IntelligenceRepository
+from app.services.intelligence_attestation_service import has_current_attestation
 from app.services.phase10_context_identity_service import derive_modeling_context_from_campaign_context
 from app.services.potential_customer_search_submission_service import normalize_search_definition
+from app.services.source_currentness_service import generation_sources_match
+from app.services.source_currentness_service import latest_source_identity
+from app.services.calibrated_selection_contract_service import (
+    CALIBRATED_SELECTION_CONTRACT_VERSION,
+    build_branch_predicates,
+    propensity_bucket_bounds,
+)
+
+
+PREFLIGHT_CACHE_CONTRACT_VERSION = "2"
 
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
-def _predicates(branch: Mapping[str, Any], *, calibrated: bool) -> tuple[list[str], list[Any]]:
-    predicates: list[str] = []
-    parameters: list[Any] = []
-    numeric = {
-        "age_min": "d.age >= ?", "age_max": "d.age <= ?",
-        "individual_yearly_income_min": "d.individual_yearly_income >= ?",
-        "individual_yearly_income_max": "d.individual_yearly_income <= ?",
-        "family_member_count_min": "d.family_member_count >= ?",
-        "family_member_count_max": "d.family_member_count <= ?",
+def build_preflight_cache_key(
+    *,
+    criteria_sha256: str,
+    filter_branches_sha256: str,
+    catalog_version: str,
+    source_identity: Mapping[str, Any],
+    generation_id: int,
+    scoring_run_id: int,
+    calibration_artifact_id: int,
+    propensity_bucket: str,
+    selection_mode: str,
+    target_count: int | None,
+) -> str:
+    """Hash every lineage and selection component that can change a count."""
+
+    payload = {
+        "preflight_cache_contract_version": PREFLIGHT_CACHE_CONTRACT_VERSION,
+        "calibrated_selection_contract_version": CALIBRATED_SELECTION_CONTRACT_VERSION,
+        "selection_contract_version": "2",
+        "criteria_sha256": criteria_sha256,
+        "filter_branches_sha256": filter_branches_sha256,
+        "catalog_version": catalog_version,
+        "source_identity": dict(source_identity),
+        "generation_id": generation_id,
+        "scoring_run_id": scoring_run_id,
+        "calibration_artifact_id": calibration_artifact_id,
+        "propensity_bucket": propensity_bucket,
+        "propensity_bucket_bounds": propensity_bucket_bounds(propensity_bucket),
+        "selection_mode": selection_mode,
+        "target_count": target_count,
     }
-    if calibrated:
-        numeric.update({
-            "score_min": "p.calibrated_probability >= ?",
-            "score_max": "p.calibrated_probability <= ?",
-            "top_percentile_max": "p.percentile_bucket <= ?",
-        })
-    for key, predicate in numeric.items():
-        if branch.get(key) is not None:
-            predicates.append(predicate)
-            parameters.append(branch[key])
-    if calibrated and branch.get("deciles"):
-        marks = ",".join("?" for _ in branch["deciles"])
-        predicates.append(f"p.decile IN ({marks})")
-        parameters.extend(branch["deciles"])
-    if calibrated and branch.get("rank_bands"):
-        marks = ",".join("?" for _ in branch["rank_bands"])
-        predicates.append(f"p.rank_band IN ({marks})")
-        parameters.extend(branch["rank_bands"])
-    for field in (
-        "gender", "state", "marital_status", "education", "employment_status",
-        "resident_status", "resident_type", "type_of_employment",
-    ):
-        values = branch.get(field) or []
-        if values:
-            marks = ",".join("?" for _ in values)
-            predicates.append(
-                f"COALESCE(NULLIF(TRIM(CAST(d.{field} AS TEXT)),''),'Unknown/Other') IN ({marks})"
-            )
-            parameters.extend(values)
-    return predicates, parameters
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
 
 
 def _union_count(
@@ -72,13 +77,13 @@ def _union_count(
     parameters: list[Any] = []
     calibrated = calibration_id is not None
     for branch in branches:
-        predicates, values = _predicates(branch, calibrated=calibrated)
+        predicates, values = build_branch_predicates(
+            branch,
+            calibrated=calibrated,
+            calibration_artifact_id=calibration_id,
+            propensity_bucket=propensity_bucket,
+        )
         if calibrated:
-            predicates.insert(0, "p.calibration_artifact_id=?")
-            values.insert(0, calibration_id)
-            if propensity_bucket is not None:
-                predicates.insert(1, "p.propensity_bucket=?")
-                values.insert(1, propensity_bucket)
             source = "calibrated_propensity_scores AS p JOIN demographics AS d ON d.person_id=p.person_id"
             identity = "p.person_id"
         else:
@@ -96,6 +101,23 @@ def _union_count(
         ).fetchone()[0])
 
 
+def count_calibrated_members(
+    database_path: str | Path,
+    branches: list[Mapping[str, Any]],
+    *,
+    calibration_artifact_id: int,
+    propensity_bucket: str,
+) -> int:
+    """Count the exact de-duplicated membership emitted by the v2 iterator."""
+
+    return _union_count(
+        Path(database_path),
+        branches,
+        calibration_id=calibration_artifact_id,
+        propensity_bucket=propensity_bucket,
+    )
+
+
 def _demographic_counts_many(
     path: Path,
     branches_by_request: list[list[Mapping[str, Any]]],
@@ -109,7 +131,7 @@ def _demographic_counts_many(
     for index, branches in enumerate(branches_by_request):
         branch_expressions: list[str] = []
         for branch in branches:
-            predicates, values = _predicates(branch, calibrated=False)
+            predicates, values = build_branch_predicates(branch, calibrated=False)
             branch_expressions.append(
                 "(" + (" AND ".join(predicates) if predicates else "1") + ")"
             )
@@ -136,42 +158,76 @@ def exact_preflight_many(
         return []
     path = initialize_database(database_path)
     repository = Phase10IntelligenceRepository(path)
+    current_sources = latest_source_identity(path)
+    source_identity_payload = {
+        name: {"import_id": identity[0], "source_checksum": identity[1]}
+        for name, identity in sorted(current_sources.items())
+    }
+    source_identity_sha256 = hashlib.sha256(
+        json.dumps(
+            source_identity_payload, sort_keys=True, separators=(",", ":")
+        ).encode("utf-8")
+    ).hexdigest()
     prepared: list[dict[str, Any]] = []
     for request in requests:
         bucket = str(request["propensity_bucket"])
-        normalized_context, normalized_criteria, _catalog = normalize_search_definition(
+        normalized_context, normalized_criteria, catalog = normalize_search_definition(
             path,
             raw_context=dict(request["context"]),
             raw_criteria=dict(request["criteria"]),
             propensity_bucket=bucket,
             catalog_version=request.get("catalog_version"),
+            require_current_catalog=False,
         )
         identity = derive_modeling_context_from_campaign_context(normalized_context)
         generations = repository.find_generations_by_modeling_context(
             identity.modeling_context_sha256,
             limit=20,
         )
+        reusable = [
+            item for item in generations
+            if item["generation_status"] == "READY"
+            and item["lifecycle_state"] in {"CURRENT", "REUSABLE", "PROTECTED"}
+        ]
         generation = next(
-            (
-                item
-                for item in generations
-                if item["generation_status"] == "READY"
-                and item["lifecycle_state"] in {"CURRENT", "REUSABLE", "PROTECTED"}
-            ),
-            None,
+            (item for item in reusable if has_current_attestation(path, item)),
+            reusable[0] if reusable else None,
         )
+        source_current = generation_sources_match(path, generation)
+        attestation_current = bool(
+            generation is not None and has_current_attestation(path, generation)
+        )
+        if not catalog.get("is_current", True):
+            lineage_state = "STALE"
+        elif attestation_current:
+            lineage_state = "CURRENT"
+        elif generation is not None and not source_current:
+            lineage_state = "STALE"
+        elif generation is not None:
+            lineage_state = "UNVERIFIED"
+        else:
+            lineage_state = "NOT_AVAILABLE"
         calibration_id: int | None = None
+        calibration_status: str | None = None
         if generation is not None:
             with get_connection(path) as connection:
                 calibration = connection.execute(
-                    """SELECT calibration_artifact_id FROM score_calibration_artifacts
-                       WHERE scoring_run_id=? AND status='PROMOTED'
-                       ORDER BY promoted_at DESC,calibration_artifact_id DESC LIMIT 1""",
+                    """SELECT calibration_artifact_id,status
+                       FROM score_calibration_artifacts
+                       WHERE scoring_run_id=?
+                       ORDER BY CASE status WHEN 'PROMOTED' THEN 0 WHEN 'STALE' THEN 1 ELSE 2 END,
+                                promoted_at DESC,calibration_artifact_id DESC LIMIT 1""",
                     (int(generation["scoring_run_id"]),),
                 ).fetchone()
             if calibration is not None:
                 calibration_id = int(calibration["calibration_artifact_id"])
+                calibration_status = str(calibration["status"])
         branches = [dict(item) for item in normalized_criteria.audience_filter_branches]
+        branches_sha256 = hashlib.sha256(
+            json.dumps(branches, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        selection_mode = str(normalized_criteria.audience_selection["mode"])
+        target_count = normalized_criteria.audience_selection.get("target_count")
         prepared.append(
             {
                 "bucket": bucket,
@@ -179,6 +235,12 @@ def exact_preflight_many(
                 "branches": branches,
                 "generation": generation,
                 "calibration_id": calibration_id,
+                "calibration_status": calibration_status,
+                "lineage_state": lineage_state,
+                "catalog_version": str(catalog["catalog_version"]),
+                "branches_sha256": branches_sha256,
+                "selection_mode": selection_mode,
+                "target_count": target_count,
             }
         )
 
@@ -189,19 +251,24 @@ def exact_preflight_many(
         calibration_id = item["calibration_id"]
         item["cache_key"] = None
         item["cached"] = None
-        if generation is not None and calibration_id is not None:
-            cache_payload = {
-                "criteria_sha256": item["criteria"].sha256,
-                "generation_id": int(generation["generation_id"]),
-                "calibration_artifact_id": calibration_id,
-            }
-            cache_key = hashlib.sha256(
-                json.dumps(
-                    cache_payload,
-                    sort_keys=True,
-                    separators=(",", ":"),
-                ).encode()
-            ).hexdigest()
+        if (
+            generation is not None
+            and calibration_id is not None
+            and item["lineage_state"] == "CURRENT"
+            and item["calibration_status"] == "PROMOTED"
+        ):
+            cache_key = build_preflight_cache_key(
+                criteria_sha256=item["criteria"].sha256,
+                filter_branches_sha256=item["branches_sha256"],
+                catalog_version=item["catalog_version"],
+                source_identity=source_identity_payload,
+                generation_id=int(generation["generation_id"]),
+                scoring_run_id=int(generation["scoring_run_id"]),
+                calibration_artifact_id=calibration_id,
+                propensity_bucket=item["bucket"],
+                selection_mode=item["selection_mode"],
+                target_count=item["target_count"],
+            )
             with get_connection(path) as connection:
                 cached = connection.execute(
                     """SELECT * FROM search_preflight_cache
@@ -224,37 +291,82 @@ def exact_preflight_many(
     for item, demographic_count in zip(prepared, demographic_counts, strict=True):
         generation = item["generation"]
         calibration_id = item["calibration_id"]
+        calibration_status = item["calibration_status"]
+        lineage_state = item["lineage_state"]
         criteria = item["criteria"]
         bucket = item["bucket"]
+        response_identity = {
+            "catalog_version": item["catalog_version"],
+            "source_identity_sha256": source_identity_sha256,
+            "filter_branches_sha256": item["branches_sha256"],
+            "selection_contract_version": "2",
+            "selection_mode": item["selection_mode"],
+            "target_count": item["target_count"],
+        }
         if generation is None:
             results.append(
                 {
                     "demographic_count": demographic_count,
                     "bucket_count": 0,
                     "intersection_count": 0,
+                    "qualifying_count": 0,
+                    "selected_count": 0,
                     "demo_ready": False,
                     "generation_id": None,
                     "scoring_run_id": None,
-                    "calibration_artifact_id": None,
+                    "calibration_artifact_id": calibration_id,
                     "calibration_currentness": "NOT_AVAILABLE",
                     "safe_message": "Compatible targeting intelligence has not been prepared yet.",
                     "criteria_sha256": criteria.sha256,
+                    **response_identity,
                 }
             )
             continue
-        if calibration_id is None:
+        if lineage_state != "CURRENT":
             results.append(
                 {
                     "demographic_count": demographic_count,
                     "bucket_count": 0,
                     "intersection_count": 0,
+                    "qualifying_count": 0,
+                    "selected_count": 0,
                     "demo_ready": False,
                     "generation_id": int(generation["generation_id"]),
                     "scoring_run_id": int(generation["scoring_run_id"]),
-                    "calibration_artifact_id": None,
-                    "calibration_currentness": "NOT_AVAILABLE",
-                    "safe_message": "Compatible intelligence exists, but calibrated probabilities are not ready.",
+                    "calibration_artifact_id": calibration_id,
+                    "calibration_currentness": lineage_state,
+                    "safe_message": (
+                        "Targeting intelligence is stale because an authoritative source changed. Prepare current intelligence before using this count."
+                        if lineage_state == "STALE"
+                        else "Targeting intelligence has not passed current deep verification. Verify it before using calibrated counts."
+                    ),
                     "criteria_sha256": criteria.sha256,
+                    **response_identity,
+                }
+            )
+            continue
+        if calibration_id is None or calibration_status != "PROMOTED":
+            results.append(
+                {
+                    "demographic_count": demographic_count,
+                    "bucket_count": 0,
+                    "intersection_count": 0,
+                    "qualifying_count": 0,
+                    "selected_count": 0,
+                    "demo_ready": False,
+                    "generation_id": int(generation["generation_id"]),
+                    "scoring_run_id": int(generation["scoring_run_id"]),
+                    "calibration_artifact_id": calibration_id,
+                    "calibration_currentness": (
+                        "STALE" if calibration_status == "STALE" else "NOT_AVAILABLE"
+                    ),
+                    "safe_message": (
+                        "The prior calibration is stale. Publish a calibration for the current scoring lineage."
+                        if calibration_status == "STALE"
+                        else "Compatible intelligence exists, but calibrated probabilities are not ready."
+                    ),
+                    "criteria_sha256": criteria.sha256,
+                    **response_identity,
                 }
             )
             continue
@@ -274,10 +386,10 @@ def exact_preflight_many(
                     ).fetchone()[0]
                 )
             intersection_count = (
-                _union_count(
+                count_calibrated_members(
                     path,
                     item["branches"],
-                    calibration_id=calibration_id,
+                    calibration_artifact_id=calibration_id,
                     propensity_bucket=bucket,
                 )
                 if bucket_count
@@ -303,22 +415,34 @@ def exact_preflight_many(
                         now,
                     ),
                 )
+        selected_count = (
+            min(intersection_count, int(item["target_count"]))
+            if item["selection_mode"] == "TOP_N" and item["target_count"] is not None
+            else intersection_count
+        )
         results.append(
             {
                 "demographic_count": demographic_count,
                 "bucket_count": bucket_count,
                 "intersection_count": intersection_count,
-                "demo_ready": intersection_count >= 10_000,
+                "qualifying_count": intersection_count,
+                "selected_count": selected_count,
+                "demo_ready": selected_count >= 10_000,
                 "generation_id": int(generation["generation_id"]),
                 "scoring_run_id": int(generation["scoring_run_id"]),
                 "calibration_artifact_id": calibration_id,
                 "calibration_currentness": "CURRENT",
                 "safe_message": (
                     "This exact selection is demo-ready."
-                    if intersection_count >= 10_000
-                    else "This exact selection contains fewer than 10,000 potential customers; filters were not widened."
+                    if selected_count >= 10_000
+                    else (
+                        f"{intersection_count:,} potential customers qualify and the saved TOP_N selection would return {selected_count:,}; filters were not widened."
+                        if item["selection_mode"] == "TOP_N"
+                        else "This exact selection contains fewer than 10,000 potential customers; filters were not widened."
+                    )
                 ),
                 "criteria_sha256": criteria.sha256,
+                **response_identity,
             }
         )
     return results
@@ -345,4 +469,8 @@ def exact_preflight(
     )[0]
 
 
-__all__ = ("exact_preflight", "exact_preflight_many")
+__all__ = (
+    "PREFLIGHT_CACHE_CONTRACT_VERSION", "build_preflight_cache_key",
+    "count_calibrated_members",
+    "exact_preflight", "exact_preflight_many",
+)

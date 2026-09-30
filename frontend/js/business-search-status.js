@@ -32,13 +32,24 @@ const timeText = (value) => value ? new Date(value).toLocaleString() : "Not comp
 const durationText = (value) => value === null || value === undefined
   ? "Not completed"
   : `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })} seconds`;
-const feedbackIdempotencyKey = (runId) => {
-  if (typeof crypto.randomUUID === "function") {
-    return `browser-feedback-${runId}-${crypto.randomUUID()}`;
+const probabilityText = (value) => `${(Number(value) * 100).toLocaleString(
+  undefined, { maximumFractionDigits: 2 },
+)}%`;
+const browserIdempotencyKey = (purpose, runId) => {
+  const secureCrypto = globalThis.crypto;
+  if (typeof secureCrypto?.randomUUID === "function") {
+    return `browser-${purpose}-${runId}-${secureCrypto.randomUUID()}`;
+  }
+  if (typeof secureCrypto?.getRandomValues !== "function") {
+    throw new Error("Secure browser entropy is unavailable.");
   }
   const entropy = new Uint32Array(4);
-  crypto.getRandomValues(entropy);
-  return `browser-feedback-${runId}-${Array.from(entropy, (value) => value.toString(16).padStart(8, "0")).join("")}`;
+  secureCrypto.getRandomValues(entropy);
+  const token = Array.from(
+    entropy,
+    (value) => value.toString(16).padStart(8, "0"),
+  ).join("");
+  return `browser-${purpose}-${runId}-${token}`;
 };
 
 function clearTimer() {
@@ -53,7 +64,7 @@ async function retryRun(runId, button) {
   try {
     await getJSON(`/api/potential-customer-search/runs/${runId}/retry`, {
       method: "POST",
-      headers: { "Idempotency-Key": `browser-${runId}-${crypto.randomUUID()}` },
+      headers: { "Idempotency-Key": browserIdempotencyKey("retry", runId) },
     });
     refreshCycles = 0;
     if (window.location.hash === `#results/${runId}`) await loadSearchStatus(runId);
@@ -113,11 +124,16 @@ function resultCard(run) {
     ["Products", products],
     ["Campaign / Offer", context],
     ["Delivery Profile", `${run.delivery_profile_label} · ${run.export_profile}`],
-    ["Match Strength", label(run.match_strength)],
+    [run.selection_label, run.selection_semantics === "LEGACY_RAW_SCORE"
+      ? label(run.selection_value) : run.selection_value],
     ["Potential Customers", run.selected_count === null
       ? "Pending" : Number(run.selected_count).toLocaleString()],
     ["Result Source", run.result_source_label],
-    ["Processing Duration", durationText(run.processing_seconds)],
+    ["Queue Duration", durationText(run.progress?.queue_seconds)],
+    ["Processing Duration", durationText(
+      run.processing_seconds ?? run.progress?.processing_seconds,
+    )],
+    ["Total Elapsed", durationText(run.progress?.total_elapsed_seconds)],
   ]);
   const targeting = make(
     "p", "result-card-targeting", run.targeting_summary.join(" · "),
@@ -240,7 +256,11 @@ function renderDetail(run) {
     ["Potential Customers", run.selected_count === null
       ? "Pending" : Number(run.selected_count).toLocaleString()],
     ["Currentness", label(run.currentness)],
-    ["Processing Duration", durationText(run.processing_seconds)],
+    ["Queue Duration", durationText(run.progress?.queue_seconds)],
+    ["Processing Duration", durationText(
+      run.processing_seconds ?? run.progress?.processing_seconds,
+    )],
+    ["Total Elapsed", durationText(run.progress?.total_elapsed_seconds)],
     ["Planned Launch", run.planned_launch_date],
   ]);
   find("result-detail-progress").replaceChildren(createRunProgress(run));
@@ -267,21 +287,33 @@ function renderDetail(run) {
   definitionList(
     find("result-targeting-details"),
     detailEntries(run.targeting_criteria)
-      .filter(([term]) => !term.includes("Contract Version")),
+      .filter(([term]) => !term.includes("Contract Version"))
+      .filter(([term]) => !(
+        run.selection_semantics === "CALIBRATED_PURCHASE_PROBABILITY"
+        && term === "Match Strength"
+      )),
   );
   definitionList(find("result-selection-details"), [
+    [run.selection_label, run.selection_semantics === "LEGACY_RAW_SCORE"
+      ? label(run.selection_value) : run.selection_value],
     ["Selection Mode", label(run.selection.mode)],
     ["Requested Count", run.selection.target_count],
     ["Resolved Count", run.selection.resolved_count],
     ["Result Source", run.result_source_explanation],
     ["Currentness", label(run.currentness)],
   ]);
+  const calibratedSummary = run.score_summary?.semantics
+    === "CALIBRATED_PURCHASE_PROBABILITY";
   const score = run.score_summary ? [
     ["Score Scope", run.score_summary.scope],
-    ["Scored Population", run.score_summary.population_count],
-    ["Minimum Score", run.score_summary.minimum],
-    ["Mean Score", run.score_summary.mean],
-    ["Maximum Score", run.score_summary.maximum],
+    [calibratedSummary ? "Calibrated Population" : "Scored Population",
+      run.score_summary.population_count],
+    [calibratedSummary ? "Minimum Probability" : "Minimum Score",
+      calibratedSummary ? probabilityText(run.score_summary.minimum) : run.score_summary.minimum],
+    [calibratedSummary ? "Mean Probability" : "Mean Score",
+      calibratedSummary ? probabilityText(run.score_summary.mean) : run.score_summary.mean],
+    [calibratedSummary ? "Maximum Probability" : "Maximum Score",
+      calibratedSummary ? probabilityText(run.score_summary.maximum) : run.score_summary.maximum],
   ] : [["Score Summary", "Available after targeting intelligence completes"]];
   definitionList(
     find("result-profile-details"),
@@ -352,12 +384,12 @@ async function uploadFeedback() {
       method: "POST",
       headers: {
         "Content-Type": contentType,
-        "Idempotency-Key": feedbackIdempotencyKey(runId),
+        "Idempotency-Key": browserIdempotencyKey("feedback", runId),
         "X-Feedback-Source": file.name,
       },
       body: await file.arrayBuffer(),
     });
-    status.textContent = `${result.row_count.toLocaleString()} outcomes accepted. ${result.retraining_reason}`;
+    status.textContent = `${result.row_count.toLocaleString()} outcomes accepted. ${result.recalibration_reason}`;
   } catch (error) {
     status.textContent = error.message || "Feedback could not be accepted.";
   } finally {

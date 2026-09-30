@@ -64,7 +64,13 @@ def get_recent_results(
             .title(),
             "safe_message": _STATUS_MESSAGES[str(row["status"])],
             "progress": project_run_progress(
-                row, row if row.get("lifecycle_status") is not None else None
+                row,
+                row if row.get("lifecycle_status") is not None else None,
+                attempt={
+                    "created_at": row.get("attempt_created_at"),
+                    "started_at": row.get("attempt_started_at"),
+                    "completed_at": row.get("attempt_completed_at"),
+                },
             ),
             "issue": project_run_issue(
                 row if row.get("lifecycle_status") is not None else None

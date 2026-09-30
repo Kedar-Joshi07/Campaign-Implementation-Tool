@@ -682,22 +682,22 @@ def _stream_sources(
 
 
 def _refresh_targeting_catalog_after_import(database_path: Path) -> None:
-    """Refresh compact business catalogs after an authoritative import commits."""
+    """Reconcile all derived currentness after an authoritative import commits."""
 
     try:
-        from app.services.targeting_option_catalog_service import (
-            get_or_build_targeting_catalog,
+        from app.services.source_currentness_service import (
+            reconcile_source_currentness,
         )
 
-        catalog = get_or_build_targeting_catalog(database_path)
+        outcome = reconcile_source_currentness(database_path)
         logger.info(
-            "Targeting catalog refreshed after import | catalog_version=%s",
-            catalog["catalog_version"],
+            "Derived source currentness reconciled after import | outcome=%s",
+            outcome,
         )
     except Exception:
         # The authoritative import is already committed. Startup performs the
         # same idempotent refresh, so catalog failure cannot rewrite import truth.
-        logger.exception("Post-import targeting catalog refresh failed")
+        logger.exception("Post-import derived currentness reconciliation failed")
 
 
 def _import_dataset(

@@ -134,6 +134,9 @@ def test_bounded_phase11_performance_gates(
     initial = execute_phase11_search(
         path,
         initial_run,
+        **repository.claim_search_attempt(
+            initial_run, lease_owner="performance-gate-test"
+        ).as_kwargs(),
         materializer=materializer,
         project_root=path.parent,
         phase10_reader=phase10_reader,
@@ -174,6 +177,9 @@ def test_bounded_phase11_performance_gates(
         outcome = execute_phase11_search(
             path,
             exact_run,
+            **repository.claim_search_attempt(
+                exact_run, lease_owner="performance-gate-test"
+            ).as_kwargs(),
             materializer=materializer,
             project_root=path.parent,
             phase10_reader=phase10_reader,
@@ -205,6 +211,9 @@ def test_bounded_phase11_performance_gates(
         outcome = execute_phase11_search(
             path,
             filtered_run,
+            **repository.claim_search_attempt(
+                filtered_run, lease_owner="performance-gate-test"
+            ).as_kwargs(),
             materializer=materializer,
             project_root=path.parent,
             phase10_reader=phase10_reader,

@@ -26,6 +26,21 @@ function etaText(progress) {
   return `Approximately ${duration(low)} to ${duration(high)} remaining`;
 }
 
+function freshnessText(progress) {
+  if (progress.lifecycle_status === "QUEUED") return null;
+  if (new Set(["COMPLETED", "BLOCKED", "FAILED", "STOPPED"]).has(progress.lifecycle_status)) {
+    return null;
+  }
+  if (progress.heartbeat_state === "STALE") {
+    return "Progress updates appear stalled; retry may become available shortly.";
+  }
+  if (progress.heartbeat_age_seconds === null
+      || progress.heartbeat_age_seconds === undefined) {
+    return "No worker heartbeat has been recorded yet.";
+  }
+  return `Worker heartbeat ${duration(progress.heartbeat_age_seconds)} ago`;
+}
+
 export function isRunActive(run) {
   return new Set([
     "QUEUED", "PROCESSING", "PAUSE_REQUESTED", "PAUSED",
@@ -55,8 +70,11 @@ export function createRunProgress(run, { compact = false } = {}) {
   fill.style.width = `${progress.progress_percent}%`;
   track.append(fill);
   const counters = progress.total_count === null
-    ? `${count(progress.processed_count)} ${progress.progress_unit} processed; final total is confirmed at completion`
+    ? progress.processed_count > 0
+      ? `${count(progress.processed_count)} ${progress.progress_unit} processed; final total is not yet known`
+      : "Processed count will appear when measurable selection begins"
     : `${count(progress.processed_count)} of ${count(progress.total_count)} ${progress.progress_unit} processed`;
+  const freshness = freshnessText(progress);
   section.append(
     heading,
     track,
@@ -64,6 +82,10 @@ export function createRunProgress(run, { compact = false } = {}) {
     make("p", "run-progress-meta", counters),
     make("p", "run-progress-meta", etaText(progress)),
   );
+  if (freshness) section.append(make("p", "run-progress-meta", freshness));
+  if (run.queue_position) {
+    section.append(make("p", "run-progress-meta", `Queue position: ${run.queue_position}`));
+  }
   return section;
 }
 

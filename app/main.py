@@ -36,9 +36,9 @@ from app.services.potential_customer_search_submission_service import (
     configure_phase11_search_executor,
     reset_phase11_search_executor,
 )
-from app.services.phase11_feedback_service import configure_feedback_retraining_executor
-from app.jobs.feedback_retraining_worker import FeedbackRetrainingWorker
-from app.services.targeting_option_catalog_service import get_or_build_targeting_catalog
+from app.services.phase11_feedback_service import configure_feedback_recalibration_executor
+from app.jobs.feedback_retraining_worker import FeedbackRecalibrationWorker
+from app.services.source_currentness_service import reconcile_source_currentness
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -57,13 +57,13 @@ async def lifespan(_: FastAPI):
         APP_ENV,
     )
     phase11_coordinator: Phase11SearchCoordinator | None = None
-    feedback_worker: FeedbackRetrainingWorker | None = None
+    feedback_worker: FeedbackRecalibrationWorker | None = None
     try:
         initialized_path = initialize_database(DATABASE_PATH)
-        catalog = get_or_build_targeting_catalog(initialized_path)
+        currentness = reconcile_source_currentness(initialized_path)
         logger.info(
-            "Targeting option catalog ready | catalog_version=%s",
-            catalog["catalog_version"],
+            "Source currentness reconciliation completed | outcome=%s",
+            currentness,
         )
         phase11_materializer = ResultSnapshotMaterializer(PROJECT_ROOT)
         phase11_coordinator = Phase11SearchCoordinator(
@@ -72,8 +72,8 @@ async def lifespan(_: FastAPI):
             project_root=PROJECT_ROOT,
         )
         configure_phase11_search_executor(phase11_coordinator.submit)
-        feedback_worker = FeedbackRetrainingWorker()
-        configure_feedback_retraining_executor(feedback_worker.submit)
+        feedback_worker = FeedbackRecalibrationWorker()
+        configure_feedback_recalibration_executor(feedback_worker.submit)
         resumed_feedback = feedback_worker.resume_durable_decisions(initialized_path)
         logger.info(
             "Phase 11 runtime composition completed | workers=%s poll_seconds=%s resumed_feedback=%s",
@@ -140,7 +140,7 @@ async def lifespan(_: FastAPI):
         yield
     finally:
         reset_phase11_search_executor()
-        configure_feedback_retraining_executor(None)
+        configure_feedback_recalibration_executor(None)
         if phase11_coordinator is not None:
             phase11_coordinator.shutdown(wait=True)
         if feedback_worker is not None:

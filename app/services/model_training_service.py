@@ -433,6 +433,7 @@ def train_and_persist_model(
             cohort.frame,
             validation_fraction=float(validation_fraction),
             random_seed=random_seed,
+            campaign_memberships=cohort.campaign_memberships,
         )
         stage_seconds["split"] = time.perf_counter() - stage_started
         stage_started = time.perf_counter()
@@ -603,6 +604,7 @@ def train_and_persist_model(
             library_versions_json=_canonical_json(_library_versions()),
             artifact_path=artifact_relative_path,
             artifact_sha256=artifact_sha256,
+            split_lineage_json=_canonical_json(split.split_lineage),
         )
         summary["total_seconds"] = time.perf_counter() - execution_started
         return summary

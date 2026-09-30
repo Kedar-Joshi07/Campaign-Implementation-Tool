@@ -355,6 +355,33 @@ def test_successful_import_refreshes_compact_targeting_catalog(
     assert refreshed == [database_path]
 
 
+def test_post_import_currentness_failure_does_not_rewrite_committed_import(
+    tmp_path: Path, database_path: Path, monkeypatch,
+) -> None:
+    source = _write_source(
+        tmp_path / "committed_customers.csv",
+        CUSTOMER_COLUMNS,
+        [_customer_row()],
+    )
+    monkeypatch.setattr(
+        "app.services.source_currentness_service.reconcile_source_currentness",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            RuntimeError("simulated post-commit maintenance failure")
+        ),
+    )
+
+    result = import_customers(source, database_path=database_path)
+
+    assert result.status == "COMPLETED"
+    with get_connection(database_path) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM customers").fetchone()[0] == 1
+        run = connection.execute(
+            "SELECT status,source_checksum FROM data_import_runs ORDER BY import_id DESC LIMIT 1"
+        ).fetchone()
+    assert run["status"] == "COMPLETED"
+    assert len(run["source_checksum"]) == 64
+
+
 def test_campaign_import_with_valid_customer(tmp_path: Path, database_path: Path) -> None:
     customer_file = _write_source(
         tmp_path / "customers.csv", CUSTOMER_COLUMNS, [_customer_row()]

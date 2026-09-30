@@ -1,9 +1,10 @@
 """Step 5: intentional submissions and same-run concurrency safety."""
 
+# ruff: noqa: F401, F811 - imported pytest fixture is intentionally injected.
+
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 from threading import Barrier, Event, Lock
 import time
 
@@ -22,6 +23,7 @@ from tests.test_phase11_smart_reuse_engine import (
     ready_response,
     table_counts,
 )
+import app.services.phase11_search_orchestration_service as orchestration
 
 
 def _wait_until(predicate, *, timeout: float = 5.0) -> None:
@@ -81,7 +83,12 @@ def test_startup_resume_racing_request_submit_starts_one_loop(case) -> None:
         calls.append(identifier)
         started.set()
         assert release.wait(2.0)
-        repository.fail_search_run(identifier, blocked=True)
+        fence = repository.claim_search_attempt(
+            identifier, lease_owner="submission-concurrency-test"
+        )
+        repository.fail_search_run(
+            identifier, **fence.as_kwargs(), blocked=True
+        )
         return SearchOrchestrationOutcome(identifier, "BLOCKED")
 
     coordinator = _coordinator(case, runner, workers=1)
@@ -228,32 +235,86 @@ def test_different_searches_share_generation_without_duplicate_scoring(case) -> 
         coordinator.shutdown()
 
 
-def test_heavy_intelligence_wait_emits_live_heartbeat(case) -> None:
+def test_long_phase10_scoring_keeps_truthful_stage_and_live_heartbeat(
+    case, monkeypatch,
+) -> None:
     path, _ids, _values, repository = case
     search_run_id = _search(case, campaign_name="Heartbeat certification")
     current_generation = generation(case)
-    response = ready_response(current_generation)
+    ready = ready_response(current_generation, build=True)
+    running = {
+        **ready,
+        "status": "RUNNING",
+        "is_ready": False,
+        "stage": "SCORING_POTENTIAL_CUSTOMERS",
+        "progress_percent": 61,
+        "business_message": "Scoring the verified customer population.",
+    }
+    calls = 0
+    second_read_started = Event()
+    release_second_read = Event()
+
+    monkeypatch.setattr(orchestration, "_direct_reuse_state", lambda *_args: None)
 
     def slow_reader(*_args, **_kwargs):
-        time.sleep(10.5)
-        return response
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return running
+        second_read_started.set()
+        assert release_second_read.wait(15.0)
+        return ready
 
-    outcome = execute_phase11_search_safely(
+    fence = repository.claim_search_attempt(
+        search_run_id, lease_owner="heartbeat-test"
+    ).as_kwargs()
+    waiting = execute_phase11_search_safely(
         path,
         search_run_id,
+        **fence,
         materializer=ResultSnapshotMaterializer(path.parent),
         project_root=path.parent,
         phase10_reader=slow_reader,
         membership_source=lambda *_args: fixed_membership_source(),
     )
+    assert waiting.status == "PROCESSING"
+    first_runtime = repository.fetch_search_runtime(search_run_id)
+    assert first_runtime["stage_code"] == "PHASE10_SCORING"
+    assert first_runtime["progress_percent"] == 61
+    initial_state_version = int(first_runtime["state_version"])
+
+    started_at = time.monotonic()
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(
+            execute_phase11_search_safely,
+            path,
+            search_run_id,
+            **fence,
+            materializer=ResultSnapshotMaterializer(path.parent),
+            project_root=path.parent,
+            phase10_reader=slow_reader,
+            membership_source=lambda *_args: fixed_membership_source(),
+        )
+        assert second_read_started.wait(2.0)
+        _wait_until(
+            lambda: int(repository.fetch_search_runtime(search_run_id)["state_version"])
+            >= initial_state_version + 2,
+            timeout=12.0,
+        )
+        assert time.monotonic() - started_at >= 9.5
+        active = repository.fetch_search_runtime(search_run_id)
+        assert active["stage_code"] == "PHASE10_SCORING"
+        assert active["progress_percent"] == 61
+        assert active["heartbeat_at"] != first_runtime["heartbeat_at"]
+        with get_connection(path) as connection:
+            scoring_events = connection.execute(
+                """SELECT COUNT(*) FROM campaign_search_progress_events
+                   WHERE search_run_id=? AND stage_code='PHASE10_SCORING'""",
+                (search_run_id,),
+            ).fetchone()[0]
+        assert scoring_events == 1
+        release_second_read.set()
+        outcome = future.result(timeout=5.0)
 
     assert outcome.status == "COMPLETED"
     assert repository.fetch_search_run(search_run_id)["status"] == "COMPLETED"
-    with get_connection(path) as connection:
-        heartbeats = connection.execute(
-            """SELECT COUNT(*) FROM campaign_search_progress_events
-               WHERE search_run_id=?
-                 AND status_message LIKE 'Still checking compatible%'""",
-            (search_run_id,),
-        ).fetchone()[0]
-    assert heartbeats >= 1

@@ -118,8 +118,6 @@ def test_submission_persists_exact_lineage_and_default_blocked_status(client, da
     assert set(status) == {
         "search_run_id", "campaign_name", "status", "created_at", "completed_at",
         "selected_count", "delivery_channel", "export_profile", "safe_message",
-        "selection_contract_version", "attempt_number", "queue_position",
-        "propensity_bucket", "progress", "issue", "retry_eligible",
     }
 
 
@@ -141,6 +139,19 @@ def test_calibrated_submission_and_retry_expose_v2_attempt_contract(client, data
     assert first["propensity_bucket"] == "0.70"
     assert first["attempt_number"] == 1
     assert first["status"] == "BLOCKED"
+    expected_fields = {
+        "search_run_id", "campaign_name", "status", "created_at", "completed_at",
+        "selected_count", "delivery_channel", "export_profile", "safe_message",
+        "selection_contract_version", "attempt_number", "queue_position",
+        "propensity_bucket", "progress", "issue", "retry_eligible",
+    }
+    assert set(first) == expected_fields
+    assert client.get(f"{RUNS}/{first['search_run_id']}").json() == first
+    assert client.get(f"{RUNS}/{first['search_run_id']}/status").json() == first
+    assert client.get(RUNS).json() == [first]
+    detail = client.get(f"{RUNS}/{first['search_run_id']}/result").json()
+    assert detail["selection_contract_version"] == "2"
+    assert detail["propensity_bucket"] == "0.70"
 
     retried = client.post(
         f"{RUNS}/{first['search_run_id']}/retry",
@@ -150,6 +161,7 @@ def test_calibrated_submission_and_retry_expose_v2_attempt_contract(client, data
     assert retried.json()["search_run_id"] == first["search_run_id"]
     assert retried.json()["attempt_number"] == 2
     assert retried.json()["status"] == "BLOCKED"
+    assert set(retried.json()) == expected_fields
     with get_connection(database_path) as connection:
         attempts = connection.execute(
             "SELECT attempt_number,status FROM campaign_search_attempts WHERE search_run_id=? ORDER BY attempt_number",
@@ -293,7 +305,10 @@ def test_executor_handoff_sees_durable_exact_run_and_processing_survives_new_cli
         assert json.loads(row["targeting_criteria_json"])["match_strength"] == "STRONG"
         assert get_business_targeting_criteria(path, targeting_context_id=row["targeting_context_id"])
         calls.append(identifier)
-        repository.mark_processing(identifier)
+        fence = repository.claim_search_attempt(
+            identifier, lease_owner="business-form-test"
+        )
+        repository.mark_processing(identifier, **fence.as_kwargs())
     monkeypatch.setattr(service, "PHASE11_SEARCH_EXECUTOR", execute)
     assert client.get(OPTIONS).json()["workflow_available"] is True
     response = client.post(RUNS, json=request_payload())

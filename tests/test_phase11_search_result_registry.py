@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from pathlib import Path
 import sqlite3
 
@@ -19,7 +18,6 @@ from app.repositories.campaign_result_registry_repository import CampaignResultR
 from app.repositories.phase10_intelligence_repository import Phase10IntelligenceRepository
 from app.services.phase11_result_contracts import (
     RESULT_MEMBERSHIP_COLUMNS, Phase11RegistryStateError, Phase11RegistryValidationError,
-    canonical_metadata_json,
 )
 from tests.test_phase10_schema_registry_repository import (
     NOW, _create_version_fourteen_database, _generation_values, _seed_lineage,
@@ -56,6 +54,12 @@ def _search(case, **overrides):
     return repository.create_search_run(**arguments)
 
 
+def _fence(case, search_id: int, *, owner: str = "phase11-test"):
+    return case[3].claim_search_attempt(
+        search_id, lease_owner=owner
+    ).as_kwargs()
+
+
 def _snapshot(case, search_id: int, **overrides):
     _, ids, _, repository = case
     run = repository.fetch_search_run(search_id)
@@ -71,8 +75,12 @@ def _snapshot(case, search_id: int, **overrides):
 
 def _complete(case, search_id: int, snapshot_id: int, source="INTELLIGENCE_REUSE"):
     repository = case[3]
-    repository.mark_processing(search_id)
-    repository.complete_search_run(search_id, result_snapshot_id=snapshot_id, result_source=source, timestamp=LATER)
+    fence = _fence(case, search_id)
+    repository.mark_processing(search_id, **fence, timestamp=NOW)
+    repository.complete_search_run(
+        search_id, **fence, result_snapshot_id=snapshot_id,
+        result_source=source, timestamp=LATER,
+    )
 
 
 def test_fresh_schema_has_exact_non_pii_columns_indexes_and_foreign_keys(tmp_path: Path):
@@ -116,6 +124,71 @@ def test_upgrade_from_15_and_16_preserves_all_legacy_rows_and_is_idempotent(tmp_
             assert connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] == 0
 
 
+def test_schema_27_preserves_referenced_v1_snapshot_without_rewriting_identity(case):
+    path, _ids, _values, repository = case
+    search_id = _search(case)
+    snapshot_id = _snapshot(case, search_id)
+    _complete(case, search_id, snapshot_id)
+    before_snapshot = repository.fetch_snapshot(snapshot_id)
+    before_run = repository.fetch_search_run(search_id)
+
+    # Reconstruct the exact v26 single-version constraint so this test exercises
+    # the production table-rebuild migration with a live child reference.
+    with get_connection(path, write=True) as connection:
+        connection.execute("PRAGMA foreign_keys=OFF")
+        for trigger in (
+            "campaign_result_snapshots_immutable_identity",
+            "campaign_result_snapshots_no_delete",
+            "campaign_search_runs_snapshot_insert",
+            "campaign_search_runs_snapshot_update",
+            "campaign_result_export_events_lineage",
+        ):
+            connection.execute(f"DROP TRIGGER IF EXISTS {trigger}")
+        definition = str(connection.execute(
+            """SELECT sql FROM sqlite_master
+               WHERE type='table' AND name='campaign_result_snapshots'"""
+        ).fetchone()[0])
+        legacy_definition = definition.replace(
+            "CREATE TABLE campaign_result_snapshots",
+            "CREATE TABLE campaign_result_snapshots_v26",
+            1,
+        ).replace(
+            "CHECK (result_membership_contract_version IN ('1','2'))",
+            "CHECK (result_membership_contract_version = '1')",
+            1,
+        )
+        connection.execute(legacy_definition)
+        columns = ",".join(CAMPAIGN_RESULT_SNAPSHOT_COLUMNS)
+        connection.execute(
+            f"INSERT INTO campaign_result_snapshots_v26 ({columns}) "
+            f"SELECT {columns} FROM campaign_result_snapshots"
+        )
+        connection.execute("DROP TABLE campaign_result_snapshots")
+        connection.execute(
+            "ALTER TABLE campaign_result_snapshots_v26 "
+            "RENAME TO campaign_result_snapshots"
+        )
+        connection.execute(
+            "UPDATE app_metadata SET value='26' WHERE key='schema_version'"
+        )
+        connection.execute("PRAGMA foreign_keys=ON")
+
+    initialize_database(path)
+    migrated_repository = CampaignResultRegistryRepository(path)
+    assert migrated_repository.fetch_snapshot(snapshot_id) == before_snapshot
+    assert migrated_repository.fetch_search_run(search_id) == before_run
+    with get_connection(path) as connection:
+        assert connection.execute(
+            "SELECT value FROM app_metadata WHERE key='schema_version'"
+        ).fetchone()[0] == "27"
+        assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
+        definition = str(connection.execute(
+            """SELECT sql FROM sqlite_master
+               WHERE type='table' AND name='campaign_result_snapshots'"""
+        ).fetchone()[0])
+    assert "result_membership_contract_version IN ('1','2')" in definition
+
+
 def test_failed_schema_17_migration_rolls_back_ddl_and_version(tmp_path: Path, monkeypatch):
     path = tmp_path / "rollback.db"
     _create_version_fourteen_database(path)
@@ -154,7 +227,7 @@ def test_two_submissions_share_one_snapshot_but_keep_distinct_immutable_history(
     assert [r["search_run_id"] for r in repository.list_search_runs(before_search_run_id=second)] == [first]
     assert repository.fetch_snapshot(snapshot)["last_used_at"] == LATER
     with pytest.raises(Phase11RegistryStateError):
-        repository.mark_processing(first)
+        repository.mark_processing(first, **_fence(case, first))
 
 
 @pytest.mark.parametrize("source", ("EXACT_RESULT_REUSE", "INTELLIGENCE_REUSE", "NEW_INTELLIGENCE_BUILD"))
@@ -168,13 +241,17 @@ def test_all_result_sources_are_recordable_without_launching_work(case, source):
 @pytest.mark.parametrize("blocked", (True, False))
 def test_failure_and_blocked_records_are_safe_and_terminal(case, blocked):
     search = _search(case)
-    case[3].fail_search_run(search, blocked=blocked, timestamp=LATER)
+    case[3].fail_search_run(
+        search, **_fence(case, search), blocked=blocked, timestamp=LATER
+    )
     row = case[3].fetch_search_run(search)
     assert row["status"] == ("BLOCKED" if blocked else "FAILED")
-    assert row["result_snapshot_id"] is None and row["processing_seconds"] == 10.0
+    assert row["result_snapshot_id"] is None and row["processing_seconds"] == 0.0
     assert row["safe_error_message"]
     with pytest.raises(Phase11RegistryStateError):
-        case[3].fail_search_run(search, timestamp=LATER)
+        case[3].fail_search_run(
+            search, **_fence(case, search), timestamp=LATER
+        )
 
 
 @pytest.mark.parametrize("change", (
@@ -184,9 +261,13 @@ def test_failure_and_blocked_records_are_safe_and_terminal(case, blocked):
 def test_completion_rejects_wrong_snapshot_identity_and_rolls_back(case, change):
     search = _search(case)
     snapshot = _snapshot(case, search, **change)
-    case[3].mark_processing(search)
+    fence = _fence(case, search)
+    case[3].mark_processing(search, **fence, timestamp=NOW)
     with pytest.raises(sqlite3.IntegrityError):
-        case[3].complete_search_run(search, result_snapshot_id=snapshot, result_source="EXACT_RESULT_REUSE", timestamp=LATER)
+        case[3].complete_search_run(
+            search, **fence, result_snapshot_id=snapshot,
+            result_source="EXACT_RESULT_REUSE", timestamp=LATER,
+        )
     assert case[3].fetch_search_run(search)["status"] == "PROCESSING"
     assert case[3].fetch_snapshot(snapshot)["last_used_at"] == NOW
 
@@ -195,10 +276,14 @@ def test_stale_snapshot_and_stale_generation_are_rejected(case):
     path, ids, _, repository = case
     search = _search(case)
     snapshot = _snapshot(case, search)
-    repository.mark_processing(search)
+    fence = _fence(case, search)
+    repository.mark_processing(search, **fence)
     repository.update_snapshot_currentness(snapshot, state="STALE", timestamp=LATER)
     with pytest.raises(Phase11RegistryStateError):
-        repository.complete_search_run(search, result_snapshot_id=snapshot, result_source="EXACT_RESULT_REUSE", timestamp=LATER)
+        repository.complete_search_run(
+            search, **fence, result_snapshot_id=snapshot,
+            result_source="EXACT_RESULT_REUSE", timestamp=LATER,
+        )
     with get_connection(path, write=True) as connection:
         connection.execute("UPDATE phase10_intelligence_generations SET lifecycle_state='STALE' WHERE generation_id=?", (ids["generation_id"],))
     with pytest.raises(Phase11RegistryStateError):

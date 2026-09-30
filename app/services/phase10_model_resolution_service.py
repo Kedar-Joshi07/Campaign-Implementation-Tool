@@ -239,6 +239,7 @@ def _expected_split_counts(cohort: TrainingCohort) -> dict[str, int]:
         cohort.frame,
         validation_fraction=PHASE10_AUTOMATED_TRAINING_VALIDATION_FRACTION,
         random_seed=PHASE10_AUTOMATED_TRAINING_RANDOM_SEED,
+        campaign_memberships=cohort.campaign_memberships,
     )
     return {
         "reconstructed_observation_count": cohort.observation_count,

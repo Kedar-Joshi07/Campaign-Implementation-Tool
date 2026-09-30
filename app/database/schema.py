@@ -38,7 +38,7 @@ from app.database.search_recovery_schema import (
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 21
+CURRENT_SCHEMA_VERSION = 30
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -130,6 +130,7 @@ MODEL_RUN_COLUMNS = (
     "artifact_path",
     "artifact_sha256",
     "error_message",
+    "split_lineage_json",
 )
 
 JOB_COLUMNS = (
@@ -387,6 +388,9 @@ PHASE10_ORCHESTRATION_RUN_COLUMNS = (
     "updated_at",
     "completed_at",
     "safe_error_message",
+    "failure_code",
+    "failure_category",
+    "retryable",
 )
 
 PHASE10_CONTEXT_BINDING_COLUMNS = (
@@ -2928,6 +2932,562 @@ def _migrate_to_version_21(connection: sqlite3.Connection) -> None:
         connection.execute(statement)
 
 
+def _migrate_to_version_22(connection: sqlite3.Connection) -> None:
+    """Add durable per-attempt execution fencing and lease metadata."""
+
+    if not _table_exists(connection, "campaign_search_attempts"):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 22 because campaign_search_attempts does not exist."
+        )
+    columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(campaign_search_attempts)")
+    }
+    additions = (
+        (
+            "execution_lease_token",
+            "TEXT CHECK (execution_lease_token IS NULL OR "
+            "(length(execution_lease_token)=64 AND "
+            "execution_lease_token NOT GLOB '*[^0-9a-f]*'))",
+        ),
+        (
+            "lease_owner",
+            "TEXT CHECK (lease_owner IS NULL OR length(lease_owner) BETWEEN 1 AND 128)",
+        ),
+        ("lease_claimed_at", "TEXT"),
+        ("lease_heartbeat_at", "TEXT"),
+    )
+    for name, definition in additions:
+        if name not in columns:
+            connection.execute(
+                f'ALTER TABLE campaign_search_attempts ADD COLUMN "{name}" {definition}'
+            )
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_attempts_terminal")
+    connection.execute(
+        """UPDATE campaign_search_attempts
+           SET execution_lease_token=lower(hex(randomblob(32)))
+           WHERE execution_lease_token IS NULL"""
+    )
+    connection.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_search_attempt_execution_lease
+           ON campaign_search_attempts(execution_lease_token)
+           WHERE execution_lease_token IS NOT NULL"""
+    )
+    invalid = connection.execute(
+        """SELECT COUNT(*) FROM campaign_search_attempts
+           WHERE execution_lease_token IS NULL
+              OR length(execution_lease_token) != 64
+              OR execution_lease_token GLOB '*[^0-9a-f]*'"""
+    ).fetchone()[0]
+    if invalid:
+        raise UnsupportedSchemaVersionError(
+            "Attempt execution-fence backfill did not produce valid lease tokens."
+        )
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_attempt_create")
+    connection.execute(
+        """
+        CREATE TRIGGER campaign_search_attempt_create
+        AFTER INSERT ON campaign_search_runs
+        BEGIN
+            INSERT INTO campaign_search_attempts (
+                search_run_id, attempt_number, attempt_contract_version,
+                selection_contract_version, propensity_bucket,
+                bucket_minimum, bucket_maximum, bucket_maximum_inclusive,
+                status, execution_lease_token, created_at, started_at
+            ) VALUES (
+                NEW.search_run_id, NEW.current_attempt_number, '1',
+                NEW.selection_contract_version, NEW.propensity_bucket,
+                CASE NEW.propensity_bucket
+                    WHEN '0.90' THEN 0.90 WHEN '0.80' THEN 0.80
+                    WHEN '0.70' THEN 0.70 WHEN '0.60' THEN 0.60
+                    WHEN '0.50' THEN 0.50 END,
+                CASE NEW.propensity_bucket
+                    WHEN '0.90' THEN 1.00 WHEN '0.80' THEN 0.90
+                    WHEN '0.70' THEN 0.80 WHEN '0.60' THEN 0.70
+                    WHEN '0.50' THEN 0.60 END,
+                CASE WHEN NEW.propensity_bucket='0.90' THEN 1
+                     WHEN NEW.propensity_bucket IS NOT NULL THEN 0 END,
+                NEW.status, lower(hex(randomblob(32))), NEW.created_at, NEW.started_at
+            );
+        END
+        """
+    )
+    connection.execute(
+        """CREATE TRIGGER campaign_search_attempts_terminal
+           BEFORE UPDATE ON campaign_search_attempts
+           WHEN OLD.status IN ('COMPLETED','BLOCKED','FAILED')
+           BEGIN SELECT RAISE(ABORT, 'terminal search attempt is immutable'); END"""
+    )
+
+
+def _migrate_to_version_23(connection: sqlite3.Connection) -> None:
+    """Add Phase 10 failure ownership and Phase 11 dependency lineage."""
+
+    required = (
+        "phase10_orchestration_runs",
+        "campaign_search_attempts",
+        "campaign_search_run_runtime",
+    )
+    if any(not _table_exists(connection, table) for table in required):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 23 because dependency tables are missing."
+        )
+    phase10_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(phase10_orchestration_runs)")
+    }
+    phase10_additions = (
+        (
+            "failure_code",
+            "TEXT CHECK (failure_code IS NULL OR length(failure_code) BETWEEN 1 AND 80)",
+        ),
+        (
+            "failure_category",
+            "TEXT CHECK (failure_category IS NULL OR length(failure_category) BETWEEN 1 AND 80)",
+        ),
+        ("retryable", "INTEGER NOT NULL DEFAULT 0 CHECK (retryable IN (0,1))"),
+    )
+    for name, definition in phase10_additions:
+        if name not in phase10_columns:
+            connection.execute(
+                f'ALTER TABLE phase10_orchestration_runs ADD COLUMN "{name}" {definition}'
+            )
+    connection.execute(
+        """UPDATE phase10_orchestration_runs
+           SET failure_code=CASE status
+                   WHEN 'FAILED' THEN 'LEGACY_PHASE10_FAILED'
+                   WHEN 'BLOCKED' THEN 'PHASE10_BUSINESS_BLOCKED'
+                   ELSE failure_code END,
+               failure_category=CASE status
+                   WHEN 'FAILED' THEN 'TRANSIENT_DEPENDENCY'
+                   WHEN 'BLOCKED' THEN 'BUSINESS_DATA_INSUFFICIENCY'
+                   ELSE failure_category END,
+               retryable=CASE WHEN status='FAILED' THEN 1 ELSE 0 END
+           WHERE status IN ('FAILED','BLOCKED')
+             AND (failure_code IS NULL OR failure_category IS NULL)"""
+    )
+
+    attempt_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(campaign_search_attempts)")
+    }
+    attempt_additions = (
+        (
+            "phase10_orchestration_id",
+            "INTEGER REFERENCES phase10_orchestration_runs(orchestration_id) ON DELETE RESTRICT",
+        ),
+        (
+            "phase10_dependency_status",
+            "TEXT CHECK (phase10_dependency_status IS NULL OR "
+            "phase10_dependency_status IN ('NOT_STARTED','QUEUED','RUNNING','READY','BLOCKED','FAILED','STALE'))",
+        ),
+        (
+            "phase10_dependency_rejoined",
+            "INTEGER NOT NULL DEFAULT 0 CHECK (phase10_dependency_rejoined IN (0,1))",
+        ),
+        ("phase10_dependency_updated_at", "TEXT"),
+    )
+    for name, definition in attempt_additions:
+        if name not in attempt_columns:
+            connection.execute(
+                f'ALTER TABLE campaign_search_attempts ADD COLUMN "{name}" {definition}'
+            )
+
+    runtime_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(campaign_search_run_runtime)")
+    }
+    if "technical_reference" not in runtime_columns:
+        connection.execute(
+            """ALTER TABLE campaign_search_run_runtime
+               ADD COLUMN technical_reference TEXT
+               CHECK (technical_reference IS NULL OR length(technical_reference) BETWEEN 1 AND 80)"""
+        )
+        connection.execute(
+            """UPDATE campaign_search_run_runtime
+               SET technical_reference=failure_code
+               WHERE failure_code IS NOT NULL"""
+        )
+    invalid = connection.execute(
+        """SELECT COUNT(*) FROM phase10_orchestration_runs
+           WHERE status IN ('FAILED','BLOCKED')
+             AND (failure_code IS NULL OR failure_category IS NULL)
+        """
+    ).fetchone()[0]
+    if invalid:
+        raise UnsupportedSchemaVersionError(
+            "Phase 10 failure ownership backfill did not complete."
+        )
+
+
+def _migrate_to_version_24(connection: sqlite3.Connection) -> None:
+    """Version intelligence attestations as full lineage/integrity evidence."""
+
+    table = "intelligence_verification_attestations"
+    if not _table_exists(connection, table):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 24 because intelligence attestations are missing."
+        )
+    existing = {
+        row["name"] for row in connection.execute(f"PRAGMA table_info({table})")
+    }
+    additions = (
+        ("verification_contract_version", "TEXT"),
+        ("integrity_contract_version", "TEXT"),
+        ("model_run_id", "INTEGER REFERENCES model_runs(model_run_id) ON DELETE RESTRICT"),
+        ("feature_contract_version", "TEXT"),
+        ("feature_contract_sha256", "TEXT"),
+        ("score_semantics_sha256", "TEXT"),
+        ("customer_import_id", "INTEGER"),
+        ("customer_source_checksum", "TEXT"),
+        ("campaign_sales_import_id", "INTEGER"),
+        ("campaign_sales_source_checksum", "TEXT"),
+        ("demographic_import_id", "INTEGER"),
+        ("demographic_source_checksum", "TEXT"),
+        ("rank_contract_version", "TEXT"),
+        ("analytics_contract_version", "TEXT"),
+        (
+            "verified_facts_json",
+            "TEXT CHECK (verified_facts_json IS NULL OR json_valid(verified_facts_json))",
+        ),
+        (
+            "verified_facts_sha256",
+            "TEXT CHECK (verified_facts_sha256 IS NULL OR length(verified_facts_sha256)=64)",
+        ),
+        (
+            "failure_codes_json",
+            "TEXT CHECK (failure_codes_json IS NULL OR json_valid(failure_codes_json))",
+        ),
+    )
+    for name, definition in additions:
+        if name not in existing:
+            connection.execute(f'ALTER TABLE {table} ADD COLUMN "{name}" {definition}')
+    # A row-count-only verification cannot satisfy contract v2. Retain the
+    # historical record, but make it ineligible for direct reuse.
+    connection.execute(
+        f"""UPDATE {table}
+            SET verification_status='STALE'
+            WHERE verification_status='VERIFIED'
+              AND (verification_contract_version IS NULL
+                   OR integrity_contract_version IS NULL
+                   OR verified_facts_sha256 IS NULL)"""
+    )
+
+
+def _migrate_to_version_25(connection: sqlite3.Connection) -> None:
+    """Make attempt start timestamps represent actual worker processing."""
+
+    if not _table_exists(connection, "campaign_search_attempts"):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 25 because search attempts are missing."
+        )
+    # Active queued attempts have not started and are safe to correct. Terminal
+    # attempts remain immutable historical evidence.
+    connection.execute(
+        """UPDATE campaign_search_attempts
+           SET started_at=NULL
+           WHERE status='QUEUED' AND completed_at IS NULL"""
+    )
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_attempt_create")
+    connection.execute(
+        """
+        CREATE TRIGGER campaign_search_attempt_create
+        AFTER INSERT ON campaign_search_runs
+        BEGIN
+            INSERT INTO campaign_search_attempts (
+                search_run_id, attempt_number, attempt_contract_version,
+                selection_contract_version, propensity_bucket,
+                bucket_minimum, bucket_maximum, bucket_maximum_inclusive,
+                status, execution_lease_token, created_at, started_at
+            ) VALUES (
+                NEW.search_run_id, NEW.current_attempt_number, '1',
+                NEW.selection_contract_version, NEW.propensity_bucket,
+                CASE NEW.propensity_bucket
+                    WHEN '0.90' THEN 0.90 WHEN '0.80' THEN 0.80
+                    WHEN '0.70' THEN 0.70 WHEN '0.60' THEN 0.60
+                    WHEN '0.50' THEN 0.50 END,
+                CASE NEW.propensity_bucket
+                    WHEN '0.90' THEN 1.00 WHEN '0.80' THEN 0.90
+                    WHEN '0.70' THEN 0.80 WHEN '0.60' THEN 0.70
+                    WHEN '0.50' THEN 0.60 END,
+                CASE WHEN NEW.propensity_bucket='0.90' THEN 1
+                     WHEN NEW.propensity_bucket IS NOT NULL THEN 0 END,
+                NEW.status, lower(hex(randomblob(32))), NEW.created_at,
+                CASE WHEN NEW.status='QUEUED' THEN NULL ELSE NEW.started_at END
+            );
+        END
+        """
+    )
+
+
+def _migrate_to_version_26(connection: sqlite3.Connection) -> None:
+    """Add workload-qualified progress and transactional initial events."""
+
+    required = (
+        "campaign_search_runs",
+        "campaign_search_run_runtime",
+        "campaign_search_attempts",
+        "campaign_search_progress_events",
+    )
+    if any(not _table_exists(connection, table) for table in required):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 26 because search progress tables are missing."
+        )
+    runtime_columns = {
+        row["name"]
+        for row in connection.execute(
+            "PRAGMA table_info(campaign_search_run_runtime)"
+        )
+    }
+    if "workload_class" not in runtime_columns:
+        connection.execute(
+            """ALTER TABLE campaign_search_run_runtime
+               ADD COLUMN workload_class TEXT NOT NULL
+               DEFAULT 'PENDING_CLASSIFICATION'
+               CHECK (length(workload_class) BETWEEN 1 AND 80)"""
+        )
+    connection.execute(
+        """CREATE INDEX IF NOT EXISTS idx_search_progress_workload_stage
+           ON campaign_search_progress_events(
+               workload_class,stage_code,recorded_at,search_run_id
+           )"""
+    )
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_initial_progress_event")
+    connection.execute(
+        """
+        CREATE TRIGGER campaign_search_initial_progress_event
+        AFTER INSERT ON campaign_search_attempts
+        WHEN NEW.status='QUEUED'
+        BEGIN
+            INSERT INTO campaign_search_progress_events (
+                search_run_id,attempt_number,stage_code,stage_label,
+                progress_percent,processed_count,total_count,status_message,
+                workload_class,recorded_at
+            ) VALUES (
+                NEW.search_run_id,NEW.attempt_number,'QUEUED','Waiting to start',
+                0,0,NULL,'Saved and waiting for processing capacity.',
+                'PENDING_CLASSIFICATION',NEW.created_at
+            );
+        END
+        """
+    )
+
+
+def _migrate_to_version_27(connection: sqlite3.Connection) -> None:
+    """Permit explicit v2 membership while preserving every v1 snapshot row."""
+
+    required = (
+        "campaign_result_snapshots",
+        "campaign_search_runs",
+        "campaign_result_export_events",
+    )
+    if any(not _table_exists(connection, table) for table in required):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 27 because result registry tables are missing."
+        )
+    definition_row = connection.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='campaign_result_snapshots'"
+    ).fetchone()
+    definition = str(definition_row["sql"] or "")
+    normalized = "".join(definition.split()).lower()
+    if "check(result_membership_contract_versionin('1','2'))" not in normalized:
+        legacy = "CHECK (result_membership_contract_version = '1')"
+        replacement = (
+            "CHECK (result_membership_contract_version IN ('1','2'))"
+        )
+        if definition.count(legacy) != 1:
+            raise UnsupportedSchemaVersionError(
+                "Result snapshot membership constraint is not the supported v26 definition."
+            )
+        # This is a guarded constraint broadening, not a table rebuild. It keeps
+        # snapshot rows, AUTOINCREMENT identity, triggers, indexes, and every
+        # child foreign-key reference byte-for-byte unchanged. SQLite has no
+        # ALTER CHECK syntax, so update only the verified schema definition and
+        # advance the schema cookie to force an immediate reparse.
+        revised = definition.replace(legacy, replacement, 1)
+        try:
+            connection.execute("PRAGMA writable_schema=ON")
+            cursor = connection.execute(
+                """UPDATE sqlite_master SET sql=?
+                   WHERE type='table' AND name='campaign_result_snapshots'
+                     AND sql=?""",
+                (revised, definition),
+            )
+        finally:
+            connection.execute("PRAGMA writable_schema=OFF")
+        if cursor.rowcount != 1:
+            raise UnsupportedSchemaVersionError(
+                "Result snapshot membership constraint could not be updated safely."
+            )
+        schema_version = int(
+            connection.execute("PRAGMA schema_version").fetchone()[0]
+        )
+        connection.execute(f"PRAGMA schema_version={schema_version + 1}")
+    for statement in PHASE_ELEVEN_REQUIRED_INDEX_STATEMENTS.values():
+        connection.execute(statement)
+    for statement in PHASE_ELEVEN_TRIGGER_STATEMENTS:
+        connection.execute(statement)
+    violations = connection.execute("PRAGMA foreign_key_check").fetchall()
+    if violations:
+        raise UnsupportedSchemaVersionError(
+            "Result snapshot migration failed foreign-key verification."
+        )
+    integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
+    if integrity != "ok":
+        raise UnsupportedSchemaVersionError(
+            "Result snapshot migration failed database integrity verification."
+        )
+
+
+def _migrate_to_version_28(connection: sqlite3.Connection) -> None:
+    """Enforce one current targeting catalog at the persistence boundary."""
+
+    if not _table_exists(connection, "targeting_option_catalogs"):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 28 because targeting catalogs are missing."
+        )
+    current = connection.execute(
+        """SELECT catalog_version FROM targeting_option_catalogs
+           WHERE is_current=1
+           ORDER BY created_at DESC,catalog_version DESC"""
+    ).fetchall()
+    if len(current) > 1:
+        winner = str(current[0]["catalog_version"])
+        connection.execute(
+            """UPDATE targeting_option_catalogs SET is_current=0
+               WHERE is_current=1 AND catalog_version<>?""",
+            (winner,),
+        )
+    connection.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_targeting_option_catalog_current
+           ON targeting_option_catalogs(is_current) WHERE is_current=1"""
+    )
+
+
+def _migrate_to_version_29(connection: sqlite3.Connection) -> None:
+    """Persist grouped model lineage and permit isolated calibration v2 artifacts."""
+
+    if not _table_exists(connection, "model_runs") or not _table_exists(
+        connection, "score_calibration_artifacts"
+    ):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 29 because model/calibration tables are missing."
+        )
+    model_columns = {
+        row["name"] for row in connection.execute("PRAGMA table_info(model_runs)")
+    }
+    if "split_lineage_json" not in model_columns:
+        connection.execute(
+            """ALTER TABLE model_runs ADD COLUMN split_lineage_json TEXT
+               CHECK (split_lineage_json IS NULL OR json_valid(split_lineage_json))"""
+        )
+
+    definition_row = connection.execute(
+        """SELECT sql FROM sqlite_master
+           WHERE type='table' AND name='score_calibration_artifacts'"""
+    ).fetchone()
+    definition = str(definition_row["sql"] or "")
+    normalized = "".join(definition.split()).lower()
+    if "check(calibration_contract_versionin('1','2'))" not in normalized:
+        legacy = "CHECK (calibration_contract_version = '1')"
+        replacement = "CHECK (calibration_contract_version IN ('1','2'))"
+        if definition.count(legacy) != 1:
+            raise UnsupportedSchemaVersionError(
+                "Calibration contract constraint is not the supported v1 definition."
+            )
+        revised = definition.replace(legacy, replacement, 1)
+        try:
+            connection.execute("PRAGMA writable_schema=ON")
+            cursor = connection.execute(
+                """UPDATE sqlite_master SET sql=?
+                   WHERE type='table' AND name='score_calibration_artifacts'
+                     AND sql=?""",
+                (revised, definition),
+            )
+        finally:
+            connection.execute("PRAGMA writable_schema=OFF")
+        if cursor.rowcount != 1:
+            raise UnsupportedSchemaVersionError(
+                "Calibration contract constraint could not be updated safely."
+            )
+        schema_version = int(connection.execute("PRAGMA schema_version").fetchone()[0])
+        connection.execute(f"PRAGMA schema_version={schema_version + 1}")
+    if connection.execute("PRAGMA foreign_key_check").fetchall():
+        raise UnsupportedSchemaVersionError(
+            "Calibration isolation migration failed foreign-key verification."
+        )
+
+
+def _migrate_to_version_30(connection: sqlite3.Connection) -> None:
+    """Add truthful, bounded feedback-recalibration decision lineage."""
+
+    required = ("campaign_feedback_batches", "feedback_retraining_decisions")
+    if any(not _table_exists(connection, table) for table in required):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 30 because feedback tables are missing."
+        )
+    batch_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(campaign_feedback_batches)")
+    }
+    if "selection_basis_sha256" not in batch_columns:
+        connection.execute(
+            """ALTER TABLE campaign_feedback_batches
+               ADD COLUMN selection_basis_sha256 TEXT
+               CHECK (selection_basis_sha256 IS NULL OR length(selection_basis_sha256)=64)"""
+        )
+    decision_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(feedback_retraining_decisions)")
+    }
+    additions = (
+        (
+            "decision_kind",
+            "TEXT NOT NULL DEFAULT 'RECALIBRATION' CHECK (decision_kind='RECALIBRATION')",
+        ),
+        (
+            "latest_feedback_batch_id",
+            "INTEGER REFERENCES campaign_feedback_batches(feedback_batch_id) ON DELETE RESTRICT",
+        ),
+        (
+            "reference_decision_id",
+            "INTEGER REFERENCES feedback_retraining_decisions(retraining_decision_id) ON DELETE RESTRICT",
+        ),
+        (
+            "drift_lineage_json",
+            "TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(drift_lineage_json))",
+        ),
+    )
+    for name, definition in additions:
+        if name not in decision_columns:
+            connection.execute(
+                f'ALTER TABLE feedback_retraining_decisions ADD COLUMN "{name}" {definition}'
+            )
+    duplicate_waiting = connection.execute(
+        """SELECT scoring_run_id,MAX(retraining_decision_id) AS keeper
+           FROM feedback_retraining_decisions
+           WHERE status='WAITING_FOR_DATA'
+           GROUP BY scoring_run_id HAVING COUNT(*)>1"""
+    ).fetchall()
+    for row in duplicate_waiting:
+        connection.execute(
+            """UPDATE feedback_retraining_decisions
+               SET status='REJECTED',
+                   trigger_reason='Superseded during bounded recalibration-state migration.',
+                   completed_at=COALESCE(completed_at,created_at)
+               WHERE scoring_run_id=? AND status='WAITING_FOR_DATA'
+                 AND retraining_decision_id<>?""",
+            (int(row["scoring_run_id"]), int(row["keeper"])),
+        )
+    connection.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_feedback_recalibration_waiting
+           ON feedback_retraining_decisions(scoring_run_id)
+           WHERE status='WAITING_FOR_DATA'"""
+    )
+    if connection.execute("PRAGMA foreign_key_check").fetchall():
+        raise UnsupportedSchemaVersionError(
+            "Feedback recalibration migration failed foreign-key verification."
+        )
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -2949,6 +3509,15 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     19: _migrate_to_version_19,
     20: _migrate_to_version_20,
     21: _migrate_to_version_21,
+    22: _migrate_to_version_22,
+    23: _migrate_to_version_23,
+    24: _migrate_to_version_24,
+    25: _migrate_to_version_25,
+    26: _migrate_to_version_26,
+    27: _migrate_to_version_27,
+    28: _migrate_to_version_28,
+    29: _migrate_to_version_29,
+    30: _migrate_to_version_30,
 }
 
 

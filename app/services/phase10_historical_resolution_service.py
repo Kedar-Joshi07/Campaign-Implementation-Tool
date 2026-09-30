@@ -158,6 +158,7 @@ def _deterministic_split_viable(
             cohort.frame,
             validation_fraction=PHASE10_AUTOMATED_TRAINING_VALIDATION_FRACTION,
             random_seed=PHASE10_AUTOMATED_TRAINING_RANDOM_SEED,
+            campaign_memberships=cohort.campaign_memberships,
         )
     except (TrainingCohortError, FeatureSplitError, ValueError):
         return False

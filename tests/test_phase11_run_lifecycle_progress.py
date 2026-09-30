@@ -19,7 +19,7 @@ from app.services.phase11_run_lifecycle_service import (
     project_run_issue,
     project_run_progress,
 )
-from tests.test_phase11_search_result_registry import _search, case
+from tests.test_phase11_search_result_registry import _fence, _search, case
 
 
 def test_runtime_progress_is_durable_monotonic_and_terminal(case) -> None:
@@ -35,9 +35,13 @@ def test_runtime_progress_is_durable_monotonic_and_terminal(case) -> None:
     assert queued["progress_percent"] == 0
     assert queued["total_count"] == 100
 
-    repository.mark_processing(search_run_id)
+    fence = _fence(case, search_run_id)
+    repository.mark_processing(
+        search_run_id, **fence, timestamp="2026-09-13T10:00:00Z"
+    )
     repository.update_search_progress(
         search_run_id,
+        **fence,
         stage_code="MATERIALIZING_RESULT",
         stage_label="Building the result snapshot",
         progress_percent=55,
@@ -55,6 +59,7 @@ def test_runtime_progress_is_durable_monotonic_and_terminal(case) -> None:
     with pytest.raises(Phase11RegistryValidationError, match="cannot decrease"):
         repository.update_search_progress(
             search_run_id,
+            **fence,
             stage_code="CHECKING_INTELLIGENCE",
             stage_label="Checking targeting intelligence",
             progress_percent=20,
@@ -63,6 +68,7 @@ def test_runtime_progress_is_durable_monotonic_and_terminal(case) -> None:
 
     repository.fail_search_run(
         search_run_id,
+        **fence,
         failure_code="SOURCE_DATA_UNAVAILABLE",
         failure_category="SOURCE_DATA",
         failure_summary="The current source data is not available.",
@@ -89,10 +95,52 @@ def test_runtime_progress_is_durable_monotonic_and_terminal(case) -> None:
     }
 
 
+def test_initial_queue_event_is_transactional_and_heartbeats_do_not_flood_history(
+    case,
+) -> None:
+    repository = case[3]
+    search_run_id = _search(case, campaign_name="Initial progress event")
+    with get_connection(case[0]) as connection:
+        queued_events = connection.execute(
+            """SELECT stage_code,progress_percent,workload_class
+               FROM campaign_search_progress_events WHERE search_run_id=?""",
+            (search_run_id,),
+        ).fetchall()
+    assert [tuple(row) for row in queued_events] == [
+        ("QUEUED", 0, "PENDING_CLASSIFICATION")
+    ]
+
+    fence = _fence(case, search_run_id)
+    repository.mark_processing(
+        search_run_id, **fence, timestamp="2026-09-13T10:00:00Z"
+    )
+    started = repository.fetch_search_runtime(search_run_id)
+    repository.heartbeat_search_attempt(
+        search_run_id, **fence, timestamp="2026-09-13T10:00:05Z"
+    )
+    repository.heartbeat_search_attempt(
+        search_run_id, **fence, timestamp="2026-09-13T10:00:10Z"
+    )
+    heartbeating = repository.fetch_search_runtime(search_run_id)
+    assert heartbeating["stage_code"] == "CHECKING_CURRENT_INTELLIGENCE"
+    assert heartbeating["progress_percent"] == 2
+    assert heartbeating["updated_at"] == started["updated_at"]
+    assert heartbeating["heartbeat_at"] == "2026-09-13T10:00:10Z"
+    assert int(heartbeating["state_version"]) == int(started["state_version"]) + 2
+    with get_connection(case[0]) as connection:
+        event_count = connection.execute(
+            "SELECT COUNT(*) FROM campaign_search_progress_events WHERE search_run_id=?",
+            (search_run_id,),
+        ).fetchone()[0]
+    assert event_count == 2
+
+
 def test_future_control_states_have_a_guarded_durable_transition_contract(case) -> None:
     search_run_id = _search(case)
     repository = case[3]
-    repository.mark_processing(search_run_id)
+    repository.mark_processing(
+        search_run_id, **_fence(case, search_run_id)
+    )
     with get_connection(case[0], write=True) as connection:
         connection.execute(
             "UPDATE campaign_search_run_runtime SET lifecycle_status='PAUSE_REQUESTED' WHERE search_run_id=?",
@@ -116,6 +164,7 @@ def test_retry_keeps_visible_run_and_creates_idempotent_immutable_attempt(case) 
     search_run_id = _search(case)
     repository.fail_search_run(
         search_run_id,
+        **_fence(case, search_run_id),
         blocked=True,
         failure_code="CALIBRATION_NOT_READY",
         failure_category="CALIBRATION",
@@ -153,6 +202,7 @@ def test_permanent_failure_is_not_retryable(case) -> None:
     search_run_id = _search(case)
     repository.fail_search_run(
         search_run_id,
+        **_fence(case, search_run_id),
         failure_code="INVALID_IMMUTABLE_CONTRACT",
         failure_category="PERMANENT_CONTRACT_FAILURE",
         failure_summary="The saved search contract is permanently invalid.",
@@ -175,6 +225,7 @@ def test_concurrent_retry_clicks_create_exactly_one_next_attempt(case) -> None:
     search_run_id = _search(case)
     repository.fail_search_run(
         search_run_id,
+        **_fence(case, search_run_id),
         blocked=True,
         failure_code="CALIBRATION_NOT_READY",
         failure_category="CALIBRATION",
@@ -213,6 +264,7 @@ def test_bulk_queue_positions_are_fifo_and_ignore_terminal_runs(case) -> None:
     third = _search(case, campaign_name="Third terminal")
     repository.fail_search_run(
         third,
+        **_fence(case, third),
         blocked=True,
         failure_code="NO_HISTORY",
         failure_category="HISTORY",
@@ -225,10 +277,31 @@ def test_bulk_queue_positions_are_fifo_and_ignore_terminal_runs(case) -> None:
     }
 
 
+def test_retry_queue_position_uses_current_attempt_enqueue_time(case) -> None:
+    repository = case[3]
+    first = _search(case, campaign_name="First original submission")
+    second = _search(case, campaign_name="Second original submission")
+    repository.fail_search_run(
+        first,
+        **_fence(case, first),
+        failure_code="TRANSIENT_FAILURE",
+        timestamp="2026-09-13T10:00:10Z",
+    )
+    repository.retry_search_run(
+        first,
+        idempotency_key="retry-after-second-queued",
+        timestamp="2026-09-13T10:00:20Z",
+    )
+    assert repository.queue_positions([first, second]) == {second: 1, first: 2}
+
+
 def test_stale_processing_attempt_is_recoverable_but_live_attempt_is_not(case) -> None:
     repository = case[3]
     search_run_id = _search(case)
-    repository.mark_processing(search_run_id)
+    fence = _fence(case, search_run_id)
+    repository.mark_processing(
+        search_run_id, **fence, timestamp="2026-09-13T10:00:00Z"
+    )
     with get_connection(case[0], write=True) as connection:
         connection.execute(
             """UPDATE campaign_search_run_runtime
@@ -265,9 +338,19 @@ def test_stale_processing_attempt_is_recoverable_but_live_attempt_is_not(case) -
                WHERE search_run_id=? AND attempt_number=1""",
             (search_run_id,),
         ).fetchone()
+        terminal_events = connection.execute(
+            """SELECT attempt_number,stage_code FROM campaign_search_progress_events
+               WHERE search_run_id=? AND stage_code IN ('FAILED','QUEUED')
+               ORDER BY progress_event_id""",
+            (search_run_id,),
+        ).fetchall()
     assert tuple(first) == (
-        "FAILED", "STALE_PROCESSING_ATTEMPT", "CHECKING_INTELLIGENCE", 1,
+        "FAILED", "STALE_PROCESSING_ATTEMPT", "CHECKING_CURRENT_INTELLIGENCE", 1,
     )
+    assert [tuple(row) for row in terminal_events][-2:] == [
+        (1, "FAILED"),
+        (2, "QUEUED"),
+    ]
 
 
 def test_eta_is_bounded_qualified_and_never_fabricated_for_queued_work() -> None:
@@ -324,3 +407,121 @@ def test_eta_is_bounded_qualified_and_never_fabricated_for_queued_work() -> None
     assert queued["estimated_completion_at"] is None
     assert queued["estimate_confidence"] == "UNAVAILABLE"
     assert queued["estimate_basis"] == "WAITING_FOR_CAPACITY"
+
+
+def test_eta_history_is_isolated_by_workload_and_stage(case) -> None:
+    repository = case[3]
+    samples = (
+        ("DIRECT_INTELLIGENCE_REUSE", 10),
+        ("NEW_RESULT_MATERIALIZATION", 100),
+    )
+    sample_runs = {
+        workload: [
+            _search(case, campaign_name=f"{workload} sample {sample_index}")
+            for sample_index in range(3)
+        ]
+        for workload, _duration in samples
+    }
+    with get_connection(case[0], write=True) as connection:
+        for workload_index, (workload, duration) in enumerate(samples):
+            for sample_index, search_run_id in enumerate(sample_runs[workload]):
+                base_second = workload_index * 10 + sample_index
+                started_at = f"2030-01-0{sample_index + 1}T10:00:{base_second:02d}Z"
+                ended = datetime.fromisoformat(
+                    started_at.replace("Z", "+00:00")
+                ) + timedelta(seconds=duration)
+                connection.execute(
+                    """INSERT INTO campaign_search_progress_events (
+                           search_run_id,attempt_number,stage_code,stage_label,
+                           progress_percent,processed_count,total_count,status_message,
+                           workload_class,recorded_at
+                       ) VALUES (?,1,'MATERIALIZING_RESULT','Building result',94,1,NULL,
+                                 'Building result',?,?)""",
+                    (search_run_id, workload, started_at),
+                )
+                connection.execute(
+                    """INSERT INTO campaign_search_progress_events (
+                           search_run_id,attempt_number,stage_code,stage_label,
+                           progress_percent,processed_count,total_count,status_message,
+                           workload_class,recorded_at
+                       ) VALUES (?,1,'VERIFYING_RESULT','Verifying result',99,1,1,
+                                 'Verifying result',?,?)""",
+                    (
+                        search_run_id,
+                        workload,
+                        ended.isoformat(timespec="seconds").replace("+00:00", "Z"),
+                    ),
+                )
+
+    history = repository.stage_duration_history()
+    assert history[("DIRECT_INTELLIGENCE_REUSE", "MATERIALIZING_RESULT")] == pytest.approx(
+        [10.0, 10.0, 10.0], abs=0.001
+    )
+    assert history[("NEW_RESULT_MATERIALIZATION", "MATERIALIZING_RESULT")] == pytest.approx(
+        [100.0, 100.0, 100.0], abs=0.001
+    )
+
+
+def test_attempt_timing_excludes_queue_wait_and_resets_on_retry(case) -> None:
+    repository = case[3]
+    search_run_id = _search(case)
+    first_fence = _fence(case, search_run_id)
+    first_queued = repository.fetch_current_attempt(search_run_id)
+    assert first_queued["started_at"] is None
+
+    repository.mark_processing(
+        search_run_id,
+        **first_fence,
+        timestamp="2026-09-13T10:02:00Z",
+    )
+    repository.fail_search_run(
+        search_run_id,
+        **first_fence,
+        timestamp="2026-09-13T10:02:10Z",
+    )
+    first_terminal = repository.fetch_current_attempt(search_run_id)
+    first_projection = project_run_progress(
+        repository.fetch_search_run(search_run_id),
+        repository.fetch_search_runtime(search_run_id),
+        attempt=first_terminal,
+    )
+    assert first_projection["queue_seconds"] == 120.0
+    assert first_projection["processing_seconds"] == 10.0
+    assert first_projection["total_elapsed_seconds"] == 130.0
+
+    repository.retry_search_run(
+        search_run_id,
+        idempotency_key="timing-retry-0001",
+        timestamp="2026-09-13T10:03:00Z",
+    )
+    second_queued = repository.fetch_current_attempt(search_run_id)
+    assert second_queued["attempt_number"] == 2
+    assert second_queued["started_at"] is None
+    second_fence = _fence(case, search_run_id, owner="timing-retry")
+    repository.mark_processing(
+        search_run_id,
+        **second_fence,
+        timestamp="2026-09-13T10:03:30Z",
+    )
+    repository.fail_search_run(
+        search_run_id,
+        **second_fence,
+        timestamp="2026-09-13T10:03:40Z",
+    )
+    second_terminal = repository.fetch_current_attempt(search_run_id)
+    second_projection = project_run_progress(
+        repository.fetch_search_run(search_run_id),
+        repository.fetch_search_runtime(search_run_id),
+        attempt=second_terminal,
+    )
+    assert second_projection["queue_seconds"] == 30.0
+    assert second_projection["processing_seconds"] == 10.0
+    assert second_projection["total_elapsed_seconds"] == 40.0
+
+    with get_connection(case[0]) as connection:
+        preserved = dict(connection.execute(
+            """SELECT * FROM campaign_search_attempts
+               WHERE search_run_id=? AND attempt_number=1""",
+            (search_run_id,),
+        ).fetchone())
+    assert preserved == first_terminal

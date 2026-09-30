@@ -117,6 +117,18 @@ def _technical_details(
         "technical_message": (
             None if orchestration is None else orchestration.get("technical_message")
         ),
+        "failure_code": (
+            None if orchestration is None else orchestration.get("failure_code")
+        ),
+        "failure_category": (
+            None if orchestration is None else orchestration.get("failure_category")
+        ),
+        "retryable": bool(orchestration and orchestration.get("retryable")),
+        "technical_reference": (
+            None
+            if orchestration is None
+            else f"P10-{int(orchestration['orchestration_id'])}"
+        ),
     }
 
 
@@ -137,7 +149,8 @@ def _response(
         "stage": stage,
         "progress_percent": progress_percent,
         "business_message": business_message,
-        "can_retry": status in {"NOT_STARTED", "BLOCKED", "FAILED", "STALE"},
+        "can_retry": status in {"NOT_STARTED", "STALE"}
+        or bool(orchestration and orchestration.get("retryable")),
         "is_ready": status == "READY",
         "reuse_summary": reuse_summary,
         "technical_details": _technical_details(requested, orchestration),
@@ -341,6 +354,10 @@ def retry_phase10_targeting_intelligence(
         raise Phase10ApiConflictError("Targeting intelligence is already being prepared.")
     if current["status"] == "READY":
         raise Phase10ApiConflictError("Targeting intelligence is already ready.")
+    if current["status"] in {"BLOCKED", "FAILED"} and not current["can_retry"]:
+        raise Phase10ApiConflictError(
+            "This targeting-intelligence failure is not eligible for retry."
+        )
     return prepare_phase10_targeting_intelligence(
         database_path,
         targeting_context_id,

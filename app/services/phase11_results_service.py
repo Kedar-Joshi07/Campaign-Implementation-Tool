@@ -29,12 +29,20 @@ from app.services.phase11_run_lifecycle_service import (
     project_run_progress,
 )
 from app.services.targeting_option_catalog_service import get_product_catalog_entries
+from app.services.source_currentness_service import result_lineage_is_current
 
 
 RESULT_SOURCE_LABELS = {
     "EXACT_RESULT_REUSE": "Reused previous exact result",
     "INTELLIGENCE_REUSE": "Reused existing targeting intelligence",
     "NEW_INTELLIGENCE_BUILD": "Prepared new targeting intelligence",
+}
+PROPENSITY_BUCKET_LABELS = {
+    "0.90": "90% to 100%",
+    "0.80": "80% to <90%",
+    "0.70": "70% to <80%",
+    "0.60": "60% to <70%",
+    "0.50": "50% to <60%",
 }
 ACTIVE_SEARCH_STATUSES = frozenset({"QUEUED", "PROCESSING"})
 DOWNLOAD_ENGINE_AVAILABLE = True
@@ -79,11 +87,16 @@ def _decode_contracts(
 
 
 def _product_summaries(
-    database_path: Path, product_ids: list[str]
+    database_path: Path,
+    product_ids: list[str],
+    *,
+    catalog_version: str | None = None,
 ) -> list[dict[str, str]]:
     if not product_ids:
         return []
-    catalog = get_product_catalog_entries(database_path, product_ids)
+    catalog = get_product_catalog_entries(
+        database_path, product_ids, catalog_version=catalog_version
+    )
     missing = [product_id for product_id in product_ids if product_id not in catalog]
     if not missing:
         return [catalog[product_id] for product_id in product_ids]
@@ -150,6 +163,28 @@ def _safe_message(run: Mapping[str, Any]) -> str:
     return messages[str(run["status"])]
 
 
+def _selection_projection(
+    run: Mapping[str, Any], criteria: Mapping[str, Any]
+) -> dict[str, str]:
+    if str(run.get("selection_contract_version") or "1") == "2":
+        bucket = str(run.get("propensity_bucket") or "")
+        label = PROPENSITY_BUCKET_LABELS.get(bucket)
+        if label is None:
+            raise Phase11ResultProjectionError(
+                "Saved calibrated selection could not be reopened safely."
+            )
+        return {
+            "selection_label": "Purchase Propensity",
+            "selection_value": label,
+            "selection_semantics": "CALIBRATED_PURCHASE_PROBABILITY",
+        }
+    return {
+        "selection_label": "Match Strength",
+        "selection_value": str(criteria["match_strength"]),
+        "selection_semantics": "LEGACY_RAW_SCORE",
+    }
+
+
 def _recorded_currentness(
     snapshot: Mapping[str, Any] | None,
     generation: Mapping[str, Any] | None,
@@ -170,27 +205,19 @@ def _recorded_currentness(
     return "STALE"
 
 
-def _demographic_source_is_current(
-    database_path: Path, generation: Mapping[str, Any] | None
+def _result_lineage_is_current(
+    database_path: Path,
+    run: Mapping[str, Any],
+    generation: Mapping[str, Any] | None,
 ) -> bool:
-    if generation is None:
-        return False
-    with get_connection(database_path) as connection:
-        row = connection.execute(
-            """
-            SELECT import_id, source_checksum
-            FROM data_import_runs
-            WHERE dataset_name='demographics' AND status='COMPLETED'
-            ORDER BY import_id DESC
-            LIMIT 1
-            """
-        ).fetchone()
-    return bool(
-        row is not None
-        and int(row["import_id"]) == generation.get("demographic_import_id")
-        and str(row["source_checksum"]) == generation.get(
-            "demographic_source_checksum"
-        )
+    calibration_id = run.get("calibration_artifact_id")
+    return result_lineage_is_current(
+        database_path,
+        generation,
+        selection_contract_version=str(run.get("selection_contract_version") or "1"),
+        calibration_artifact_id=(
+            int(calibration_id) if calibration_id is not None else None
+        ),
     )
 
 
@@ -213,31 +240,52 @@ def _base_projection(
     criteria: Mapping[str, Any], snapshot: Mapping[str, Any] | None,
     generation: Mapping[str, Any] | None,
     repository: CampaignResultRegistryRepository,
-    stage_history: Mapping[str, list[float]] | None = None,
-    product_catalog: Mapping[str, dict[str, str]] | None = None,
+    stage_history: Mapping[tuple[str, str], list[float]] | None = None,
+    product_catalog: Mapping[
+        tuple[str | None, str], dict[str, str]
+    ] | None = None,
     demographic_source_current: bool | None = None,
     runtime_override: Mapping[str, Any] | None = None,
+    attempt_override: Mapping[str, Any] | None = None,
     queue_positions: Mapping[int, int] | None = None,
 ) -> dict[str, Any]:
     source = run.get("result_source")
     product_ids = list(context["product_ids"])
     products = (
-        [product_catalog.get(product_id, {
-            "product_id": product_id, "product_name": product_id,
-            "product_category": "",
-        }) for product_id in product_ids]
+        [
+            product_catalog.get(
+                (run.get("catalog_version"), product_id),
+                product_catalog.get((None, product_id), {
+                    "product_id": product_id, "product_name": product_id,
+                    "product_category": "",
+                }),
+            )
+            for product_id in product_ids
+        ]
         if product_catalog is not None
-        else _product_summaries(database_path, product_ids)
+        else _product_summaries(
+            database_path,
+            product_ids,
+            catalog_version=run.get("catalog_version"),
+        )
     )
     currentness = _recorded_currentness(
         snapshot,
         generation,
-        _demographic_source_is_current(database_path, generation)
+        _result_lineage_is_current(database_path, run, generation)
         if demographic_source_current is None else demographic_source_current,
     )
     channel = str(run["delivery_channel"])
     runtime = runtime_override or repository.fetch_search_runtime(int(run["search_run_id"]))
+    attempt = attempt_override or repository.fetch_current_attempt(int(run["search_run_id"]))
     issue = project_run_issue(runtime)
+    selection_projection = _selection_projection(run, criteria)
+    targeting_summary = _targeting_summary(criteria)
+    if selection_projection["selection_semantics"] == "CALIBRATED_PURCHASE_PROBABILITY":
+        targeting_summary = [
+            f"Purchase propensity: {selection_projection['selection_value']}",
+            *targeting_summary,
+        ]
     return {
         "search_run_id": int(run["search_run_id"]),
         "campaign_name": str(run["campaign_name"]),
@@ -252,7 +300,8 @@ def _base_projection(
         "export_profile": str(run["export_profile"]),
         "delivery_profile_label": channel.replace("_", " ").title(),
         "match_strength": str(criteria["match_strength"]),
-        "targeting_summary": _targeting_summary(criteria),
+        **selection_projection,
+        "targeting_summary": targeting_summary,
         "selected_count": run.get("selected_count"),
         "result_source": source,
         "result_source_label": RESULT_SOURCE_LABELS.get(
@@ -268,7 +317,10 @@ def _base_projection(
         "safe_message": _safe_message(run),
         "progress": project_run_progress(
             run, runtime,
-            stage_duration_samples=(stage_history or {}).get(str(runtime["stage_code"])) if runtime else None,
+            attempt=attempt,
+            stage_duration_samples=(stage_history or {}).get((
+                str(runtime["workload_class"]), str(runtime["stage_code"])
+            )) if runtime else None,
         ),
         "issue": issue,
         "retry_eligible": bool(issue and issue.get("retryable")),
@@ -331,6 +383,7 @@ def list_result_history(
     snapshots = bulk("campaign_result_snapshots", "result_snapshot_id", snapshot_ids)
     generations = bulk("phase10_intelligence_generations", "generation_id", generation_ids)
     runtimes = bulk("campaign_search_run_runtime", "search_run_id", run_ids)
+    attempts = repository.fetch_current_attempts(run_ids)
     decoded: list[tuple[dict[str, Any], dict[str, Any], dict[str, Any], list[dict[str, Any]]]] = []
     all_product_ids: set[str] = set()
     for run in runs:
@@ -341,13 +394,32 @@ def list_result_history(
         all_product_ids.update(context["product_ids"])
         decoded.append((run, context, criteria, branches))
     product_rows = _product_summaries(path, sorted(all_product_ids))
-    product_catalog = {row["product_id"]: row for row in product_rows}
-    with get_connection(path) as connection:
-        latest_demographic = connection.execute(
-            """SELECT import_id,source_checksum FROM data_import_runs
-               WHERE dataset_name='demographics' AND status='COMPLETED'
-               ORDER BY import_id DESC LIMIT 1"""
-        ).fetchone()
+    product_catalog: dict[tuple[str | None, str], dict[str, str]] = {
+        (None, row["product_id"]): row for row in product_rows
+    }
+    catalog_versions = sorted({
+        str(run["catalog_version"])
+        for run in runs if run.get("catalog_version") is not None
+    })
+    if catalog_versions and all_product_ids:
+        version_marks = ",".join("?" for _ in catalog_versions)
+        product_marks = ",".join("?" for _ in all_product_ids)
+        with get_connection(path) as connection:
+            historical_products = connection.execute(
+                f"""SELECT catalog_version,product_id,product_name,product_category
+                    FROM targeting_product_catalog
+                    WHERE catalog_version IN ({version_marks})
+                      AND product_id IN ({product_marks})""",
+                (*catalog_versions, *sorted(all_product_ids)),
+            ).fetchall()
+        product_catalog.update({
+            (str(row["catalog_version"]), str(row["product_id"])): {
+                "product_id": str(row["product_id"]),
+                "product_name": str(row["product_name"]),
+                "product_category": str(row["product_category"]),
+            }
+            for row in historical_products
+        })
     result = []
     for run in runs:
         _saved_run, context, criteria, _branches = next(
@@ -355,17 +427,14 @@ def list_result_history(
         )
         snapshot = snapshots.get(int(run["result_snapshot_id"])) if run.get("result_snapshot_id") is not None else None
         generation = generations.get(int(run["generation_id"])) if run.get("generation_id") is not None else None
-        demographic_current = bool(
-            generation is not None and latest_demographic is not None
-            and int(latest_demographic["import_id"]) == generation.get("demographic_import_id")
-            and str(latest_demographic["source_checksum"]) == generation.get("demographic_source_checksum")
-        )
+        demographic_current = _result_lineage_is_current(path, run, generation)
         result.append(
             _base_projection(
                 path, run, context, criteria, snapshot, generation, repository,
                 stage_history,
                 product_catalog, demographic_current,
                 runtimes.get(int(run["search_run_id"])),
+                attempts.get(int(run["search_run_id"])),
                 queue_positions,
             )
         )
@@ -373,7 +442,40 @@ def list_result_history(
     return result
 
 
-def _score_summary(database_path: Path, scoring_run_id: Any) -> dict[str, Any] | None:
+def _score_summary(
+    database_path: Path, run: Mapping[str, Any]
+) -> dict[str, Any] | None:
+    if str(run.get("selection_contract_version") or "1") == "2":
+        calibration_id = run.get("calibration_artifact_id")
+        if isinstance(calibration_id, bool) or not isinstance(calibration_id, int):
+            return None
+        with get_connection(database_path) as connection:
+            row = connection.execute(
+                """SELECT COUNT(*) AS population_count,
+                          MIN(scores.calibrated_probability) AS probability_min,
+                          MAX(scores.calibrated_probability) AS probability_max,
+                          AVG(scores.calibrated_probability) AS probability_mean
+                   FROM calibrated_propensity_scores AS scores
+                   JOIN score_calibration_artifacts AS artifact
+                     ON artifact.calibration_artifact_id=scores.calibration_artifact_id
+                   WHERE scores.calibration_artifact_id=?
+                     AND artifact.status='PROMOTED'""",
+                (calibration_id,),
+            ).fetchone()
+        if row is None or int(row["population_count"]) == 0:
+            return None
+        return {
+            "scope": "Calibrated potential-customer universe",
+            "metric_label": "Calibrated purchase probability",
+            "semantics": "CALIBRATED_PURCHASE_PROBABILITY",
+            "probability_bucket": str(run["propensity_bucket"]),
+            "population_count": int(row["population_count"]),
+            "minimum": float(row["probability_min"]),
+            "maximum": float(row["probability_max"]),
+            "mean": float(row["probability_mean"]),
+        }
+
+    scoring_run_id = run.get("scoring_run_id")
     if not isinstance(scoring_run_id, int):
         return None
     with get_connection(database_path) as connection:
@@ -463,7 +565,7 @@ def get_result_detail(
         "result_source_explanation": RESULT_SOURCE_LABELS.get(
             str(source), "Result source will be available after completion."
         ),
-        "score_summary": _score_summary(path, run.get("scoring_run_id")),
+        "score_summary": _score_summary(path, run),
         "demographic_summary": _demographic_summary(criteria),
         "snapshot_provenance": provenance,
         "technical_details": {
@@ -503,6 +605,7 @@ __all__ = (
     "Phase11ResultNotFoundError",
     "Phase11ResultProjectionError",
     "RESULT_SOURCE_LABELS",
+    "PROPENSITY_BUCKET_LABELS",
     "get_result_detail",
     "list_result_history",
 )

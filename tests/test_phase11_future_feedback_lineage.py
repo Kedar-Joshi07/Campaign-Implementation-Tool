@@ -67,9 +67,13 @@ def completed_search(tmp_path: Path):
         snapshot_sha256="e" * 64,
         timestamp=NOW,
     )
-    repository.mark_processing(search_run_id)
+    fence = repository.claim_search_attempt(
+        search_run_id, lease_owner="future-lineage-test"
+    )
+    repository.mark_processing(search_run_id, **fence.as_kwargs(), timestamp=NOW)
     repository.complete_search_run(
         search_run_id,
+        **fence.as_kwargs(),
         result_snapshot_id=snapshot_id,
         result_source="INTELLIGENCE_REUSE",
         timestamp=LATER,
@@ -110,7 +114,7 @@ def test_fresh_schema_has_nullable_write_once_future_foreign_key_seam(
     assert len(foreign_keys) == 1
     assert foreign_keys[0]["table"] == "campaign_search_runs"
     assert set(PHASE_ELEVEN_FEEDBACK_INDEX_STATEMENTS) <= indexes
-    assert CURRENT_SCHEMA_VERSION == 21
+    assert CURRENT_SCHEMA_VERSION == 30
 
 
 def test_version_17_upgrade_backfills_existing_search_without_changing_it(
@@ -179,7 +183,7 @@ def test_version_17_upgrade_backfills_existing_search_without_changing_it(
         "created_at": NOW,
         "updated_at": NOW,
     }
-    assert version == "21"
+    assert version == str(CURRENT_SCHEMA_VERSION)
 
 
 def test_failed_version_18_migration_rolls_back_table_and_version(

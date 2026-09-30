@@ -250,6 +250,9 @@ def test_orchestrator_reuses_production_snapshot_without_duplicate_file(case):
     first_outcome = execute_phase11_search(
         path,
         first,
+        **repository.claim_search_attempt(
+            first, lease_owner="snapshot-materialization-test"
+        ).as_kwargs(),
         materializer=materializer,
         project_root=path.parent,
         phase10_reader=fixed_reader(ready_response(generation)),
@@ -263,6 +266,9 @@ def test_orchestrator_reuses_production_snapshot_without_duplicate_file(case):
     second_outcome = execute_phase11_search(
         path,
         second,
+        **repository.claim_search_attempt(
+            second, lease_owner="snapshot-materialization-test"
+        ).as_kwargs(),
         materializer=materializer,
         project_root=path.parent,
         phase10_reader=fixed_reader(ready_response(generation)),

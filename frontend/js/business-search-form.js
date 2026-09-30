@@ -207,7 +207,10 @@ async function preflight() {
       body: JSON.stringify({ context: request.context, criteria: request.criteria,
         propensity_bucket: request.propensity_bucket, catalog_version: request.catalog_version }),
     });
-    output.textContent = `${result.intersection_count.toLocaleString()} exact potential customers. ${result.safe_message} Demographic pool: ${result.demographic_count.toLocaleString()}; propensity bucket: ${result.bucket_count.toLocaleString()}.`;
+    const countSummary = result.selection_mode === "TOP_N"
+      ? `${result.qualifying_count.toLocaleString()} qualify; ${result.selected_count.toLocaleString()} would be selected.`
+      : `${result.selected_count.toLocaleString()} exact potential customers.`;
+    output.textContent = `${countSummary} ${result.safe_message} Demographic pool: ${result.demographic_count.toLocaleString()}; propensity bucket: ${result.bucket_count.toLocaleString()}.`;
   } catch (error) {
     output.textContent = error.message || "The exact count could not be checked.";
   } finally {

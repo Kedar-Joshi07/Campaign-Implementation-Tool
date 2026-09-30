@@ -105,6 +105,7 @@ def project_run_progress(
     run: Mapping[str, Any],
     runtime: Mapping[str, Any] | None,
     *,
+    attempt: Mapping[str, Any] | None = None,
     now: datetime | None = None,
     stage_duration_samples: list[float] | None = None,
 ) -> dict[str, Any]:
@@ -125,14 +126,61 @@ def project_run_progress(
             "updated_at": run.get("completed_at") or run.get("created_at"),
             "heartbeat_at": None,
             "state_version": 1,
+            "workload_class": "PENDING_CLASSIFICATION",
         }
     current = now or datetime.now(timezone.utc)
+    heartbeat_at = _parse_timestamp(runtime.get("heartbeat_at"))
+    lifecycle_status = str(runtime["lifecycle_status"])
+    heartbeat_age_seconds = (
+        max(0.0, (current - heartbeat_at).total_seconds())
+        if heartbeat_at is not None and lifecycle_status in ACTIVE_LIFECYCLE_STATUSES
+        else None
+    )
+    heartbeat_state = (
+        "NOT_AVAILABLE"
+        if heartbeat_age_seconds is None
+        else "STALE"
+        if heartbeat_age_seconds >= STALE_HEARTBEAT_SECONDS
+        else "CURRENT"
+    )
+    queued_at = _parse_timestamp(
+        (attempt or {}).get("created_at") or run.get("created_at")
+    )
+    processing_started_at = _parse_timestamp(
+        (attempt or {}).get("started_at")
+        or runtime.get("processing_started_at")
+    )
+    completed_at = _parse_timestamp(
+        (attempt or {}).get("completed_at") or run.get("completed_at")
+    )
+    queue_end = processing_started_at or (
+        current if lifecycle_status == "QUEUED" else None
+    )
+    processing_end = completed_at or (
+        current if lifecycle_status == "PROCESSING" else None
+    )
+    total_end = completed_at or (
+        current
+        if lifecycle_status in {"QUEUED", "PROCESSING"}
+        else None
+    )
+
+    def seconds_between(start: datetime | None, end: datetime | None) -> float | None:
+        if start is None or end is None:
+            return None
+        return max(0.0, (end - start).total_seconds())
+
+    queue_seconds = seconds_between(queued_at, queue_end)
+    processing_seconds = seconds_between(processing_started_at, processing_end)
+    if completed_at is not None and processing_started_at is None:
+        processing_seconds = 0.0
+    total_elapsed_seconds = seconds_between(queued_at, total_end)
     eta = _bounded_eta(
         run, runtime, now=current, stage_duration_samples=stage_duration_samples,
     )
     return {
         "contract_version": "1",
-        "lifecycle_status": str(runtime["lifecycle_status"]),
+        "lifecycle_status": lifecycle_status,
         "stage_code": str(runtime["stage_code"]),
         "stage_label": str(runtime["stage_label"]),
         "progress_percent": int(runtime["progress_percent"]),
@@ -147,6 +195,20 @@ def project_run_progress(
         "updated_at": str(runtime["updated_at"]),
         "heartbeat_at": runtime.get("heartbeat_at"),
         "state_version": int(runtime["state_version"]),
+        "workload_class": str(
+            runtime.get("workload_class") or "PENDING_CLASSIFICATION"
+        ),
+        "heartbeat_age_seconds": heartbeat_age_seconds,
+        "heartbeat_state": heartbeat_state,
+        "queued_at": _timestamp(queued_at) if queued_at is not None else None,
+        "processing_started_at": (
+            _timestamp(processing_started_at)
+            if processing_started_at is not None else None
+        ),
+        "completed_at": _timestamp(completed_at) if completed_at is not None else None,
+        "queue_seconds": queue_seconds,
+        "processing_seconds": processing_seconds,
+        "total_elapsed_seconds": total_elapsed_seconds,
     } | eta
 
 
@@ -193,9 +255,12 @@ def project_run_issue(
         "affected_stage": str(
             runtime.get("failure_stage_code") or runtime.get("stage_code") or "UNKNOWN"
         ),
-        "technical_reference": str(runtime["failure_code"]),
+        "technical_reference": str(
+            runtime.get("technical_reference") or runtime["failure_code"]
+        ),
         "user_action_required": str(runtime.get("failure_category")) in {
             "SAVED_TARGETING_CRITERIA", "TARGETING_INTELLIGENCE", "CALIBRATION",
+            "BUSINESS_DATA_INSUFFICIENCY", "PERMANENT_VALIDATION",
         },
     }
 

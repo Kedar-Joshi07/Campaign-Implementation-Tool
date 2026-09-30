@@ -1083,16 +1083,17 @@ def test_deep_integrity_validator_detects_duplicate_identity_aggregate_signal(
     )
     scoring_run_id = int(result["scoring_run_id"])
 
-    original_fetch = scoring_service.ScoringRepository.fetch_score_aggregates
+    original_fetch = scoring_service.ScoringRepository.fetch_phase10_score_integrity
 
     def _fake_aggregates(self: Any, scoring_run_id: int) -> dict[str, Any]:
         aggregates = original_fetch(self, scoring_run_id)
         aggregates["distinct_person_count"] = int(aggregates["score_count"]) - 1
+        aggregates["duplicate_person_count"] = 1
         return aggregates
 
     monkeypatch.setattr(
         scoring_service.ScoringRepository,
-        "fetch_score_aggregates",
+        "fetch_phase10_score_integrity",
         _fake_aggregates,
     )
 

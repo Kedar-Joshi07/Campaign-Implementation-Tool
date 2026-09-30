@@ -488,6 +488,9 @@ See .env.example for supported variables:
 - No customer-person identity resolution.
 - No authentication, authorization, tenant isolation, or RBAC.
 - No activation/send channel integrations.
-- No provider feedback ingestion, automated outcome labeling, or retraining loop.
+- Governed manual CSV/JSON purchase-outcome feedback can recalibrate an existing
+  scoring generation. It does not retrain the feature model or constitute
+  reinforcement learning. There is no provider feedback integration or automatic
+  true-model retraining loop.
 - Local artifact storage and local operational posture, not a multi-tenant deployment profile.
 - Timing evidence is environment-dependent and not an SLA.

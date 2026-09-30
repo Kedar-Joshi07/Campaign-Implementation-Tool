@@ -110,7 +110,8 @@ def main() -> int:
         rows.append(row)
         print(
             f"scenario={scenario['id']:02d} demographic={result['demographic_count']} "
-            f"bucket={result['bucket_count']} exact={result['intersection_count']} "
+            f"bucket={result['bucket_count']} qualifying={result['qualifying_count']} "
+            f"selected={result['selected_count']} "
             f"demo_ready={result['demo_ready']}",
             flush=True,
         )

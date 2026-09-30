@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import importlib.metadata
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -29,6 +29,13 @@ from app.ml.feature_contract import (
     normalize_categorical_features,
     normalize_numeric_features,
     validate_and_normalize_feature_frame,
+)
+from app.ml.campaign_group_split import (
+    CALIBRATION_EVALUATION,
+    CALIBRATION_FIT,
+    MODEL_TRAINING,
+    CampaignGroupSplitError,
+    build_campaign_group_partition,
 )
 
 
@@ -112,6 +119,8 @@ class CustomerCohortSplit:
     validation_features: pd.DataFrame
     train_labels: pd.Series
     validation_labels: pd.Series
+    split_strategy: str = "CUSTOMER_STRATIFIED_V1"
+    split_lineage: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -138,6 +147,7 @@ def split_customer_cohort(
     *,
     validation_fraction: float = DEFAULT_VALIDATION_FRACTION,
     random_seed: int = DEFAULT_RANDOM_SEED,
+    campaign_memberships: Mapping[str, Sequence[str]] | None = None,
 ) -> CustomerCohortSplit:
     """Create a deterministic stratified split at unique-customer grain."""
     if isinstance(random_seed, bool) or not isinstance(random_seed, int):
@@ -168,18 +178,41 @@ def split_customer_cohort(
         [ordered.loc[:, ["customer_id", "pu_label"]], normalized_features],
         axis=1,
     )
-    try:
-        train_rows, validation_rows = train_test_split(
-            normalized,
-            test_size=float(validation_fraction),
-            random_state=random_seed,
-            shuffle=True,
-            stratify=normalized["pu_label"],
-        )
-    except ValueError as exc:
-        raise FeatureSplitError(
-            "Customer cohort is too small for a stratified train/validation split."
-        ) from exc
+    split_lineage: dict[str, Any] = {}
+    split_strategy = "CUSTOMER_STRATIFIED_V1"
+    if campaign_memberships is None:
+        try:
+            train_rows, validation_rows = train_test_split(
+                normalized,
+                test_size=float(validation_fraction),
+                random_state=random_seed,
+                shuffle=True,
+                stratify=normalized["pu_label"],
+            )
+        except ValueError as exc:
+            raise FeatureSplitError(
+                "Customer cohort is too small for a stratified train/validation split."
+            ) from exc
+    else:
+        try:
+            grouped = build_campaign_group_partition(
+                normalized,
+                campaign_memberships,
+                seed=random_seed,
+                validation_fraction=float(validation_fraction),
+            )
+        except CampaignGroupSplitError as exc:
+            raise FeatureSplitError(str(exc)) from exc
+        split_strategy = str(grouped.lineage["strategy_version"])
+        split_lineage = grouped.lineage
+        train_rows = normalized.loc[
+            grouped.customer_partitions == MODEL_TRAINING
+        ]
+        validation_rows = normalized.loc[
+            grouped.customer_partitions.isin(
+                (CALIBRATION_FIT, CALIBRATION_EVALUATION)
+            )
+        ]
 
     train_rows = train_rows.reset_index(drop=True)
     validation_rows = validation_rows.reset_index(drop=True)
@@ -206,6 +239,8 @@ def split_customer_cohort(
         validation_features=validation_rows.loc[:, ORDERED_FEATURES].reset_index(drop=True),
         train_labels=train_rows["pu_label"].astype("Int8"),
         validation_labels=validation_rows["pu_label"].astype("Int8"),
+        split_strategy=split_strategy,
+        split_lineage=split_lineage,
     )
 
 

@@ -23,6 +23,13 @@ from app.services.phase11_search_orchestration_service import (
 from tests.test_phase11_search_result_registry import _search, case
 
 
+def _worker_fence(kwargs):
+    return {
+        "attempt_number": kwargs["attempt_number"],
+        "execution_lease_token": kwargs["execution_lease_token"],
+    }
+
+
 def _wait_until(predicate, *, timeout: float = 2.0) -> None:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -80,7 +87,9 @@ def test_submit_deduplicates_one_active_search_and_cleans_registry(case) -> None
         calls.append(identifier)
         started.set()
         assert release.wait(1.0)
-        repository.fail_search_run(identifier, blocked=True)
+        repository.fail_search_run(
+            identifier, **_worker_fence(_kwargs), blocked=True
+        )
         return SearchOrchestrationOutcome(identifier, "BLOCKED")
 
     coordinator = _coordinator(case, runner)
@@ -101,7 +110,12 @@ def test_submit_deduplicates_one_active_search_and_cleans_registry(case) -> None
 def test_terminal_search_is_ignored_without_creating_a_future(case) -> None:
     repository = case[3]
     search_run_id = _search(case)
-    repository.fail_search_run(search_run_id, blocked=True)
+    fence = repository.claim_search_attempt(
+        search_run_id, lease_owner="runtime-coordinator-test"
+    )
+    repository.fail_search_run(
+        search_run_id, **fence.as_kwargs(), blocked=True
+    )
     called = False
 
     def runner(*_args, **_kwargs):
@@ -127,11 +141,15 @@ def test_worker_polls_phase10_then_reaches_terminal_state(case) -> None:
         nonlocal calls
         calls += 1
         if calls == 1:
-            repository.mark_processing(identifier)
+            repository.mark_processing(
+                identifier, **_worker_fence(_kwargs)
+            )
             return SearchOrchestrationOutcome(
                 identifier, "PROCESSING", waiting_on="PHASE10_INTELLIGENCE"
             )
-        repository.fail_search_run(identifier)
+        repository.fail_search_run(
+            identifier, **_worker_fence(_kwargs)
+        )
         return SearchOrchestrationOutcome(identifier, "FAILED")
 
     coordinator = _coordinator(case, runner)
@@ -169,7 +187,9 @@ def test_shutdown_wakes_poller_preserves_durable_state_and_rejects_submit(case) 
     waiting = Event()
 
     def runner(_path, identifier, **_kwargs):
-        repository.mark_processing(identifier)
+        repository.mark_processing(
+            identifier, **_worker_fence(_kwargs)
+        )
         waiting.set()
         return SearchOrchestrationOutcome(
             identifier, "PROCESSING", waiting_on="PHASE10_INTELLIGENCE"

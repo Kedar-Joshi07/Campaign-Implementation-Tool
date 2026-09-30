@@ -18,7 +18,6 @@ from sklearn.metrics import average_precision_score, brier_score_loss, log_loss,
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.repositories.phase10_intelligence_repository import Phase10IntelligenceRepository
-from app.repositories.historical_repository import build_matching_observations_cte
 from app.services.intelligence_attestation_service import (
     has_current_attestation,
     record_deep_verification_attestation,
@@ -28,20 +27,19 @@ from app.services.model_scoring_compatibility import (
     validate_scoreable_model,
 )
 from app.services.training_cohort_service import reconstruct_training_cohort
+from app.services.calibrated_selection_contract_service import PROPENSITY_BUCKETS
 from app.ml.preprocessing import split_customer_cohort
+from app.ml.campaign_group_split import (
+    CALIBRATION_EVALUATION,
+    CALIBRATION_FIT,
+    MODEL_TRAINING,
+    SPLIT_STRATEGY_VERSION,
+    build_campaign_group_partition,
+)
 
 
-CALIBRATION_CONTRACT_VERSION = "1"
+CALIBRATION_CONTRACT_VERSION = "2"
 CALIBRATION_SPLIT_SEED = 1729
-PROPENSITY_BUCKETS = {
-    "0.90": (0.90, 1.00, True),
-    "0.80": (0.80, 0.90, False),
-    "0.70": (0.70, 0.80, False),
-    "0.60": (0.60, 0.70, False),
-    "0.50": (0.50, 0.60, False),
-}
-
-
 class PropensityCalibrationError(RuntimeError):
     pass
 
@@ -84,6 +82,38 @@ def _metrics(labels: np.ndarray, probabilities: np.ndarray) -> dict[str, float]:
     }
 
 
+def _has_governed_three_way_lineage(lineage: dict[str, Any]) -> bool:
+    overlaps = lineage.get("overlap_counts")
+    partitions = (
+        set(lineage.get("model_training_group_ids", ())),
+        set(lineage.get("calibration_fit_group_ids", ())),
+        set(lineage.get("calibration_evaluation_group_ids", ())),
+    )
+    balances = (
+        lineage.get("calibration_fit_class_balance"),
+        lineage.get("calibration_evaluation_class_balance"),
+    )
+    return bool(
+        lineage.get("three_way_isolated") is True
+        and lineage.get("strategy_version") == SPLIT_STRATEGY_VERSION
+        and lineage.get("candidate_selection_partition")
+        == "calibration_evaluation"
+        and lineage.get("evaluation_records_used_for_fit") == 0
+        and isinstance(overlaps, dict)
+        and overlaps
+        and all(value == 0 for value in overlaps.values())
+        and all(partitions)
+        and not partitions[0].intersection(partitions[1] | partitions[2])
+        and not partitions[1].intersection(partitions[2])
+        and all(
+            isinstance(balance, dict)
+            and int(balance.get("positive", 0)) > 0
+            and int(balance.get("negative", 0)) > 0
+            for balance in balances
+        )
+    )
+
+
 def apply_calibration(artifact: dict[str, Any], raw_scores: np.ndarray) -> np.ndarray:
     scores = np.asarray(raw_scores, dtype=np.float64)
     if artifact.get("method") == "SIGMOID":
@@ -104,6 +134,9 @@ def fit_held_out_calibration(
     group_ids: list[str] | np.ndarray,
     *,
     seed: int = CALIBRATION_SPLIT_SEED,
+    calibration_fit_group_ids: list[str] | tuple[str, ...] | None = None,
+    calibration_evaluation_group_ids: list[str] | tuple[str, ...] | None = None,
+    model_training_group_ids: list[str] | tuple[str, ...] = (),
 ) -> FittedCalibration:
     scores = np.asarray(raw_scores, dtype=np.float64)
     labels = np.asarray(outcomes, dtype=np.int8)
@@ -117,11 +150,40 @@ def fit_held_out_calibration(
     unique_groups = np.unique(groups)
     if unique_groups.size < 2:
         raise PropensityCalibrationError("Calibration requires at least two independent campaign groups.")
-    shuffled = unique_groups.copy()
-    np.random.default_rng(seed).shuffle(shuffled)
-    calibration_groups = set(shuffled[: max(1, shuffled.size // 2)])
+    if (calibration_fit_group_ids is None) != (
+        calibration_evaluation_group_ids is None
+    ):
+        raise PropensityCalibrationError(
+            "Both calibration partition group lists must be supplied together."
+        )
+    if calibration_fit_group_ids is None:
+        shuffled = unique_groups.copy()
+        np.random.default_rng(seed).shuffle(shuffled)
+        calibration_groups = set(shuffled[: max(1, shuffled.size // 2)])
+        evaluation_groups = set(shuffled) - calibration_groups
+    else:
+        calibration_groups = set(calibration_fit_group_ids)
+        evaluation_groups = set(calibration_evaluation_group_ids or ())
+        if calibration_groups | evaluation_groups != set(unique_groups):
+            raise PropensityCalibrationError(
+                "Persisted calibration partitions do not exactly cover held-out groups."
+            )
+    model_groups = set(model_training_group_ids)
+    overlap_counts = {
+        "model_training_calibration_fit": len(model_groups & calibration_groups),
+        "model_training_calibration_evaluation": len(model_groups & evaluation_groups),
+        "calibration_fit_calibration_evaluation": len(
+            calibration_groups & evaluation_groups
+        ),
+    }
+    if any(overlap_counts.values()):
+        raise PropensityCalibrationError(
+            "Model, calibration-fit, and calibration-evaluation groups must not overlap."
+        )
     calibration_mask = np.asarray([value in calibration_groups for value in groups])
-    test_mask = ~calibration_mask
+    test_mask = np.asarray([value in evaluation_groups for value in groups])
+    if not calibration_mask.all() and not (calibration_mask | test_mask).all():
+        raise PropensityCalibrationError("A held-out record has no governed partition.")
     if len(np.unique(labels[calibration_mask])) < 2 or len(np.unique(labels[test_mask])) < 2:
         raise PropensityCalibrationError("The deterministic grouped split lacks both outcome classes.")
 
@@ -151,17 +213,45 @@ def fit_held_out_calibration(
         method=str(artifact["method"]), artifact=artifact, metrics=metrics,
         split_lineage={
             "seed": seed,
-            "strategy": "DETERMINISTIC_GROUPED_CAMPAIGN_HOLDOUT",
+            "strategy": SPLIT_STRATEGY_VERSION,
+            "strategy_version": SPLIT_STRATEGY_VERSION,
             "calibration_count": int(calibration_mask.sum()),
             "test_count": int(test_mask.sum()),
             "calibration_group_count": len(calibration_groups),
-            "test_group_count": int(unique_groups.size - len(calibration_groups)),
-            "group_overlap_count": 0,
+            "test_group_count": len(evaluation_groups),
+            "model_training_group_count": len(model_groups),
+            "model_training_group_ids": sorted(model_groups),
+            "calibration_fit_group_ids": sorted(calibration_groups),
+            "calibration_evaluation_group_ids": sorted(evaluation_groups),
+            "model_training_group_ids_sha256": hashlib.sha256(
+                json.dumps(sorted(model_groups), separators=(",", ":")).encode()
+            ).hexdigest(),
+            "calibration_fit_group_ids_sha256": hashlib.sha256(
+                json.dumps(sorted(calibration_groups), separators=(",", ":")).encode()
+            ).hexdigest(),
+            "calibration_evaluation_group_ids_sha256": hashlib.sha256(
+                json.dumps(sorted(evaluation_groups), separators=(",", ":")).encode()
+            ).hexdigest(),
+            "overlap_counts": overlap_counts,
+            "group_overlap_count": sum(overlap_counts.values()),
+            "calibration_fit_class_balance": {
+                "positive": int(labels[calibration_mask].sum()),
+                "negative": int(calibration_mask.sum() - labels[calibration_mask].sum()),
+            },
+            "calibration_evaluation_class_balance": {
+                "positive": int(labels[test_mask].sum()),
+                "negative": int(test_mask.sum() - labels[test_mask].sum()),
+            },
+            "candidate_selection_partition": "calibration_evaluation",
+            "evaluation_records_used_for_fit": 0,
+            "three_way_isolated": bool(model_groups),
         },
     )
 
 
-def _load_observed_outcomes(path: Path, scoring_run_id: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _load_observed_outcomes(
+    path: Path, scoring_run_id: int
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, dict[str, Any]]:
     """Score only the model's held-out historical customers for calibration.
 
     Prospect identifiers and historical customer identifiers are deliberately
@@ -174,7 +264,7 @@ def _load_observed_outcomes(path: Path, scoring_run_id: int) -> tuple[np.ndarray
     with get_connection(path) as connection:
         scoring = connection.execute(
             """SELECT s.model_run_id,m.analysis_run_id,m.random_seed,
-                      m.validation_fraction
+                      m.validation_fraction,m.split_lineage_json
                FROM scoring_runs AS s
                JOIN model_runs AS m ON m.model_run_id=s.model_run_id
                WHERE s.scoring_run_id=? AND s.status='COMPLETED'
@@ -192,27 +282,35 @@ def _load_observed_outcomes(path: Path, scoring_run_id: int) -> tuple[np.ndarray
         cohort.frame,
         validation_fraction=float(scoring["validation_fraction"]),
         random_seed=int(scoring["random_seed"]),
+        campaign_memberships=cohort.campaign_memberships,
     )
+    if scoring["split_lineage_json"] is None:
+        raise PropensityCalibrationError(
+            "The model predates campaign-group isolation and cannot be calibrated safely."
+        )
+    persisted_lineage = json.loads(str(scoring["split_lineage_json"]))
+    if persisted_lineage != split.split_lineage:
+        raise PropensityCalibrationError(
+            "Reconstructed campaign-group lineage does not match the model run."
+        )
     model = validate_scoreable_model(path, int(scoring["model_run_id"]))
     scores = transform_and_score_prospect_chunk(
         artifact_payload=model.artifact_payload,
         raw_features=split.validation_features,
     )
-    cte, parameters = build_matching_observations_cte(cohort.filters)
-    with get_connection(path) as connection:
-        group_rows = connection.execute(
-            f"""{cte}
-                SELECT labels.customer_id,MIN(observations.campaign_id) AS group_id
-                FROM customer_labels AS labels
-                JOIN matching_observations AS observations
-                  ON observations.customer_id=labels.customer_id
-                GROUP BY labels.customer_id""",
-            parameters,
-        ).fetchall()
-    groups_by_customer = {
-        str(row["customer_id"]): str(row["group_id"])
-        for row in group_rows if row["group_id"] is not None
-    }
+    grouped = build_campaign_group_partition(
+        cohort.frame,
+        cohort.campaign_memberships,
+        seed=int(scoring["random_seed"]),
+        validation_fraction=float(scoring["validation_fraction"]),
+    )
+    groups_by_customer = dict(
+        zip(
+            cohort.frame["customer_id"].astype(str),
+            grouped.customer_group_ids.astype(str),
+            strict=True,
+        )
+    )
     validation_ids = [str(value) for value in split.validation_customer_ids]
     if any(identifier not in groups_by_customer for identifier in validation_ids):
         raise PropensityCalibrationError(
@@ -221,9 +319,14 @@ def _load_observed_outcomes(path: Path, scoring_run_id: int) -> tuple[np.ndarray
     labels = np.asarray(split.validation_labels, dtype=np.int8)
     if scores.shape != labels.shape:
         raise PropensityCalibrationError("Held-out model scores do not match outcomes.")
-    return scores, labels, np.asarray(
-        [groups_by_customer[identifier] for identifier in validation_ids],
-        dtype=str,
+    return (
+        scores,
+        labels,
+        np.asarray(
+            [groups_by_customer[identifier] for identifier in validation_ids],
+            dtype=str,
+        ),
+        persisted_lineage,
     )
 
 
@@ -239,6 +342,10 @@ def publish_fitted_calibration(
     """Persist a fitted candidate and, when approved, publish all calibrated scores."""
 
     path = initialize_database(database_path)
+    if promote and not _has_governed_three_way_lineage(fitted.split_lineage):
+        raise PropensityCalibrationError(
+            "Calibration promotion requires isolated model, fit, and evaluation groups."
+        )
     artifact_json = json.dumps(fitted.artifact, sort_keys=True, separators=(",", ":"))
     metrics_json = json.dumps(fitted.metrics, sort_keys=True, separators=(",", ":"))
     split_json = json.dumps(fitted.split_lineage, sort_keys=True, separators=(",", ":"))
@@ -285,9 +392,9 @@ def publish_fitted_calibration(
                        calibration_contract_version,scoring_run_id,model_run_id,outcome_definition,
                        method,split_seed,split_lineage_json,artifact_json,metrics_json,
                        artifact_sha256,source_checksum,status,created_at
-                   ) VALUES ('1',?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (scoring_run_id, int(scoring["model_run_id"]), "ATTRIBUTED_PURCHASE",
-                 fitted.method, CALIBRATION_SPLIT_SEED, split_json, artifact_json,
+                   ) VALUES (?, ?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (CALIBRATION_CONTRACT_VERSION, scoring_run_id, int(scoring["model_run_id"]), "ATTRIBUTED_PURCHASE",
+                 fitted.method, int(fitted.split_lineage.get("seed", CALIBRATION_SPLIT_SEED)), split_json, artifact_json,
                  metrics_json, artifact_sha, source_checksum,
                  "CANDIDATE" if promote else "REJECTED", now),
             ).lastrowid)
@@ -411,8 +518,20 @@ def publish_calibrated_generation(
     """Fit on held-out outcomes and publish a separate calibrated score generation."""
 
     path = initialize_database(database_path)
-    scores, labels, groups = _load_observed_outcomes(path, scoring_run_id)
-    fitted = fit_held_out_calibration(scores, labels, groups)
+    scores, labels, groups, model_lineage = _load_observed_outcomes(
+        path, scoring_run_id
+    )
+    partitions = model_lineage["partitions"]
+    fitted = fit_held_out_calibration(
+        scores,
+        labels,
+        groups,
+        calibration_fit_group_ids=partitions[CALIBRATION_FIT]["group_ids"],
+        calibration_evaluation_group_ids=partitions[CALIBRATION_EVALUATION][
+            "group_ids"
+        ],
+        model_training_group_ids=partitions[MODEL_TRAINING]["group_ids"],
+    )
     with get_connection(path) as connection:
         source = connection.execute(
             """SELECT source_checksum FROM data_import_runs

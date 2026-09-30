@@ -1,12 +1,18 @@
 from __future__ import annotations
 
+# ruff: noqa: F401, F811 - imported pytest fixture is intentionally injected.
+
 from copy import deepcopy
+from concurrent.futures import ThreadPoolExecutor
 import csv
 import gzip
 import hashlib
 import io
 import json
+from itertools import chain
 from pathlib import Path
+from threading import Barrier, Lock, local
+import time
 
 import pytest
 
@@ -19,13 +25,15 @@ from app.services.phase11_search_orchestration_service import (
     build_generation_fingerprint,
     build_result_cache_key,
     execute_phase11_search,
-    execute_phase11_search_safely,
+    execute_phase11_search_safely as _execute_safe_engine,
     resume_phase11_searches,
     iter_selected_members,
     validate_persisted_search_identity,
     validate_exact_snapshot,
 )
 from tests.test_phase11_search_result_registry import case, _search
+
+import app.services.phase11_search_orchestration_service as orchestration
 
 
 def ready_response(generation, *, build=False):
@@ -49,9 +57,83 @@ def ready_response(generation, *, build=False):
 
 def fixed_reader(response, calls=None):
     def read(path, context_id, **kwargs):
-        if calls is not None: calls.append(("read", context_id))
+        if calls is not None:
+            calls.append(("read", context_id))
         return deepcopy(response)
     return read
+
+
+def _direct_ready_result():
+    return (
+        "READY",
+        {"generation_id": 1},
+        {"status": "READY", "is_ready": True},
+    )
+
+
+def test_current_direct_reuse_does_not_wait_for_unrelated_heavy_gate(monkeypatch):
+    monkeypatch.setattr(
+        orchestration, "_direct_reuse_state", lambda *_args: _direct_ready_result()
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "_phase10_state",
+        lambda *_args, **_kwargs: pytest.fail("direct reuse entered heavy work"),
+    )
+    orchestration._PHASE10_HEAVY_GATE.acquire()
+    try:
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(
+                orchestration._resolve_phase10_state,
+                Path("unused.db"),
+                {"modeling_context_sha256": "a" * 64},
+                project_root=Path("."),
+                reader=lambda *_args, **_kwargs: {},
+                preparer=lambda *_args, **_kwargs: {},
+            )
+            assert future.result(timeout=1.0)[0] == "READY"
+    finally:
+        orchestration._PHASE10_HEAVY_GATE.release()
+
+
+def test_heavy_waiter_rechecks_reuse_and_only_one_worker_builds(monkeypatch):
+    first_checks = Barrier(2)
+    thread_state = local()
+    state_lock = Lock()
+    state = {"ready": False, "builds": 0}
+
+    def direct(*_args):
+        if not getattr(thread_state, "checked", False):
+            thread_state.checked = True
+            first_checks.wait(timeout=2.0)
+            return None
+        with state_lock:
+            return _direct_ready_result() if state["ready"] else None
+
+    def build(*_args, **_kwargs):
+        with state_lock:
+            state["builds"] += 1
+        time.sleep(0.05)
+        with state_lock:
+            state["ready"] = True
+        return _direct_ready_result()
+
+    monkeypatch.setattr(orchestration, "_direct_reuse_state", direct)
+    monkeypatch.setattr(orchestration, "_phase10_state", build)
+
+    def resolve():
+        return orchestration._resolve_phase10_state(
+            Path("unused.db"),
+            {"modeling_context_sha256": "a" * 64},
+            project_root=Path("."),
+            reader=lambda *_args, **_kwargs: {},
+            preparer=lambda *_args, **_kwargs: {},
+        )
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(lambda _value: resolve(), range(2)))
+    assert [result[0] for result in results] == ["READY", "READY"]
+    assert state["builds"] == 1
 
 
 def membership_bytes(rows=2):
@@ -140,7 +222,21 @@ _execute_engine = execute_phase11_search
 
 def execute_phase11_search(*args, **kwargs):
     kwargs.setdefault("membership_source", fixed_membership_source)
+    if "attempt_number" not in kwargs:
+        fence = CampaignResultRegistryRepository(args[0]).claim_search_attempt(
+            args[1], lease_owner="smart-reuse-test"
+        )
+        kwargs.update(fence.as_kwargs())
     return _execute_engine(*args, **kwargs)
+
+
+def execute_phase11_search_safely(*args, **kwargs):
+    if "attempt_number" not in kwargs:
+        fence = CampaignResultRegistryRepository(args[0]).claim_search_attempt(
+            args[1], lease_owner="smart-reuse-safe-test"
+        )
+        kwargs.update(fence.as_kwargs())
+    return _execute_safe_engine(*args, **kwargs)
 
 
 def table_counts(path):
@@ -186,7 +282,7 @@ def test_identical_request_reuses_snapshot_but_creates_second_history_and_profil
     second = _search(case, campaign_name="SMS version", delivery_channel="SMS")
     def forbidden_membership_scan(*args):
         raise AssertionError("exact reuse must not scan Audience Engine membership")
-    outcome = _execute_engine(
+    outcome = execute_phase11_search(
         path, second, materializer=materializer, project_root=path.parent,
         phase10_reader=fixed_reader(ready_response(current), reader_calls),
         membership_source=forbidden_membership_scan,
@@ -425,6 +521,52 @@ def test_materializer_failure_fails_closed_and_new_run_retries_cleanly(case):
         assert connection.execute(
             "SELECT COUNT(*) FROM campaign_result_snapshots"
         ).fetchone()[0] == 1
+
+
+def test_long_materialization_heartbeats_without_overwriting_stage(case, monkeypatch):
+    path, _, _, repository = case
+    current = generation(case)
+    search_run_id = _search(case, campaign_name="Materialization heartbeat")
+    writer = DeterministicMaterializer(path.parent, repository)
+    observations = {}
+    monkeypatch.setattr(orchestration, "_SEARCH_HEARTBEAT_INTERVAL_SECONDS", 0.05)
+
+    def slow_materializer(path_arg, run, generation_arg, cache_key, existing, members):
+        iterator = iter(members)
+        first_member = next(iterator)
+        before = repository.fetch_search_runtime(search_run_id)
+        assert before["stage_code"] == "MATERIALIZING_RESULT"
+        deadline = time.monotonic() + 1.0
+        after = before
+        while int(after["state_version"]) <= int(before["state_version"]):
+            assert time.monotonic() < deadline
+            time.sleep(0.01)
+            after = repository.fetch_search_runtime(search_run_id)
+        observations.update(before=before, after=after)
+        with get_connection(path) as connection:
+            observations["event_count"] = connection.execute(
+                """SELECT COUNT(*) FROM campaign_search_progress_events
+                   WHERE search_run_id=? AND stage_code='MATERIALIZING_RESULT'""",
+                (search_run_id,),
+            ).fetchone()[0]
+        return writer(
+            path_arg, run, generation_arg, cache_key, existing,
+            chain((first_member,), iterator),
+        )
+
+    outcome = execute_phase11_search(
+        path,
+        search_run_id,
+        materializer=slow_materializer,
+        project_root=path.parent,
+        phase10_reader=fixed_reader(ready_response(current)),
+        membership_source=fixed_membership_source,
+    )
+
+    assert outcome.status == "COMPLETED"
+    assert observations["after"]["stage_code"] == "MATERIALIZING_RESULT"
+    assert observations["after"]["progress_percent"] == observations["before"]["progress_percent"]
+    assert observations["event_count"] == 1
 
 
 def test_audience_engine_branches_are_or_merged_in_global_rank_order_and_top_n_stops(case):

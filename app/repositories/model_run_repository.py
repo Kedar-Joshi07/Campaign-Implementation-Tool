@@ -60,6 +60,7 @@ class ModelRunRepository:
         library_versions_json: str,
         artifact_path: str,
         artifact_sha256: str,
+        split_lineage_json: str,
     ) -> None:
         with get_connection(self.database_path, write=True) as connection:
             cursor = connection.execute(
@@ -85,6 +86,7 @@ class ModelRunRepository:
                     library_versions_json = ?,
                     artifact_path = ?,
                     artifact_sha256 = ?,
+                    split_lineage_json = ?,
                     error_message = NULL
                 WHERE model_run_id = ? AND status = 'RUNNING'
                 """,
@@ -107,6 +109,7 @@ class ModelRunRepository:
                     library_versions_json,
                     artifact_path,
                     artifact_sha256,
+                    split_lineage_json,
                     model_run_id,
                 ),
             )

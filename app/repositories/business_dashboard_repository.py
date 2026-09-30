@@ -56,10 +56,17 @@ class BusinessDashboardRepository:
                        rt.failure_code, rt.failure_category, rt.failure_summary,
                        rt.resolution_steps_json, rt.retryable,
                        rt.processing_started_at, rt.updated_at,
-                       rt.heartbeat_at, rt.state_version
+                       rt.heartbeat_at, rt.state_version,
+                       rt.workload_class,
+                       a.created_at AS attempt_created_at,
+                       a.started_at AS attempt_started_at,
+                       a.completed_at AS attempt_completed_at
                 FROM campaign_search_runs AS r
                 LEFT JOIN campaign_search_run_runtime AS rt
                   ON rt.search_run_id = r.search_run_id
+                LEFT JOIN campaign_search_attempts AS a
+                  ON a.search_run_id=r.search_run_id
+                 AND a.attempt_number=r.current_attempt_number
                 ORDER BY r.created_at DESC, r.search_run_id DESC
                 LIMIT ?
                 """,

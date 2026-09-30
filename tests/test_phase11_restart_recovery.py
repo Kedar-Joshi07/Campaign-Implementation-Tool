@@ -19,10 +19,18 @@ from app.services.phase11_search_orchestration_service import (
 )
 from tests.test_phase11_search_result_registry import (
     _complete,
+    _fence,
     _search,
     _snapshot,
     case,
 )
+
+
+def _worker_fence(kwargs):
+    return {
+        "attempt_number": kwargs["attempt_number"],
+        "execution_lease_token": kwargs["execution_lease_token"],
+    }
 from tests.test_phase11_smart_reuse_engine import (
     DeterministicMaterializer,
     fixed_membership_source,
@@ -63,7 +71,9 @@ def test_queued_search_is_scheduled_without_processing_inside_startup(case) -> N
     def runner(_path, identifier, **_kwargs):
         started.set()
         assert release.wait(2.0)
-        repository.fail_search_run(identifier, blocked=True)
+        repository.fail_search_run(
+            identifier, **_worker_fence(_kwargs), blocked=True
+        )
         return SearchOrchestrationOutcome(identifier, "BLOCKED")
 
     coordinator = _coordinator(case, runner)
@@ -92,7 +102,9 @@ def test_processing_search_survives_shutdown_and_resumes_once_after_restart(case
 
     def waiting_runner(_path, identifier, **_kwargs):
         if repository.fetch_search_run(identifier)["status"] == "QUEUED":
-            repository.mark_processing(identifier)
+            repository.mark_processing(
+                identifier, **_worker_fence(_kwargs)
+            )
         first_pass.set()
         return SearchOrchestrationOutcome(
             identifier,
@@ -114,7 +126,9 @@ def test_processing_search_survives_shutdown_and_resumes_once_after_restart(case
         calls.append(identifier)
         resumed.set()
         assert release.wait(2.0)
-        repository.fail_search_run(identifier, blocked=True)
+        repository.fail_search_run(
+            identifier, **_worker_fence(_kwargs), blocked=True
+        )
         return SearchOrchestrationOutcome(identifier, "BLOCKED")
 
     app_b = _coordinator(case, resumed_runner)
@@ -138,7 +152,9 @@ def test_processing_search_survives_shutdown_and_resumes_once_after_restart(case
 def test_processing_search_retries_snapshot_publication_once_and_completes(case) -> None:
     path, _, _, repository = case
     search_run_id = _search(case)
-    repository.mark_processing(search_run_id)
+    repository.mark_processing(
+        search_run_id, **_fence(case, search_run_id)
+    )
     current_generation = generation(case)
     materializer = DeterministicMaterializer(path.parent, repository)
 
@@ -183,9 +199,11 @@ def test_completed_blocked_and_failed_searches_are_not_resubmitted(case) -> None
     snapshot_id = _snapshot(case, completed)
     _complete(case, completed, snapshot_id)
     blocked = _search(case)
-    repository.fail_search_run(blocked, blocked=True)
+    repository.fail_search_run(
+        blocked, **_fence(case, blocked), blocked=True
+    )
     failed = _search(case)
-    repository.fail_search_run(failed)
+    repository.fail_search_run(failed, **_fence(case, failed))
     calls: list[int] = []
 
     def forbidden_runner(_path, identifier, **_kwargs):

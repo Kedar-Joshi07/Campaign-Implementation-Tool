@@ -1,5 +1,7 @@
 """Step 12: bounded business result history and no-contact-PII detail UI."""
 
+# ruff: noqa: F401, F811 - imported pytest fixtures are intentionally injected.
+
 from __future__ import annotations
 
 from copy import deepcopy
@@ -61,13 +63,12 @@ def test_result_api_is_additive_newest_first_bounded_and_preserves_each_submissi
     second_payload["campaign_name"] = "Second intentional submission"
     second = client.post(RUNS, json=second_payload).json()
 
-    # Lifecycle recovery metadata is additive and stable across create/list/status.
+    # The legacy/v1 run-status allowlist remains byte-for-field stable. Rich
+    # lifecycle data is exposed separately by Results and by explicit v2 status.
     assert client.get(RUNS).json() == [second, first]
     assert set(first) == {
         "search_run_id", "campaign_name", "status", "created_at", "completed_at",
         "selected_count", "delivery_channel", "export_profile", "safe_message",
-        "selection_contract_version", "attempt_number", "queue_position",
-        "propensity_bucket", "progress", "issue", "retry_eligible",
     }
 
     bulk_queue_calls: list[list[int]] = []
@@ -164,6 +165,8 @@ def test_result_detail_reopens_exact_saved_context_criteria_selection_and_safe_e
     assert detail["snapshot_provenance"] is None
     assert detail["score_summary"] is None
     assert detail["download_eligible"] is False
+    assert detail["selection_contract_version"] == "1"
+    assert detail["propensity_bucket"] is None
     assert not PROHIBITED.intersection(_keys(detail))
     assert client.get(f"{RUNS}/987654/result").status_code == 404
     assert client.get(f"{RUNS}/0/result").status_code == 422
@@ -198,9 +201,12 @@ def test_completed_result_detail_validates_materialized_snapshot_and_lineage(
         database_path, run, generation, cache_key, None, members,
         project_root=tmp_path,
     )
-    repository.mark_processing(run_id)
+    fence = repository.claim_search_attempt(
+        run_id, lease_owner="result-detail-test"
+    )
+    repository.mark_processing(run_id, **fence.as_kwargs())
     repository.complete_search_run(
-        run_id, result_snapshot_id=snapshot_id,
+        run_id, **fence.as_kwargs(), result_snapshot_id=snapshot_id,
         result_source="INTELLIGENCE_REUSE",
     )
 
@@ -225,7 +231,9 @@ def test_completed_result_detail_validates_materialized_snapshot_and_lineage(
     assert not PROHIBITED.intersection(_keys(detail))
 
 
-def _history_item(run_id, *, status="COMPLETED", name=None, eligible=False):
+def _history_item(
+    run_id, *, status="COMPLETED", name=None, eligible=False, bucket=None,
+):
     progress_percent = {
         "QUEUED": 0, "PROCESSING": 68, "COMPLETED": 100,
         "BLOCKED": 22, "FAILED": 54,
@@ -242,6 +250,12 @@ def _history_item(run_id, *, status="COMPLETED", name=None, eligible=False):
             "technical_reference": "FIXTURE-BLOCKED-001",
             "user_action_required": status == "BLOCKED",
         }
+    calibrated = bucket is not None
+    bucket_labels = {
+        "0.90": "90% to 100%", "0.80": "80% to <90%",
+        "0.70": "70% to <80%", "0.60": "60% to <70%",
+        "0.50": "50% to <60%",
+    }
     return {
         "search_run_id": run_id,
         "campaign_name": name or f"Campaign {run_id}",
@@ -252,7 +266,17 @@ def _history_item(run_id, *, status="COMPLETED", name=None, eligible=False):
         "campaign_types": ["Retention"], "campaign_categories": ["Lifecycle"],
         "offer_types": ["Loyalty"], "delivery_channel": "EMAIL",
         "export_profile": "EMAIL_CONTACT_V1", "delivery_profile_label": "Email",
-        "match_strength": "STRONG", "targeting_summary": ["State: Ohio, Texas"],
+        "match_strength": "STRONG",
+        "selection_label": "Purchase Propensity" if calibrated else "Match Strength",
+        "selection_value": bucket_labels[bucket] if calibrated else "STRONG",
+        "selection_semantics": (
+            "CALIBRATED_PURCHASE_PROBABILITY" if calibrated else "LEGACY_RAW_SCORE"
+        ),
+        "selection_contract_version": "2" if calibrated else "1",
+        "propensity_bucket": bucket,
+        "targeting_summary": ([
+            f"Purchase propensity: {bucket_labels[bucket]}", "State: Ohio, Texas",
+        ] if calibrated else ["State: Ohio, Texas"]),
         "selected_count": 125 if status == "COMPLETED" else None,
         "result_source": "EXACT_RESULT_REUSE" if status == "COMPLETED" else None,
         "result_source_label": "Reused previous exact result" if status == "COMPLETED" else "Not available until completion",
@@ -280,8 +304,10 @@ def _history_item(run_id, *, status="COMPLETED", name=None, eligible=False):
     }
 
 
-def _detail_payload(run_id=42, *, status="COMPLETED"):
-    return _history_item(run_id, name="Autumn savings", status=status) | {
+def _detail_payload(run_id=42, *, status="COMPLETED", bucket=None):
+    detail = _history_item(
+        run_id, name="Autumn savings", status=status, bucket=bucket,
+    ) | {
         "description": "Retention campaign", "planned_launch_date": "2026-10-01",
         "campaign_context": {
             "product_ids": ["PRD-1"], "campaign_types": ["Retention"],
@@ -311,6 +337,19 @@ def _detail_payload(run_id=42, *, status="COMPLETED"):
         "technical_details": {"targeting_context_id": 4, "generation_id": 3,
                               "targeting_criteria_sha256": "a" * 64},
     }
+    if bucket is not None:
+        detail["score_summary"] = {
+            "scope": "Calibrated potential-customer universe",
+            "metric_label": "Calibrated purchase probability",
+            "semantics": "CALIBRATED_PURCHASE_PROBABILITY",
+            "probability_bucket": bucket,
+            "population_count": 500,
+            "minimum": 0.49,
+            "maximum": 0.99,
+            "mean": 0.71,
+        }
+        detail["snapshot_provenance"]["membership_contract_version"] = "2"
+    return detail
 
 
 @pytest.mark.browser
@@ -330,7 +369,11 @@ def test_results_history_renders_deduplicates_paginates_and_only_polls_active(pa
                 _history_item(21, status="BLOCKED"),
                 _history_item(20, status="FAILED"),
             ] + [
-                _history_item(run_id, eligible=run_id == 19)
+                _history_item(
+                    run_id,
+                    eligible=run_id == 19,
+                    bucket={18: "0.50", 17: "0.60"}.get(run_id),
+                )
                 for run_id in range(19, 2, -1)
             ]
         else:
@@ -340,7 +383,11 @@ def test_results_history_renders_deduplicates_paginates_and_only_polls_active(pa
                 _history_item(21, status="BLOCKED"),
                 _history_item(20, status="FAILED"),
             ] + [
-                _history_item(run_id, eligible=run_id == 19)
+                _history_item(
+                    run_id,
+                    eligible=run_id == 19,
+                    bucket={18: "0.50", 17: "0.60"}.get(run_id),
+                )
                 for run_id in range(19, 2, -1)
             ]
         route.fulfill(status=200, json=payload)
@@ -371,6 +418,12 @@ def test_results_history_renders_deduplicates_paginates_and_only_polls_active(pa
     ).is_visible()
     assert browser.locator('[data-search-run-id="19"]').get_by_role(
         "link", name="Run Again",
+    ).is_visible()
+    assert browser.locator('[data-search-run-id="18"]').get_by_text(
+        "50% to <60%", exact=True,
+    ).is_visible()
+    assert browser.locator('[data-search-run-id="17"]').get_by_text(
+        "60% to <70%", exact=True,
     ).is_visible()
     assert browser.locator('[data-search-run-id="19"] a[download]').get_attribute("href") == "/api/potential-customer-search/runs/19/download"
     browser.wait_for_timeout(5200)
@@ -447,6 +500,8 @@ def test_result_detail_uploads_csv_and_json_feedback_with_governed_headers(page)
                 "created_at": "2026-09-28T10:00:00Z",
                 "retraining_status": "WAITING_FOR_DATA",
                 "retraining_reason": "Waiting for governed feedback.",
+                "recalibration_status": "WAITING_FOR_DATA",
+                "recalibration_reason": "Waiting for governed feedback for recalibration.",
             },
         )
 
@@ -495,13 +550,63 @@ def test_result_detail_uploads_csv_and_json_feedback_with_governed_headers(page)
 
 
 @pytest.mark.browser
-def test_result_detail_is_responsive_progressively_disclosed_and_has_no_contact_pii(page):
+def test_retry_uses_secure_entropy_fallback_without_random_uuid(page):
+    browser, errors, _requests = page
+    browser.add_init_script(
+        """
+        Object.defineProperty(Crypto.prototype, "randomUUID", {
+          configurable: true,
+          value: undefined,
+        });
+        """
+    )
+    retries = []
+    browser.route(
+        "**/api/potential-customer-search/runs/42/result",
+        lambda route: route.fulfill(
+            status=200,
+            json=_detail_payload(status="FAILED"),
+        ),
+    )
+
+    def accept_retry(route):
+        retries.append(route.request.headers["idempotency-key"])
+        route.fulfill(status=202, json={"search_run_id": 42})
+
+    browser.route(
+        "**/api/potential-customer-search/runs/42/retry",
+        accept_retry,
+    )
+    open_route(browser, "#results/42")
+    assert browser.evaluate("typeof crypto.randomUUID") == "undefined"
+    browser.get_by_role("button", name="Retry Search").click()
+    browser.wait_for_function("() => document.querySelector('#result-detail-status').textContent.length > 0")
+    assert len(retries) == 1
+    assert retries[0].startswith("browser-retry-42-")
+    assert len(retries[0].removeprefix("browser-retry-42-")) == 32
+    assert errors == []
+
+
+@pytest.mark.browser
+@pytest.mark.parametrize(
+    "viewport",
+    (
+        {"width": 360, "height": 800},
+        {"width": 390, "height": 844},
+        {"width": 768, "height": 900},
+        {"width": 1280, "height": 900},
+    ),
+    ids=("mobile-360", "mobile-390", "tablet-768", "desktop"),
+)
+def test_result_detail_is_responsive_progressively_disclosed_and_has_no_contact_pii(
+    page, viewport,
+):
     browser, errors, _requests = page
     browser.route(
         "**/api/potential-customer-search/runs/42/result",
         lambda route: route.fulfill(status=200, json=_detail_payload()),
     )
-    browser.set_viewport_size({"width": 390, "height": 844})
+    browser.set_viewport_size(viewport)
     open_route(browser, "#results/42")
     browser.get_by_text("Autumn savings", exact=True).wait_for()
     assert browser.locator("#result-detail-progress [role='progressbar']").get_attribute("aria-valuenow") == "100"
@@ -511,6 +616,10 @@ def test_result_detail_is_responsive_progressively_disclosed_and_has_no_contact_
     assert browser.locator("#result-technical-disclosure").get_attribute("open") is None
     assert browser.locator("#result-detail-download").is_hidden()
     assert browser.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
+    assert browser.evaluate(
+        "document.querySelector('#result-detail-content').scrollWidth <= "
+        "document.querySelector('#result-detail-content').clientWidth"
+    )
     visible = browser.locator("#result-detail-view").inner_text().lower()
     assert not {"first name", "last name", "phone number", "postal code"}.intersection(
         phrase for phrase in ("first name", "last name", "phone number", "postal code")
@@ -518,6 +627,38 @@ def test_result_detail_is_responsive_progressively_disclosed_and_has_no_contact_
     )
     browser.locator("#result-technical-disclosure summary").click()
     assert "TARGETING CONTEXT ID" in browser.locator("#result-technical-details").inner_text()
+    assert browser.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
+    assert browser.evaluate(
+        "document.querySelector('#result-detail-content').scrollWidth <= "
+        "document.querySelector('#result-detail-content').clientWidth"
+    )
+    assert errors == []
+
+
+@pytest.mark.browser
+def test_v2_result_detail_renders_calibrated_semantics_without_legacy_primary_label(
+    page,
+):
+    browser, errors, _requests = page
+    browser.route(
+        "**/api/potential-customer-search/runs/52/result",
+        lambda route: route.fulfill(
+            status=200, json=_detail_payload(52, bucket="0.50")
+        ),
+    )
+    open_route(browser, "#results/52")
+    browser.get_by_text("Autumn savings", exact=True).wait_for()
+    selection = browser.locator("#result-selection-details")
+    assert selection.get_by_text("Purchase Propensity", exact=True).is_visible()
+    assert selection.get_by_text("50% to <60%", exact=True).is_visible()
+    assert browser.locator("#result-targeting-details").get_by_text(
+        "Match Strength", exact=True,
+    ).count() == 0
+    profile = browser.locator("#result-profile-details")
+    assert profile.get_by_text("Minimum Probability", exact=True).is_visible()
+    assert profile.get_by_text("Mean Probability", exact=True).is_visible()
+    assert profile.get_by_text("Maximum Probability", exact=True).is_visible()
+    assert profile.get_by_text("49%", exact=True).is_visible()
     assert errors == []
 
 
@@ -528,12 +669,20 @@ def test_step12_frontend_uses_bounded_active_only_refresh_and_safe_dom_rendering
     assert "isRunActive" in source
     progress_source = (ROOT / "frontend/js/run-progress.js").read_text(encoding="utf-8")
     assert '"QUEUED", "PROCESSING", "PAUSE_REQUESTED", "PAUSED"' in progress_source
+    assert "Queue position:" in progress_source
+    assert "Worker heartbeat" in progress_source
+    assert "Progress updates appear stalled" in progress_source
+    assert "Processed count will appear when measurable selection begins" in progress_source
+    assert "0 of unknown" not in progress_source
     assert "new Map()" in source and "rows.set(run.search_run_id, run)" in source
     assert "before_search_run_id" in source
     assert "textContent" in source and ".innerHTML" not in source
     assert "Resume Updates" in source
     assert "refreshCycles >= RESULT_REFRESH_MAX_CYCLES" in source
-    assert "crypto.getRandomValues" in source
+    assert 'browserIdempotencyKey("retry", runId)' in source
+    assert 'browserIdempotencyKey("feedback", runId)' in source
+    assert "secureCrypto.getRandomValues" in source
+    assert "Math.random" not in source
     html = (ROOT / "frontend/index.html").read_text(encoding="utf-8")
     for identifier in (
         "business-search-history", "business-history-more", "result-detail-overview",
@@ -547,3 +696,8 @@ def test_step12_frontend_uses_bounded_active_only_refresh_and_safe_dom_rendering
     assert "Idempotency-Key" in html
     assert "Purchase outcome CSV or JSON" in html
     assert '"application/json"' in source
+    assert "run.selection_label" in source
+    assert '"Minimum Probability"' in source
+    assert '"Mean Probability"' in source
+    assert '"Maximum Probability"' in source
+    assert 'term === "Match Strength"' in source

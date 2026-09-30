@@ -9,11 +9,21 @@ from typing import Any
 
 
 SEARCH_RUN_CONTRACT_VERSION = "1"
-RESULT_MEMBERSHIP_CONTRACT_VERSION = "1"
+RESULT_MEMBERSHIP_V1_CONTRACT_VERSION = "1"
+RESULT_MEMBERSHIP_V2_CONTRACT_VERSION = "2"
+# Frozen compatibility alias. New code must resolve the membership version from
+# the immutable selection contract instead of treating this as a latest version.
+RESULT_MEMBERSHIP_CONTRACT_VERSION = RESULT_MEMBERSHIP_V1_CONTRACT_VERSION
 RESULT_EXPORT_CONTRACT_VERSION = "1"
-RESULT_MEMBERSHIP_COLUMNS = (
+RESULT_MEMBERSHIP_V1_COLUMNS = (
     "person_id", "propensity_score", "percentile_bucket", "decile", "rank_band",
 )
+RESULT_MEMBERSHIP_V2_COLUMNS = (
+    "person_id", "calibrated_purchase_probability", "probability_bucket",
+    "raw_propensity_score", "percentile_bucket", "decile", "rank_band",
+)
+# Frozen compatibility alias for legacy callers and v1 export schemas.
+RESULT_MEMBERSHIP_COLUMNS = RESULT_MEMBERSHIP_V1_COLUMNS
 SEARCH_RUN_STATUSES = frozenset({"QUEUED", "PROCESSING", "COMPLETED", "BLOCKED", "FAILED"})
 RESULT_SOURCES = frozenset({"EXACT_RESULT_REUSE", "INTELLIGENCE_REUSE", "NEW_INTELLIGENCE_BUILD"})
 RESULT_CURRENTNESS_STATES = frozenset({"CURRENT", "STALE", "UNVERIFIED"})
@@ -32,6 +42,26 @@ class Phase11RegistryValidationError(ValueError):
 
 class Phase11RegistryStateError(RuntimeError):
     """Missing lineage or conflicting/terminal state."""
+
+
+def result_membership_contract_for_selection(selection_contract_version: Any) -> str:
+    """Resolve the immutable analytical schema owned by a selection contract."""
+
+    version = str(selection_contract_version or "1")
+    if version == "1":
+        return RESULT_MEMBERSHIP_V1_CONTRACT_VERSION
+    if version == "2":
+        return RESULT_MEMBERSHIP_V2_CONTRACT_VERSION
+    raise Phase11RegistryValidationError("Unsupported selection contract version.")
+
+
+def result_membership_columns(contract_version: Any) -> tuple[str, ...]:
+    version = str(contract_version)
+    if version == RESULT_MEMBERSHIP_V1_CONTRACT_VERSION:
+        return RESULT_MEMBERSHIP_V1_COLUMNS
+    if version == RESULT_MEMBERSHIP_V2_CONTRACT_VERSION:
+        return RESULT_MEMBERSHIP_V2_COLUMNS
+    raise Phase11RegistryValidationError("Unsupported membership contract version.")
 
 
 def canonical_metadata_json(value: Any, *, branches: bool = False) -> tuple[str, str]:

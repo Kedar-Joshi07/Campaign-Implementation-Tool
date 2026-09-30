@@ -930,6 +930,9 @@ class Phase10IntelligenceRepository:
         completed_at: str,
         safe_error_message: str | None = None,
         technical_message: str | None = None,
+        failure_code: str | None = None,
+        failure_category: str | None = None,
+        retryable: bool | None = None,
     ) -> None:
         if status not in {"BLOCKED", "FAILED"}:
             raise Phase10RepositoryValidationError("Terminal status must be BLOCKED or FAILED.")
@@ -943,6 +946,29 @@ class Phase10IntelligenceRepository:
         )
         if status == "FAILED" and error is None:
             raise Phase10RepositoryValidationError("FAILED orchestration requires a safe error.")
+        code = _text(
+            failure_code
+            or (
+                "PHASE10_TRANSIENT_FAILED"
+                if status == "FAILED"
+                else "PHASE10_BUSINESS_BLOCKED"
+            ),
+            field_name="failure_code",
+            maximum=80,
+        )
+        category = _text(
+            failure_category
+            or (
+                "TRANSIENT_DEPENDENCY"
+                if status == "FAILED"
+                else "BUSINESS_DATA_INSUFFICIENCY"
+            ),
+            field_name="failure_category",
+            maximum=80,
+        )
+        retry_allowed = status == "FAILED" if retryable is None else retryable
+        if not isinstance(retry_allowed, bool):
+            raise Phase10RepositoryValidationError("retryable must be boolean.")
         with get_connection(self.database_path, write=True) as connection:
             connection.execute("BEGIN IMMEDIATE")
             cursor = connection.execute(
@@ -950,7 +976,8 @@ class Phase10IntelligenceRepository:
                 UPDATE phase10_orchestration_runs
                 SET status = ?, stage = ?, business_message = ?,
                     technical_message = ?, updated_at = ?, completed_at = ?,
-                    safe_error_message = ?
+                    safe_error_message = ?, failure_code = ?,
+                    failure_category = ?, retryable = ?
                 WHERE orchestration_id = ? AND status IN ('QUEUED', 'RUNNING')
                 """,
                 (
@@ -961,6 +988,9 @@ class Phase10IntelligenceRepository:
                     timestamp,
                     timestamp,
                     error,
+                    code,
+                    category,
+                    int(retry_allowed),
                     normalized_id,
                 ),
             )

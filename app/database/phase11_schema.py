@@ -37,6 +37,8 @@ CAMPAIGN_SEARCH_RUN_RUNTIME_COLUMNS = (
     "retryable", "created_at", "processing_started_at", "updated_at",
     "heartbeat_at", "state_version",
     "stage_started_at", "failure_stage_code",
+    "technical_reference",
+    "workload_class",
 )
 
 SEARCH_RUN_LIFECYCLE_STATUSES = (
@@ -62,7 +64,8 @@ PHASE_ELEVEN_CREATE_TABLE_STATEMENTS = (
     f"""
     CREATE TABLE IF NOT EXISTS campaign_result_snapshots (
         result_snapshot_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        result_membership_contract_version TEXT NOT NULL CHECK (result_membership_contract_version = '1'),
+        result_membership_contract_version TEXT NOT NULL
+            CHECK (result_membership_contract_version IN ('1','2')),
         generation_id INTEGER NOT NULL REFERENCES phase10_intelligence_generations(generation_id) ON DELETE RESTRICT,
         {_digest('targeting_criteria_sha256')},
         {_digest('filter_branches_sha256')},

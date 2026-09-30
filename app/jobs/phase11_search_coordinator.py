@@ -6,11 +6,13 @@ from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 import logging
 import math
+import secrets
 from pathlib import Path
 from threading import Event, Lock
 from typing import Any
 
 from app.repositories.campaign_result_registry_repository import (
+    AttemptExecutionFence,
     CampaignResultRegistryRepository,
 )
 from app.services.phase11_result_contracts import Phase11RegistryStateError
@@ -78,6 +80,7 @@ class Phase11SearchCoordinator:
         self.max_tracked_runs = tracked
         self._runner = runner
         self._repository = CampaignResultRegistryRepository(self.database_path)
+        self._lease_owner = f"phase11-coordinator-{secrets.token_hex(12)}"
         self._executor = ThreadPoolExecutor(
             max_workers=workers,
             thread_name_prefix="phase11-search",
@@ -139,7 +142,10 @@ class Phase11SearchCoordinator:
             self._active_search_ids.add(identifier)
 
         try:
-            future = self._executor.submit(self._run_search, identifier)
+            fence = self._repository.claim_search_attempt(
+                identifier, lease_owner=self._lease_owner
+            )
+            future = self._executor.submit(self._run_search, identifier, fence)
         except Exception:
             with self._lock:
                 self._active_search_ids.discard(identifier)
@@ -152,12 +158,17 @@ class Phase11SearchCoordinator:
                 self._futures[identifier] = future
         return True
 
-    def _run_search(self, search_run_id: int) -> None:
+    def _run_search(
+        self,
+        search_run_id: int,
+        fence: AttemptExecutionFence,
+    ) -> None:
         try:
             while not self._shutdown_event.is_set():
                 outcome = self._runner(
                     self.database_path,
                     search_run_id,
+                    **fence.as_kwargs(),
                     materializer=self.materializer,
                     project_root=self.project_root,
                 )
@@ -178,7 +189,7 @@ class Phase11SearchCoordinator:
                 search_run_id,
                 type(exc).__name__,
             )
-            self._fail_active_search_safely(search_run_id)
+            self._fail_active_search_safely(search_run_id, fence)
         finally:
             with self._lock:
                 self._active_search_ids.discard(search_run_id)
@@ -187,11 +198,17 @@ class Phase11SearchCoordinator:
             if refill:
                 self._refill_from_durable_state()
 
-    def _fail_active_search_safely(self, search_run_id: int) -> None:
+    def _fail_active_search_safely(
+        self,
+        search_run_id: int,
+        fence: AttemptExecutionFence,
+    ) -> None:
         try:
             current = self._repository.fetch_search_run(search_run_id)
             if current is not None and current["status"] in {"QUEUED", "PROCESSING"}:
-                self._repository.fail_search_run(search_run_id)
+                self._repository.fail_search_run(
+                    search_run_id, **fence.as_kwargs()
+                )
         except Exception:
             logger.exception(
                 "Phase 11 coordinator could not persist safe failure | search_run_id=%s",

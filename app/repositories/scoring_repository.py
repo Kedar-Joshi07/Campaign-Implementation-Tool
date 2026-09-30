@@ -581,7 +581,7 @@ class ScoringRepository:
             ).fetchall()
         return [dict(row) for row in rows]
 
-    def fetch_phase10_score_integrity(self, scoring_run_id: int) -> dict[str, int]:
+    def fetch_phase10_score_integrity(self, scoring_run_id: int) -> dict[str, Any]:
         """Deep full-universe score integrity counts for Phase 10 compatibility."""
 
         normalized_id = _require_positive_int(
@@ -594,6 +594,9 @@ class ScoringRepository:
                 SELECT
                     COUNT(*) AS score_count,
                     COUNT(DISTINCT person_id) AS distinct_person_count,
+                    MIN(propensity_score) AS score_min,
+                    MAX(propensity_score) AS score_max,
+                    AVG(propensity_score) AS score_mean,
                     SUM(
                         CASE
                             WHEN propensity_score IS NULL
@@ -637,7 +640,7 @@ class ScoringRepository:
             ).fetchone()
         score_count = int(score_row["score_count"])
         distinct_count = int(score_row["distinct_person_count"])
-        return {
+        result: dict[str, Any] = {
             "score_count": score_count,
             "distinct_person_count": distinct_count,
             "duplicate_person_count": score_count - distinct_count,
@@ -645,6 +648,20 @@ class ScoringRepository:
             "missing_person_count": int(missing_row["missing_person_count"]),
             "extra_person_count": int(extra_row["extra_person_count"]),
         }
+        result.update(
+            {
+                "score_min": (
+                    None if score_row["score_min"] is None else float(score_row["score_min"])
+                ),
+                "score_max": (
+                    None if score_row["score_max"] is None else float(score_row["score_max"])
+                ),
+                "score_mean": (
+                    None if score_row["score_mean"] is None else float(score_row["score_mean"])
+                ),
+            }
+        )
+        return result
 
     def find_completed_run_for_model(self, model_run_id: int) -> dict[str, Any] | None:
         normalized_model_run_id = _require_positive_int(model_run_id, field_name="model_run_id")
