@@ -156,10 +156,13 @@ No new HTTP endpoint or response field was added. The behavioral contract change
 
 ## 12. CI certification and remaining limitations
 
-- Exact candidate SHA: not available because commit/push was not authorized in this execution.
-- Exact-SHA GitHub Actions run: not started.
-- Exact-SHA CI status: `PENDING_COMMIT_AND_PUSH_AUTHORIZATION`.
-- Prompt 13.5 status: `NO-GO` until the candidate is committed, pushed, and the required GitHub Actions jobs are green on that exact SHA.
+- First exact candidate SHA: `2548e2b5bdff627fee3332c999f71a467c57ab39`.
+- First exact-SHA GitHub Actions run: `36729928374`.
+- Passing jobs: Repository Hygiene, Python Validation, Tests, and Clean-Room Phase1-7.
+- Failed job: Frontend Contract. Its Phase 11 step reported `349 passed, 2 failed, 5 deselected`; both failures were result-detail horizontal overflow at the 360 px and 390 px mobile viewports.
+- Remediation: feedback-template actions now wrap/stack on bounded widths and the native feedback file input is explicitly constrained to its panel. The exact responsive parameter set passed `4/4`, and the full result-history/detail browser file passed `14/14` locally.
+- Current exact-SHA CI status: `REMEDIATION_PENDING_COMMIT_AND_RERUN`.
+- Prompt 13.5 status: `NO-GO` until the remediation candidate is committed, pushed, and all required GitHub Actions jobs are green on that exact SHA.
 
 Accepted limitations:
 
@@ -168,4 +171,4 @@ Accepted limitations:
 - Prompt 14A/14B remains an explicit future business decision.
 - Full canonical performance and 20-scenario demo qualification remain future work after policy selection.
 
-The only valid next action is to obtain authorization to create/push the candidate commit, run exact-SHA GitHub CI, and fix any remaining Prompt 13.5 blocker. Prompt 14 must not begin until Prompt 13.5 is fully green.
+The only valid next action is to commit/push the bounded responsive remediation and rerun exact-SHA GitHub CI. Prompt 14 must not begin until Prompt 13.5 is fully green.
