@@ -40,6 +40,7 @@ from app.services.phase10_historical_resolution_service import (
 )
 from app.services.phase10_model_resolution_service import (
     Phase10ModelValidationError,
+    find_reusable_phase10_model,
     resolve_or_train_phase10_model,
     validate_phase10_model_before_scoring,
 )
@@ -217,6 +218,47 @@ def test_fresh_training_uses_synchronous_child_job_then_exactly_reuses(
         first.model_run_id
     ]
     assert second.compatible_candidates[0].discovery_source == "LEGACY_MODEL_RUN"
+
+
+def test_legacy_split_lineage_is_rejected_for_reuse_and_retrained(
+    phase10_case,
+) -> None:
+    database_path, project_root, context, historical, first = _fresh_model(
+        phase10_case
+    )
+    assert first.model_run_id is not None
+    legacy_lineage = {
+        "split_strategy": "CUSTOMER_STRATIFIED_V1",
+        "random_seed": 42,
+        "validation_fraction": 0.2,
+    }
+    with get_connection(database_path, write=True) as connection:
+        connection.execute(
+            "UPDATE model_runs SET split_lineage_json = ? WHERE model_run_id = ?",
+            (json.dumps(legacy_lineage, sort_keys=True), first.model_run_id),
+        )
+
+    assert find_reusable_phase10_model(
+        database_path,
+        context,
+        historical,
+        project_root=project_root,
+    ) is None
+
+    replacement = resolve_or_train_phase10_model(
+        database_path,
+        context,
+        historical,
+        project_root=project_root,
+    )
+    assert replacement.status == "READY"
+    assert replacement.trained is True and replacement.reused is False
+    assert replacement.model_run_id != first.model_run_id
+    rejected = {
+        candidate.model_run_id: candidate.reason_codes
+        for candidate in replacement.rejected_candidates
+    }
+    assert "GOVERNED_SPLIT_LINEAGE_INVALID" in rejected[first.model_run_id]
 
 
 def test_pre_scoring_gate_rejects_all_required_model_integrity_failures(

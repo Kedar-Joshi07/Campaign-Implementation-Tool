@@ -34,7 +34,10 @@ from app.services.potential_customer_preflight_service import (
 from app.services.potential_customer_search_submission_service import (
     normalize_search_definition,
 )
-from app.services.source_currentness_service import reconcile_source_currentness
+from app.services.source_currentness_service import (
+    reconcile_source_currentness,
+    resolve_governed_calibration_eligibility,
+)
 from app.services.targeting_option_catalog_service import get_or_build_targeting_catalog
 from tests.test_intelligence_attestation_currentness import (
     attestation_case,
@@ -86,6 +89,31 @@ def _publish_controlled_calibration(path: Path, generation: dict) -> int:
             "SELECT COUNT(*) FROM score_calibration_artifacts WHERE scoring_run_id=?",
             (generation["scoring_run_id"],),
         ).fetchone()[0]) + 1
+        model_lineage = json.loads(connection.execute(
+            "SELECT split_lineage_json FROM model_runs WHERE model_run_id=?",
+            (generation["model_run_id"],),
+        ).fetchone()[0])
+    partitions = model_lineage["partitions"]
+    calibration_lineage = {
+        "seed": 1729,
+        "strategy": model_lineage["strategy_version"],
+        "strategy_version": model_lineage["strategy_version"],
+        "model_training_group_ids": partitions["model_training"]["group_ids"],
+        "calibration_fit_group_ids": partitions["calibration_fit"]["group_ids"],
+        "calibration_evaluation_group_ids": partitions["calibration_evaluation"]["group_ids"],
+        "overlap_counts": model_lineage["overlap_counts"],
+        "calibration_fit_class_balance": {
+            "positive": partitions["calibration_fit"]["positive_count"],
+            "negative": partitions["calibration_fit"]["negative_count"],
+        },
+        "calibration_evaluation_class_balance": {
+            "positive": partitions["calibration_evaluation"]["positive_count"],
+            "negative": partitions["calibration_evaluation"]["negative_count"],
+        },
+        "candidate_selection_partition": "calibration_evaluation",
+        "evaluation_records_used_for_fit": 0,
+        "three_way_isolated": True,
+    }
     while len(probabilities) < len(raw_rows):
         probabilities.append(0.75)
     ordered = sorted(
@@ -99,10 +127,11 @@ def _publish_controlled_calibration(path: Path, generation: dict) -> int:
                    outcome_definition,method,split_seed,split_lineage_json,
                    artifact_json,metrics_json,artifact_sha256,source_checksum,
                    status,created_at,promoted_at
-               ) VALUES ('1',?,?,'ATTRIBUTED_PURCHASE','SIGMOID',1729,
-                         '{}','{}','{}',?,?,'PROMOTED',?,?)""",
+               ) VALUES ('2',?,?,'ATTRIBUTED_PURCHASE','SIGMOID',1729,
+                         ?,'{}','{}',?,?,'PROMOTED',?,?)""",
             (
                 generation["scoring_run_id"], generation["model_run_id"],
+                json.dumps(calibration_lineage, sort_keys=True, separators=(",", ":")),
                 f"{artifact_ordinal:064x}", "e" * 64, "2026-09-29T12:00:00Z",
                 "2026-09-29T12:00:00Z",
             ),
@@ -212,6 +241,59 @@ def parity_case(attestation_case):
     assert record_deep_verification_attestation(path, generation)["status"] == "VERIFIED"
     calibration_id = _publish_controlled_calibration(path, generation)
     return path, project_root, context_id, generation, calibration_id
+
+
+def test_governed_calibration_consumption_gate_accepts_exact_current_lineage(
+    parity_case,
+) -> None:
+    path, _root, _context_id, generation, calibration_id = parity_case
+    decision = resolve_governed_calibration_eligibility(
+        path, generation, calibration_id
+    )
+    assert decision.eligible is True
+    assert decision.reason_code == "ELIGIBLE"
+
+
+def test_legacy_promoted_calibration_remains_historical_but_is_not_v2_eligible(
+    parity_case,
+) -> None:
+    path, _root, _context_id, generation, calibration_id = parity_case
+    with get_connection(path, write=True) as connection:
+        connection.execute(
+            """UPDATE score_calibration_artifacts
+               SET calibration_contract_version='1'
+               WHERE calibration_artifact_id=?""",
+            (calibration_id,),
+        )
+    decision = resolve_governed_calibration_eligibility(
+        path, generation, calibration_id
+    )
+    assert decision.eligible is False
+    assert decision.reason_code == "CALIBRATION_GOVERNANCE_INCOMPATIBLE"
+    with get_connection(path) as connection:
+        persisted = connection.execute(
+            """SELECT calibration_contract_version,status
+               FROM score_calibration_artifacts WHERE calibration_artifact_id=?""",
+            (calibration_id,),
+        ).fetchone()
+    assert tuple(persisted) == ("1", "PROMOTED")
+
+
+def test_malformed_governed_calibration_lineage_is_not_consumable(
+    parity_case,
+) -> None:
+    path, _root, _context_id, generation, calibration_id = parity_case
+    with get_connection(path, write=True) as connection:
+        connection.execute(
+            """UPDATE score_calibration_artifacts SET split_lineage_json='{}'
+               WHERE calibration_artifact_id=?""",
+            (calibration_id,),
+        )
+    decision = resolve_governed_calibration_eligibility(
+        path, generation, calibration_id
+    )
+    assert decision.eligible is False
+    assert decision.reason_code == "CALIBRATION_LINEAGE_INVALID"
 
 
 @pytest.mark.parametrize(

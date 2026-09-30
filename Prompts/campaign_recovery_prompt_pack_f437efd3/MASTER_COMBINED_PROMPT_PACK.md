@@ -21,6 +21,7 @@ Do not start with the zero-customer model problem. First make execution safe:
 11. calibration isolation
 12. feedback-learning semantics
 13. business selection-policy decision
+13.5. mandatory integration closure, migration certification, and exact-SHA green gate
 14. chosen conditional implementation path
 15. fault/restart certification
 16. canonical performance
@@ -44,6 +45,7 @@ Do not start with the zero-customer model problem. First make execution safe:
 - `11_CALIBRATION_TRAIN_CALIBRATE_TEST_ISOLATION_AND_GOVERNANCE.md`
 - `12_FEEDBACK_RECALIBRATION_PSI_AND_TRUE_MODEL_LEARNING_BOUNDARY.md`
 - `13_ZERO_CUSTOMER_ROOT_CAUSE_AND_SELECTION_POLICY_DECISION_GATE.md`
+- `13.5_Prompts_00–13_Integration_Closure,_Governance_Reconciliation,_Migration_Certification,_and_Exact-SHA_Green_Gate.md`
 - `14A_KEEP_ABSOLUTE_PROBABILITY_MODEL_IMPROVEMENT_PATH.md`
 - `14B_VERSIONED_SELECTION_CONTRACT_V3_IF_APPROVED.md`
 - `15_FAULT_INJECTION_RESTART_CONCURRENCY_AND_CRASH_RECOVERY_MATRIX.md`
@@ -56,7 +58,9 @@ Do not start with the zero-customer model problem. First make execution safe:
 
 Run one prompt at a time. Review the result before moving on. A later prompt may depend on schema/API invariants introduced by an earlier prompt.
 
-**Prompt 13 is an explicit policy gate.** Do not run both 14A and 14B. Run the one matching the approved business decision.
+**Prompt 13.5 is mandatory after Prompt 13.** It must reach its exact-SHA green
+gate before an explicit human/business decision selects exactly one of 14A or
+14B. Do not run both branches.
 
 If any step returns NO-GO, fix that step before continuing unless the prompt explicitly permits a documented limitation.
 
@@ -185,7 +189,11 @@ Freeze these invariants:
 
 ### D. Prompt execution graph
 Recommended order:
-`01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08 -> 09 -> 10 -> 11 -> 12 -> 13`, then either the approved `14A` or `14B`, then `15 -> 16 -> 17 -> 18 -> 19`.
+`01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08 -> 09 -> 10 -> 11 -> 12 -> 13 -> 13.5`, then obtain an explicit human/business decision, run exactly one approved branch (`14A` or `14B`), then `15 -> 16 -> 17 -> 18 -> 19`.
+
+Prompt 13.5 is a mandatory integration-closure, migration-certification, and
+exact-SHA green gate. Do not proceed to either Prompt 14 branch on local focused
+tests alone.
 
 Do not implement substantive fixes in Prompt 00 unless required merely to reproduce/document baseline behavior.
 

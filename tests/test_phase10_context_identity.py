@@ -99,7 +99,7 @@ def test_phase10_policy_versions_are_explicit_and_frozen_at_v1() -> None:
     assert PHASE10_HISTORICAL_WINDOW_POLICY_VERSION == "1"
     assert PHASE10_MULTI_PRODUCT_POSITIVE_POLICY_VERSION == "1"
     assert PHASE10_TRAINING_ELIGIBILITY_POLICY_VERSION == "1"
-    assert PHASE10_AUTOMATED_TRAINING_POLICY_VERSION == "1"
+    assert PHASE10_AUTOMATED_TRAINING_POLICY_VERSION == "2"
     assert PHASE10_ORCHESTRATION_CONTRACT_VERSION == "1"
     assert PHASE10_INTELLIGENCE_GENERATION_CONTRACT_VERSION == "1"
     assert PHASE10_LIFECYCLE_POLICY_VERSION == "1"
@@ -291,7 +291,8 @@ def test_historical_fingerprint_rejects_context_filter_mismatch() -> None:
         {"model_role_policy_version": "3"},
         {"evaluation_contract_version": "3"},
         {"training_eligibility_policy_version": "2"},
-        {"automated_training_policy_version": "2"},
+        {"automated_training_policy_version": "1"},
+        {"split_strategy_version": "CUSTOMER_STRATIFIED_V1"},
         {"random_seed": 43},
         {"validation_fraction": 0.25},
         {"run_elkan_challenger": False},

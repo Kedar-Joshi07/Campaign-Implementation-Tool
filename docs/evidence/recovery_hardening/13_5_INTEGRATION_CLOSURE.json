@@ -1,0 +1,156 @@
+{
+  "evidence_contract": "PROMPT_13_5_INTEGRATION_CLOSURE_V1",
+  "generated_at": "2026-09-30T14:17:29Z",
+  "starting_sha": "6c7c76164a62f14c15e7d4699cf46922dd632ef0",
+  "candidate_sha": null,
+  "candidate_state": "UNCOMMITTED_WORKING_TREE",
+  "branch": "main",
+  "starting_schema_version": 30,
+  "ending_schema_version": 30,
+  "canonical_copy_starting_schema_version": 26,
+  "canonical_copy_ending_schema_version": 30,
+  "baseline_ci": {
+    "run_id": 36668701656,
+    "head_sha": "6c7c76164a62f14c15e7d4699cf46922dd632ef0",
+    "status": "completed",
+    "conclusion": "failure",
+    "tests": {
+      "passed": 945,
+      "failed": 9,
+      "errors": 38,
+      "deselected": 121
+    },
+    "jobs": {
+      "Repository Hygiene": "success",
+      "Python Validation": "success",
+      "Tests": "failure",
+      "Frontend Contract": "failure",
+      "Clean-Room Phase1-7": "failure"
+    },
+    "raw_log_access": "HTTP_403_ADMIN_REQUIRED"
+  },
+  "failure_inventory": [
+    {
+      "scope": "Tests setup/API/browser groups",
+      "occurrences": 38,
+      "baseline_outcome": "ERROR",
+      "classification": "REAL_APPLICATION_DEFECT",
+      "root_cause": "Application lifespan ignored the get_database_path dependency override and initialized/reconciled the canonical database.",
+      "fix": "Resolve and consistently use the overridden runtime database path during lifespan startup.",
+      "final_result": "1011 passed, 121 deselected"
+    },
+    {
+      "scope": "Phase 10/11 governed success fixtures",
+      "occurrences": 7,
+      "baseline_outcome": "FAILED",
+      "classification": "OUTDATED_SUCCESS_FIXTURE",
+      "root_cause": "Fixtures formed one campaign-connected component and could not satisfy CAMPAIGN_CONNECTED_THREE_WAY_V1.",
+      "fix": "Use deterministic fixtures with at least three independent connected components while preserving explicit one-component failure tests.",
+      "final_result": "Phase 10 90 passed; Phase 11 351 passed, 5 deselected; clean-room PASS"
+    },
+    {
+      "scope": "test_schema_version_16_migration_preserves_version_15_rows",
+      "occurrences": 1,
+      "baseline_outcome": "FAILED",
+      "classification": "INVALID_LEGACY_MIGRATION_FIXTURE",
+      "root_cause": "The hand-built v15 fixture omitted dependencies required by later migrations.",
+      "fix": "Use an authentic historical boundary and the real migration path.",
+      "final_result": "PASS"
+    },
+    {
+      "scope": "test_schema_27_preserves_referenced_v1_snapshot_without_rewriting_identity",
+      "occurrences": 1,
+      "baseline_outcome": "FAILED",
+      "classification": "INVALID_LEGACY_MIGRATION_FIXTURE",
+      "root_cause": "The fixture did not apply migration 27 at the exact v26-to-v27 boundary.",
+      "fix": "Apply migration 27 at its real boundary, verify v1 identity, then upgrade to v30.",
+      "final_result": "PASS"
+    }
+  ],
+  "training_policy_version": "2",
+  "training_split_strategy": "CAMPAIGN_CONNECTED_THREE_WAY_V1",
+  "legacy_split_strategy": "CUSTOMER_STRATIFIED_V1",
+  "legacy_model_reuse_allowed_for_governed_training": false,
+  "governed_calibration_contract_version": "2",
+  "legacy_calibration_allowed_for_new_v2": false,
+  "cleanroom_result": {
+    "status": "PASS",
+    "customer_components": 3,
+    "customers": 1200,
+    "campaign_sales_rows": 9000,
+    "demographic_rows": 12000,
+    "analysis_status": "COMPLETED",
+    "model_status": "COMPLETED",
+    "scoring_status": "COMPLETED",
+    "source_drift_export_status": 409,
+    "runtime_removed": true
+  },
+  "migration_integrity_check": "ok",
+  "migration_foreign_key_violation_count": 0,
+  "migration_second_initialization_semantically_idempotent": true,
+  "canonical_database": {
+    "path": "data/campaign_poc.db",
+    "in_place_modified": false,
+    "size_bytes": 7574577152,
+    "sha256_before": "43b6d31ed6c4f33574f2450f3bf1e2ece0ab56d77fd9213e76de9e8e07ef4d77",
+    "sha256_after": "43b6d31ed6c4f33574f2450f3bf1e2ece0ab56d77fd9213e76de9e8e07ef4d77"
+  },
+  "focused_test_results": [
+    {"scope": "model_resolution_and_attempt_fencing", "passed": 20, "failed": 0, "errors": 0, "duration_seconds": 108.70},
+    {"scope": "migration_boundaries_and_matrix", "passed": 18, "failed": 0, "errors": 0, "deselected": 46},
+    {"scope": "preflight_materialization_parity", "passed": 19, "failed": 0, "errors": 0, "duration_seconds": 98.50},
+    {"scope": "generator_compatibility", "passed": 3, "failed": 0, "errors": 0, "duration_seconds": 25.88},
+    {"scope": "browser_file_outside_restricted_sandbox", "passed": 14, "failed": 0, "errors": 0, "duration_seconds": 109.09},
+    {"scope": "phase9", "passed": 69, "failed": 0, "errors": 0, "duration_seconds": 438.20},
+    {"scope": "phase10", "passed": 90, "failed": 0, "errors": 0, "duration_seconds": 445.61},
+    {"scope": "phase11_non_heavy", "passed": 351, "failed": 0, "errors": 0, "deselected": 5, "duration_seconds": 781.48}
+  ],
+  "full_test_result": {
+    "passed": 1011,
+    "failed": 0,
+    "errors": 0,
+    "deselected": 121,
+    "duration_seconds": 2254.23
+  },
+  "frontend_contract_result": {
+    "status": "PASS",
+    "passed": 125,
+    "failed": 0,
+    "errors": 0,
+    "duration_seconds": 384.27
+  },
+  "repository_hygiene_result": "PASS",
+  "python_validation_result": {
+    "pip_check": "PASS",
+    "compileall": "PASS",
+    "diff_check": "PASS_WITH_LINE_ENDING_WARNINGS"
+  },
+  "worker_fencing_audit": {
+    "status": "PASS",
+    "corrected_entry_points": [
+      "scripts/validation/run_phase11_bounded_cleanroom.py",
+      "scripts/validation/browser/phase11_step19_server.py",
+      "scripts/validation/browser/phase11_step20_server.py"
+    ]
+  },
+  "exact_sha_ci_run_id": null,
+  "exact_sha_ci_status": "PENDING_COMMIT_AND_PUSH_AUTHORIZATION",
+  "canonical_training_governance_status": "BLOCKED_ONE_CONNECTED_COMPONENT",
+  "canonical_topology": {
+    "campaign_connected_component_count": 1,
+    "distinct_campaign_count": 96,
+    "distinct_customer_count": 119909,
+    "distinct_customer_campaign_pair_count": 570000,
+    "multi_campaign_customer_count": 108330,
+    "maximum_campaigns_per_customer": 23,
+    "governed_three_way_split_available": false
+  },
+  "prompt_13_5_status": "NO_GO_EXACT_SHA_CI_PENDING",
+  "remaining_limitations": [
+    "No candidate commit exists because commit and push were not authorized.",
+    "Exact-SHA GitHub Actions has not run.",
+    "Canonical campaign data has one connected component and cannot satisfy governed three-way split isolation.",
+    "Prompt 13 business policy remains undecided; neither 14A nor 14B has been run.",
+    "Full canonical performance and demo scenario qualification remain future work after policy selection."
+  ]
+}

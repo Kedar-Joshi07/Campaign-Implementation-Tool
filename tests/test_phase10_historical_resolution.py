@@ -30,11 +30,12 @@ def database_path(tmp_path: Path) -> Path:
     ]
     observations: list[tuple[object, ...]] = []
     for index in range(1, 15):
-        positive = 1 if index <= 7 else 0
+        positive = 1 if index in {1, 2, 3, 4, 5, 7, 13} else 0
         observations.append(
             (
                 f"S{index:02d}",
                 f"C{index:02d}",
+                f"CMP{((index - 1) % 7) + 1}",
                 "P1",
                 "Lifecycle",
                 "Loyalty",
@@ -50,6 +51,7 @@ def database_path(tmp_path: Path) -> Path:
             (
                 f"S{index:02d}",
                 f"C{index:02d}",
+                f"CMP{((index - 1) % 3) + 8}",
                 "P2",
                 "Acquisition",
                 "Discount",
@@ -80,7 +82,7 @@ def database_path(tmp_path: Path) -> Path:
                 contacted_flag, engagement_flag, response_flag, purchase_flag,
                 campaign_attributed_sale_flag, pu_label
             ) VALUES (
-                ?, ?, 'CMP', ?, 'Campaign', 'Retention', ?,
+                ?, ?, ?, ?, 'Campaign', 'Retention', ?,
                 'Email', ?, 'Product', 'Product category',
                 '2025-01-01', '2025-12-31', ?,
                 1, 0, 0, ?, ?, ?

@@ -597,6 +597,9 @@ def generate(args: argparse.Namespace) -> None:
         raise ValueError("customer_id must be unique in the customer master")
     if args.n_rows <= 0:
         raise ValueError("n_rows must be positive")
+    customer_components = int(getattr(args, "customer_components", 1))
+    if customer_components not in range(1, 17):
+        raise ValueError("customer_components must be between 1 and 16")
 
     n_customers = len(customers)
     if n_customers < 1000:
@@ -675,6 +678,11 @@ def generate(args: argparse.Namespace) -> None:
             age = customer_age_on(customers["date_of_birth"], start)
             completed_age_at_start = customer_completed_age_on(customers["date_of_birth"], start)
             eligible_indices = np.flatnonzero(completed_age_at_start >= 18)
+            if customer_components > 1:
+                component = (ci - 1) % customer_components
+                eligible_indices = eligible_indices[
+                    eligible_indices % customer_components == component
+                ]
             if campaign.target_row_count > int(eligible_indices.size):
                 raise ValueError(
                     "Campaign target size exceeds customers age>=18 at campaign start; "
@@ -1014,6 +1022,17 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--campaign-master-output", default="campaign_master.csv")
     p.add_argument("--product-master-output", default="product_master.csv")
     p.add_argument("--sample-rows", type=int, default=10_000)
+    p.add_argument(
+        "--customer-components",
+        type=int,
+        default=1,
+        choices=range(1, 17),
+        metavar="1..16",
+        help=(
+            "Optionally isolate campaign membership into deterministic customer "
+            "components. The default preserves normal generation semantics."
+        ),
+    )
     return p.parse_args()
 
 

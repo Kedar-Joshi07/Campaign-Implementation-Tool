@@ -82,7 +82,7 @@ def _metrics(labels: np.ndarray, probabilities: np.ndarray) -> dict[str, float]:
     }
 
 
-def _has_governed_three_way_lineage(lineage: dict[str, Any]) -> bool:
+def has_governed_calibration_lineage(lineage: dict[str, Any]) -> bool:
     overlaps = lineage.get("overlap_counts")
     partitions = (
         set(lineage.get("model_training_group_ids", ())),
@@ -342,7 +342,7 @@ def publish_fitted_calibration(
     """Persist a fitted candidate and, when approved, publish all calibrated scores."""
 
     path = initialize_database(database_path)
-    if promote and not _has_governed_three_way_lineage(fitted.split_lineage):
+    if promote and not has_governed_calibration_lineage(fitted.split_lineage):
         raise PropensityCalibrationError(
             "Calibration promotion requires isolated model, fit, and evaluation groups."
         )
@@ -554,5 +554,6 @@ def publish_calibrated_generation(
 __all__ = (
     "CALIBRATION_CONTRACT_VERSION", "PROPENSITY_BUCKETS", "FittedCalibration",
     "PropensityCalibrationError", "apply_calibration", "fit_held_out_calibration",
+    "has_governed_calibration_lineage",
     "publish_calibrated_generation", "publish_fitted_calibration",
 )

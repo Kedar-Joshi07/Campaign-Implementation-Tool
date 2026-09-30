@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import APP_ENV, APP_NAME, APP_VERSION, DATABASE_PATH
 from app.database.schema import initialize_database
+from app.dependencies import get_database_path
 from app.jobs.executor import shutdown_model_training_executor
 from app.jobs.phase11_search_coordinator import Phase11SearchCoordinator
 from app.logging_config import configure_logging
@@ -56,10 +57,14 @@ async def lifespan(_: FastAPI):
         APP_VERSION,
         APP_ENV,
     )
+    database_override = app.dependency_overrides.get(get_database_path)
+    runtime_database_path = Path(
+        database_override() if database_override is not None else DATABASE_PATH
+    )
     phase11_coordinator: Phase11SearchCoordinator | None = None
     feedback_worker: FeedbackRecalibrationWorker | None = None
     try:
-        initialized_path = initialize_database(DATABASE_PATH)
+        initialized_path = initialize_database(runtime_database_path)
         currentness = reconcile_source_currentness(initialized_path)
         logger.info(
             "Source currentness reconciliation completed | outcome=%s",
@@ -90,7 +95,7 @@ async def lifespan(_: FastAPI):
             "Phase 11 runtime composition failed; workflow is unavailable"
         )
     try:
-        stale_failed = reconcile_stale_model_training_jobs(DATABASE_PATH)
+        stale_failed = reconcile_stale_model_training_jobs(runtime_database_path)
         logger.info(
             "Compute startup reconciliation completed | failed_stale_jobs=%s",
             stale_failed,
@@ -99,7 +104,7 @@ async def lifespan(_: FastAPI):
         logger.exception("Compute startup reconciliation failed")
     try:
         resumed_phase10 = reconcile_phase10_orchestrations(
-            DATABASE_PATH,
+            runtime_database_path,
             project_root=PROJECT_ROOT,
         )
         logger.info(
@@ -121,7 +126,9 @@ async def lifespan(_: FastAPI):
     except Exception:
         logger.exception("Phase 11 startup reconciliation failed")
     try:
-        stale_campaign_exports = reconcile_stale_campaign_export_events(DATABASE_PATH)
+        stale_campaign_exports = reconcile_stale_campaign_export_events(
+            runtime_database_path
+        )
         logger.info(
             "Campaign export startup reconciliation completed | reconciled_stale_exports=%s",
             stale_campaign_exports,
@@ -129,7 +136,9 @@ async def lifespan(_: FastAPI):
     except Exception:
         logger.exception("Campaign export startup reconciliation failed")
     try:
-        stale_result_exports = reconcile_stale_result_export_events(DATABASE_PATH)
+        stale_result_exports = reconcile_stale_result_export_events(
+            runtime_database_path
+        )
         logger.info(
             "Result export startup reconciliation completed | reconciled_stale_exports=%s",
             stale_result_exports,

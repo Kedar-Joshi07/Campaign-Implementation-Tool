@@ -14,8 +14,11 @@ from app.repositories.phase10_intelligence_repository import Phase10Intelligence
 from app.services.intelligence_attestation_service import has_current_attestation
 from app.services.phase10_context_identity_service import derive_modeling_context_from_campaign_context
 from app.services.potential_customer_search_submission_service import normalize_search_definition
-from app.services.source_currentness_service import generation_sources_match
-from app.services.source_currentness_service import latest_source_identity
+from app.services.source_currentness_service import (
+    generation_sources_match,
+    latest_source_identity,
+    resolve_governed_calibration_eligibility,
+)
 from app.services.calibrated_selection_contract_service import (
     CALIBRATED_SELECTION_CONTRACT_VERSION,
     build_branch_predicates,
@@ -209,19 +212,12 @@ def exact_preflight_many(
             lineage_state = "NOT_AVAILABLE"
         calibration_id: int | None = None
         calibration_status: str | None = None
+        calibration_eligibility = resolve_governed_calibration_eligibility(
+            path, generation
+        )
         if generation is not None:
-            with get_connection(path) as connection:
-                calibration = connection.execute(
-                    """SELECT calibration_artifact_id,status
-                       FROM score_calibration_artifacts
-                       WHERE scoring_run_id=?
-                       ORDER BY CASE status WHEN 'PROMOTED' THEN 0 WHEN 'STALE' THEN 1 ELSE 2 END,
-                                promoted_at DESC,calibration_artifact_id DESC LIMIT 1""",
-                    (int(generation["scoring_run_id"]),),
-                ).fetchone()
-            if calibration is not None:
-                calibration_id = int(calibration["calibration_artifact_id"])
-                calibration_status = str(calibration["status"])
+            calibration_id = calibration_eligibility.calibration_artifact_id
+            calibration_status = calibration_eligibility.status
         branches = [dict(item) for item in normalized_criteria.audience_filter_branches]
         branches_sha256 = hashlib.sha256(
             json.dumps(branches, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -236,6 +232,7 @@ def exact_preflight_many(
                 "generation": generation,
                 "calibration_id": calibration_id,
                 "calibration_status": calibration_status,
+                "calibration_eligibility": calibration_eligibility,
                 "lineage_state": lineage_state,
                 "catalog_version": str(catalog["catalog_version"]),
                 "branches_sha256": branches_sha256,
@@ -255,7 +252,7 @@ def exact_preflight_many(
             generation is not None
             and calibration_id is not None
             and item["lineage_state"] == "CURRENT"
-            and item["calibration_status"] == "PROMOTED"
+            and item["calibration_eligibility"].eligible
         ):
             cache_key = build_preflight_cache_key(
                 criteria_sha256=item["criteria"].sha256,
@@ -292,6 +289,7 @@ def exact_preflight_many(
         generation = item["generation"]
         calibration_id = item["calibration_id"]
         calibration_status = item["calibration_status"]
+        calibration_eligibility = item["calibration_eligibility"]
         lineage_state = item["lineage_state"]
         criteria = item["criteria"]
         bucket = item["bucket"]
@@ -345,7 +343,7 @@ def exact_preflight_many(
                 }
             )
             continue
-        if calibration_id is None or calibration_status != "PROMOTED":
+        if not calibration_eligibility.eligible:
             results.append(
                 {
                     "demographic_count": demographic_count,
@@ -357,14 +355,8 @@ def exact_preflight_many(
                     "generation_id": int(generation["generation_id"]),
                     "scoring_run_id": int(generation["scoring_run_id"]),
                     "calibration_artifact_id": calibration_id,
-                    "calibration_currentness": (
-                        "STALE" if calibration_status == "STALE" else "NOT_AVAILABLE"
-                    ),
-                    "safe_message": (
-                        "The prior calibration is stale. Publish a calibration for the current scoring lineage."
-                        if calibration_status == "STALE"
-                        else "Compatible intelligence exists, but calibrated probabilities are not ready."
-                    ),
+                    "calibration_currentness": calibration_eligibility.status,
+                    "safe_message": calibration_eligibility.safe_message,
                     "criteria_sha256": criteria.sha256,
                     **response_identity,
                 }

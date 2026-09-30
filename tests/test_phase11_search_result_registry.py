@@ -102,8 +102,10 @@ def test_fresh_schema_has_exact_non_pii_columns_indexes_and_foreign_keys(tmp_pat
     assert RESULT_MEMBERSHIP_COLUMNS == ("person_id", "propensity_score", "percentile_bucket", "decile", "rank_band")
 
 
-@pytest.mark.parametrize("baseline", (15, 16))
-def test_upgrade_from_15_and_16_preserves_all_legacy_rows_and_is_idempotent(tmp_path: Path, baseline: int):
+@pytest.mark.parametrize("baseline", tuple(range(15, CURRENT_SCHEMA_VERSION + 1)))
+def test_upgrade_from_supported_historical_version_preserves_rows_and_is_idempotent(
+    tmp_path: Path, baseline: int
+):
     path = tmp_path / "upgrade.db"
     _create_version_fourteen_database(path)
     with get_connection(path, write=True) as connection:
@@ -173,6 +175,26 @@ def test_schema_27_preserves_referenced_v1_snapshot_without_rewriting_identity(c
         )
         connection.execute("PRAGMA foreign_keys=ON")
 
+    with get_connection(path, write=True) as connection:
+        MIGRATIONS[27](connection)
+        connection.execute(
+            "UPDATE app_metadata SET value='27' WHERE key='schema_version'"
+        )
+
+    boundary_repository = CampaignResultRegistryRepository(path)
+    assert boundary_repository.fetch_snapshot(snapshot_id) == before_snapshot
+    assert boundary_repository.fetch_search_run(search_id) == before_run
+    with get_connection(path) as connection:
+        assert connection.execute(
+            "SELECT value FROM app_metadata WHERE key='schema_version'"
+        ).fetchone()[0] == "27"
+        assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
+        boundary_definition = str(connection.execute(
+            """SELECT sql FROM sqlite_master
+               WHERE type='table' AND name='campaign_result_snapshots'"""
+        ).fetchone()[0])
+    assert "result_membership_contract_version IN ('1','2')" in boundary_definition
+
     initialize_database(path)
     migrated_repository = CampaignResultRegistryRepository(path)
     assert migrated_repository.fetch_snapshot(snapshot_id) == before_snapshot
@@ -180,7 +202,7 @@ def test_schema_27_preserves_referenced_v1_snapshot_without_rewriting_identity(c
     with get_connection(path) as connection:
         assert connection.execute(
             "SELECT value FROM app_metadata WHERE key='schema_version'"
-        ).fetchone()[0] == "27"
+        ).fetchone()[0] == str(CURRENT_SCHEMA_VERSION)
         assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
         definition = str(connection.execute(
             """SELECT sql FROM sqlite_master

@@ -48,6 +48,9 @@ from app.services.calibrated_selection_contract_service import (
     CALIBRATED_SELECTION_CONTRACT_VERSION,
     build_branch_predicates,
 )
+from app.services.source_currentness_service import (
+    resolve_governed_calibration_eligibility,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -883,28 +886,22 @@ def execute_phase11_search(
 
     calibration_artifact_id = None
     if run.get("selection_contract_version") == "2":
-        with get_connection(path) as connection:
-            calibration = connection.execute(
-                """SELECT calibration_artifact_id FROM score_calibration_artifacts
-                   WHERE scoring_run_id=? AND status='PROMOTED'
-                   ORDER BY promoted_at DESC,calibration_artifact_id DESC LIMIT 1""",
-                (int(generation["scoring_run_id"]),),
-            ).fetchone()
-        if calibration is None:
+        calibration = resolve_governed_calibration_eligibility(path, generation)
+        if not calibration.eligible:
             repository.fail_search_run(
                 search_run_id,
                 **fence,
                 blocked=True,
-                failure_code="CALIBRATED_PROPENSITY_NOT_READY",
+                failure_code=calibration.reason_code,
                 failure_category="CALIBRATION",
-                failure_summary="Calibrated purchase probabilities are not ready for this targeting intelligence.",
+                failure_summary=calibration.safe_message,
                 resolution_steps=(
                     "Prepare and promote a held-out probability calibration for the current scoring generation.",
                     "Retry this saved search after calibration completes.",
                 ),
             )
             return SearchOrchestrationOutcome(search_run_id, "BLOCKED")
-        calibration_artifact_id = int(calibration["calibration_artifact_id"])
+        calibration_artifact_id = calibration.calibration_artifact_id
     repository.bind_current_attempt_lineage(
         search_run_id,
         **fence,

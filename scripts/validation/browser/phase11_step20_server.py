@@ -95,6 +95,10 @@ def main() -> int:
     def real_executor(database: Path, search_run_id: int) -> None:
         def worker() -> None:
             repository = CampaignResultRegistryRepository(database)
+            fence = repository.claim_search_attempt(
+                search_run_id,
+                lease_owner="phase11-step20-browser",
+            )
             run_key = str(search_run_id)
             with metrics_lock:
                 metrics["per_search"][run_key] = {
@@ -109,6 +113,7 @@ def main() -> int:
                     outcome = phase11_search_orchestration_service.execute_phase11_search_safely(
                         database,
                         search_run_id,
+                        **fence.as_kwargs(),
                         materializer=materializer,
                         project_root=PROJECT_ROOT,
                         membership_source=counted_members,
@@ -126,7 +131,10 @@ def main() -> int:
             except Exception as exc:
                 current = repository.fetch_search_run(search_run_id)
                 if current and current["status"] in {"QUEUED", "PROCESSING"}:
-                    repository.fail_search_run(search_run_id)
+                    repository.fail_search_run(
+                        search_run_id,
+                        **fence.as_kwargs(),
+                    )
                 with metrics_lock:
                     entry = metrics["per_search"][run_key]
                     entry["last_status"] = "FAILED"

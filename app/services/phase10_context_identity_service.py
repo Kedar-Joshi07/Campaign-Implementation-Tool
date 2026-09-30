@@ -21,6 +21,7 @@ from app.schemas.phase10_intelligence import (
     ModelCompatibilityContract,
     ModelingContextContract,
     PHASE10_AUTOMATED_TRAINING_POLICY_VERSION,
+    PHASE10_AUTOMATED_TRAINING_SPLIT_STRATEGY_VERSION,
     PHASE10_AUTOMATED_TRAINING_RANDOM_SEED,
     PHASE10_AUTOMATED_TRAINING_RUN_ELKAN_CHALLENGER,
     PHASE10_AUTOMATED_TRAINING_VALIDATION_FRACTION,
@@ -110,13 +111,15 @@ def _normalized_sha256(value: Any, *, field_name: str) -> str:
     return normalized
 
 
-def _normalized_version(value: Any, *, field_name: str) -> str:
+def _normalized_version(
+    value: Any, *, field_name: str, max_length: int = 24
+) -> str:
     if not isinstance(value, str):
         raise Phase10ContextIdentityError(f"{field_name} must be text.")
     normalized = value.strip()
-    if not normalized or len(normalized) > 24:
+    if not normalized or len(normalized) > max_length:
         raise Phase10ContextIdentityError(
-            f"{field_name} must contain between 1 and 24 characters."
+            f"{field_name} must contain between 1 and {max_length} characters."
         )
     return normalized
 
@@ -321,6 +324,7 @@ def build_model_compatibility_fingerprint(
         PHASE10_TRAINING_ELIGIBILITY_POLICY_VERSION
     ),
     automated_training_policy_version: str = PHASE10_AUTOMATED_TRAINING_POLICY_VERSION,
+    split_strategy_version: str = PHASE10_AUTOMATED_TRAINING_SPLIT_STRATEGY_VERSION,
     random_seed: int = PHASE10_AUTOMATED_TRAINING_RANDOM_SEED,
     validation_fraction: float = PHASE10_AUTOMATED_TRAINING_VALIDATION_FRACTION,
     run_elkan_challenger: bool = PHASE10_AUTOMATED_TRAINING_RUN_ELKAN_CHALLENGER,
@@ -362,6 +366,11 @@ def build_model_compatibility_fingerprint(
             automated_training_policy_version=_normalized_version(
                 automated_training_policy_version,
                 field_name="automated_training_policy_version",
+            ),
+            split_strategy_version=_normalized_version(
+                split_strategy_version,
+                field_name="split_strategy_version",
+                max_length=64,
             ),
             random_seed=random_seed,
             validation_fraction=validation_fraction,

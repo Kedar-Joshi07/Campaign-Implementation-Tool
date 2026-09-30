@@ -258,6 +258,36 @@ class _NeverDisconnected:
         return False
 
 
+def _governed_calibration_lineage(database_path: Path, model_run_id: int) -> str:
+    with get_connection(database_path) as connection:
+        model_lineage = json.loads(connection.execute(
+            "SELECT split_lineage_json FROM model_runs WHERE model_run_id=?",
+            (model_run_id,),
+        ).fetchone()[0])
+    partitions = model_lineage["partitions"]
+    payload = {
+        "seed": 1729,
+        "strategy": model_lineage["strategy_version"],
+        "strategy_version": model_lineage["strategy_version"],
+        "model_training_group_ids": partitions["model_training"]["group_ids"],
+        "calibration_fit_group_ids": partitions["calibration_fit"]["group_ids"],
+        "calibration_evaluation_group_ids": partitions["calibration_evaluation"]["group_ids"],
+        "overlap_counts": model_lineage["overlap_counts"],
+        "calibration_fit_class_balance": {
+            "positive": partitions["calibration_fit"]["positive_count"],
+            "negative": partitions["calibration_fit"]["negative_count"],
+        },
+        "calibration_evaluation_class_balance": {
+            "positive": partitions["calibration_evaluation"]["positive_count"],
+            "negative": partitions["calibration_evaluation"]["negative_count"],
+        },
+        "candidate_selection_partition": "calibration_evaluation",
+        "evaluation_records_used_for_fit": 0,
+        "three_way_isolated": True,
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
 @pytest.mark.parametrize(
     ("dataset_name", "row_count"),
     (("customers", 40), ("campaign_sales", 40), ("demographics", 60)),
@@ -277,10 +307,13 @@ def test_authoritative_replacement_stales_every_dependent_currentness_layer(
                    outcome_definition,method,split_seed,split_lineage_json,
                    artifact_json,metrics_json,artifact_sha256,source_checksum,
                    status,created_at,promoted_at
-               ) VALUES ('1',?,?,'ATTRIBUTED_PURCHASE','SIGMOID',1729,
-                         '{}','{}','{}',?,?,'PROMOTED',?,?)""",
+               ) VALUES ('2',?,?,'ATTRIBUTED_PURCHASE','SIGMOID',1729,
+                         ?,'{}','{}',?,?,'PROMOTED',?,?)""",
             (
                 generation["scoring_run_id"], generation["model_run_id"],
+                _governed_calibration_lineage(
+                    database_path, int(generation["model_run_id"])
+                ),
                 "b" * 64, "c" * 64, "2026-09-29T09:00:00Z",
                 "2026-09-29T09:00:00Z",
             ),

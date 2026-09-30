@@ -378,9 +378,14 @@ class _Executor:
         return iter_selected_members(*args)
 
     def __call__(self, database_path: Path, search_run_id: int) -> None:
+        fence = CampaignResultRegistryRepository(database_path).claim_search_attempt(
+            search_run_id,
+            lease_owner="phase11-bounded-cleanroom",
+        )
         execute_phase11_search(
             database_path,
             search_run_id,
+            **fence.as_kwargs(),
             materializer=self.materializer,
             project_root=self.run_root,
             phase10_preparer=self._prepare,

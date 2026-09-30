@@ -100,7 +100,7 @@ def phase10_scoring_case(tmp_path: Path):
                 contacted_flag, engagement_flag, response_flag, purchase_flag,
                 campaign_attributed_sale_flag, pu_label
             ) VALUES (
-                ?, ?, 'CMP1', 'P1', 'Campaign', 'Retention', 'Retention',
+                ?, ?, ?, 'P1', 'Campaign', 'Retention', 'Retention',
                 'Email', 'Loyalty', 'Product', 'Category',
                 '2025-01-01', '2025-12-31', ?, 1, 0, 0, ?, ?, ?
             )
@@ -109,10 +109,11 @@ def phase10_scoring_case(tmp_path: Path):
                 (
                     f"S{index:03d}",
                     f"C{index:03d}",
+                    f"CMP{((index - 1) % 7) + 1}",
                     f"2025-01-{1 + ((index - 1) % 28):02d}",
-                    1 if index <= 20 else 0,
-                    1 if index <= 20 else 0,
-                    1 if index <= 20 else 0,
+                    1 if index % 2 or index in {22, 32, 38} else 0,
+                    1 if index % 2 or index in {22, 32, 38} else 0,
+                    1 if index % 2 or index in {22, 32, 38} else 0,
                 )
                 for index in range(1, 41)
             ],

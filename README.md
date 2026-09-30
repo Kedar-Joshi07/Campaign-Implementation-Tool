@@ -65,11 +65,15 @@ and [runtime final freeze report](docs/evidence/phase11_runtime_closure/PHASE11_
 ## Current versions and frozen contracts
 
 - Application version default: 0.1.0
-- Current SQLite schema version: 18
+- Current SQLite schema version: 30 (the operator's canonical local database
+  remains at schema 26 until an in-place migration is explicitly authorized)
 - Feature contract version: 1
 - Feature contract SHA-256: a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535
 - Model role policy version: 2
 - Evaluation contract version: 2
+- Automated training policy version: 2
+- Automated training split strategy: CAMPAIGN_CONNECTED_THREE_WAY_V1
+- Governed calibration contract version: 2
 - Audience filter contract version: 1
 - Audience rank contract version: 1
 - Audience selection contract version: 1
@@ -161,7 +165,13 @@ If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs
 .\.venv\Scripts\python.exe scripts\init_db.py --inspect
 ```
 
-Initialization is idempotent and creates/verifies schema version 19. The 15-to-16 migration appends source fields with false/null defaults. The 16-to-17 migration adds separate `campaign_search_runs`, `campaign_result_snapshots`, and `campaign_result_export_events` registries without modifying Phase 1–10 rows or legacy Campaign export semantics. The 17-to-18 migration adds a nullable, write-once future activation and outcome-lineage seam. The 18-to-19 migration adds one durable lifecycle/progress row per search, including monotonic progress, processed counts, heartbeat, safe issue guidance, and a guarded future control-state contract.
+Initialization is idempotent and creates/verifies schema version 30. Migrations
+20–26 add durable search attempts, progress, fencing, dependency lineage,
+attestation lineage, and workload-qualified progress. Migrations 27–30 add
+explicit v2 result membership, one-current-catalog enforcement, persisted
+campaign-connected model/calibration lineage, and bounded feedback-recalibration
+decision lineage. Historical rows remain readable and immutable under their
+recorded contracts.
 
 Phase 11 persists immutable business submissions separately from reusable, contact-PII-free result snapshots. Exact hits reuse a validated snapshot; otherwise the system reuses compatible Phase 10 intelligence or builds only missing layers, then atomically materializes one requested membership. Search-result exports have their own count/checksum/currentness audit records. See [smart reuse and snapshot contracts](docs/PHASE_11_RESULT_SNAPSHOTS_AND_SMART_REUSE.md).
 

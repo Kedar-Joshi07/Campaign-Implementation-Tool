@@ -13,7 +13,10 @@ PHASE10_COMPATIBILITY_CONTRACT_VERSION = "1"
 PHASE10_HISTORICAL_WINDOW_POLICY_VERSION = "1"
 PHASE10_MULTI_PRODUCT_POSITIVE_POLICY_VERSION = "1"
 PHASE10_TRAINING_ELIGIBILITY_POLICY_VERSION = "1"
-PHASE10_AUTOMATED_TRAINING_POLICY_VERSION = "1"
+PHASE10_AUTOMATED_TRAINING_POLICY_VERSION = "2"
+PHASE10_AUTOMATED_TRAINING_SPLIT_STRATEGY_VERSION = (
+    "CAMPAIGN_CONNECTED_THREE_WAY_V1"
+)
 PHASE10_ORCHESTRATION_CONTRACT_VERSION = "1"
 PHASE10_INTELLIGENCE_GENERATION_CONTRACT_VERSION = "1"
 PHASE10_LIFECYCLE_POLICY_VERSION = "1"
@@ -200,6 +203,7 @@ class ModelCompatibilityContract(Phase10StrictModel):
     evaluation_contract_version: str = Field(min_length=1, max_length=24)
     training_eligibility_policy_version: str = Field(min_length=1, max_length=24)
     automated_training_policy_version: str = Field(min_length=1, max_length=24)
+    split_strategy_version: str = Field(min_length=1, max_length=64)
     random_seed: int
     validation_fraction: float = Field(gt=0.0, lt=1.0)
     run_elkan_challenger: bool
@@ -387,6 +391,7 @@ __all__ = (
     "ModelCompatibilityContract",
     "ModelingContextContract",
     "PHASE10_AUTOMATED_TRAINING_POLICY_VERSION",
+    "PHASE10_AUTOMATED_TRAINING_SPLIT_STRATEGY_VERSION",
     "PHASE10_AUTOMATED_TRAINING_RANDOM_SEED",
     "PHASE10_AUTOMATED_TRAINING_RUN_ELKAN_CHALLENGER",
     "PHASE10_AUTOMATED_TRAINING_VALIDATION_FRACTION",

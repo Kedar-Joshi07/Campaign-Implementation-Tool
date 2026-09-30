@@ -11,8 +11,16 @@ import subprocess
 import sys
 
 from app.database.connection import get_connection
-from app.database.schema import CURRENT_SCHEMA_VERSION, DEMOGRAPHIC_COLUMNS, initialize_database
+from app.database.schema import (
+    CURRENT_SCHEMA_VERSION,
+    DEMOGRAPHIC_COLUMNS,
+    MIGRATIONS,
+    initialize_database,
+)
 from app.ml.feature_contract import FEATURE_CONTRACT_SHA256, ORDERED_FEATURES
+from tests.test_phase10_schema_registry_repository import (
+    _create_version_fourteen_database,
+)
 from app.services.data_import_service import _compute_source_checksum
 from app.services.data_validation_service import validate_demographic_row
 
@@ -137,33 +145,31 @@ def test_contactability_identifiers_are_independent_of_generator_chunk_size(
 
 def test_schema_version_16_migration_preserves_version_15_rows(tmp_path: Path) -> None:
     database_path = tmp_path / "phase11_migration.db"
-    legacy_columns = DEMOGRAPHIC_COLUMNS[: -len(CONTACTABILITY_COLUMNS)]
-    definitions = ", ".join(
-        f'"{column}" {"TEXT PRIMARY KEY" if column == "person_id" else "TEXT"}'
-        for column in legacy_columns
-    )
-    connection = sqlite3.connect(database_path)
-    try:
+    _create_version_fourteen_database(database_path)
+    with get_connection(database_path, write=True) as connection:
+        MIGRATIONS[15](connection)
         connection.execute(
-            "CREATE TABLE app_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL, "
-            "updated_at TEXT NOT NULL)"
+            "UPDATE app_metadata SET value='15' WHERE key='schema_version'"
         )
-        connection.executemany(
-            "INSERT INTO app_metadata (key, value, updated_at) VALUES (?, ?, ?)",
+        connection.execute(
+            """INSERT INTO demographics (
+                   person_id, first_name, age, state,
+                   individual_yearly_income, family_member_count,
+                   number_of_children_in_family, number_of_adults_in_family,
+                   family_yearly_income
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
-                ("schema_version", "15", "2026-09-16T00:00:00Z"),
-                ("application_version", "0.1.0", "2026-09-16T00:00:00Z"),
-                ("database_initialized_at", "2026-09-16T00:00:00Z", "2026-09-16T00:00:00Z"),
+                "US000000001",
+                "Preserved",
+                40,
+                "Ohio",
+                50_000,
+                2,
+                0,
+                2,
+                75_000,
             ),
         )
-        connection.execute(f"CREATE TABLE demographics ({definitions})")
-        connection.execute(
-            "INSERT INTO demographics (person_id, first_name) VALUES (?, ?)",
-            ("US000000001", "Preserved"),
-        )
-        connection.commit()
-    finally:
-        connection.close()
 
     initialize_database(database_path)
 

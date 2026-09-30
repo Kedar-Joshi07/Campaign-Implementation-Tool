@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -20,6 +20,74 @@ _PARTITIONS = (MODEL_TRAINING, CALIBRATION_FIT, CALIBRATION_EVALUATION)
 
 class CampaignGroupSplitError(ValueError):
     """Raised when campaign lineage cannot support an isolated split."""
+
+
+def validate_campaign_group_split_lineage(
+    lineage: Mapping[str, Any] | None,
+    *,
+    expected_seed: int | None = None,
+    expected_validation_fraction: float | None = None,
+) -> bool:
+    """Return whether persisted lineage proves the governed isolated split.
+
+    This intentionally validates persisted facts rather than accepting a strategy
+    label alone. Historical rows remain readable, but cannot satisfy governed
+    automated reuse unless their three partitions are complete and disjoint.
+    """
+
+    if not isinstance(lineage, Mapping):
+        return False
+    if lineage.get("strategy_version") != SPLIT_STRATEGY_VERSION:
+        return False
+    if expected_seed is not None and lineage.get("seed") != expected_seed:
+        return False
+    if expected_validation_fraction is not None and lineage.get(
+        "validation_fraction"
+    ) != expected_validation_fraction:
+        return False
+    partitions = lineage.get("partitions")
+    if not isinstance(partitions, Mapping) or set(partitions) != set(_PARTITIONS):
+        return False
+    all_groups: set[str] = set()
+    customer_count = 0
+    for partition in _PARTITIONS:
+        facts = partitions.get(partition)
+        if not isinstance(facts, Mapping):
+            return False
+        groups = facts.get("group_ids")
+        if (
+            not isinstance(groups, list)
+            or not groups
+            or any(not isinstance(group, str) or not group for group in groups)
+            or len(groups) != len(set(groups))
+            or all_groups.intersection(groups)
+            or facts.get("group_count") != len(groups)
+            or facts.get("group_ids_sha256") != _sha(groups)
+        ):
+            return False
+        positive_count = facts.get("positive_count")
+        negative_count = facts.get("negative_count")
+        partition_customer_count = facts.get("customer_count")
+        if (
+            not isinstance(positive_count, int)
+            or isinstance(positive_count, bool)
+            or positive_count <= 0
+            or not isinstance(negative_count, int)
+            or isinstance(negative_count, bool)
+            or negative_count <= 0
+            or partition_customer_count != positive_count + negative_count
+        ):
+            return False
+        all_groups.update(groups)
+        customer_count += partition_customer_count
+    overlap_counts = lineage.get("overlap_counts")
+    if not isinstance(overlap_counts, Mapping) or set(overlap_counts.values()) != {0}:
+        return False
+    return (
+        lineage.get("group_count") == len(all_groups)
+        and lineage.get("all_group_ids_sha256") == _sha(sorted(all_groups))
+        and lineage.get("customer_count") == customer_count
+    )
 
 
 @dataclass(frozen=True)
@@ -256,4 +324,5 @@ __all__ = (
     "MODEL_TRAINING",
     "SPLIT_STRATEGY_VERSION",
     "build_campaign_group_partition",
+    "validate_campaign_group_split_lineage",
 )

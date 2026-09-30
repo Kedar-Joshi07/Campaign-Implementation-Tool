@@ -34,6 +34,7 @@ from app.ml.model_roles import (
     PRIMARY_ROLE_GOVERNED_SELECTION,
 )
 from app.ml.preprocessing import split_customer_cohort
+from app.ml.campaign_group_split import validate_campaign_group_split_lineage
 from app.repositories.job_repository import JobRepository
 from app.repositories.model_run_repository import ModelRunRepository
 from app.repositories.phase10_intelligence_repository import (
@@ -394,6 +395,7 @@ def _model_reason_codes(
     hyperparameters = _decode_json_object(row.get("hyperparameters_json"))
     evaluation = _decode_json_object(row.get("metrics_json"))
     libraries = _decode_json_object(row.get("library_versions_json"))
+    split_lineage = _decode_json_object(row.get("split_lineage_json"))
 
     if (
         feature != FEATURE_CONTRACT
@@ -434,6 +436,12 @@ def _model_reason_codes(
         _append_reason(reasons, "EVALUATION_METADATA_INVALID")
     if libraries is None:
         _append_reason(reasons, "LIBRARY_METADATA_INVALID")
+    if not validate_campaign_group_split_lineage(
+        split_lineage,
+        expected_seed=PHASE10_AUTOMATED_TRAINING_RANDOM_SEED,
+        expected_validation_fraction=PHASE10_AUTOMATED_TRAINING_VALIDATION_FRACTION,
+    ):
+        _append_reason(reasons, "GOVERNED_SPLIT_LINEAGE_INVALID")
     if any(
         _contains_prohibited_metadata(item)
         for item in (feature, preprocessing, hyperparameters, evaluation, libraries)

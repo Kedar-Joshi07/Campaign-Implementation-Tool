@@ -109,7 +109,11 @@ Freeze these invariants:
 
 ### D. Prompt execution graph
 Recommended order:
-`01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08 -> 09 -> 10 -> 11 -> 12 -> 13`, then either the approved `14A` or `14B`, then `15 -> 16 -> 17 -> 18 -> 19`.
+`01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08 -> 09 -> 10 -> 11 -> 12 -> 13 -> 13.5`, then obtain an explicit human/business decision, run exactly one approved branch (`14A` or `14B`), then `15 -> 16 -> 17 -> 18 -> 19`.
+
+Prompt 13.5 is a mandatory integration-closure, migration-certification, and
+exact-SHA green gate. Do not proceed to either Prompt 14 branch on local focused
+tests alone.
 
 Do not implement substantive fixes in Prompt 00 unless required merely to reproduce/document baseline behavior.
 

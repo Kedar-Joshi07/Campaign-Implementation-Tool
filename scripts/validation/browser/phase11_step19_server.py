@@ -60,7 +60,14 @@ def main() -> int:
                 repository = CampaignResultRegistryRepository(database)
                 current = repository.fetch_search_run(search_run_id)
                 if current and current["status"] in {"QUEUED", "PROCESSING"}:
-                    repository.fail_search_run(search_run_id)
+                    fence = repository.claim_search_attempt(
+                        search_run_id,
+                        lease_owner="phase11-step19-failure",
+                    )
+                    repository.fail_search_run(
+                        search_run_id,
+                        **fence.as_kwargs(),
+                    )
 
         thread = threading.Thread(
             target=worker,
