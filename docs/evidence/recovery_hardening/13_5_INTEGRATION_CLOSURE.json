@@ -1,9 +1,9 @@
 {
   "evidence_contract": "PROMPT_13_5_INTEGRATION_CLOSURE_V1",
-  "generated_at": "2026-09-30T14:17:29Z",
+  "generated_at": "2026-10-01T04:51:24Z",
   "starting_sha": "6c7c76164a62f14c15e7d4699cf46922dd632ef0",
-  "candidate_sha": "51acaeccd69de4318f8cd7ef8411e02afb0f9ab4",
-  "candidate_state": "PUSHED_CI_FAILED_SUPERSEDED_BY_STRENGTHENED_RESPONSIVE_FIX_WORKTREE",
+  "candidate_sha": "1de30f2368c3b8555befc2e1214f83cb9ef8334e",
+  "candidate_state": "PUSHED_CI_FAILED_SUPERSEDED_BY_PLATFORM_NEUTRAL_FEEDBACK_CONTROL_WORKTREE",
   "branch": "main",
   "starting_schema_version": 30,
   "ending_schema_version": 30,
@@ -100,10 +100,10 @@
     {"scope": "migration_boundaries_and_matrix", "passed": 18, "failed": 0, "errors": 0, "deselected": 46},
     {"scope": "preflight_materialization_parity", "passed": 19, "failed": 0, "errors": 0, "duration_seconds": 98.50},
     {"scope": "generator_compatibility", "passed": 3, "failed": 0, "errors": 0, "duration_seconds": 25.88},
-    {"scope": "browser_file_outside_restricted_sandbox", "passed": 14, "failed": 0, "errors": 0, "duration_seconds": 109.09},
+    {"scope": "browser_file_outside_restricted_sandbox", "passed": 14, "failed": 0, "errors": 0, "duration_seconds": 49.57},
     {"scope": "phase9", "passed": 69, "failed": 0, "errors": 0, "duration_seconds": 438.20},
     {"scope": "phase10", "passed": 90, "failed": 0, "errors": 0, "duration_seconds": 445.61},
-    {"scope": "phase11_non_heavy", "passed": 351, "failed": 0, "errors": 0, "deselected": 5, "duration_seconds": 781.48}
+    {"scope": "phase11_non_heavy", "passed": 351, "failed": 0, "errors": 0, "deselected": 5, "duration_seconds": 787.15}
   ],
   "full_test_result": {
     "passed": 1011,
@@ -117,7 +117,7 @@
     "passed": 125,
     "failed": 0,
     "errors": 0,
-    "duration_seconds": 384.27
+    "duration_seconds": 448.60
   },
   "repository_hygiene_result": "PASS",
   "python_validation_result": {
@@ -133,7 +133,7 @@
       "scripts/validation/browser/phase11_step20_server.py"
     ]
   },
-  "exact_sha_ci_run_id": 36733487762,
+  "exact_sha_ci_run_id": 36813062085,
   "exact_sha_ci_status": "FAILURE_FRONTEND_PHASE11_RESPONSIVE_REMEDIATION_PENDING",
   "exact_sha_ci_jobs": {
     "Repository Hygiene": "success",
@@ -155,7 +155,15 @@
     "second_ci_job_result": "Four jobs passed; Frontend Contract bounded Phase 11 step failed",
     "strengthened_fix": "Bounded feedback grid, direct-child width constraints, native file-selector bound, and element-level assertion diagnostics",
     "strengthened_local_exact_viewport_result": "4 passed",
-    "strengthened_local_result_detail_file_result": "14 passed"
+    "strengthened_local_result_detail_file_result": "14 passed",
+    "third_candidate_sha": "1de30f2368c3b8555befc2e1214f83cb9ef8334e",
+    "third_ci_run_id": 36813062085,
+    "third_ci_job_result": "Four jobs passed; Frontend Contract bounded Phase 11 step failed with a fixed 366 px Linux-native control width",
+    "platform_neutral_fix": "Visually hidden accessible file input with bounded label-button and wrapping filename status; explicit single-column mobile overview and wrapped progress heading",
+    "platform_neutral_local_focused_result": "5 passed",
+    "platform_neutral_local_result_detail_file_result": "14 passed",
+    "platform_neutral_local_frontend_api_result": "125 passed",
+    "platform_neutral_local_phase11_result": "351 passed, 5 deselected"
   },
   "canonical_training_governance_status": "BLOCKED_ONE_CONNECTED_COMPONENT",
   "canonical_topology": {
@@ -169,7 +177,7 @@
   },
   "prompt_13_5_status": "NO_GO_EXACT_SHA_CI_REMEDIATION_PENDING",
   "remaining_limitations": [
-    "The first exact-SHA run exposed two mobile result-detail overflow failures; the remediation requires a new exact-SHA run.",
+    "Three exact-SHA runs exposed the same two Linux-only mobile result-detail overflow failures; the platform-neutral remediation requires a new exact-SHA run.",
     "Canonical campaign data has one connected component and cannot satisfy governed three-way split isolation.",
     "Prompt 13 business policy remains undecided; neither 14A nor 14B has been run.",
     "Full canonical performance and demo scenario qualification remain future work after policy selection."

@@ -1,6 +1,6 @@
 # Prompt 13.5 Integration Closure
 
-Generated: 2026-09-30T14:17:29Z
+Generated: 2026-10-01T04:51:24Z
 
 ## 1. Baseline
 
@@ -163,6 +163,8 @@ No new HTTP endpoint or response field was added. The behavioral contract change
 - Remediation: feedback-template actions now wrap/stack on bounded widths and the native feedback file input is explicitly constrained to its panel. The exact responsive parameter set passed `4/4`, and the full result-history/detail browser file passed `14/14` locally.
 - Second candidate SHA `51acaeccd69de4318f8cd7ef8411e02afb0f9ab4` ran as GitHub Actions run `36733487762`. Repository Hygiene, Python Validation, Tests, and Clean-Room Phase1-7 passed; the bounded Phase 11 step of Frontend Contract still failed in the Linux runner.
 - The second remediation replaces the result feedback flex sizing with an explicit bounded grid, constrains every direct result-detail/grid/panel child, bounds the native file-selector button, and adds element-level overflow diagnostics without weakening either assertion. The responsive matrix again passed `4/4` and the complete result-history/detail file passed `14/14` locally.
+- Third candidate SHA `1de30f2368c3b8555befc2e1214f83cb9ef8334e` ran as GitHub Actions run `36813062085`. Repository Hygiene, Python Validation, Tests, and Clean-Room Phase1-7 passed; Frontend Contract again reported only the two mobile overflow cases (`349 passed, 2 failed, 5 deselected`). The raw authenticated job log measured a fixed 366 px result-detail scroll width at both failing viewports, isolating the platform-dependent native feedback file control.
+- The third remediation removes the Linux/Windows native file-control sizing variance from layout: the real file input remains accessible and functional but is visually hidden, while a bounded label-button and wrapping filename status provide the user-facing control. Mobile overview/progress layouts are also explicitly single-column/wrapping. Local verification passed the focused matrix (`5 passed`), the full result-history/detail file (`14 passed`), the frontend/API gate (`125 passed`), and bounded Phase 11 (`351 passed, 5 deselected`).
 - Current exact-SHA CI status: `REMEDIATION_PENDING_COMMIT_AND_RERUN`.
 - Prompt 13.5 status: `NO-GO` until the remediation candidate is committed, pushed, and all required GitHub Actions jobs are green on that exact SHA.
 
@@ -173,4 +175,4 @@ Accepted limitations:
 - Prompt 14A/14B remains an explicit future business decision.
 - Full canonical performance and 20-scenario demo qualification remain future work after policy selection.
 
-The only valid next action is to commit/push the strengthened bounded responsive remediation and rerun exact-SHA GitHub CI. Prompt 14 must not begin until Prompt 13.5 is fully green.
+The only valid next action is to commit/push the platform-neutral feedback-control remediation and rerun exact-SHA GitHub CI. Prompt 14 must not begin until Prompt 13.5 is fully green.

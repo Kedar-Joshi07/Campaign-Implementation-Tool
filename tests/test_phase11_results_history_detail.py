@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -654,13 +655,20 @@ def test_result_detail_is_responsive_progressively_disclosed_and_has_no_contact_
     assert browser.locator("#result-technical-disclosure").get_attribute("open") is None
     assert browser.locator("#result-detail-download").is_hidden()
     overflow = _overflow_diagnostics(browser)
+    if (
+        overflow["documentScrollWidth"] > overflow["documentClientWidth"]
+        or overflow["contentScrollWidth"] > overflow["contentClientWidth"]
+    ):
+        print("OVERFLOW_DIAGNOSTICS=" + json.dumps(overflow, sort_keys=True))
     assert browser.evaluate(
         "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
-    ), overflow
+    ), json.dumps(overflow, sort_keys=True)
     assert browser.evaluate(
         "document.querySelector('#result-detail-content').scrollWidth <= "
         "document.querySelector('#result-detail-content').clientWidth"
-    ), overflow
+    ), json.dumps(overflow, sort_keys=True)
+    assert browser.get_by_text("Choose Feedback File", exact=True).is_visible()
+    assert browser.get_by_text("No file chosen", exact=True).is_visible()
     visible = browser.locator("#result-detail-view").inner_text().lower()
     assert not {"first name", "last name", "phone number", "postal code"}.intersection(
         phrase for phrase in ("first name", "last name", "phone number", "postal code")
@@ -671,11 +679,11 @@ def test_result_detail_is_responsive_progressively_disclosed_and_has_no_contact_
     overflow = _overflow_diagnostics(browser)
     assert browser.evaluate(
         "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
-    ), overflow
+    ), json.dumps(overflow, sort_keys=True)
     assert browser.evaluate(
         "document.querySelector('#result-detail-content').scrollWidth <= "
         "document.querySelector('#result-detail-content').clientWidth"
-    ), overflow
+    ), json.dumps(overflow, sort_keys=True)
     assert errors == []
 
 

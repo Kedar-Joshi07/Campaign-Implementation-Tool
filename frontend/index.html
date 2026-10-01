@@ -7,7 +7,7 @@
     <title>Home | Campaign Implementation Intelligence</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="/static/css/main.css?v=sidebar-layout-2">
-    <link rel="stylesheet" href="/static/css/components.css?v=phase11-16">
+    <link rel="stylesheet" href="/static/css/components.css?v=phase11-17">
   </head>
   <body>
     <div class="app-shell">
@@ -1809,7 +1809,12 @@
                   </ul>
                   <p class="panel-note">The downloaded files contain placeholders only. Replace them with verified outcomes before uploading or sending the API request.</p>
                 </details>
-                <div class="form-field"><label for="result-feedback-file">Purchase outcome CSV or JSON</label><input id="result-feedback-file" type="file" accept=".csv,.json,text/csv,application/csv,application/json"></div>
+                <div class="form-field result-feedback-file-control">
+                  <span id="result-feedback-file-label">Purchase outcome CSV or JSON</span>
+                  <input id="result-feedback-file" class="result-feedback-file-input" type="file" accept=".csv,.json,text/csv,application/csv,application/json" aria-labelledby="result-feedback-file-label" aria-describedby="result-feedback-file-name">
+                  <label class="button button-secondary" for="result-feedback-file">Choose Feedback File</label>
+                  <span id="result-feedback-file-name" class="result-feedback-file-name">No file chosen</span>
+                </div>
                 <button id="result-feedback-upload" class="button button-secondary" type="button">Upload Feedback</button>
                 <p id="result-feedback-status" class="panel-note" role="status" aria-live="polite"></p>
               </section>

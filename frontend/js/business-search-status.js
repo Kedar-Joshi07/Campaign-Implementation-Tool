@@ -354,6 +354,7 @@ function renderDetail(run) {
   const feedbackPanel = find("result-feedback-panel");
   feedbackPanel.hidden = run.status !== "COMPLETED";
   find("result-feedback-file").value = "";
+  find("result-feedback-file-name").textContent = "No file chosen";
   find("result-feedback-status").textContent = "";
 }
 
@@ -448,6 +449,10 @@ export function initializeSearchStatus() {
   find("result-detail-refresh").addEventListener("click", () => {
     refreshCycles = 0;
     loadSearchStatus(find("result-detail-view").dataset.searchRunId);
+  });
+  find("result-feedback-file").addEventListener("change", (event) => {
+    find("result-feedback-file-name").textContent =
+      event.target.files?.[0]?.name || "No file chosen";
   });
   find("result-feedback-upload").addEventListener("click", uploadFeedback);
 }
