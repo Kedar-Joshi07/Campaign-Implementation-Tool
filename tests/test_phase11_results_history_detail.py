@@ -352,6 +352,44 @@ def _detail_payload(run_id=42, *, status="COMPLETED", bucket=None):
     return detail
 
 
+def _overflow_diagnostics(browser):
+    return browser.evaluate(
+        """
+        () => {
+          const content = document.querySelector('#result-detail-content');
+          const describe = (element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+              tag: element.tagName,
+              id: element.id,
+              className: String(element.className || ''),
+              clientWidth: element.clientWidth,
+              scrollWidth: element.scrollWidth,
+              left: Math.round(rect.left),
+              right: Math.round(rect.right),
+            };
+          };
+          return {
+            viewport: document.documentElement.clientWidth,
+            documentClientWidth: document.documentElement.clientWidth,
+            documentScrollWidth: document.documentElement.scrollWidth,
+            contentClientWidth: content?.clientWidth,
+            contentScrollWidth: content?.scrollWidth,
+            offenders: [...document.querySelectorAll('#result-detail-view *')]
+              .filter((element) => {
+                const rect = element.getBoundingClientRect();
+                return element.scrollWidth > element.clientWidth + 1
+                  || rect.right > document.documentElement.clientWidth + 1
+                  || rect.left < -1;
+              })
+              .slice(0, 20)
+              .map(describe),
+          };
+        }
+        """
+    )
+
+
 @pytest.mark.browser
 def test_results_history_renders_deduplicates_paginates_and_only_polls_active(page):
     browser, errors, _requests = page
@@ -615,11 +653,14 @@ def test_result_detail_is_responsive_progressively_disclosed_and_has_no_contact_
     assert browser.get_by_text("Contact information is never shown here.", exact=False).is_visible()
     assert browser.locator("#result-technical-disclosure").get_attribute("open") is None
     assert browser.locator("#result-detail-download").is_hidden()
-    assert browser.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
+    overflow = _overflow_diagnostics(browser)
+    assert browser.evaluate(
+        "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
+    ), overflow
     assert browser.evaluate(
         "document.querySelector('#result-detail-content').scrollWidth <= "
         "document.querySelector('#result-detail-content').clientWidth"
-    )
+    ), overflow
     visible = browser.locator("#result-detail-view").inner_text().lower()
     assert not {"first name", "last name", "phone number", "postal code"}.intersection(
         phrase for phrase in ("first name", "last name", "phone number", "postal code")
@@ -627,11 +668,14 @@ def test_result_detail_is_responsive_progressively_disclosed_and_has_no_contact_
     )
     browser.locator("#result-technical-disclosure summary").click()
     assert "TARGETING CONTEXT ID" in browser.locator("#result-technical-details").inner_text()
-    assert browser.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
+    overflow = _overflow_diagnostics(browser)
+    assert browser.evaluate(
+        "document.documentElement.scrollWidth <= document.documentElement.clientWidth"
+    ), overflow
     assert browser.evaluate(
         "document.querySelector('#result-detail-content').scrollWidth <= "
         "document.querySelector('#result-detail-content').clientWidth"
-    )
+    ), overflow
     assert errors == []
 
 

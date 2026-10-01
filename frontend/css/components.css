@@ -2926,7 +2926,8 @@ tbody tr:hover td {
 .result-status-badge.is-blocked { background: #fef3c7; color: #92400e; }
 .result-status-badge.is-failed { background: #fee2e2; color: #991b1b; }
 .result-detail-toolbar { justify-content: space-between; margin-bottom: 12px; }
-.result-detail-content { display: grid; min-width: 0; max-width: 100%; gap: 18px; }
+.result-detail-content { display: grid; width: 100%; min-width: 0; max-width: 100%; gap: 18px; overflow-wrap: anywhere; }
+.result-detail-content > *, .result-detail-grid > *, .result-feedback-panel > * { min-width: 0; max-width: 100%; }
 .result-detail-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; padding: 22px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .result-detail-hero h2 { margin: 3px 0 8px; }
 .result-detail-hero > *, .result-detail-toolbar > * { min-width: 0; max-width: 100%; }
@@ -2935,19 +2936,31 @@ tbody tr:hover td {
 .result-detail-panel, .result-technical-disclosure { min-width: 0; max-width: 100%; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .result-detail-panel h3 { margin-top: 0; }
 .result-feedback-template-actions {
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 14px 0;
 }
 .result-feedback-template-actions .button {
-  min-width: 0;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  white-space: normal;
-}
-.result-feedback-panel .form-field input[type="file"] {
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
+}
+.result-feedback-panel .form-field input[type="file"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: .82rem;
+}
+.result-feedback-panel .form-field input[type="file"]::file-selector-button {
+  max-width: calc(100% - 6rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .feedback-format-guide { margin: 12px 0 18px; }
 .feedback-format-guide summary { cursor: pointer; font-weight: 700; }
@@ -2970,8 +2983,7 @@ tbody tr:hover td {
   .result-definition-list dd { margin: 0 0 10px; }
   .result-detail-toolbar .button { white-space: normal; }
   .result-feedback-template-actions {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

@@ -161,6 +161,8 @@ No new HTTP endpoint or response field was added. The behavioral contract change
 - Passing jobs: Repository Hygiene, Python Validation, Tests, and Clean-Room Phase1-7.
 - Failed job: Frontend Contract. Its Phase 11 step reported `349 passed, 2 failed, 5 deselected`; both failures were result-detail horizontal overflow at the 360 px and 390 px mobile viewports.
 - Remediation: feedback-template actions now wrap/stack on bounded widths and the native feedback file input is explicitly constrained to its panel. The exact responsive parameter set passed `4/4`, and the full result-history/detail browser file passed `14/14` locally.
+- Second candidate SHA `51acaeccd69de4318f8cd7ef8411e02afb0f9ab4` ran as GitHub Actions run `36733487762`. Repository Hygiene, Python Validation, Tests, and Clean-Room Phase1-7 passed; the bounded Phase 11 step of Frontend Contract still failed in the Linux runner.
+- The second remediation replaces the result feedback flex sizing with an explicit bounded grid, constrains every direct result-detail/grid/panel child, bounds the native file-selector button, and adds element-level overflow diagnostics without weakening either assertion. The responsive matrix again passed `4/4` and the complete result-history/detail file passed `14/14` locally.
 - Current exact-SHA CI status: `REMEDIATION_PENDING_COMMIT_AND_RERUN`.
 - Prompt 13.5 status: `NO-GO` until the remediation candidate is committed, pushed, and all required GitHub Actions jobs are green on that exact SHA.
 
@@ -171,4 +173,4 @@ Accepted limitations:
 - Prompt 14A/14B remains an explicit future business decision.
 - Full canonical performance and 20-scenario demo qualification remain future work after policy selection.
 
-The only valid next action is to commit/push the bounded responsive remediation and rerun exact-SHA GitHub CI. Prompt 14 must not begin until Prompt 13.5 is fully green.
+The only valid next action is to commit/push the strengthened bounded responsive remediation and rerun exact-SHA GitHub CI. Prompt 14 must not begin until Prompt 13.5 is fully green.

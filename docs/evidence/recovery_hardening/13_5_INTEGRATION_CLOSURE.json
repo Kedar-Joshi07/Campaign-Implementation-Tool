@@ -2,8 +2,8 @@
   "evidence_contract": "PROMPT_13_5_INTEGRATION_CLOSURE_V1",
   "generated_at": "2026-09-30T14:17:29Z",
   "starting_sha": "6c7c76164a62f14c15e7d4699cf46922dd632ef0",
-  "candidate_sha": "2548e2b5bdff627fee3332c999f71a467c57ab39",
-  "candidate_state": "PUSHED_CI_FAILED_SUPERSEDED_BY_RESPONSIVE_FIX_WORKTREE",
+  "candidate_sha": "51acaeccd69de4318f8cd7ef8411e02afb0f9ab4",
+  "candidate_state": "PUSHED_CI_FAILED_SUPERSEDED_BY_STRENGTHENED_RESPONSIVE_FIX_WORKTREE",
   "branch": "main",
   "starting_schema_version": 30,
   "ending_schema_version": 30,
@@ -133,8 +133,8 @@
       "scripts/validation/browser/phase11_step20_server.py"
     ]
   },
-  "exact_sha_ci_run_id": 36729928374,
-  "exact_sha_ci_status": "FAILURE_FRONTEND_MOBILE_OVERFLOW_REMEDIATION_PENDING",
+  "exact_sha_ci_run_id": 36733487762,
+  "exact_sha_ci_status": "FAILURE_FRONTEND_PHASE11_RESPONSIVE_REMEDIATION_PENDING",
   "exact_sha_ci_jobs": {
     "Repository Hygiene": "success",
     "Python Validation": "success",
@@ -149,7 +149,13 @@
     ],
     "ci_phase11_result": "349 passed, 2 failed, 5 deselected",
     "local_exact_viewport_result": "4 passed",
-    "local_result_detail_file_result": "14 passed"
+    "local_result_detail_file_result": "14 passed",
+    "second_candidate_sha": "51acaeccd69de4318f8cd7ef8411e02afb0f9ab4",
+    "second_ci_run_id": 36733487762,
+    "second_ci_job_result": "Four jobs passed; Frontend Contract bounded Phase 11 step failed",
+    "strengthened_fix": "Bounded feedback grid, direct-child width constraints, native file-selector bound, and element-level assertion diagnostics",
+    "strengthened_local_exact_viewport_result": "4 passed",
+    "strengthened_local_result_detail_file_result": "14 passed"
   },
   "canonical_training_governance_status": "BLOCKED_ONE_CONNECTED_COMPONENT",
   "canonical_topology": {
