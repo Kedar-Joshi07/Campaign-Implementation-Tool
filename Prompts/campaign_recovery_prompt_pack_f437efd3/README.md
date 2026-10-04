@@ -22,6 +22,7 @@ Do not start with the zero-customer model problem. First make execution safe:
 12. feedback-learning semantics
 13. business selection-policy decision
 13.5. mandatory integration closure, migration certification, and exact-SHA green gate
+13.6. mandatory pre-14 statistical, ownership, contract, runtime, and CI stabilization
 14. chosen conditional implementation path
 15. fault/restart certification
 16. canonical performance
@@ -46,6 +47,7 @@ Do not start with the zero-customer model problem. First make execution safe:
 - `12_FEEDBACK_RECALIBRATION_PSI_AND_TRUE_MODEL_LEARNING_BOUNDARY.md`
 - `13_ZERO_CUSTOMER_ROOT_CAUSE_AND_SELECTION_POLICY_DECISION_GATE.md`
 - `13.5_Prompts_00–13_Integration_Closure,_Governance_Reconciliation,_Migration_Certification,_and_Exact-SHA_Green_Gate.md`
+- `Prompt_13_6_Pre-14_Stabilization_Statistical_Integrity_Contract_Extensibility_Runtime_Ownership_and_CI_Hardening.md`
 - `14A_KEEP_ABSOLUTE_PROBABILITY_MODEL_IMPROVEMENT_PATH.md`
 - `14B_VERSIONED_SELECTION_CONTRACT_V3_IF_APPROVED.md`
 - `15_FAULT_INJECTION_RESTART_CONCURRENCY_AND_CRASH_RECOVERY_MATRIX.md`
@@ -62,9 +64,13 @@ Run one prompt at a time. Review the result before moving on. A later prompt may
 gate before an explicit human/business decision selects exactly one of 14A or
 14B. Do not run both branches.
 
+**Prompt 13.6 is mandatory after Prompt 13.5 and before the business decision is
+reconfirmed.** It hardens existing contracts only and does not select 14A/14B,
+introduce v3 semantics, or change the v2 probability thresholds.
+
 Current execution graph:
 
-`01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08 -> 09 -> 10 -> 11 -> 12 -> 13 -> 13.5 -> explicit human/business decision -> (14A or 14B) -> 15 -> 16 -> 17 -> 18 -> 19`
+`01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08 -> 09 -> 10 -> 11 -> 12 -> 13 -> 13.5 -> 13.6 -> reconfirm human/business decision -> (14A or 14B) -> 15 -> 16 -> 17 -> 18 -> 19`
 
 If any step returns NO-GO, fix that step before continuing unless the prompt explicitly permits a documented limitation.
 

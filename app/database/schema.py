@@ -38,7 +38,7 @@ from app.database.search_recovery_schema import (
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 30
+CURRENT_SCHEMA_VERSION = 31
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
 EXPECTED_TABLES = (
@@ -3488,6 +3488,116 @@ def _migrate_to_version_30(connection: sqlite3.Connection) -> None:
         raise UnsupportedSchemaVersionError(
             "Feedback recalibration migration failed foreign-key verification."
         )
+
+
+def _migrate_to_version_31(connection: sqlite3.Connection) -> None:
+    """Add Prompt 13.6 calibration, grouping, and worker ownership invariants."""
+
+    required = (
+        "score_calibration_artifacts",
+        "feedback_retraining_decisions",
+    )
+    if any(not _table_exists(connection, table) for table in required):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 31 because calibration/feedback tables are missing."
+        )
+
+    duplicate_promoted = connection.execute(
+        """SELECT scoring_run_id FROM score_calibration_artifacts
+           WHERE status='PROMOTED'
+           GROUP BY scoring_run_id HAVING COUNT(*)>1"""
+    ).fetchall()
+    for row in duplicate_promoted:
+        scoring_run_id = int(row["scoring_run_id"])
+        winner = connection.execute(
+            """SELECT calibration_artifact_id FROM score_calibration_artifacts
+               WHERE scoring_run_id=? AND status='PROMOTED'
+               ORDER BY promoted_at DESC,calibration_artifact_id DESC LIMIT 1""",
+            (scoring_run_id,),
+        ).fetchone()
+        if winner is None:
+            raise UnsupportedSchemaVersionError(
+                "Promoted calibration normalization could not choose a winner."
+            )
+        winner_id = int(winner["calibration_artifact_id"])
+        connection.execute(
+            """UPDATE score_calibration_artifacts SET status='STALE'
+               WHERE scoring_run_id=? AND status='PROMOTED'
+                 AND calibration_artifact_id<>?""",
+            (scoring_run_id, winner_id),
+        )
+        if _table_exists(connection, "search_preflight_cache"):
+            connection.execute(
+                """UPDATE search_preflight_cache SET currentness_state='STALE'
+                   WHERE calibration_artifact_id<>?
+                     AND calibration_artifact_id IN (
+                         SELECT calibration_artifact_id
+                         FROM score_calibration_artifacts
+                         WHERE scoring_run_id=? AND status='STALE'
+                     )""",
+                (winner_id, scoring_run_id),
+            )
+    connection.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_score_calibration_one_promoted
+           ON score_calibration_artifacts(scoring_run_id)
+           WHERE status='PROMOTED'"""
+    )
+
+    decision_columns = {
+        row["name"]
+        for row in connection.execute("PRAGMA table_info(feedback_retraining_decisions)")
+    }
+    additions = (
+        (
+            "independent_feedback_group_count",
+            "INTEGER NOT NULL DEFAULT 0 CHECK (independent_feedback_group_count >= 0)",
+        ),
+        ("feedback_grouping_contract_version", "TEXT"),
+        (
+            "feedback_grouping_sha256",
+            "TEXT CHECK (feedback_grouping_sha256 IS NULL OR length(feedback_grouping_sha256)=64)",
+        ),
+        (
+            "execution_lease_token",
+            "TEXT CHECK (execution_lease_token IS NULL OR length(execution_lease_token)=64)",
+        ),
+        ("lease_owner", "TEXT"),
+        ("lease_claimed_at", "TEXT"),
+        ("lease_heartbeat_at", "TEXT"),
+    )
+    for name, definition in additions:
+        if name not in decision_columns:
+            connection.execute(
+                f'ALTER TABLE feedback_retraining_decisions ADD COLUMN "{name}" {definition}'
+            )
+
+    duplicate_active = connection.execute(
+        """SELECT scoring_run_id,MAX(retraining_decision_id) AS keeper
+           FROM feedback_retraining_decisions
+           WHERE status IN ('QUEUED','TRAINING')
+           GROUP BY scoring_run_id HAVING COUNT(*)>1"""
+    ).fetchall()
+    for row in duplicate_active:
+        connection.execute(
+            """UPDATE feedback_retraining_decisions
+               SET status='REJECTED',
+                   trigger_reason='Superseded during bounded execution-ownership migration.',
+                   completed_at=COALESCE(completed_at,created_at)
+               WHERE scoring_run_id=? AND status IN ('QUEUED','TRAINING')
+                 AND retraining_decision_id<>?""",
+            (int(row["scoring_run_id"]), int(row["keeper"])),
+        )
+    connection.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_feedback_recalibration_active
+           ON feedback_retraining_decisions(scoring_run_id)
+           WHERE status IN ('QUEUED','TRAINING')"""
+    )
+    if connection.execute("PRAGMA foreign_key_check").fetchall():
+        raise UnsupportedSchemaVersionError(
+            "Prompt 13.6 migration failed foreign-key verification."
+        )
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -3518,6 +3628,7 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     28: _migrate_to_version_28,
     29: _migrate_to_version_29,
     30: _migrate_to_version_30,
+    31: _migrate_to_version_31,
 }
 
 

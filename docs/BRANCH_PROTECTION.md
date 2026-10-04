@@ -4,18 +4,25 @@ This repository cannot be programmatically configured from local CI scripts, so 
 
 ## Current verification status
 
-Verified through the public GitHub API on 2026-09-21:
+Re-verified through the public GitHub API on 2026-10-04 for the Prompt 13.6
+starting baseline:
 
 - repository: `Kedar-Joshi07/Campaign-Implementation-Tool`;
 - default branch: `main`;
-- remote `main` SHA: `9009e23b750000d3f3d29e09204281f3d301e640`;
+- remote `main` SHA: `58a5852d488aa686ed67ffa7ccecbc50463f4081`;
 - branch metadata: `protected=false`;
 - authenticated protection-detail endpoint: unavailable (`401 Requires authentication`);
+- repository-ruleset detail could not be authenticated;
 - GitHub CLI/admin credentials: not available in the certification environment.
 
 Branch protection is therefore **not currently enabled or verified as enabled**. The settings below remain an explicit repository-governance follow-up. This does not invalidate the certified runtime behavior, but protection must be applied and re-read through an authenticated administrator account before claiming the repository-governance gate complete.
 
-The latest remote-main CI run at the time of this check was run `#23` (`35514589328`) for the exact remote SHA above. Repository Hygiene, Python Validation, Tests, Clean-Room Phase1-7, and Frontend Contract all completed successfully. This green run does not substitute for branch protection and does not certify later local/uncommitted changes.
+The known exact-SHA CI run for this starting baseline is `36818012626`.
+Repository Hygiene, Python Validation, Tests, Clean-Room Phase1-7, and Frontend
+Contract all completed successfully. This green run does not substitute for
+branch protection and does not certify later local/uncommitted changes.
+
+**BRANCH PROTECTION PENDING — ADMIN ACTION REQUIRED.**
 
 ## Required status checks
 

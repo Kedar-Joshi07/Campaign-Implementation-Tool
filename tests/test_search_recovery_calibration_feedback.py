@@ -6,7 +6,10 @@ from __future__ import annotations
 
 import csv
 import gzip
+import hashlib
 import inspect
+import json
+import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -47,6 +50,9 @@ from tests.test_phase11_search_result_registry import (
 
 
 def _identity_calibration() -> FittedCalibration:
+    group_hash = lambda values: hashlib.sha256(  # noqa: E731
+        json.dumps(sorted(values), separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
     return FittedCalibration(
         method="ISOTONIC",
         artifact={
@@ -75,6 +81,9 @@ def _identity_calibration() -> FittedCalibration:
             "model_training_group_ids": ["train-a"],
             "calibration_fit_group_ids": ["fit-a"],
             "calibration_evaluation_group_ids": ["eval-a"],
+            "model_training_group_ids_sha256": group_hash(["train-a"]),
+            "calibration_fit_group_ids_sha256": group_hash(["fit-a"]),
+            "calibration_evaluation_group_ids_sha256": group_hash(["eval-a"]),
             "overlap_counts": {
                 "model_training_calibration_fit": 0,
                 "model_training_calibration_evaluation": 0,
@@ -87,8 +96,51 @@ def _identity_calibration() -> FittedCalibration:
             },
             "candidate_selection_partition": "calibration_evaluation",
             "evaluation_records_used_for_fit": 0,
+            "model_partition_seed": 42,
+            "model_validation_fraction": 0.2,
         },
     )
+
+
+def _install_identity_model_lineage(path: Path, model_run_id: int) -> None:
+    def partition(group_id: str) -> dict[str, object]:
+        return {
+            "group_ids": [group_id],
+            "group_ids_sha256": hashlib.sha256(
+                json.dumps([group_id], separators=(",", ":")).encode("utf-8")
+            ).hexdigest(),
+            "group_count": 1,
+            "customer_count": 200,
+            "positive_count": 100,
+            "negative_count": 100,
+        }
+
+    all_groups = ["eval-a", "fit-a", "train-a"]
+    lineage = {
+        "strategy_version": "CAMPAIGN_CONNECTED_THREE_WAY_V1",
+        "seed": 42,
+        "validation_fraction": 0.20,
+        "partitions": {
+            "model_training": partition("train-a"),
+            "calibration_fit": partition("fit-a"),
+            "calibration_evaluation": partition("eval-a"),
+        },
+        "overlap_counts": {
+            "model_training_calibration_fit": 0,
+            "model_training_calibration_evaluation": 0,
+            "calibration_fit_calibration_evaluation": 0,
+        },
+        "group_count": 3,
+        "all_group_ids_sha256": hashlib.sha256(
+            json.dumps(all_groups, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
+        "customer_count": 600,
+    }
+    with get_connection(path, write=True) as connection:
+        connection.execute(
+            "UPDATE model_runs SET split_lineage_json=? WHERE model_run_id=?",
+            (json.dumps(lineage, sort_keys=True, separators=(",", ":")), model_run_id),
+        )
 
 
 def test_calibration_fit_is_deterministic_and_group_disjoint() -> None:
@@ -115,7 +167,7 @@ def test_calibration_fit_is_deterministic_and_group_disjoint() -> None:
         ({"labels": 999}, "WAITING_FOR_DATA"),
         ({"positives": 99}, "WAITING_FOR_DATA"),
         ({"negatives": 99}, "WAITING_FOR_DATA"),
-        ({"runs": 1}, "WAITING_FOR_DATA"),
+        ({"independent_groups": 1}, "WAITING_FOR_DATA"),
         ({"new_label_ratio": .099, "population_stability_index": .199}, "WAITING_FOR_DATA"),
         ({"new_label_ratio": 0.0, "population_stability_index": .20}, "QUEUED"),
     ),
@@ -125,7 +177,7 @@ def test_adaptive_feedback_gate_has_exact_governed_boundaries(overrides, expecte
         "labels": 1_000,
         "positives": 100,
         "negatives": 900,
-        "runs": 2,
+        "independent_groups": 2,
         "new_label_ratio": .10,
         "population_stability_index": 0.0,
     }
@@ -157,7 +209,7 @@ def test_unavailable_psi_never_manufactures_an_adaptive_trigger() -> None:
         labels=1_000,
         positives=100,
         negatives=900,
-        runs=2,
+        independent_groups=2,
         new_label_ratio=0.099,
         population_stability_index=None,
     )
@@ -294,7 +346,7 @@ def test_challenger_promotion_requires_calibration_and_ranking_gates() -> None:
         "top_decile_lift": 2.0,
     }
     assert challenger_meets_promotion_gates(passing, incumbent) is True
-    assert challenger_meets_promotion_gates(passing, None) is True
+    assert challenger_meets_promotion_gates(passing, None) is False
     for key, value in (
         ("brier_score", .20),
         ("roc_auc", .689),
@@ -332,23 +384,26 @@ def test_public_feedback_language_is_recalibration_not_model_retraining() -> Non
 def test_feedback_worker_recovers_queued_and_interrupted_decisions(case, monkeypatch) -> None:
     path, ids, _values, _repository = case
     with get_connection(path, write=True) as connection:
-        for status in ("QUEUED", "TRAINING"):
-            connection.execute(
-                """INSERT INTO feedback_retraining_decisions (
-                       decision_contract_version,scoring_run_id,status,label_count,
-                       positive_count,negative_count,distinct_run_count,new_label_ratio,
-                       population_stability_index,trigger_reason,created_at
-                   ) VALUES ('1',?,?,?,?,?,?,?,?,?,?)""",
-                (
-                    ids["scoring_run_id"], status, 1_000, 100, 900, 2,
-                    .10, 0.0, "test", "2026-09-20T10:00:00Z",
-                ),
-            )
+        connection.execute(
+            """INSERT INTO feedback_retraining_decisions (
+                   decision_contract_version,scoring_run_id,status,label_count,
+                   positive_count,negative_count,distinct_run_count,new_label_ratio,
+                   population_stability_index,trigger_reason,created_at,
+                   execution_lease_token,lease_owner,lease_claimed_at,
+                   lease_heartbeat_at
+               ) VALUES ('1',?,'TRAINING',?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                ids["scoring_run_id"], 1_000, 100, 900, 2,
+                .10, 0.0, "test", "2026-09-20T10:00:00Z",
+                "a" * 64, "expired-owner", "2026-09-20T10:00:00Z",
+                "2026-09-20T10:00:00Z",
+            ),
+        )
     worker = FeedbackRetrainingWorker()
     submitted: list[tuple[Path, int]] = []
     monkeypatch.setattr(worker, "submit", lambda database_path, decision_id: submitted.append((Path(database_path), decision_id)))
     try:
-        assert worker.resume_durable_decisions(path) == 2
+        assert worker.resume_durable_decisions(path) == 1
     finally:
         worker.shutdown()
 
@@ -356,10 +411,45 @@ def test_feedback_worker_recovers_queued_and_interrupted_decisions(case, monkeyp
         rows = connection.execute(
             "SELECT retraining_decision_id,status,trigger_reason FROM feedback_retraining_decisions ORDER BY retraining_decision_id"
         ).fetchall()
-    assert [row["status"] for row in rows] == ["QUEUED", "QUEUED"]
-    assert rows[1]["trigger_reason"] == "Interrupted recalibration recovered at application startup."
+    assert [row["status"] for row in rows] == ["TRAINING"]
+    assert rows[0]["trigger_reason"] == "test"
     assert submitted == [(path, int(row["retraining_decision_id"])) for row in rows]
     assert FeedbackRetrainingWorker is FeedbackRecalibrationWorker
+
+
+def test_feedback_worker_fresh_owner_is_not_stolen_and_stale_takeover_fences_old(case) -> None:
+    path, ids, _values, _repository = case
+    with get_connection(path, write=True) as connection:
+        decision_id = int(
+            connection.execute(
+                """INSERT INTO feedback_retraining_decisions (
+                       decision_contract_version,scoring_run_id,status,label_count,
+                       positive_count,negative_count,distinct_run_count,new_label_ratio,
+                       population_stability_index,trigger_reason,created_at
+                   ) VALUES ('1',?,'QUEUED',1000,100,900,2,.10,0,'test',?)""",
+                (ids["scoring_run_id"], datetime.now(timezone.utc).isoformat()),
+            ).lastrowid
+        )
+    owner_a = FeedbackRecalibrationWorker()
+    owner_b = FeedbackRecalibrationWorker()
+    try:
+        token_a = owner_a._claim(path, decision_id)
+        assert token_a is not None
+        assert owner_b._claim(path, decision_id) is None
+        with get_connection(path, write=True) as connection:
+            connection.execute(
+                """UPDATE feedback_retraining_decisions
+                   SET lease_heartbeat_at='2026-01-01T00:00:00Z'
+                   WHERE retraining_decision_id=?""",
+                (decision_id,),
+            )
+        token_b = owner_b._claim(path, decision_id)
+        assert token_b is not None and token_b != token_a
+        assert owner_a._heartbeat(path, decision_id, token_a) is False
+        assert owner_b._heartbeat(path, decision_id, token_b) is True
+    finally:
+        owner_a.shutdown()
+        owner_b.shutdown()
 
 
 def test_schema_30_bounds_legacy_duplicate_waiting_decisions(case) -> None:
@@ -402,10 +492,127 @@ def test_schema_30_bounds_legacy_duplicate_waiting_decisions(case) -> None:
     assert "idx_feedback_recalibration_waiting" in indexes
 
 
+def test_database_enforces_one_promoted_calibration_per_scoring_run(case) -> None:
+    path, ids, _values, _repository = case
+
+    def values(artifact_sha: str, created_at: str) -> tuple[object, ...]:
+        return (
+            ids["scoring_run_id"],
+            ids["model_run_id"],
+            "{}",
+            "{}",
+            "{}",
+            artifact_sha,
+            "b" * 64,
+            created_at,
+            created_at,
+        )
+
+    statement = """INSERT INTO score_calibration_artifacts (
+        calibration_contract_version,scoring_run_id,model_run_id,
+        outcome_definition,method,split_seed,split_lineage_json,
+        artifact_json,metrics_json,artifact_sha256,source_checksum,status,
+        created_at,promoted_at
+    ) VALUES ('2',?,?,'ATTRIBUTED_PURCHASE','SIGMOID',1729,?,?,?,?,?,'PROMOTED',?,?)"""
+    with get_connection(path, write=True) as connection:
+        first_id = int(
+            connection.execute(
+                statement, values("1" * 64, "2026-09-20T10:00:00Z")
+            ).lastrowid
+        )
+    with pytest.raises(sqlite3.IntegrityError):
+        with get_connection(path, write=True) as connection:
+            connection.execute(
+                statement, values("2" * 64, "2026-09-20T11:00:00Z")
+            )
+    with get_connection(path, write=True) as connection:
+        connection.execute(
+            "UPDATE score_calibration_artifacts SET status='STALE' WHERE calibration_artifact_id=?",
+            (first_id,),
+        )
+        second_id = int(
+            connection.execute(
+                statement, values("2" * 64, "2026-09-20T11:00:00Z")
+            ).lastrowid
+        )
+    with get_connection(path) as connection:
+        rows = connection.execute(
+            """SELECT calibration_artifact_id,status,artifact_sha256
+               FROM score_calibration_artifacts ORDER BY calibration_artifact_id"""
+        ).fetchall()
+    assert [(row["calibration_artifact_id"], row["status"]) for row in rows] == [
+        (first_id, "STALE"),
+        (second_id, "PROMOTED"),
+    ]
+    assert rows[0]["artifact_sha256"] == "1" * 64
+
+
+def test_schema_31_normalizes_legacy_promoted_duplicates_idempotently(case) -> None:
+    path, ids, _values, _repository = case
+    with get_connection(path, write=True) as connection:
+        connection.execute("DROP INDEX idx_score_calibration_one_promoted")
+        for ordinal in (1, 2):
+            connection.execute(
+                """INSERT INTO score_calibration_artifacts (
+                       calibration_contract_version,scoring_run_id,model_run_id,
+                       outcome_definition,method,split_seed,split_lineage_json,
+                       artifact_json,metrics_json,artifact_sha256,source_checksum,
+                       status,created_at,promoted_at
+                   ) VALUES ('2',?,?,'ATTRIBUTED_PURCHASE','SIGMOID',1729,
+                             '{}','{}','{}',?,?,'PROMOTED',?,?)""",
+                (
+                    ids["scoring_run_id"],
+                    ids["model_run_id"],
+                    str(ordinal) * 64,
+                    "b" * 64,
+                    f"2026-09-20T1{ordinal}:00:00Z",
+                    f"2026-09-20T1{ordinal}:00:00Z",
+                ),
+            )
+        connection.execute(
+            "UPDATE app_metadata SET value='30' WHERE key='schema_version'"
+        )
+
+    initialize_database(path)
+    initialize_database(path)
+    with get_connection(path) as connection:
+        rows = connection.execute(
+            """SELECT artifact_sha256,status FROM score_calibration_artifacts
+               ORDER BY calibration_artifact_id"""
+        ).fetchall()
+        indexes = {
+            row["name"]
+            for row in connection.execute(
+                "PRAGMA index_list(score_calibration_artifacts)"
+            )
+        }
+        feedback_columns = {
+            row["name"]
+            for row in connection.execute(
+                "PRAGMA table_info(feedback_retraining_decisions)"
+            )
+        }
+        foreign_keys = connection.execute("PRAGMA foreign_key_check").fetchall()
+    assert [row["status"] for row in rows] == ["STALE", "PROMOTED"]
+    assert rows[1]["artifact_sha256"] == "2" * 64
+    assert "idx_score_calibration_one_promoted" in indexes
+    assert {
+        "independent_feedback_group_count",
+        "feedback_grouping_contract_version",
+        "feedback_grouping_sha256",
+        "execution_lease_token",
+        "lease_owner",
+        "lease_claimed_at",
+        "lease_heartbeat_at",
+    } <= feedback_columns
+    assert foreign_keys == []
+
+
 def test_published_calibration_has_exact_bucket_boundaries_and_attestation(
     case, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     path, ids, _values, _repository = case
+    _install_identity_model_lineage(path, ids["model_run_id"])
     attestation_checks: list[int] = []
     monkeypatch.setattr(
         "app.services.propensity_calibration_service.has_current_attestation",
@@ -481,6 +688,7 @@ def test_published_calibration_has_exact_bucket_boundaries_and_attestation(
 
 def test_failed_deep_verification_cannot_publish_calibration(case) -> None:
     path, ids, _values, _repository = case
+    _install_identity_model_lineage(path, ids["model_run_id"])
     with get_connection(path, write=True) as connection:
         connection.execute(
             "UPDATE scoring_runs SET scored_person_count=1 WHERE scoring_run_id=?",

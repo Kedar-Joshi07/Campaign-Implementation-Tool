@@ -1,0 +1,145 @@
+{
+  "evidence_contract": "PHASE13_6_PRE14_STABILIZATION_V1",
+  "recorded_date": "2026-10-04",
+  "starting_sha": "58a5852d488aa686ed67ffa7ccecbc50463f4081",
+  "candidate_sha": null,
+  "working_tree_before": {
+    "tracked_changes": [],
+    "untracked": [
+      "Prompts/campaign_recovery_prompt_pack_f437efd3/Prompt_13_6_Pre-14_Stabilization_Statistical_Integrity_Contract_Extensibility_Runtime_Ownership_and_CI_Hardening.md"
+    ]
+  },
+  "baseline_ci": {
+    "run_id": 36818012626,
+    "head_sha": "58a5852d488aa686ed67ffa7ccecbc50463f4081",
+    "conclusion": "success",
+    "required_jobs": [
+      "Repository Hygiene",
+      "Python Validation",
+      "Tests",
+      "Frontend Contract",
+      "Clean-Room Phase1-7"
+    ]
+  },
+  "contracts": {
+    "selection_contract_version": "2",
+    "propensity_buckets": {
+      "0.90": {"lower": 0.9, "upper": 1.0, "upper_inclusive": true},
+      "0.80": {"lower": 0.8, "upper": 0.9, "upper_inclusive": false},
+      "0.70": {"lower": 0.7, "upper": 0.8, "upper_inclusive": false},
+      "0.60": {"lower": 0.6, "upper": 0.7, "upper_inclusive": false},
+      "0.50": {"lower": 0.5, "upper": 0.6, "upper_inclusive": false}
+    },
+    "default_bucket": "0.70",
+    "demo_qualification_minimum": 10000,
+    "v3_introduced": false
+  },
+  "confirmed_defects": [
+    "preflight_currentness_response_model_mismatch",
+    "cross_artifact_lineage_identity_not_proven",
+    "feedback_person_leakage_across_search_groups",
+    "challenger_incumbent_populations_not_like_for_like",
+    "promoted_calibration_singleton_not_db_enforced",
+    "same_attempt_live_owner_split_brain",
+    "feedback_decision_live_owner_split_brain",
+    "selection_contract_duplication",
+    "manual_browser_validation_dependency_gap",
+    "runtime_health_false_healthy",
+    "accidental_schema_30_test_coupling"
+  ],
+  "additional_defects_discovered": [
+    "graceful_search_claim_handoff_was_not_explicit",
+    "feedback_grouping_helper_initially_violated_phase3_module_boundary"
+  ],
+  "disproved": [
+    "canonical_duplicate_promoted_calibrations",
+    "need_for_selection_contract_v3",
+    "need_to_lower_0_50_probability_minimum",
+    "additional_actionable_todo_marker_p0_p1"
+  ],
+  "schema": {
+    "before": 30,
+    "after": 31,
+    "additive": true,
+    "promoted_calibration_partial_unique_index": true,
+    "feedback_decision_ownership_and_evaluation_lineage": true
+  },
+  "api": {
+    "preflight_additive_fields": ["calibration_eligibility", "calibration_reason_code"],
+    "public_currentness_values": ["CURRENT", "NOT_AVAILABLE", "STALE", "UNVERIFIED"],
+    "health_runtime_components": true,
+    "critical_workflow_failure_http_status": 503,
+    "historical_v1_v2_readable": true
+  },
+  "proofs": {
+    "cross_lineage_exact_partition_identity": true,
+    "feedback_connected_component_isolation": true,
+    "like_for_like_frozen_evaluation_population": true,
+    "database_promoted_calibration_singleton": true,
+    "owner_aware_stale_takeover_token_rotation": true,
+    "old_owner_fenced_after_takeover": true,
+    "runtime_health_degrades_on_phase11_failure": true
+  },
+  "migration_certification": {
+    "contract": "PHASE13_6_CANONICAL_COPY_MIGRATION_V1",
+    "source_schema_before": 26,
+    "copy_schema_after": 31,
+    "source_size_bytes": 7574577152,
+    "source_sha256_before": "43b6d31ed6c4f33574f2450f3bf1e2ece0ab56d77fd9213e76de9e8e07ef4d77",
+    "source_sha256_after": "43b6d31ed6c4f33574f2450f3bf1e2ece0ab56d77fd9213e76de9e8e07ef4d77",
+    "source_unchanged": true,
+    "integrity_check": "ok",
+    "foreign_key_violations": 0,
+    "semantic_signature_first": "9d044b76d04441cc8b5cb43a99679ec55c5fcd706d6fdb3c04e26c2efbd399b1",
+    "semantic_signature_second": "9d044b76d04441cc8b5cb43a99679ec55c5fcd706d6fdb3c04e26c2efbd399b1",
+    "second_initialization_semantically_idempotent": true
+  },
+  "tests": {
+    "focused": {"passed": 108, "duration_seconds": 318.84},
+    "broad_defect_followup": {"passed": 7, "duration_seconds": 48.26},
+    "affected_modules": {"passed": 69, "duration_seconds": 182.07},
+    "main_non_heavy": {"passed": 1035, "deselected": 121, "duration_seconds": 3511.31},
+    "frontend_api": {"passed": 125, "duration_seconds": 621.98},
+    "phase9": {"passed": 69, "duration_seconds": 665.14},
+    "phase10": {"passed": 90, "duration_seconds": 706.96},
+    "phase11_bounded": {"passed": 354, "deselected": 5, "duration_seconds": 735.87},
+    "cleanroom_phase1_to_phase7": {"status": "PASS", "completed_at": "2026-10-04T10:16:52Z"},
+    "pip_check": "PASS",
+    "compileall": "PASS",
+    "diff_check": "PASS_BEFORE_EVIDENCE_FINAL_RERUN_PENDING"
+  },
+  "full_validation": {
+    "workflow_structurally_repaired": true,
+    "lfs_checkout": true,
+    "pinned_browser_dependencies": true,
+    "system_chrome_configured": true,
+    "committed_runner_mandatory": true,
+    "runs_full5m": false,
+    "remote_status": "MANUAL FULL VALIDATION REMOTE CERTIFICATION PENDING"
+  },
+  "branch_protection": {
+    "protected": false,
+    "verified_via_public_api": true,
+    "admin_action_required": true,
+    "status": "BRANCH PROTECTION PENDING - ADMIN ACTION REQUIRED"
+  },
+  "exact_sha_ci": {
+    "run_id": null,
+    "head_sha": null,
+    "conclusion": "PENDING"
+  },
+  "remaining_limitations": [
+    "one_campaign_connected_component",
+    "prompt13_business_decision_unselected",
+    "prompt14_not_run",
+    "prompt16_full5m_not_run",
+    "prompt17_20_scenario_qualification_not_run",
+    "single_node_sqlite_poc",
+    "authentication_rbac_not_implemented",
+    "activation_send_not_implemented",
+    "automatic_true_feature_model_retraining_not_implemented",
+    "manual_full_validation_remote_dispatch_pending",
+    "branch_protection_admin_action_required"
+  ],
+  "decision": "NO_GO_UNTIL_EXACT_CANDIDATE_SHA_GREEN"
+}

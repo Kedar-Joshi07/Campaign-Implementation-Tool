@@ -69,8 +69,14 @@ def export_profiles(database_path: DatabasePath) -> list[dict]:
 
 
 @router.get("/api/potential-customer-search/options")
-def search_options(database_path: DatabasePath) -> dict:
-    return service.search_form_options(database_path)
+def search_options(request: Request, database_path: DatabasePath) -> dict:
+    runtime = getattr(request.app.state, "runtime_health", None)
+    return service.search_form_options(
+        database_path,
+        workflow_available=(
+            None if runtime is None else runtime.phase11_search_available
+        ),
+    )
 
 
 @router.post("/api/potential-customer-search/runs", response_model=SearchSubmissionV2Status | SearchSubmissionStatus, status_code=201)

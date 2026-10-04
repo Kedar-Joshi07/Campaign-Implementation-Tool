@@ -47,6 +47,9 @@ def test_health_payload_contains_application_and_database_details(client: TestCl
         "application_status": "ok",
         "database_status": "connected",
         "schema_status": "ready",
+        "phase11_search_workflow_status": "available",
+        "feedback_recalibration_status": "available",
+        "runtime_issue_codes": [],
         "missing_tables": [],
         "application": APP_NAME,
         "version": APP_VERSION,
@@ -81,6 +84,40 @@ def test_health_reports_unavailable_database(tmp_path: Path) -> None:
     assert response.status_code == 503
     assert response.json()["database_status"] == "unavailable"
     assert response.json()["schema_status"] == "unknown"
+
+
+def test_phase11_composition_failure_degrades_health_and_options_agree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    database_path = tmp_path / "runtime-failure.db"
+    initialize_database(database_path)
+    app.dependency_overrides[get_database_path] = lambda: database_path
+
+    class FailingCoordinator:
+        def __init__(self, *_args, **_kwargs) -> None:
+            raise RuntimeError("simulated composition failure")
+
+    monkeypatch.setattr("app.main.Phase11SearchCoordinator", FailingCoordinator)
+    try:
+        with TestClient(app) as test_client:
+            health = test_client.get("/api/health")
+            options = test_client.get("/api/potential-customer-search/options")
+            assert health.status_code == 503
+            payload = health.json()
+            assert payload["application_status"] == "degraded"
+            assert payload["phase11_search_workflow_status"] == "unavailable"
+            assert payload["feedback_recalibration_status"] == "unavailable"
+            assert payload["runtime_issue_codes"] == [
+                "PHASE11_RUNTIME_COMPOSITION_UNAVAILABLE"
+            ]
+            assert options.status_code == 200
+            assert options.json()["workflow_available"] is False
+    finally:
+        app.dependency_overrides.clear()
+
+    assert app.state.runtime_health.phase11_search_available is False
+    assert app.state.runtime_health.feedback_recalibration_available is False
+    assert app.state.runtime_health.issue_codes == []
 
 
 def test_application_startup_runs_stale_job_reconciliation_and_shutdown(

@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.selection_contracts import PropensityBucket
+
 
 class PotentialCustomerSearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -13,7 +15,7 @@ class PotentialCustomerSearchRequest(BaseModel):
     context: dict[str, Any]
     criteria: dict[str, Any]
     export_profile: str
-    propensity_bucket: Literal["0.90", "0.80", "0.70", "0.60", "0.50"] | None = None
+    propensity_bucket: PropensityBucket | None = None
     catalog_version: str | None = Field(default=None, min_length=64, max_length=64)
 
 
@@ -21,7 +23,7 @@ class PotentialCustomerPreflightRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     context: dict[str, Any]
     criteria: dict[str, Any]
-    propensity_bucket: Literal["0.90", "0.80", "0.70", "0.60", "0.50"]
+    propensity_bucket: PropensityBucket
     catalog_version: str | None = Field(default=None, min_length=64, max_length=64)
 
 
@@ -37,6 +39,16 @@ class PotentialCustomerPreflightResponse(BaseModel):
     scoring_run_id: int | None = Field(default=None, gt=0)
     calibration_artifact_id: int | None = Field(default=None, gt=0)
     calibration_currentness: Literal["CURRENT", "NOT_AVAILABLE", "STALE", "UNVERIFIED"]
+    calibration_eligibility: Literal["ELIGIBLE", "NOT_ELIGIBLE"]
+    calibration_reason_code: Literal[
+        "ELIGIBLE",
+        "GOVERNED_CALIBRATION_NOT_AVAILABLE",
+        "AUTHORITATIVE_SOURCES_STALE",
+        "CURRENT_ATTESTATION_REQUIRED",
+        "CALIBRATION_NOT_PROMOTED",
+        "CALIBRATION_GOVERNANCE_INCOMPATIBLE",
+        "CALIBRATION_LINEAGE_INVALID",
+    ]
     safe_message: str
     criteria_sha256: str = Field(min_length=64, max_length=64)
     filter_branches_sha256: str = Field(min_length=64, max_length=64)
@@ -159,7 +171,7 @@ class SearchSubmissionV2Status(SearchSubmissionStatus):
     """Calibrated-selection status with additive lifecycle recovery fields."""
 
     selection_contract_version: Literal["2"]
-    propensity_bucket: Literal["0.90", "0.80", "0.70", "0.60", "0.50"]
+    propensity_bucket: PropensityBucket
     attempt_number: int = Field(gt=0)
     queue_position: int | None = Field(default=None, gt=0)
     progress: SearchRunProgress
@@ -207,7 +219,7 @@ class SearchResultHistoryItem(BaseModel):
     retry_eligible: bool
     attempt_number: int = Field(default=1, gt=0)
     queue_position: int | None = Field(default=None, gt=0)
-    propensity_bucket: Literal["0.90", "0.80", "0.70", "0.60", "0.50"] | None = None
+    propensity_bucket: PropensityBucket | None = None
     selection_contract_version: Literal["1", "2"] = "1"
 
 

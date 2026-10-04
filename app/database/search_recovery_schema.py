@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+from app.selection_contracts import PROPENSITY_BUCKET_KEYS
+
+
+_PROPENSITY_BUCKET_SQL = ",".join(f"'{value}'" for value in PROPENSITY_BUCKET_KEYS)
 
 SEARCH_RECOVERY_TABLE_STATEMENTS = (
-    """
+    f"""
     CREATE TABLE IF NOT EXISTS campaign_search_attempts (
         attempt_id INTEGER PRIMARY KEY AUTOINCREMENT,
         search_run_id INTEGER NOT NULL REFERENCES campaign_search_runs(search_run_id) ON DELETE RESTRICT,
         attempt_number INTEGER NOT NULL CHECK (attempt_number > 0),
         attempt_contract_version TEXT NOT NULL CHECK (attempt_contract_version = '1'),
         selection_contract_version TEXT NOT NULL CHECK (selection_contract_version IN ('1','2')),
-        propensity_bucket TEXT CHECK (propensity_bucket IN ('0.90','0.80','0.70','0.60','0.50')),
+        propensity_bucket TEXT CHECK (propensity_bucket IN ({_PROPENSITY_BUCKET_SQL})),
         bucket_minimum REAL CHECK (bucket_minimum IS NULL OR bucket_minimum BETWEEN 0 AND 1),
         bucket_maximum REAL CHECK (bucket_maximum IS NULL OR bucket_maximum BETWEEN 0 AND 1),
         bucket_maximum_inclusive INTEGER CHECK (bucket_maximum_inclusive IS NULL OR bucket_maximum_inclusive IN (0,1)),
@@ -95,14 +99,14 @@ SEARCH_RECOVERY_TABLE_STATEMENTS = (
         UNIQUE(scoring_run_id, artifact_sha256)
     )
     """,
-    """
+    f"""
     CREATE TABLE IF NOT EXISTS calibrated_propensity_scores (
         calibration_artifact_id INTEGER NOT NULL REFERENCES score_calibration_artifacts(calibration_artifact_id) ON DELETE RESTRICT,
         scoring_run_id INTEGER NOT NULL REFERENCES scoring_runs(scoring_run_id) ON DELETE RESTRICT,
         person_id TEXT NOT NULL,
         raw_score REAL NOT NULL CHECK (raw_score BETWEEN 0 AND 1),
         calibrated_probability REAL NOT NULL CHECK (calibrated_probability BETWEEN 0 AND 1),
-        propensity_bucket TEXT CHECK (propensity_bucket IN ('0.90','0.80','0.70','0.60','0.50')),
+        propensity_bucket TEXT CHECK (propensity_bucket IN ({_PROPENSITY_BUCKET_SQL})),
         rank_position INTEGER NOT NULL CHECK (rank_position > 0),
         total_population INTEGER NOT NULL CHECK (total_population > 0),
         percentile_bucket INTEGER NOT NULL CHECK (percentile_bucket BETWEEN 1 AND 100),
@@ -213,6 +217,11 @@ SEARCH_RECOVERY_TABLE_STATEMENTS = (
         positive_count INTEGER NOT NULL CHECK (positive_count >= 0),
         negative_count INTEGER NOT NULL CHECK (negative_count >= 0),
         distinct_run_count INTEGER NOT NULL CHECK (distinct_run_count >= 0),
+        independent_feedback_group_count INTEGER NOT NULL DEFAULT 0
+            CHECK (independent_feedback_group_count >= 0),
+        feedback_grouping_contract_version TEXT,
+        feedback_grouping_sha256 TEXT
+            CHECK (feedback_grouping_sha256 IS NULL OR length(feedback_grouping_sha256)=64),
         new_label_ratio REAL NOT NULL CHECK (new_label_ratio >= 0),
         population_stability_index REAL,
         decision_kind TEXT NOT NULL DEFAULT 'RECALIBRATION' CHECK (decision_kind='RECALIBRATION'),
@@ -223,6 +232,11 @@ SEARCH_RECOVERY_TABLE_STATEMENTS = (
         incumbent_calibration_artifact_id INTEGER,
         candidate_calibration_artifact_id INTEGER,
         metrics_json TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(metrics_json)),
+        execution_lease_token TEXT
+            CHECK (execution_lease_token IS NULL OR length(execution_lease_token)=64),
+        lease_owner TEXT,
+        lease_claimed_at TEXT,
+        lease_heartbeat_at TEXT,
         created_at TEXT NOT NULL,
         completed_at TEXT
     )
@@ -239,6 +253,8 @@ SEARCH_RECOVERY_INDEX_STATEMENTS = (
     "CREATE INDEX IF NOT EXISTS idx_feedback_person ON campaign_feedback_outcomes(person_id, outcome_at)",
     "CREATE INDEX IF NOT EXISTS idx_targeting_product_lookup ON targeting_product_catalog(product_id, catalog_version)",
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_targeting_option_catalog_current ON targeting_option_catalogs(is_current) WHERE is_current=1",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_score_calibration_one_promoted ON score_calibration_artifacts(scoring_run_id) WHERE status='PROMOTED'",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_feedback_recalibration_active ON feedback_retraining_decisions(scoring_run_id) WHERE status IN ('QUEUED','TRAINING')",
 )
 
 

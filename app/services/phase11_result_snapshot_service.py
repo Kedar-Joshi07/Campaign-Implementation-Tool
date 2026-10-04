@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from app.database.connection import get_connection
+from app.selection_contracts import CALIBRATED_SELECTION_CONTRACT_VERSION
 from app.repositories.campaign_result_registry_repository import (
     CampaignResultRegistryRepository,
 )
@@ -293,9 +294,9 @@ def _manifest(
         "storage_format": RESULT_SNAPSHOT_STORAGE_FORMAT,
         "storage_schema": list(_membership_schema(membership_contract)),
     }
-    if run.get("selection_contract_version") == "2":
+    if run.get("selection_contract_version") == CALIBRATED_SELECTION_CONTRACT_VERSION:
         payload.update({
-            "selection_contract_version": "2",
+            "selection_contract_version": CALIBRATED_SELECTION_CONTRACT_VERSION,
             "propensity_bucket": run.get("propensity_bucket"),
             "calibration_artifact_id": run.get("calibration_artifact_id"),
         })
@@ -357,9 +358,9 @@ def validate_result_snapshot(
             "storage_format": RESULT_SNAPSHOT_STORAGE_FORMAT,
             "currentness_state": "CURRENT",
         }
-        if run.get("selection_contract_version") == "2":
+        if run.get("selection_contract_version") == CALIBRATED_SELECTION_CONTRACT_VERSION:
             expected_metadata.update({
-                "selection_contract_version": "2",
+                "selection_contract_version": CALIBRATED_SELECTION_CONTRACT_VERSION,
                 "propensity_bucket": run.get("propensity_bucket"),
                 "calibration_artifact_id": run.get("calibration_artifact_id"),
             })

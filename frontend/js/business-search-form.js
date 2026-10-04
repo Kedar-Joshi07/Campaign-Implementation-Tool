@@ -45,7 +45,8 @@ function capture() {
   const context = { campaign_channel: profile?.channel_code || "" };
   for (const field of Object.keys(CONTEXT_FIELDS)) context[field] = selections(field);
   const propensityBucket = document.querySelector('input[name="business_propensity_bucket"]:checked')?.value || "";
-  const legacyStrength = { "0.90": "VERY_STRONG", "0.80": "STRONG", "0.70": "GOOD", "0.60": "BROAD", "0.50": "BROAD" }[propensityBucket] || "GOOD";
+  const legacyStrength = options?.targeting.propensity_buckets
+    .find((item) => item.value === propensityBucket)?.legacy_match_strength || "GOOD";
   const criteria = {
     match_strength: legacyStrength,
     family_member_count_min: number("business-family-min"), family_member_count_max: number("business-family-max"),

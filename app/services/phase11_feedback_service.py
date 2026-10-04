@@ -15,6 +15,10 @@ from typing import Any, Iterable, Mapping
 
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
+from app.services.feedback_grouping import (
+    FEEDBACK_GROUPING_CONTRACT_VERSION,
+    build_feedback_grouping,
+)
 
 
 MAX_FEEDBACK_ROWS = 100_000
@@ -154,13 +158,18 @@ def evaluate_adaptive_feedback_gate(
     labels: int,
     positives: int,
     negatives: int,
-    runs: int,
+    independent_groups: int,
     new_label_ratio: float,
     population_stability_index: float | None,
 ) -> tuple[str, str]:
     """Apply label floors and coherent new-information thresholds."""
 
-    floor_met = labels >= 1_000 and positives >= 100 and negatives >= 100 and runs >= 2
+    floor_met = (
+        labels >= 1_000
+        and positives >= 100
+        and negatives >= 100
+        and independent_groups >= 2
+    )
     drift_met = (
         population_stability_index is not None
         and math.isfinite(population_stability_index)
@@ -171,7 +180,7 @@ def evaluate_adaptive_feedback_gate(
         return "QUEUED", "Adaptive feedback threshold reached; recalibration queued."
     return (
         "WAITING_FOR_DATA",
-        "Waiting for 1,000 labels, both outcome classes, two runs, and sufficient new information for recalibration.",
+        "Waiting for 1,000 labels, both outcome classes, two independent feedback groups, and sufficient new information for recalibration.",
     )
 
 
@@ -362,21 +371,22 @@ def _comparable_feedback_drift(
 def _adaptive_gate(
     connection, scoring_run_id: int, current_batch_id: int
 ) -> tuple[str, str, dict[str, Any]]:
-    counts = connection.execute(
-        """SELECT COUNT(*) AS labels,
-                  SUM(o.outcome) AS positives,
-                  COUNT(*)-SUM(o.outcome) AS negatives,
-                  COUNT(DISTINCT b.search_run_id) AS runs
+    feedback_rows = connection.execute(
+        """SELECT b.search_run_id,o.person_id,o.outcome
            FROM campaign_feedback_outcomes AS o
            JOIN campaign_feedback_batches AS b ON b.feedback_batch_id=o.feedback_batch_id
            JOIN campaign_search_runs AS r ON r.search_run_id=b.search_run_id
-           WHERE b.status='ACCEPTED' AND r.scoring_run_id=?""",
-        (scoring_run_id,),
-    ).fetchone()
-    labels = int(counts["labels"] or 0)
-    positives = int(counts["positives"] or 0)
-    negatives = int(counts["negatives"] or 0)
-    runs = int(counts["runs"] or 0)
+           WHERE b.status='ACCEPTED' AND r.scoring_run_id=?
+             AND b.feedback_batch_id<=?
+           ORDER BY b.search_run_id,o.person_id,b.feedback_batch_id""",
+        (scoring_run_id, current_batch_id),
+    ).fetchall()
+    grouping = build_feedback_grouping([dict(row) for row in feedback_rows])
+    labels = len(feedback_rows)
+    positives = sum(int(row["outcome"]) for row in feedback_rows)
+    negatives = labels - positives
+    runs = len({int(row["search_run_id"]) for row in feedback_rows})
+    independent_groups = len(grouping.independent_group_ids)
     baseline = connection.execute(
         """SELECT label_count FROM feedback_retraining_decisions
            WHERE scoring_run_id=? AND status IN ('PROMOTED','REJECTED','FAILED')
@@ -405,6 +415,9 @@ def _adaptive_gate(
     facts = {
         "labels": labels, "positives": positives, "negatives": negatives,
         "runs": runs,
+        "independent_groups": independent_groups,
+        "feedback_grouping_contract_version": FEEDBACK_GROUPING_CONTRACT_VERSION,
+        "feedback_grouping_sha256": grouping.grouping_sha256,
         "new_label_ratio": new_ratio,
         "population_stability_index": psi,
         "reference_decision_id": (
@@ -416,7 +429,7 @@ def _adaptive_gate(
         labels=labels,
         positives=positives,
         negatives=negatives,
-        runs=runs,
+        independent_groups=independent_groups,
         new_label_ratio=new_ratio,
         population_stability_index=psi,
     )
@@ -534,7 +547,9 @@ def ingest_feedback(
             connection.execute(
                 """UPDATE feedback_retraining_decisions
                    SET status=?,label_count=?,positive_count=?,negative_count=?,
-                       distinct_run_count=?,new_label_ratio=?,
+                       distinct_run_count=?,independent_feedback_group_count=?,
+                       feedback_grouping_contract_version=?,feedback_grouping_sha256=?,
+                       new_label_ratio=?,
                        population_stability_index=?,trigger_reason=?,
                        latest_feedback_batch_id=?,reference_decision_id=?,
                        drift_lineage_json=?,completed_at=NULL
@@ -545,6 +560,9 @@ def ingest_feedback(
                     facts["positives"],
                     facts["negatives"],
                     facts["runs"],
+                    facts["independent_groups"],
+                    facts["feedback_grouping_contract_version"],
+                    facts["feedback_grouping_sha256"],
                     facts["new_label_ratio"],
                     facts["population_stability_index"],
                     gate_reason,
@@ -562,11 +580,14 @@ def ingest_feedback(
             decision_id = int(connection.execute(
                 """INSERT INTO feedback_retraining_decisions (
                        decision_contract_version,scoring_run_id,status,label_count,
-                       positive_count,negative_count,distinct_run_count,new_label_ratio,
+                       positive_count,negative_count,distinct_run_count,
+                       independent_feedback_group_count,
+                       feedback_grouping_contract_version,feedback_grouping_sha256,
+                       new_label_ratio,
                        population_stability_index,decision_kind,trigger_reason,
                        latest_feedback_batch_id,reference_decision_id,
                        drift_lineage_json,created_at
-                   ) VALUES ('1',?,?,?,?,?,?,?,?,'RECALIBRATION',?,?,?,?,?)""",
+                   ) VALUES ('1',?,?,?,?,?,?,?,?,?,?,?,'RECALIBRATION',?,?,?,?,?)""",
                 (
                     int(run["scoring_run_id"]),
                     gate_status,
@@ -574,6 +595,9 @@ def ingest_feedback(
                     facts["positives"],
                     facts["negatives"],
                     facts["runs"],
+                    facts["independent_groups"],
+                    facts["feedback_grouping_contract_version"],
+                    facts["feedback_grouping_sha256"],
                     facts["new_label_ratio"],
                     facts["population_stability_index"],
                     gate_reason,

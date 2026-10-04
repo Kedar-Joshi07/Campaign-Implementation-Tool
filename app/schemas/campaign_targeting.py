@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.selection_contracts import PropensityBucket
 from app.schemas.campaigns import CampaignChannel, CampaignDetailResponse
 
 
@@ -361,7 +362,7 @@ class CanonicalBusinessTargetingCriteria(BusinessTargetingCriteriaContract):
     age_bucket_contract_version: str
     income_group_contract_version: str
     audience_filter_contract_version: str
-    propensity_bucket: Literal["0.90", "0.80", "0.70", "0.60", "0.50"] | None = None
+    propensity_bucket: PropensityBucket | None = None
     selection_contract_version: Literal["1", "2"] | None = None
 
 

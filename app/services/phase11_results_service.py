@@ -10,6 +10,10 @@ from typing import Any
 from pydantic import ValidationError
 
 from app.database.connection import get_connection
+from app.selection_contracts import (
+    CALIBRATED_SELECTION_CONTRACT_VERSION,
+    PROPENSITY_BUCKET_REGISTRY,
+)
 from app.repositories.campaign_result_registry_repository import (
     CampaignResultRegistryRepository,
 )
@@ -38,11 +42,8 @@ RESULT_SOURCE_LABELS = {
     "NEW_INTELLIGENCE_BUILD": "Prepared new targeting intelligence",
 }
 PROPENSITY_BUCKET_LABELS = {
-    "0.90": "90% to 100%",
-    "0.80": "80% to <90%",
-    "0.70": "70% to <80%",
-    "0.60": "60% to <70%",
-    "0.50": "50% to <60%",
+    key: definition.result_label
+    for key, definition in PROPENSITY_BUCKET_REGISTRY.items()
 }
 ACTIVE_SEARCH_STATUSES = frozenset({"QUEUED", "PROCESSING"})
 DOWNLOAD_ENGINE_AVAILABLE = True
@@ -166,7 +167,7 @@ def _safe_message(run: Mapping[str, Any]) -> str:
 def _selection_projection(
     run: Mapping[str, Any], criteria: Mapping[str, Any]
 ) -> dict[str, str]:
-    if str(run.get("selection_contract_version") or "1") == "2":
+    if str(run.get("selection_contract_version") or "1") == CALIBRATED_SELECTION_CONTRACT_VERSION:
         bucket = str(run.get("propensity_bucket") or "")
         label = PROPENSITY_BUCKET_LABELS.get(bucket)
         if label is None:
@@ -445,7 +446,7 @@ def list_result_history(
 def _score_summary(
     database_path: Path, run: Mapping[str, Any]
 ) -> dict[str, Any] | None:
-    if str(run.get("selection_contract_version") or "1") == "2":
+    if str(run.get("selection_contract_version") or "1") == CALIBRATED_SELECTION_CONTRACT_VERSION:
         calibration_id = run.get("calibration_artifact_id")
         if isinstance(calibration_id, bool) or not isinstance(calibration_id, int):
             return None

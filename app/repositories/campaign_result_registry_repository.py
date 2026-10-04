@@ -18,6 +18,11 @@ from pathlib import Path
 from typing import Any
 
 from app.database.connection import get_connection
+from app.selection_contracts import (
+    CALIBRATED_SELECTION_CONTRACT_VERSION,
+    PROPENSITY_BUCKET_KEYS,
+    propensity_bucket_bounds,
+)
 from app.services.omnichannel_profile_contracts import get_omnichannel_profile_for_channel, get_omnichannel_profile
 from app.services.phase11_result_contracts import (
     RESULT_CURRENTNESS_STATES, RESULT_EXPORT_STATUSES,
@@ -46,6 +51,7 @@ _DEFAULT_FAILED_RESOLUTION_STEPS = (
     "Try the search again after the system is available.",
     "Use the saved search details when requesting support if the problem continues.",
 )
+ATTEMPT_EXECUTION_LEASE_STALE_SECONDS = 120
 
 
 @dataclass(frozen=True)
@@ -174,7 +180,12 @@ class CampaignResultRegistryRepository:
         lease_owner: str,
         timestamp: str | None = None,
     ) -> AttemptExecutionFence:
-        """Return the durable current-attempt fence without minting a second lease."""
+        """Claim one active attempt, fencing fresh competing owners.
+
+        A same-owner claim is idempotent. A different owner may take over only
+        after the persisted heartbeat is stale, and takeover rotates the token
+        so every future write from the former owner fails its fence predicate.
+        """
 
         identifier = _integer(search_run_id)
         owner = _text(lease_owner, 128)
@@ -182,7 +193,8 @@ class CampaignResultRegistryRepository:
         with get_connection(self.database_path, write=True) as connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
-                """SELECT a.attempt_number,a.execution_lease_token
+                """SELECT a.attempt_number,a.execution_lease_token,
+                          a.lease_owner,a.lease_claimed_at,a.lease_heartbeat_at
                    FROM campaign_search_runs r
                    JOIN campaign_search_attempts a
                      ON a.search_run_id=r.search_run_id
@@ -197,18 +209,40 @@ class CampaignResultRegistryRepository:
                 raise Phase11RegistryStateError(
                     "Active search attempt execution fence was not found."
                 )
+            current_owner = row["lease_owner"]
+            token = str(row["execution_lease_token"])
+            takeover = False
+            if current_owner is not None and str(current_owner) != owner:
+                heartbeat_value = row["lease_heartbeat_at"] or row["lease_claimed_at"]
+                heartbeat = (
+                    datetime.fromisoformat(str(heartbeat_value).replace("Z", "+00:00"))
+                    if heartbeat_value is not None
+                    else None
+                )
+                current_moment = datetime.fromisoformat(moment.replace("Z", "+00:00"))
+                if heartbeat is not None and current_moment - heartbeat < timedelta(
+                    seconds=ATTEMPT_EXECUTION_LEASE_STALE_SECONDS
+                ):
+                    raise Phase11RegistryStateError(
+                        "Search attempt is already owned by a live worker."
+                    )
+                takeover = True
+                token = secrets.token_hex(32)
             cursor = connection.execute(
                 """UPDATE campaign_search_attempts
-                   SET lease_owner=COALESCE(lease_owner,?),
-                       lease_claimed_at=COALESCE(lease_claimed_at,?),
-                       lease_heartbeat_at=?
+                   SET lease_owner=?,
+                       lease_claimed_at=CASE WHEN ? THEN ? ELSE COALESCE(lease_claimed_at,?) END,
+                       lease_heartbeat_at=?,execution_lease_token=?
                    WHERE search_run_id=? AND attempt_number=?
                      AND execution_lease_token=?
                      AND status IN ('QUEUED','PROCESSING')""",
                 (
                     owner,
+                    int(takeover),
                     moment,
                     moment,
+                    moment,
+                    token,
                     identifier,
                     int(row["attempt_number"]),
                     str(row["execution_lease_token"]),
@@ -220,8 +254,48 @@ class CampaignResultRegistryRepository:
                 )
             return AttemptExecutionFence(
                 attempt_number=int(row["attempt_number"]),
-                execution_lease_token=str(row["execution_lease_token"]),
+                execution_lease_token=token,
             )
+
+    def release_search_attempt_claim(
+        self,
+        search_run_id: int,
+        *,
+        attempt_number: int,
+        execution_lease_token: str,
+    ) -> None:
+        """Release a live owner after it has stopped and invalidate its fence.
+
+        Graceful shutdown and bounded dependency preparation may hand an active
+        attempt to a later worker. Rotating the token before clearing ownership
+        ensures the former worker cannot mutate the attempt during that handoff.
+        """
+
+        identifier = _integer(search_run_id)
+        attempt, token = self._validate_fence(
+            attempt_number, execution_lease_token
+        )
+        replacement_token = secrets.token_hex(32)
+        with get_connection(self.database_path, write=True) as connection:
+            cursor = connection.execute(
+                """UPDATE campaign_search_attempts
+                   SET execution_lease_token=?,lease_owner=NULL,
+                       lease_claimed_at=NULL,lease_heartbeat_at=NULL
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=?
+                     AND status IN ('QUEUED','PROCESSING')
+                     AND EXISTS (
+                         SELECT 1 FROM campaign_search_runs r
+                         WHERE r.search_run_id=campaign_search_attempts.search_run_id
+                           AND r.current_attempt_number=campaign_search_attempts.attempt_number
+                           AND r.status IN ('QUEUED','PROCESSING')
+                     )""",
+                (replacement_token, identifier, attempt, token),
+            )
+            if cursor.rowcount != 1:
+                raise Phase11RegistryStateError(
+                    "Search attempt execution claim could not be released."
+                )
 
     @staticmethod
     def _validate_fence(
@@ -286,11 +360,9 @@ class CampaignResultRegistryRepository:
             except (TypeError, ValueError) as exc:
                 raise Phase11RegistryValidationError("Invalid planned launch date.") from exc
         timestamp = _timestamp(timestamp)
-        if selection_contract_version not in {"1", "2"}:
+        if selection_contract_version not in {"1", CALIBRATED_SELECTION_CONTRACT_VERSION}:
             raise Phase11RegistryValidationError("Invalid selection contract version.")
-        if selection_contract_version == "2" and propensity_bucket not in {
-            "0.90", "0.80", "0.70", "0.60", "0.50",
-        }:
+        if selection_contract_version == CALIBRATED_SELECTION_CONTRACT_VERSION and propensity_bucket not in PROPENSITY_BUCKET_KEYS:
             raise Phase11RegistryValidationError("Choose a supported propensity bucket.")
         if selection_contract_version == "1" and propensity_bucket is not None:
             raise Phase11RegistryValidationError("Legacy searches cannot store a propensity bucket.")
@@ -1017,9 +1089,12 @@ class CampaignResultRegistryRepository:
                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (identifier, next_attempt, "1", run["selection_contract_version"],
                  run["propensity_bucket"],
-                 float(run["propensity_bucket"]) if run["propensity_bucket"] else None,
-                 ({"0.90": 1.0, "0.80": .9, "0.70": .8, "0.60": .7, "0.50": .6}.get(run["propensity_bucket"])),
-                 1 if run["propensity_bucket"] == "0.90" else (0 if run["propensity_bucket"] else None),
+                 (propensity_bucket_bounds(str(run["propensity_bucket"]))[0]
+                  if run["propensity_bucket"] else None),
+                 (propensity_bucket_bounds(str(run["propensity_bucket"]))[1]
+                  if run["propensity_bucket"] else None),
+                 (int(propensity_bucket_bounds(str(run["propensity_bucket"]))[2])
+                  if run["propensity_bucket"] else None),
                  "QUEUED", key, secrets.token_hex(32), moment, None),
             )
             connection.execute(
@@ -1202,7 +1277,7 @@ class CampaignResultRegistryRepository:
             ).fetchone()
             if run is None or run["status"] != "PROCESSING":
                 raise Phase11RegistryStateError("Active search attempt was not found.")
-            if run["selection_contract_version"] == "2" and calibration_artifact_id is None:
+            if run["selection_contract_version"] == CALIBRATED_SELECTION_CONTRACT_VERSION and calibration_artifact_id is None:
                 raise Phase11RegistryStateError("Calibrated selection requires a promoted calibration.")
             run_cursor = connection.execute(
                 """UPDATE campaign_search_runs SET calibration_artifact_id=?

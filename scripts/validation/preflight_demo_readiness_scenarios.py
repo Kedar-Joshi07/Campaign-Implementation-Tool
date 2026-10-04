@@ -16,6 +16,7 @@ if str(ROOT) not in sys.path:
 from app.services.potential_customer_preflight_service import (  # noqa: E402
     exact_preflight_many,
 )
+from app.selection_contracts import DEMO_QUALIFICATION_MINIMUM  # noqa: E402
 from app.services.targeting_option_catalog_service import (  # noqa: E402
     get_or_build_targeting_catalog,
 )
@@ -120,7 +121,7 @@ def main() -> int:
         "database": str(database_path),
         "catalog_version": catalog["catalog_version"],
         "common_context": common_context,
-        "qualification_minimum": 10_000,
+        "qualification_minimum": DEMO_QUALIFICATION_MINIMUM,
         "qualified_count": sum(1 for row in rows if row["demo_ready"]),
         "scenarios": rows,
     }

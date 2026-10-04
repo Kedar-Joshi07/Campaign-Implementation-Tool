@@ -253,6 +253,14 @@ def main() -> int:
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--copy", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument(
+        "--final-health-only",
+        action="store_true",
+        help=(
+            "Run the expensive full integrity/FK checks once on the final "
+            "twice-initialized copy; semantic snapshots still run at every stage."
+        ),
+    )
     args = parser.parse_args()
     source = args.source.resolve()
     working_copy = args.copy.resolve()
@@ -284,10 +292,10 @@ def main() -> int:
         raise RuntimeError("Byte-for-byte copy verification failed.")
 
     print("[migration-cert] inspecting schema-26 copy", flush=True)
-    before = _snapshot(working_copy, include_health=True)
+    before = _snapshot(working_copy, include_health=not args.final_health_only)
     print("[migration-cert] running production initialization", flush=True)
     initialize_database(working_copy)
-    after_first = _snapshot(working_copy, include_health=True)
+    after_first = _snapshot(working_copy, include_health=not args.final_health_only)
     first_signature = _semantic_signature(after_first)
 
     print("[migration-cert] checking initialization idempotency", flush=True)
@@ -303,7 +311,16 @@ def main() -> int:
         "sha256": _sha256(source),
     }
     report = {
-        "certification_contract": "PHASE13_5_CANONICAL_COPY_MIGRATION_V1",
+        "certification_contract": (
+            "PHASE13_6_CANONICAL_COPY_MIGRATION_V1"
+            if args.final_health_only
+            else "PHASE13_5_CANONICAL_COPY_MIGRATION_V1"
+        ),
+        "full_health_check_stage": (
+            "AFTER_SECOND_INITIALIZATION"
+            if args.final_health_only
+            else "EVERY_SNAPSHOT"
+        ),
         "recorded_at": _utc_now(),
         "current_schema_version": CURRENT_SCHEMA_VERSION,
         "source_before": source_before,
@@ -327,8 +344,14 @@ def main() -> int:
 
     passed = all(
         (
-            before["integrity_check"] == "ok",
-            not before["foreign_key_violations"],
+            (
+                args.final_health_only
+                or before["integrity_check"] == "ok"
+            ),
+            (
+                args.final_health_only
+                or not before["foreign_key_violations"]
+            ),
             before["schema_version"] == 26,
             after_second["schema_version"] == CURRENT_SCHEMA_VERSION,
             after_second["integrity_check"] == "ok",

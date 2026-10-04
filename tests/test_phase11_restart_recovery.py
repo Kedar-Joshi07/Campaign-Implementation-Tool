@@ -152,9 +152,11 @@ def test_processing_search_survives_shutdown_and_resumes_once_after_restart(case
 def test_processing_search_retries_snapshot_publication_once_and_completes(case) -> None:
     path, _, _, repository = case
     search_run_id = _search(case)
+    initial_fence = _fence(case, search_run_id)
     repository.mark_processing(
-        search_run_id, **_fence(case, search_run_id)
+        search_run_id, **initial_fence
     )
+    repository.release_search_attempt_claim(search_run_id, **initial_fence)
     current_generation = generation(case)
     materializer = DeterministicMaterializer(path.parent, repository)
 

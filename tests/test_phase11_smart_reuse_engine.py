@@ -348,6 +348,12 @@ def test_waiting_phase10_is_durable_and_resume_records_new_build_source(case):
     assert outcome.status == "PROCESSING" and outcome.waiting_on == "PHASE10_INTELLIGENCE"
     assert repository.fetch_search_run(search)["status"] == "PROCESSING"
     assert repository.fetch_search_run(search)["result_snapshot_id"] is None
+    current_attempt = repository.fetch_current_attempt(search)
+    repository.release_search_attempt_claim(
+        search,
+        attempt_number=int(current_attempt["attempt_number"]),
+        execution_lease_token=str(current_attempt["execution_lease_token"]),
+    )
     outcomes = resume_phase11_searches(
         path, materializer=writer, project_root=path.parent,
         phase10_reader=fixed_reader(ready_response(current, build=True), calls),

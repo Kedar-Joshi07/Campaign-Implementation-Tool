@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+import hashlib
 import json
 
 import numpy as np
@@ -17,6 +19,7 @@ from app.ml.campaign_group_split import (
     SPLIT_STRATEGY_VERSION,
     CampaignGroupSplitError,
     build_campaign_group_partition,
+    validate_calibration_model_lineage_identity,
 )
 from app.ml.feature_contract import RAW_TRAINING_COLUMNS
 from app.services import propensity_calibration_service as calibration
@@ -162,6 +165,89 @@ def test_calibration_rejects_overlap_and_missing_classes() -> None:
         )
 
 
+def test_cross_artifact_lineage_requires_exact_partition_identity() -> None:
+    frame, memberships = _cohort()
+    partition = build_campaign_group_partition(
+        frame, memberships, seed=42, validation_fraction=0.20
+    )
+    model_lineage = partition.lineage
+    parts = model_lineage["partitions"]
+    calibration_lineage = {
+        "strategy_version": model_lineage["strategy_version"],
+        "model_training_group_ids": list(parts[MODEL_TRAINING]["group_ids"]),
+        "model_training_group_ids_sha256": parts[MODEL_TRAINING][
+            "group_ids_sha256"
+        ],
+        "calibration_fit_group_ids": list(parts[CALIBRATION_FIT]["group_ids"]),
+        "calibration_fit_group_ids_sha256": parts[CALIBRATION_FIT][
+            "group_ids_sha256"
+        ],
+        "calibration_evaluation_group_ids": list(
+            parts[CALIBRATION_EVALUATION]["group_ids"]
+        ),
+        "calibration_evaluation_group_ids_sha256": parts[
+            CALIBRATION_EVALUATION
+        ]["group_ids_sha256"],
+        "model_partition_seed": model_lineage["seed"],
+        "model_validation_fraction": model_lineage["validation_fraction"],
+    }
+    assert validate_calibration_model_lineage_identity(
+        calibration_lineage, model_lineage
+    )
+
+    missing_seed = copy.deepcopy(calibration_lineage)
+    missing_seed.pop("model_partition_seed")
+    assert not validate_calibration_model_lineage_identity(missing_seed, model_lineage)
+
+    wrong_fraction = copy.deepcopy(calibration_lineage)
+    wrong_fraction["model_validation_fraction"] = 0.25
+    assert not validate_calibration_model_lineage_identity(wrong_fraction, model_lineage)
+
+    reordered = copy.deepcopy(calibration_lineage)
+    reordered["model_training_group_ids"].reverse()
+    assert validate_calibration_model_lineage_identity(reordered, model_lineage)
+
+    missing = copy.deepcopy(calibration_lineage)
+    missing["model_training_group_ids"] = missing[
+        "model_training_group_ids"
+    ][:-1]
+    missing["model_training_group_ids_sha256"] = hashlib.sha256(
+        json.dumps(
+            sorted(missing["model_training_group_ids"]), separators=(",", ":")
+        ).encode("utf-8")
+    ).hexdigest()
+    assert not validate_calibration_model_lineage_identity(missing, model_lineage)
+
+    extra = copy.deepcopy(calibration_lineage)
+    extra["calibration_fit_group_ids"].append("extra-group")
+    extra["calibration_fit_group_ids_sha256"] = hashlib.sha256(
+        json.dumps(
+            sorted(extra["calibration_fit_group_ids"]), separators=(",", ":")
+        ).encode("utf-8")
+    ).hexdigest()
+    assert not validate_calibration_model_lineage_identity(extra, model_lineage)
+
+    hash_mismatch = copy.deepcopy(calibration_lineage)
+    hash_mismatch["calibration_evaluation_group_ids_sha256"] = "f" * 64
+    assert not validate_calibration_model_lineage_identity(
+        hash_mismatch, model_lineage
+    )
+
+    swapped = copy.deepcopy(calibration_lineage)
+    swapped["calibration_fit_group_ids"], swapped[
+        "calibration_evaluation_group_ids"
+    ] = (
+        swapped["calibration_evaluation_group_ids"],
+        swapped["calibration_fit_group_ids"],
+    )
+    swapped["calibration_fit_group_ids_sha256"], swapped[
+        "calibration_evaluation_group_ids_sha256"
+    ] = (
+        swapped["calibration_evaluation_group_ids_sha256"],
+        swapped["calibration_fit_group_ids_sha256"],
+    )
+    assert not validate_calibration_model_lineage_identity(swapped, model_lineage)
+
 def test_schema_30_preserves_model_lineage_and_calibration_v2(tmp_path) -> None:
     path = initialize_database(tmp_path / "calibration-isolation.db")
     with get_connection(path) as connection:
@@ -194,7 +280,7 @@ def test_schema_30_preserves_model_lineage_and_calibration_v2(tmp_path) -> None:
                WHERE type='table' AND name='score_calibration_artifacts'"""
         ).fetchone()[0]
 
-    assert version == str(CURRENT_SCHEMA_VERSION) == "30"
+    assert version == str(CURRENT_SCHEMA_VERSION)
     assert "split_lineage_json" in model_columns
     assert "selection_basis_sha256" in feedback_batch_columns
     assert {

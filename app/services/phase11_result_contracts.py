@@ -7,10 +7,15 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
+from app.selection_contracts import (
+    CALIBRATED_MEMBERSHIP_CONTRACT_VERSION,
+    CALIBRATED_SELECTION_CONTRACT_VERSION,
+)
+
 
 SEARCH_RUN_CONTRACT_VERSION = "1"
 RESULT_MEMBERSHIP_V1_CONTRACT_VERSION = "1"
-RESULT_MEMBERSHIP_V2_CONTRACT_VERSION = "2"
+RESULT_MEMBERSHIP_V2_CONTRACT_VERSION = CALIBRATED_MEMBERSHIP_CONTRACT_VERSION
 # Frozen compatibility alias. New code must resolve the membership version from
 # the immutable selection contract instead of treating this as a latest version.
 RESULT_MEMBERSHIP_CONTRACT_VERSION = RESULT_MEMBERSHIP_V1_CONTRACT_VERSION
@@ -50,7 +55,7 @@ def result_membership_contract_for_selection(selection_contract_version: Any) ->
     version = str(selection_contract_version or "1")
     if version == "1":
         return RESULT_MEMBERSHIP_V1_CONTRACT_VERSION
-    if version == "2":
+    if version == CALIBRATED_SELECTION_CONTRACT_VERSION:
         return RESULT_MEMBERSHIP_V2_CONTRACT_VERSION
     raise Phase11RegistryValidationError("Unsupported selection contract version.")
 

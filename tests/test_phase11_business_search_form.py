@@ -12,7 +12,12 @@ from urllib.parse import urlsplit
 import pytest
 
 from app.database.connection import get_connection
+from app.main import app
 from app.repositories.campaign_result_registry_repository import CampaignResultRegistryRepository
+from app.selection_contracts import (
+    DEFAULT_PROPENSITY_BUCKET,
+    PROPENSITY_BUCKET_DEFINITIONS,
+)
 from app.services import potential_customer_search_submission_service as service
 from app.services.campaign_targeting_context_service import get_business_targeting_criteria
 from app.schemas.campaign_targeting import CampaignTargetingContextContract
@@ -76,6 +81,7 @@ def test_options_are_live_registry_owned_and_executor_boundary_is_explicit(clien
     # This service-boundary test intentionally disconnects the production
     # lifespan seam. Real app composition is covered by the runtime tests.
     service.reset_phase11_search_executor()
+    app.state.runtime_health.phase11_search_available = False
     payload = client.get(OPTIONS).json()
     assert payload["workflow_available"] is False
     assert payload["context"]["products"][0]["product_id"] == "PRD-1"
@@ -127,6 +133,19 @@ def test_calibrated_submission_and_retry_expose_v2_attempt_contract(client, data
     assert len(options["catalog_version"]) == 64
     assert [item["value"] for item in options["targeting"]["propensity_buckets"]] == [
         "0.90", "0.80", "0.70", "0.60", "0.50",
+    ]
+    assert options["targeting"]["default_propensity_bucket"] == DEFAULT_PROPENSITY_BUCKET
+    assert options["targeting"]["propensity_buckets"] == [
+        {
+            "value": definition.key,
+            "label": definition.display_label,
+            "minimum": definition.minimum,
+            "maximum": definition.maximum,
+            "maximum_inclusive": definition.maximum_inclusive,
+            "legacy_match_strength": definition.legacy_match_strength,
+            "recommended": definition.key == DEFAULT_PROPENSITY_BUCKET,
+        }
+        for definition in PROPENSITY_BUCKET_DEFINITIONS
     ]
     payload = request_payload() | {
         "propensity_bucket": "0.70",

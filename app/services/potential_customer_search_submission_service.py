@@ -14,6 +14,12 @@ from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.repositories.campaign_result_registry_repository import CampaignResultRegistryRepository
 from app.repositories.campaign_targeting_context_repository import CampaignTargetingContextRepository
+from app.selection_contracts import (
+    CALIBRATED_SELECTION_CONTRACT_VERSION,
+    DEFAULT_PROPENSITY_BUCKET,
+    PROPENSITY_BUCKET_DEFINITIONS,
+    PROPENSITY_BUCKET_REGISTRY,
+)
 from app.schemas.campaign_targeting import TARGETING_SEGMENT_CONTRACT_VERSION, BUSINESS_MATCH_STRENGTH_CONTRACT_VERSION
 from app.schemas.potential_customer_search import PotentialCustomerSearchRequest
 from app.services.campaign_targeting_context_service import (
@@ -94,29 +100,35 @@ def export_profile_options(database_path: str | Path) -> list[dict]:
     return result
 
 
-def search_form_options(database_path: str | Path) -> dict:
+def search_form_options(
+    database_path: str | Path, *, workflow_available: bool | None = None
+) -> dict:
     path = initialize_database(database_path)
     catalog = get_or_build_targeting_catalog(path)
     targeting = decorate_targeting_options(catalog["targeting"])
-    targeting["default_propensity_bucket"] = "0.70"
+    targeting["default_propensity_bucket"] = DEFAULT_PROPENSITY_BUCKET
     targeting["propensity_buckets"] = [
-        {"value": value, "label": label, "minimum": minimum,
-         "maximum": maximum, "maximum_inclusive": inclusive,
-         "recommended": value == "0.70"}
-        for value, label, minimum, maximum, inclusive in (
-            ("0.90", "90% to 100% purchase propensity", .9, 1.0, True),
-            ("0.80", "80% to under 90% purchase propensity", .8, .9, False),
-            ("0.70", "70% to under 80% purchase propensity", .7, .8, False),
-            ("0.60", "60% to under 70% purchase propensity", .6, .7, False),
-            ("0.50", "50% to under 60% purchase propensity", .5, .6, False),
-        )
+        {
+            "value": definition.key,
+            "label": definition.display_label,
+            "minimum": definition.minimum,
+            "maximum": definition.maximum,
+            "maximum_inclusive": definition.maximum_inclusive,
+            "legacy_match_strength": definition.legacy_match_strength,
+            "recommended": definition.key == DEFAULT_PROPENSITY_BUCKET,
+        }
+        for definition in PROPENSITY_BUCKET_DEFINITIONS
     ]
     return dict(catalog_version=catalog["catalog_version"],
                 catalog_created_at=catalog["catalog_created_at"],
                 context=decorate_context_options(catalog["context"]),
                 targeting=targeting,
                 profiles=export_profile_options(database_path),
-                workflow_available=PHASE11_SEARCH_EXECUTOR is not None)
+                workflow_available=(
+                    PHASE11_SEARCH_EXECUTOR is not None
+                    if workflow_available is None
+                    else workflow_available
+                ))
 
 
 def _project_search_status(
@@ -143,7 +155,7 @@ def _project_search_status(
     )} | {
         "safe_message": messages[row["status"]],
     }
-    if str(row.get("selection_contract_version") or "1") != "2":
+    if str(row.get("selection_contract_version") or "1") != CALIBRATED_SELECTION_CONTRACT_VERSION:
         return payload
 
     issue = project_run_issue(runtime)
@@ -249,10 +261,9 @@ def normalize_search_definition(
     context = normalize_search_context(raw_context, _allowed_values(context_options))
     normalized_raw_criteria = dict(raw_criteria)
     if propensity_bucket is not None:
-        normalized_raw_criteria["match_strength"] = {
-            "0.90": "VERY_STRONG", "0.80": "STRONG", "0.70": "GOOD",
-            "0.60": "BROAD", "0.50": "BROAD",
-        }[propensity_bucket]
+        normalized_raw_criteria["match_strength"] = PROPENSITY_BUCKET_REGISTRY[
+            propensity_bucket
+        ].legacy_match_strength
     criteria = normalize_business_targeting_criteria(
         normalized_raw_criteria,
         allowed_values=_targeting_allowed_values(targeting_options),
@@ -267,7 +278,7 @@ def normalize_search_definition(
             ))
         payload = dict(criteria.payload)
         payload["propensity_bucket"] = propensity_bucket
-        payload["selection_contract_version"] = "2"
+        payload["selection_contract_version"] = CALIBRATED_SELECTION_CONTRACT_VERSION
         canonical = json.dumps(payload, ensure_ascii=True, allow_nan=False, sort_keys=True, separators=(",", ":"))
         criteria = type(criteria)(
             payload=payload, canonical_json=canonical,
@@ -314,7 +325,11 @@ def submit_potential_customer_search(database_path: str | Path, request: Potenti
             targeting_criteria=criteria.payload, filter_branches=list(criteria.audience_filter_branches),
             selection_mode=criteria.audience_selection["mode"], target_count=criteria.audience_selection["target_count"],
             delivery_channel=profile.channel_code, export_profile=profile.export_profile,
-            selection_contract_version="2" if request.propensity_bucket else "1",
+            selection_contract_version=(
+                CALIBRATED_SELECTION_CONTRACT_VERSION
+                if request.propensity_bucket
+                else "1"
+            ),
             propensity_bucket=request.propensity_bucket,
             catalog_version=catalog["catalog_version"], connection=connection,
             timestamp=timestamp,
@@ -377,7 +392,14 @@ def retry_potential_customer_search(
         )
         run = repository.fetch_search_run(search_run_id)
         assert run is not None
-        retry_or_rejoin_phase10_dependency(path, run, fence=fence)
+        try:
+            retry_or_rejoin_phase10_dependency(path, run, fence=fence)
+        finally:
+            current = repository.fetch_search_run(search_run_id)
+            if current is not None and current["status"] in {"QUEUED", "PROCESSING"}:
+                repository.release_search_attempt_claim(
+                    search_run_id, **fence.as_kwargs()
+                )
     if PHASE11_SEARCH_EXECUTOR is None:
         fence = repository.claim_search_attempt(
             search_run_id, lease_owner="phase11-retry-failure"

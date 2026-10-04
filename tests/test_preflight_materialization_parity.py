@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import gzip
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -113,7 +114,19 @@ def _publish_controlled_calibration(path: Path, generation: dict) -> int:
         "candidate_selection_partition": "calibration_evaluation",
         "evaluation_records_used_for_fit": 0,
         "three_way_isolated": True,
+        "model_partition_seed": model_lineage["seed"],
+        "model_validation_fraction": model_lineage["validation_fraction"],
     }
+    for field in (
+        "model_training_group_ids",
+        "calibration_fit_group_ids",
+        "calibration_evaluation_group_ids",
+    ):
+        calibration_lineage[f"{field}_sha256"] = hashlib.sha256(
+            json.dumps(
+                sorted(calibration_lineage[field]), separators=(",", ":")
+            ).encode("utf-8")
+        ).hexdigest()
     while len(probabilities) < len(raw_rows):
         probabilities.append(0.75)
     ordered = sorted(

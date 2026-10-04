@@ -27,6 +27,10 @@ from app.repositories.phase10_intelligence_repository import (
     Phase10IntelligenceRepository,
 )
 from app.database.connection import get_connection
+from app.selection_contracts import (
+    CALIBRATED_SELECTION_CONTRACT_VERSION,
+    PROPENSITY_BUCKET_KEYS,
+)
 from app.services.audience_query_service import (
     AUDIENCE_FILTER_CONTRACT_VERSION,
     AUDIENCE_RANK_CONTRACT_VERSION,
@@ -231,7 +235,7 @@ def build_result_cache_key(
     payload = {
         "result_cache_key_contract_version": (
             RESULT_CACHE_KEY_CONTRACT_VERSION
-            if selection_contract_version == "2"
+            if selection_contract_version == CALIBRATED_SELECTION_CONTRACT_VERSION
             else "1"
         ),
         "generation_id": generation["generation_id"],
@@ -245,7 +249,7 @@ def build_result_cache_key(
         "audience_rank_contract_version": AUDIENCE_RANK_CONTRACT_VERSION,
         "result_membership_contract_version": membership_contract_version,
     }
-    if selection_contract_version == "2":
+    if selection_contract_version == CALIBRATED_SELECTION_CONTRACT_VERSION:
         catalog_version = run.get("catalog_version")
         if not isinstance(catalog_version, str) or len(catalog_version) != 64:
             raise Phase11SearchOrchestrationError(
@@ -332,7 +336,7 @@ def _validated_calibrated_member(row: Mapping[str, Any]) -> dict[str, Any]:
         not isinstance(person_id, str) or not person_id
         or not math.isfinite(probability) or not 0.0 <= probability <= 1.0
         or not math.isfinite(raw_score) or not 0.0 <= raw_score <= 1.0
-        or probability_bucket not in {"0.90", "0.80", "0.70", "0.60", "0.50"}
+        or probability_bucket not in PROPENSITY_BUCKET_KEYS
         or not 1 <= percentile <= 100 or not 1 <= decile <= 10
         or not isinstance(rank_band, str) or not rank_band
     ):
@@ -455,7 +459,10 @@ def iter_selected_members(
     if not isinstance(branches, list) or not 1 <= len(branches) <= 49:
         raise Phase11SearchBlockedError("Persisted filter branches are invalid.")
     scoring_run_id = int(generation["scoring_run_id"])
-    calibrated_selection = run.get("selection_contract_version") == "2"
+    calibrated_selection = (
+        run.get("selection_contract_version")
+        == CALIBRATED_SELECTION_CONTRACT_VERSION
+    )
     if calibrated_selection:
         calibration_id = run.get("calibration_artifact_id")
         propensity_bucket = run.get("propensity_bucket")
@@ -885,7 +892,7 @@ def execute_phase11_search(
     assert generation is not None
 
     calibration_artifact_id = None
-    if run.get("selection_contract_version") == "2":
+    if run.get("selection_contract_version") == CALIBRATED_SELECTION_CONTRACT_VERSION:
         calibration = resolve_governed_calibration_eligibility(path, generation)
         if not calibration.eligible:
             repository.fail_search_run(

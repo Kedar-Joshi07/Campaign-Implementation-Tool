@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -284,7 +285,17 @@ def _governed_calibration_lineage(database_path: Path, model_run_id: int) -> str
         "candidate_selection_partition": "calibration_evaluation",
         "evaluation_records_used_for_fit": 0,
         "three_way_isolated": True,
+        "model_partition_seed": model_lineage["seed"],
+        "model_validation_fraction": model_lineage["validation_fraction"],
     }
+    for field in (
+        "model_training_group_ids",
+        "calibration_fit_group_ids",
+        "calibration_evaluation_group_ids",
+    ):
+        payload[f"{field}_sha256"] = hashlib.sha256(
+            json.dumps(sorted(payload[field]), separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
     return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
 

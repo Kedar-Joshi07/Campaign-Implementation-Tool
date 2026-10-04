@@ -13,9 +13,13 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from app.database.connection import get_connection
+from app.selection_contracts import CALIBRATED_SELECTION_CONTRACT_VERSION
 from app.services.intelligence_attestation_service import has_current_attestation
 from app.services.targeting_option_catalog_service import get_or_build_targeting_catalog
-from app.ml.campaign_group_split import validate_campaign_group_split_lineage
+from app.ml.campaign_group_split import (
+    validate_calibration_model_lineage_identity,
+    validate_campaign_group_split_lineage,
+)
 from app.schemas.phase10_intelligence import (
     PHASE10_AUTOMATED_TRAINING_RANDOM_SEED,
     PHASE10_AUTOMATED_TRAINING_VALIDATION_FRACTION,
@@ -40,6 +44,24 @@ class GovernedCalibrationEligibility:
     status: str
     reason_code: str
     safe_message: str
+
+
+def public_calibration_currentness(
+    eligibility: GovernedCalibrationEligibility,
+) -> str:
+    """Map internal lifecycle/governance states to the bounded public API."""
+
+    if eligibility.eligible:
+        return "CURRENT"
+    if eligibility.status == "STALE":
+        return "STALE"
+    if eligibility.status == "UNVERIFIED" or eligibility.reason_code in {
+        "CURRENT_ATTESTATION_REQUIRED",
+        "CALIBRATION_LINEAGE_INVALID",
+        "CALIBRATION_GOVERNANCE_INCOMPATIBLE",
+    }:
+        return "UNVERIFIED"
+    return "NOT_AVAILABLE"
 
 
 def resolve_governed_calibration_eligibility(
@@ -127,6 +149,8 @@ def resolve_governed_calibration_eligibility(
             expected_seed=PHASE10_AUTOMATED_TRAINING_RANDOM_SEED,
             expected_validation_fraction=PHASE10_AUTOMATED_TRAINING_VALIDATION_FRACTION,
         )
+    ) or not validate_calibration_model_lineage_identity(
+        calibration_lineage, model_lineage
     ):
         return GovernedCalibrationEligibility(
             False, identifier, "INELIGIBLE", "CALIBRATION_LINEAGE_INVALID",
@@ -202,7 +226,7 @@ def result_lineage_is_current(
     # generation and exact authoritative source identity remain the compatibility
     # contract.  New calibrated v2 snapshots additionally require the promoted
     # calibration, which itself requires a current attestation.
-    return selection_contract_version != "2" or calibration_is_current(
+    return selection_contract_version != CALIBRATED_SELECTION_CONTRACT_VERSION or calibration_is_current(
         database_path, generation, calibration_artifact_id
     )
 
@@ -289,6 +313,7 @@ __all__ = (
     "calibration_is_current",
     "generation_sources_match",
     "latest_source_identity",
+    "public_calibration_currentness",
     "GovernedCalibrationEligibility",
     "resolve_governed_calibration_eligibility",
     "reconcile_source_currentness",

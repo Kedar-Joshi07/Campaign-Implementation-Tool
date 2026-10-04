@@ -11,12 +11,14 @@ from typing import Any, Mapping
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.repositories.phase10_intelligence_repository import Phase10IntelligenceRepository
+from app.selection_contracts import DEMO_QUALIFICATION_MINIMUM
 from app.services.intelligence_attestation_service import has_current_attestation
 from app.services.phase10_context_identity_service import derive_modeling_context_from_campaign_context
 from app.services.potential_customer_search_submission_service import normalize_search_definition
 from app.services.source_currentness_service import (
     generation_sources_match,
     latest_source_identity,
+    public_calibration_currentness,
     resolve_governed_calibration_eligibility,
 )
 from app.services.calibrated_selection_contract_service import (
@@ -51,7 +53,7 @@ def build_preflight_cache_key(
     payload = {
         "preflight_cache_contract_version": PREFLIGHT_CACHE_CONTRACT_VERSION,
         "calibrated_selection_contract_version": CALIBRATED_SELECTION_CONTRACT_VERSION,
-        "selection_contract_version": "2",
+        "selection_contract_version": CALIBRATED_SELECTION_CONTRACT_VERSION,
         "criteria_sha256": criteria_sha256,
         "filter_branches_sha256": filter_branches_sha256,
         "catalog_version": catalog_version,
@@ -297,7 +299,7 @@ def exact_preflight_many(
             "catalog_version": item["catalog_version"],
             "source_identity_sha256": source_identity_sha256,
             "filter_branches_sha256": item["branches_sha256"],
-            "selection_contract_version": "2",
+            "selection_contract_version": CALIBRATED_SELECTION_CONTRACT_VERSION,
             "selection_mode": item["selection_mode"],
             "target_count": item["target_count"],
         }
@@ -314,6 +316,10 @@ def exact_preflight_many(
                     "scoring_run_id": None,
                     "calibration_artifact_id": calibration_id,
                     "calibration_currentness": "NOT_AVAILABLE",
+                    "calibration_eligibility": "NOT_ELIGIBLE",
+                    "calibration_reason_code": (
+                        calibration_eligibility.reason_code
+                    ),
                     "safe_message": "Compatible targeting intelligence has not been prepared yet.",
                     "criteria_sha256": criteria.sha256,
                     **response_identity,
@@ -333,6 +339,12 @@ def exact_preflight_many(
                     "scoring_run_id": int(generation["scoring_run_id"]),
                     "calibration_artifact_id": calibration_id,
                     "calibration_currentness": lineage_state,
+                    "calibration_eligibility": "NOT_ELIGIBLE",
+                    "calibration_reason_code": (
+                        "AUTHORITATIVE_SOURCES_STALE"
+                        if lineage_state == "STALE"
+                        else "CURRENT_ATTESTATION_REQUIRED"
+                    ),
                     "safe_message": (
                         "Targeting intelligence is stale because an authoritative source changed. Prepare current intelligence before using this count."
                         if lineage_state == "STALE"
@@ -355,7 +367,11 @@ def exact_preflight_many(
                     "generation_id": int(generation["generation_id"]),
                     "scoring_run_id": int(generation["scoring_run_id"]),
                     "calibration_artifact_id": calibration_id,
-                    "calibration_currentness": calibration_eligibility.status,
+                    "calibration_currentness": public_calibration_currentness(
+                        calibration_eligibility
+                    ),
+                    "calibration_eligibility": "NOT_ELIGIBLE",
+                    "calibration_reason_code": calibration_eligibility.reason_code,
                     "safe_message": calibration_eligibility.safe_message,
                     "criteria_sha256": criteria.sha256,
                     **response_identity,
@@ -419,18 +435,24 @@ def exact_preflight_many(
                 "intersection_count": intersection_count,
                 "qualifying_count": intersection_count,
                 "selected_count": selected_count,
-                "demo_ready": selected_count >= 10_000,
+                "demo_ready": selected_count >= DEMO_QUALIFICATION_MINIMUM,
                 "generation_id": int(generation["generation_id"]),
                 "scoring_run_id": int(generation["scoring_run_id"]),
                 "calibration_artifact_id": calibration_id,
                 "calibration_currentness": "CURRENT",
+                "calibration_eligibility": "ELIGIBLE",
+                "calibration_reason_code": "ELIGIBLE",
                 "safe_message": (
                     "This exact selection is demo-ready."
-                    if selected_count >= 10_000
+                    if selected_count >= DEMO_QUALIFICATION_MINIMUM
                     else (
                         f"{intersection_count:,} potential customers qualify and the saved TOP_N selection would return {selected_count:,}; filters were not widened."
                         if item["selection_mode"] == "TOP_N"
-                        else "This exact selection contains fewer than 10,000 potential customers; filters were not widened."
+                        else (
+                            "This exact selection contains fewer than "
+                            f"{DEMO_QUALIFICATION_MINIMUM:,} potential customers; "
+                            "filters were not widened."
+                        )
                     )
                 ),
                 "criteria_sha256": criteria.sha256,

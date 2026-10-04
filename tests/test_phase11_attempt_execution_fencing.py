@@ -166,7 +166,7 @@ def test_different_retry_keys_cannot_create_multiple_active_attempts(case) -> No
     assert [tuple(row) for row in attempts] == [(1, "BLOCKED"), (2, "QUEUED")]
 
 
-def test_restart_recovery_reuses_one_durable_lease_for_active_attempt(case) -> None:
+def test_restart_recovery_requires_stale_lease_and_rotates_fence(case) -> None:
     path, _ids, _values, repository = case
     search_run_id = _search(case)
     before = repository.claim_search_attempt(
@@ -175,18 +175,99 @@ def test_restart_recovery_reuses_one_durable_lease_for_active_attempt(case) -> N
     repository.mark_processing(search_run_id, **before.as_kwargs())
 
     restarted_repository = CampaignResultRegistryRepository(path)
+    with pytest.raises(Phase11RegistryStateError, match="live worker"):
+        restarted_repository.claim_search_attempt(
+            search_run_id, lease_owner="process-after-restart"
+        )
+    with get_connection(path, write=True) as connection:
+        connection.execute(
+            """UPDATE campaign_search_attempts
+               SET lease_heartbeat_at='2026-01-01T00:00:00Z'
+               WHERE search_run_id=? AND attempt_number=1""",
+            (search_run_id,),
+        )
     after = restarted_repository.claim_search_attempt(
         search_run_id, lease_owner="process-after-restart"
     )
 
     assert before.attempt_number == after.attempt_number == 1
-    assert before.execution_lease_token == after.execution_lease_token
+    assert before.execution_lease_token != after.execution_lease_token
     with get_connection(path) as connection:
         attempts = connection.execute(
             "SELECT COUNT(*) FROM campaign_search_attempts WHERE search_run_id=?",
             (search_run_id,),
         ).fetchone()[0]
     assert attempts == 1
+
+
+def test_same_attempt_takeover_fences_every_old_owner_write(case) -> None:
+    path, ids, _values, repository = case
+    search_run_id = _search(case, campaign_name="Same-attempt takeover")
+    snapshot_id = _snapshot(case, search_run_id)
+    owner_a = repository.claim_search_attempt(
+        search_run_id,
+        lease_owner="owner-a",
+        timestamp="2026-09-13T10:00:00Z",
+    )
+    repository.mark_processing(search_run_id, **owner_a.as_kwargs())
+    owner_a_reclaim = repository.claim_search_attempt(
+        search_run_id,
+        lease_owner="owner-a",
+        timestamp="2026-09-13T10:00:30Z",
+    )
+    assert owner_a_reclaim.execution_lease_token == owner_a.execution_lease_token
+    with pytest.raises(Phase11RegistryStateError, match="live worker"):
+        repository.claim_search_attempt(
+            search_run_id,
+            lease_owner="owner-b",
+            timestamp="2026-09-13T10:01:00Z",
+        )
+
+    owner_b = repository.claim_search_attempt(
+        search_run_id,
+        lease_owner="owner-b",
+        timestamp="2026-09-13T10:03:00Z",
+    )
+    assert owner_b.execution_lease_token != owner_a.execution_lease_token
+    old_fence = owner_a.as_kwargs()
+    with pytest.raises(Phase11RegistryStateError):
+        repository.update_search_progress(
+            search_run_id,
+            **old_fence,
+            stage_code="STALE_OWNER",
+            stage_label="Stale owner",
+            progress_percent=50,
+            status_message="This write must be fenced.",
+        )
+    with pytest.raises(Phase11RegistryStateError):
+        repository.fail_search_run(search_run_id, **old_fence)
+    with pytest.raises(Phase11RegistryStateError):
+        repository.complete_search_run(
+            search_run_id,
+            **old_fence,
+            result_snapshot_id=snapshot_id,
+            result_source="INTELLIGENCE_REUSE",
+        )
+    with pytest.raises(Phase11RegistryStateError):
+        repository.bind_current_attempt_lineage(
+            search_run_id,
+            **old_fence,
+            generation_id=ids["generation_id"],
+            scoring_run_id=ids["scoring_run_id"],
+            calibration_artifact_id=None,
+        )
+
+    repository.update_search_progress(
+        search_run_id,
+        **owner_b.as_kwargs(),
+        stage_code="TAKEOVER_HEALTHY",
+        stage_label="Takeover is healthy",
+        progress_percent=55,
+        status_message="The new owner has the only valid fence.",
+    )
+    assert repository.fetch_search_runtime(search_run_id)["stage_code"] == (
+        "TAKEOVER_HEALTHY"
+    )
 
 
 def test_terminal_attempt_history_is_immutable_after_retry(case) -> None:
@@ -216,6 +297,28 @@ def test_terminal_attempt_history_is_immutable_after_retry(case) -> None:
             (search_run_id,),
         ).fetchone())
     assert after == before
+
+
+def test_graceful_claim_release_rotates_fence_before_handoff(case) -> None:
+    _path, _ids, _values, repository = case
+    search_run_id = _search(case, campaign_name="Graceful owner handoff")
+    owner_a = repository.claim_search_attempt(
+        search_run_id, lease_owner="owner-a"
+    )
+
+    repository.release_search_attempt_claim(
+        search_run_id, **owner_a.as_kwargs()
+    )
+    with pytest.raises(Phase11RegistryStateError):
+        repository.mark_processing(search_run_id, **owner_a.as_kwargs())
+
+    owner_b = repository.claim_search_attempt(
+        search_run_id, lease_owner="owner-b"
+    )
+    assert owner_b.attempt_number == owner_a.attempt_number
+    assert owner_b.execution_lease_token != owner_a.execution_lease_token
+    repository.mark_processing(search_run_id, **owner_b.as_kwargs())
+    assert repository.fetch_search_run(search_run_id)["status"] == "PROCESSING"
 
 
 @pytest.mark.parametrize("baseline", (17, 18, 19, 20, 21))
@@ -272,7 +375,7 @@ def test_schema_22_upgrades_and_backfills_attempt_fences_from_supported_baseline
             row["name"]
             for row in connection.execute("PRAGMA index_list(campaign_search_attempts)")
         }
-    assert version == str(CURRENT_SCHEMA_VERSION) == "30"
+    assert version == str(CURRENT_SCHEMA_VERSION)
     assert tuple(attempt)[:2] == (1, "BLOCKED")
     assert len(attempt["execution_lease_token"]) == 64
     assert set(attempt["execution_lease_token"]) <= set("0123456789abcdef")

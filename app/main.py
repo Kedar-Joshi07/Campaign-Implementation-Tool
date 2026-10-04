@@ -17,6 +17,7 @@ from app.dependencies import get_database_path
 from app.jobs.executor import shutdown_model_training_executor
 from app.jobs.phase11_search_coordinator import Phase11SearchCoordinator
 from app.logging_config import configure_logging
+from app.runtime_health import RuntimeHealthState
 from app.routers.data import router as data_router
 from app.routers.campaigns import router as campaign_router
 from app.routers.campaign_targeting import router as campaign_targeting_router
@@ -63,6 +64,8 @@ async def lifespan(_: FastAPI):
     )
     phase11_coordinator: Phase11SearchCoordinator | None = None
     feedback_worker: FeedbackRecalibrationWorker | None = None
+    runtime_health: RuntimeHealthState = app.state.runtime_health
+    runtime_health.reset()
     try:
         initialized_path = initialize_database(runtime_database_path)
         currentness = reconcile_source_currentness(initialized_path)
@@ -80,6 +83,7 @@ async def lifespan(_: FastAPI):
         feedback_worker = FeedbackRecalibrationWorker()
         configure_feedback_recalibration_executor(feedback_worker.submit)
         resumed_feedback = feedback_worker.resume_durable_decisions(initialized_path)
+        runtime_health.mark_ready()
         logger.info(
             "Phase 11 runtime composition completed | workers=%s poll_seconds=%s resumed_feedback=%s",
             phase11_coordinator.max_workers,
@@ -87,6 +91,7 @@ async def lifespan(_: FastAPI):
             resumed_feedback,
         )
     except Exception:
+        runtime_health.mark_composition_failure()
         reset_phase11_search_executor()
         if phase11_coordinator is not None:
             phase11_coordinator.shutdown(wait=True)
@@ -155,6 +160,7 @@ async def lifespan(_: FastAPI):
         if feedback_worker is not None:
             feedback_worker.shutdown(wait=False)
         shutdown_model_training_executor(wait=False)
+        runtime_health.reset()
         logger.info("Application stopping | name=%s", APP_NAME)
 
 
@@ -174,6 +180,7 @@ app = FastAPI(
     ),
     lifespan=lifespan,
 )
+app.state.runtime_health = RuntimeHealthState()
 app.include_router(health_router)
 app.include_router(data_router)
 app.include_router(reference_router)

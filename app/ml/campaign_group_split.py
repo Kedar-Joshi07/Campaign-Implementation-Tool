@@ -102,6 +102,64 @@ def _sha(values: Sequence[str]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def validate_calibration_model_lineage_identity(
+    calibration_lineage: Mapping[str, Any] | None,
+    model_lineage: Mapping[str, Any] | None,
+) -> bool:
+    """Prove a calibration names the exact partitions recorded by its model.
+
+    Calibration fitting has its own deterministic estimator seed, so that seed
+    is not compared with the model partition seed. The model lineage is still
+    required to carry the governed partition strategy, seed, and validation
+    policy; exact partition membership and canonical hashes are then compared.
+    """
+
+    if not isinstance(calibration_lineage, Mapping) or not isinstance(
+        model_lineage, Mapping
+    ):
+        return False
+    if calibration_lineage.get("strategy_version") != model_lineage.get(
+        "strategy_version"
+    ):
+        return False
+    partitions = model_lineage.get("partitions")
+    if not isinstance(partitions, Mapping):
+        return False
+    calibration_fields = {
+        MODEL_TRAINING: "model_training_group_ids",
+        CALIBRATION_FIT: "calibration_fit_group_ids",
+        CALIBRATION_EVALUATION: "calibration_evaluation_group_ids",
+    }
+    for partition, calibration_field in calibration_fields.items():
+        model_facts = partitions.get(partition)
+        calibration_groups = calibration_lineage.get(calibration_field)
+        if not isinstance(model_facts, Mapping) or not isinstance(
+            calibration_groups, list
+        ):
+            return False
+        model_groups = model_facts.get("group_ids")
+        if not isinstance(model_groups, list):
+            return False
+        if sorted(calibration_groups) != sorted(model_groups):
+            return False
+        canonical_hash = _sha(calibration_groups)
+        if calibration_lineage.get(
+            f"{calibration_field}_sha256"
+        ) != canonical_hash or model_facts.get("group_ids_sha256") != canonical_hash:
+            return False
+    recorded_partition_seed = calibration_lineage.get("model_partition_seed")
+    if recorded_partition_seed is None or recorded_partition_seed != model_lineage.get("seed"):
+        return False
+    recorded_validation_fraction = calibration_lineage.get(
+        "model_validation_fraction"
+    )
+    if recorded_validation_fraction is None or recorded_validation_fraction != model_lineage.get(
+        "validation_fraction"
+    ):
+        return False
+    return True
+
+
 def _connected_group_ids(
     customer_ids: Sequence[str],
     memberships: Mapping[str, Sequence[str]],
@@ -324,5 +382,6 @@ __all__ = (
     "MODEL_TRAINING",
     "SPLIT_STRATEGY_VERSION",
     "build_campaign_group_partition",
+    "validate_calibration_model_lineage_identity",
     "validate_campaign_group_split_lineage",
 )

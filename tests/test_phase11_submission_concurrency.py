@@ -83,11 +83,11 @@ def test_startup_resume_racing_request_submit_starts_one_loop(case) -> None:
         calls.append(identifier)
         started.set()
         assert release.wait(2.0)
-        fence = repository.claim_search_attempt(
-            identifier, lease_owner="submission-concurrency-test"
-        )
         repository.fail_search_run(
-            identifier, **fence.as_kwargs(), blocked=True
+            identifier,
+            attempt_number=_kwargs["attempt_number"],
+            execution_lease_token=_kwargs["execution_lease_token"],
+            blocked=True,
         )
         return SearchOrchestrationOutcome(identifier, "BLOCKED")
 

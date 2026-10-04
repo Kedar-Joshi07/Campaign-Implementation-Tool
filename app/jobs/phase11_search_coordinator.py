@@ -191,6 +191,19 @@ class Phase11SearchCoordinator:
             )
             self._fail_active_search_safely(search_run_id, fence)
         finally:
+            if self._shutdown_event.is_set():
+                current = self._repository.fetch_search_run(search_run_id)
+                if current is not None and current["status"] in {"QUEUED", "PROCESSING"}:
+                    try:
+                        self._repository.release_search_attempt_claim(
+                            search_run_id, **fence.as_kwargs()
+                        )
+                    except Phase11RegistryStateError:
+                        logger.info(
+                            "Phase 11 shutdown claim was already released or fenced | "
+                            "search_run_id=%s",
+                            search_run_id,
+                        )
             with self._lock:
                 self._active_search_ids.discard(search_run_id)
                 self._futures.pop(search_run_id, None)

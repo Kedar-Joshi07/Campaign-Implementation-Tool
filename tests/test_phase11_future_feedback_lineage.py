@@ -114,7 +114,11 @@ def test_fresh_schema_has_nullable_write_once_future_foreign_key_seam(
     assert len(foreign_keys) == 1
     assert foreign_keys[0]["table"] == "campaign_search_runs"
     assert set(PHASE_ELEVEN_FEEDBACK_INDEX_STATEMENTS) <= indexes
-    assert CURRENT_SCHEMA_VERSION == 30
+    with get_connection(database_path) as connection:
+        stored_version = connection.execute(
+            "SELECT value FROM app_metadata WHERE key='schema_version'"
+        ).fetchone()[0]
+    assert stored_version == str(CURRENT_SCHEMA_VERSION)
 
 
 def test_version_17_upgrade_backfills_existing_search_without_changing_it(

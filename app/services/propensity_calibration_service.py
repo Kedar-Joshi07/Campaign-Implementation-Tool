@@ -18,6 +18,7 @@ from sklearn.metrics import average_precision_score, brier_score_loss, log_loss,
 from app.database.connection import get_connection
 from app.database.schema import initialize_database
 from app.repositories.phase10_intelligence_repository import Phase10IntelligenceRepository
+from app.selection_contracts import PROPENSITY_BUCKETS
 from app.services.intelligence_attestation_service import (
     has_current_attestation,
     record_deep_verification_attestation,
@@ -27,7 +28,9 @@ from app.services.model_scoring_compatibility import (
     validate_scoreable_model,
 )
 from app.services.training_cohort_service import reconstruct_training_cohort
-from app.services.calibrated_selection_contract_service import PROPENSITY_BUCKETS
+from app.services.calibrated_selection_contract_service import (
+    propensity_bucket_case_sql,
+)
 from app.ml.preprocessing import split_customer_cohort
 from app.ml.campaign_group_split import (
     CALIBRATION_EVALUATION,
@@ -35,6 +38,8 @@ from app.ml.campaign_group_split import (
     MODEL_TRAINING,
     SPLIT_STRATEGY_VERSION,
     build_campaign_group_partition,
+    validate_calibration_model_lineage_identity,
+    validate_campaign_group_split_lineage,
 )
 
 
@@ -66,7 +71,9 @@ def _ece(labels: np.ndarray, probabilities: np.ndarray, bins: int = 10) -> float
     return value
 
 
-def _metrics(labels: np.ndarray, probabilities: np.ndarray) -> dict[str, float]:
+def calibration_metrics(
+    labels: np.ndarray, probabilities: np.ndarray
+) -> dict[str, float]:
     clipped = np.clip(probabilities, 1e-9, 1 - 1e-9)
     order = np.lexsort((np.arange(labels.size), -clipped))
     top_n = max(1, math.ceil(labels.size * .10))
@@ -80,6 +87,9 @@ def _metrics(labels: np.ndarray, probabilities: np.ndarray) -> dict[str, float]:
         "average_precision": float(average_precision_score(labels, clipped)),
         "top_decile_lift": lift,
     }
+
+
+_metrics = calibration_metrics
 
 
 def has_governed_calibration_lineage(lineage: dict[str, Any]) -> bool:
@@ -96,8 +106,10 @@ def has_governed_calibration_lineage(lineage: dict[str, Any]) -> bool:
     return bool(
         lineage.get("three_way_isolated") is True
         and lineage.get("strategy_version") == SPLIT_STRATEGY_VERSION
-        and lineage.get("candidate_selection_partition")
-        == "calibration_evaluation"
+        and lineage.get("candidate_selection_partition") in {
+            "calibration_evaluation",
+            "feedback_calibration_evaluation",
+        }
         and lineage.get("evaluation_records_used_for_fit") == 0
         and isinstance(overlaps, dict)
         and overlaps
@@ -137,6 +149,10 @@ def fit_held_out_calibration(
     calibration_fit_group_ids: list[str] | tuple[str, ...] | None = None,
     calibration_evaluation_group_ids: list[str] | tuple[str, ...] | None = None,
     model_training_group_ids: list[str] | tuple[str, ...] = (),
+    model_calibration_fit_group_ids: list[str] | tuple[str, ...] | None = None,
+    model_calibration_evaluation_group_ids: list[str] | tuple[str, ...] | None = None,
+    model_partition_seed: int | None = None,
+    model_validation_fraction: float | None = None,
 ) -> FittedCalibration:
     scores = np.asarray(raw_scores, dtype=np.float64)
     labels = np.asarray(outcomes, dtype=np.int8)
@@ -209,6 +225,17 @@ def fit_held_out_calibration(
         candidates,
         key=lambda item: (item[1]["brier_score"], item[1]["log_loss"], item[0]["method"]),
     )
+    lineage_calibration_groups = (
+        sorted(set(model_calibration_fit_group_ids))
+        if model_calibration_fit_group_ids is not None
+        else sorted(calibration_groups)
+    )
+    lineage_evaluation_groups = (
+        sorted(set(model_calibration_evaluation_group_ids))
+        if model_calibration_evaluation_group_ids is not None
+        else sorted(evaluation_groups)
+    )
+    feedback_partition = model_calibration_fit_group_ids is not None
     return FittedCalibration(
         method=str(artifact["method"]), artifact=artifact, metrics=metrics,
         split_lineage={
@@ -221,16 +248,16 @@ def fit_held_out_calibration(
             "test_group_count": len(evaluation_groups),
             "model_training_group_count": len(model_groups),
             "model_training_group_ids": sorted(model_groups),
-            "calibration_fit_group_ids": sorted(calibration_groups),
-            "calibration_evaluation_group_ids": sorted(evaluation_groups),
+            "calibration_fit_group_ids": lineage_calibration_groups,
+            "calibration_evaluation_group_ids": lineage_evaluation_groups,
             "model_training_group_ids_sha256": hashlib.sha256(
                 json.dumps(sorted(model_groups), separators=(",", ":")).encode()
             ).hexdigest(),
             "calibration_fit_group_ids_sha256": hashlib.sha256(
-                json.dumps(sorted(calibration_groups), separators=(",", ":")).encode()
+                json.dumps(lineage_calibration_groups, separators=(",", ":")).encode()
             ).hexdigest(),
             "calibration_evaluation_group_ids_sha256": hashlib.sha256(
-                json.dumps(sorted(evaluation_groups), separators=(",", ":")).encode()
+                json.dumps(lineage_evaluation_groups, separators=(",", ":")).encode()
             ).hexdigest(),
             "overlap_counts": overlap_counts,
             "group_overlap_count": sum(overlap_counts.values()),
@@ -242,9 +269,22 @@ def fit_held_out_calibration(
                 "positive": int(labels[test_mask].sum()),
                 "negative": int(test_mask.sum() - labels[test_mask].sum()),
             },
-            "candidate_selection_partition": "calibration_evaluation",
+            "candidate_selection_partition": (
+                "feedback_calibration_evaluation"
+                if feedback_partition
+                else "calibration_evaluation"
+            ),
             "evaluation_records_used_for_fit": 0,
             "three_way_isolated": bool(model_groups),
+            "statistical_partition_kind": (
+                "FEEDBACK_CONNECTED_COMPONENT"
+                if feedback_partition
+                else "MODEL_HELD_OUT_PARTITION"
+            ),
+            "statistical_calibration_fit_group_ids": sorted(calibration_groups),
+            "statistical_calibration_evaluation_group_ids": sorted(evaluation_groups),
+            "model_partition_seed": model_partition_seed,
+            "model_validation_fraction": model_validation_fraction,
         },
     )
 
@@ -351,11 +391,30 @@ def publish_fitted_calibration(
     split_json = json.dumps(fitted.split_lineage, sort_keys=True, separators=(",", ":"))
     with get_connection(path) as connection:
         scoring = connection.execute(
-            "SELECT model_run_id,scored_person_count,artifact_sha256 FROM scoring_runs WHERE scoring_run_id=? AND status='COMPLETED'",
+            """SELECT s.model_run_id,s.scored_person_count,s.artifact_sha256,
+                      m.split_lineage_json AS model_split_lineage_json
+               FROM scoring_runs AS s
+               JOIN model_runs AS m ON m.model_run_id=s.model_run_id
+               WHERE s.scoring_run_id=? AND s.status='COMPLETED'""",
             (scoring_run_id,),
         ).fetchone()
     if scoring is None or len(source_checksum) != 64:
         raise PropensityCalibrationError("Completed scoring and a governed source checksum are required.")
+    if promote:
+        try:
+            model_lineage = json.loads(str(scoring["model_split_lineage_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise PropensityCalibrationError(
+                "Calibration promotion requires valid model split lineage."
+            ) from exc
+        if not validate_campaign_group_split_lineage(model_lineage) or not (
+            validate_calibration_model_lineage_identity(
+                fitted.split_lineage, model_lineage
+            )
+        ):
+            raise PropensityCalibrationError(
+                "Calibration lineage does not match the scoring model partitions."
+            )
     generation = next(
         (
             item
@@ -451,20 +510,17 @@ def publish_fitted_calibration(
                      for row, probability in zip(rows, calibrated, strict=True)),
                 )
     total = int(scoring["scored_person_count"])
+    bucket_expression = propensity_bucket_case_sql("calibrated_probability")
     with get_connection(path, write=True) as connection:
         connection.execute("BEGIN IMMEDIATE")
         connection.execute(
-            """INSERT INTO calibrated_propensity_scores (
+            f"""INSERT INTO calibrated_propensity_scores (
                    calibration_artifact_id,scoring_run_id,person_id,raw_score,
                    calibrated_probability,propensity_bucket,rank_position,total_population,
                    percentile_bucket,decile,rank_band
                )
                SELECT ?,?,person_id,raw_score,calibrated_probability,
-                      CASE WHEN calibrated_probability>=.9 THEN '0.90'
-                           WHEN calibrated_probability>=.8 THEN '0.80'
-                           WHEN calibrated_probability>=.7 THEN '0.70'
-                           WHEN calibrated_probability>=.6 THEN '0.60'
-                           WHEN calibrated_probability>=.5 THEN '0.50' END,
+                       {bucket_expression},
                       position,?,percentile,CAST((percentile+9)/10 AS INTEGER),
                       CASE WHEN percentile=1 THEN 'ELITE'
                            WHEN percentile<=5 THEN 'VERY_HIGH'
@@ -531,6 +587,8 @@ def publish_calibrated_generation(
             "group_ids"
         ],
         model_training_group_ids=partitions[MODEL_TRAINING]["group_ids"],
+        model_partition_seed=model_lineage.get("seed"),
+        model_validation_fraction=model_lineage.get("validation_fraction"),
     )
     with get_connection(path) as connection:
         source = connection.execute(
@@ -553,7 +611,8 @@ def publish_calibrated_generation(
 
 __all__ = (
     "CALIBRATION_CONTRACT_VERSION", "PROPENSITY_BUCKETS", "FittedCalibration",
-    "PropensityCalibrationError", "apply_calibration", "fit_held_out_calibration",
+    "PropensityCalibrationError", "apply_calibration", "calibration_metrics",
+    "fit_held_out_calibration",
     "has_governed_calibration_lineage",
     "publish_calibrated_generation", "publish_fitted_calibration",
 )

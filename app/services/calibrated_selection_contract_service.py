@@ -8,22 +8,24 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-
-CALIBRATED_SELECTION_CONTRACT_VERSION = "2"
-PROPENSITY_BUCKETS: dict[str, tuple[float, float, bool]] = {
-    "0.90": (0.90, 1.00, True),
-    "0.80": (0.80, 0.90, False),
-    "0.70": (0.70, 0.80, False),
-    "0.60": (0.60, 0.70, False),
-    "0.50": (0.50, 0.60, False),
-}
+from app.selection_contracts import (
+    CALIBRATED_SELECTION_CONTRACT_VERSION,
+    PROPENSITY_BUCKET_DEFINITIONS,
+    PROPENSITY_BUCKETS,
+    propensity_bucket_bounds,
+)
 
 
-def propensity_bucket_bounds(bucket: str) -> tuple[float, float, bool]:
-    try:
-        return PROPENSITY_BUCKETS[bucket]
-    except KeyError as exc:
-        raise ValueError("Unsupported propensity bucket.") from exc
+def propensity_bucket_case_sql(expression: str) -> str:
+    """Build the current v2 bucket CASE expression from the registry."""
+
+    if not expression or any(character in expression for character in ";\n\r"):
+        raise ValueError("A bounded SQL expression is required.")
+    clauses = " ".join(
+        f"WHEN {expression}>={definition.minimum:.2f} THEN '{definition.key}'"
+        for definition in PROPENSITY_BUCKET_DEFINITIONS
+    )
+    return f"CASE {clauses} END"
 
 
 def build_branch_predicates(
@@ -96,4 +98,5 @@ __all__ = (
     "PROPENSITY_BUCKETS",
     "build_branch_predicates",
     "propensity_bucket_bounds",
+    "propensity_bucket_case_sql",
 )

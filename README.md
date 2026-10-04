@@ -56,16 +56,18 @@ The runtime follows Router -> Schema -> Service -> Repository -> SQLite layering
 
 The Phase 11 runtime ownership path is HTTP → bounded Phase 11 coordinator → durable Phase 10 compatibility/reuse/build → immutable result snapshot → governed export. Application startup initializes the coordinator automatically, reconciles Phase 10 work, resumes durable `QUEUED`/`PROCESSING` Phase 11 searches, and reconciles stale export audits. Shutdown disconnects new submissions before closing the coordinator and existing model/scoring executor. See [Phase 11 runtime architecture](docs/PHASE_11_RUNTIME_ARCHITECTURE.md).
 
-The corrected trusted Phase 11 runtime baseline is
-`b00946dbfcbda463b81fa3717dbf2dad0598c113`. It passed real installed-Chrome
-full-5M reuse/export recertification and exact-SHA CI run `#26` (all five jobs).
-See the [runtime final acceptance](docs/evidence/phase11_runtime_closure/PHASE11_RUNTIME_FINAL_ACCEPTANCE.md)
+The historical Phase 11 runtime freeze remains documented in the
+[runtime final acceptance](docs/evidence/phase11_runtime_closure/PHASE11_RUNTIME_FINAL_ACCEPTANCE.md)
 and [runtime final freeze report](docs/evidence/phase11_runtime_closure/PHASE11_RUNTIME_FINAL_FREEZE_REPORT.md).
+The current recovery-hardening authority starts from exact-SHA
+`58a5852d488aa686ed67ffa7ccecbc50463f4081` (CI run `36818012626`, all five
+normal jobs green) and is extended by the
+[Prompt 13.6 pre-14 stabilization evidence](docs/evidence/recovery_hardening/13_6_PRE14_STABILIZATION.md).
 
 ## Current versions and frozen contracts
 
 - Application version default: 0.1.0
-- Current SQLite schema version: 30 (the operator's canonical local database
+- Current SQLite schema version: 31 (the operator's canonical local database
   remains at schema 26 until an in-place migration is explicitly authorized)
 - Feature contract version: 1
 - Feature contract SHA-256: a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535
