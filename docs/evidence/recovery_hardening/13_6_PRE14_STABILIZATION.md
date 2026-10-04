@@ -3,11 +3,11 @@
 ## Certification state
 
 - Starting SHA: `58a5852d488aa686ed67ffa7ccecbc50463f4081`.
-- Ending/candidate SHA: `PENDING_COMMIT`.
+- Ending/candidate implementation SHA: `255ff912a445423696b76fe339102c25f8f028f8`.
 - Baseline exact-SHA CI: GitHub Actions run `36818012626`; Repository Hygiene, Python Validation, Tests, Frontend Contract, and Clean-Room Phase1-7 were successful.
 - Local status: implementation and required local validation passed.
-- Remote status: exact-candidate-SHA CI and manual Full Validation dispatch are pending until the changes are committed and pushed.
-- Prompt 13.6 status at this evidence revision: **NO-GO until exact candidate SHA is green**.
+- Remote status: exact-candidate-SHA CI is green; manual Full Validation dispatch remains permission-bound and explicitly pending.
+- Prompt 13.6 status at this evidence revision: **GO**.
 
 ## Working tree before
 
@@ -128,7 +128,7 @@ Public GitHub metadata was re-read on 2026-10-04. `main` at the starting SHA rep
 | Clean-Room Phase1-7 | PASS; completed 2026-10-04T10:16:52Z |
 | `python -m pip check` | PASS, no broken requirements |
 | `python -m compileall app scripts tests` | PASS |
-| `git diff --check` | PASS before evidence generation; rerun at closure |
+| `git diff --check` | PASS at candidate closure |
 
 The exact commands were the prompt-prescribed commands. The clean-room report and JSON were regenerated at `docs/evidence/CLEANROOM_PHASE1_TO_PHASE7_REPORT.md` and `docs/evidence/cleanroom_phase1_to_phase7.json`.
 
@@ -154,10 +154,18 @@ An initial broad non-heavy run found six genuine integration defects (claim hand
 
 ## Exact-SHA CI and GO/NO-GO
 
-Exact candidate SHA: `PENDING_COMMIT`.
+Exact candidate implementation SHA: `255ff912a445423696b76fe339102c25f8f028f8`.
 
-Exact-SHA GitHub Actions run: `PENDING`.
+Exact-SHA GitHub Actions run: `37195393395`, event `push`, conclusion `success`.
 
-Current decision: **LOCAL IMPLEMENTATION PASS / REMOTE EXACT-SHA CI CERTIFICATION PENDING / PROMPT 13.6 = NO-GO UNTIL EXACT CANDIDATE SHA IS GREEN.**
+Required job conclusions:
+
+- Repository Hygiene: success.
+- Python Validation: success.
+- Tests: success.
+- Frontend Contract: success.
+- Clean-Room Phase1-7: success.
+
+Current decision: **PROMPT 13.6 = GO**. The separately accepted branch-protection administrator action and permission-bound manual-workflow dispatch remain plainly recorded and do not weaken the runtime/test certification.
 
 After exact-SHA CI is green, the only valid next action is to re-present/reconfirm the Prompt 13 business decision and then run exactly one of Prompt 14A or Prompt 14B.

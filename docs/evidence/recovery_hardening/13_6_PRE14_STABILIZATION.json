@@ -2,7 +2,7 @@
   "evidence_contract": "PHASE13_6_PRE14_STABILIZATION_V1",
   "recorded_date": "2026-10-04",
   "starting_sha": "58a5852d488aa686ed67ffa7ccecbc50463f4081",
-  "candidate_sha": null,
+  "candidate_sha": "255ff912a445423696b76fe339102c25f8f028f8",
   "working_tree_before": {
     "tracked_changes": [],
     "untracked": [
@@ -106,7 +106,7 @@
     "cleanroom_phase1_to_phase7": {"status": "PASS", "completed_at": "2026-10-04T10:16:52Z"},
     "pip_check": "PASS",
     "compileall": "PASS",
-    "diff_check": "PASS_BEFORE_EVIDENCE_FINAL_RERUN_PENDING"
+    "diff_check": "PASS"
   },
   "full_validation": {
     "workflow_structurally_repaired": true,
@@ -124,9 +124,17 @@
     "status": "BRANCH PROTECTION PENDING - ADMIN ACTION REQUIRED"
   },
   "exact_sha_ci": {
-    "run_id": null,
-    "head_sha": null,
-    "conclusion": "PENDING"
+    "run_id": 37195393395,
+    "head_sha": "255ff912a445423696b76fe339102c25f8f028f8",
+    "event": "push",
+    "conclusion": "success",
+    "jobs": {
+      "Repository Hygiene": "success",
+      "Python Validation": "success",
+      "Tests": "success",
+      "Frontend Contract": "success",
+      "Clean-Room Phase1-7": "success"
+    }
   },
   "remaining_limitations": [
     "one_campaign_connected_component",
@@ -141,5 +149,5 @@
     "manual_full_validation_remote_dispatch_pending",
     "branch_protection_admin_action_required"
   ],
-  "decision": "NO_GO_UNTIL_EXACT_CANDIDATE_SHA_GREEN"
+  "decision": "GO"
 }
