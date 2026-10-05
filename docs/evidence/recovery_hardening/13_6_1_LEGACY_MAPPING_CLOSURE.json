@@ -2,7 +2,7 @@
   "evidence_contract": "PHASE13_6_1_LEGACY_MAPPING_CLOSURE_V1",
   "recorded_date": "2026-10-05",
   "starting_sha": "728fa19ef88d891af82bceaa07fd4301d900514d",
-  "candidate_sha": "PENDING_COMMIT",
+  "candidate_sha": "a35dabbf0baa43e12dfe4bddc9ad72c29bdf5acb",
   "starting_ci": {
     "run_id": 37262707196,
     "head_sha": "728fa19ef88d891af82bceaa07fd4301d900514d",
@@ -117,6 +117,20 @@
     "protected": false,
     "status": "BRANCH PROTECTION PENDING - ADMIN ACTION REQUIRED"
   },
-  "exact_sha_ci": "PENDING_COMMIT_AND_PUSH",
-  "decision": "NO-GO"
+  "exact_sha_ci": {
+    "run_id": 37281401935,
+    "head_sha": "a35dabbf0baa43e12dfe4bddc9ad72c29bdf5acb",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": {
+      "Repository Hygiene": "success",
+      "Python Validation": "success",
+      "Tests": "success",
+      "Frontend Contract": "success",
+      "Clean-Room Phase1-7": "success"
+    }
+  },
+  "decision": "GO",
+  "pre14_stabilization_complete": true
 }

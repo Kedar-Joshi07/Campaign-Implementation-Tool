@@ -4,8 +4,8 @@
 
 - Starting SHA: `728fa19ef88d891af82bceaa07fd4301d900514d`.
 - Starting exact-SHA CI: run `37262707196`; Repository Hygiene, Python Validation, Tests, Frontend Contract, and Clean-Room Phase1-7 all succeeded.
-- Candidate SHA: pending implementation commit.
-- Prompt 13.6.1 status: **NO-GO until the required regression and exact-candidate-SHA CI gates complete**.
+- Candidate SHA: `a35dabbf0baa43e12dfe4bddc9ad72c29bdf5acb`.
+- Prompt 13.6.1 status: **GO — PRE-14 STABILIZATION COMPLETE**.
 
 This evidence supersedes Prompt 13.6 as the latest pre-14 authority. The original Prompt 13.6 evidence remains unchanged and auditable, but its GO claim was superseded after an independent post-implementation audit found a semantic reverse-mapping regression.
 
@@ -94,9 +94,11 @@ Root `README.md` now consistently states schema 31 and documents migration 31's 
 
 - Manual Full Validation: `MANUAL FULL VALIDATION REMOTE CERTIFICATION PENDING` unless authenticated dispatch becomes available after push.
 - Branch protection re-read: `main.protected=false`; `BRANCH PROTECTION PENDING - ADMIN ACTION REQUIRED`.
-- Exact-candidate-SHA CI: pending commit and push.
+- Exact-candidate-SHA CI: run `37281401935`; all five required jobs succeeded.
 
 ## Decision
 
-**PROMPT 13.6.1 = NO-GO** until every required regression and exact-SHA CI gate succeeds.
+**PROMPT 13.6.1 = GO — PRE-14 STABILIZATION COMPLETE.**
+
+The only valid next action is to reconfirm the Prompt 13 business decision and run exactly one of Prompt 14A or Prompt 14B.
 
