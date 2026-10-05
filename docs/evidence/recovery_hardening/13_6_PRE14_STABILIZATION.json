@@ -4,7 +4,7 @@
   "starting_sha": "58a5852d488aa686ed67ffa7ccecbc50463f4081",
   "candidate_sha": "255ff912a445423696b76fe339102c25f8f028f8",
   "literal_closure_baseline_sha": "7b0e2bcd9c7cf64e10f384465795648a4f6b7765",
-  "literal_closure_candidate_sha": "PENDING_COMMIT",
+  "literal_closure_candidate_sha": "d877690b69c84e649470aa65cf60a7ab968e9385",
   "working_tree_before": {
     "tracked_changes": [],
     "untracked": [
@@ -151,7 +151,18 @@
     }
   },
   "literal_closure_exact_sha_ci": {
-    "status": "PENDING_COMMIT_AND_PUSH"
+    "run_id": 37262007848,
+    "head_sha": "d877690b69c84e649470aa65cf60a7ab968e9385",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": {
+      "Repository Hygiene": "success",
+      "Python Validation": "success",
+      "Tests": "success",
+      "Frontend Contract": "success",
+      "Clean-Room Phase1-7": "success"
+    }
   },
   "remaining_limitations": [
     "one_campaign_connected_component",

@@ -35,7 +35,9 @@ Literal-closure validation results:
 
 The fresh migration used `PHASE13_6_CANONICAL_COPY_MIGRATION_V1`. The canonical source remained byte-identical at SHA-256 `43b6d31ed6c4f33574f2450f3bf1e2ece0ab56d77fd9213e76de9e8e07ef4d77`; only the explicit disposable copy was removed after validation, while its bounded JSON report was retained in the process temp directory.
 
-Literal-closure implementation SHA and exact-SHA CI are pending the commit/push gate at this evidence revision.
+Literal-closure implementation SHA: `d877690b69c84e649470aa65cf60a7ab968e9385`.
+
+Exact-SHA GitHub Actions run `37262007848` completed successfully for that SHA. Repository Hygiene, Python Validation, Tests, Frontend Contract, and Clean-Room Phase1-7 all concluded `success`.
 
 ## Working tree before
 
