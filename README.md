@@ -61,8 +61,9 @@ The historical Phase 11 runtime freeze remains documented in the
 and [runtime final freeze report](docs/evidence/phase11_runtime_closure/PHASE11_RUNTIME_FINAL_FREEZE_REPORT.md).
 The current recovery-hardening authority starts from exact-SHA
 `58a5852d488aa686ed67ffa7ccecbc50463f4081` (CI run `36818012626`, all five
-normal jobs green) and is extended by the
-[Prompt 13.6 pre-14 stabilization evidence](docs/evidence/recovery_hardening/13_6_PRE14_STABILIZATION.md).
+normal jobs green) and is extended by the Prompt 13.6 stabilization evidence.
+The latest pre-14 authority is the
+[Prompt 13.6.1 legacy-mapping closure](docs/evidence/recovery_hardening/13_6_1_LEGACY_MAPPING_CLOSURE.md).
 
 ## Current versions and frozen contracts
 
@@ -167,13 +168,15 @@ If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs
 .\.venv\Scripts\python.exe scripts\init_db.py --inspect
 ```
 
-Initialization is idempotent and creates/verifies schema version 30. Migrations
+Initialization is idempotent and creates/verifies schema version 31. Migrations
 20–26 add durable search attempts, progress, fencing, dependency lineage,
 attestation lineage, and workload-qualified progress. Migrations 27–30 add
 explicit v2 result membership, one-current-catalog enforcement, persisted
 campaign-connected model/calibration lineage, and bounded feedback-recalibration
-decision lineage. Historical rows remain readable and immutable under their
-recorded contracts.
+decision lineage. Migration 31 enforces the promoted-calibration singleton and
+adds feedback statistical-grouping and evaluation lineage plus worker
+ownership/fencing fields and invariants. Historical rows remain readable and
+immutable under their recorded contracts.
 
 Phase 11 persists immutable business submissions separately from reusable, contact-PII-free result snapshots. Exact hits reuse a validated snapshot; otherwise the system reuses compatible Phase 10 intelligence or builds only missing layers, then atomically materializes one requested membership. Search-result exports have their own count/checksum/currentness audit records. See [smart reuse and snapshot contracts](docs/PHASE_11_RESULT_SNAPSHOTS_AND_SMART_REUSE.md).
 

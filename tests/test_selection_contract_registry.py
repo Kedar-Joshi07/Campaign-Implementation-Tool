@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import inspect
+import json
+from collections import Counter
 from pathlib import Path
 
 from app.database.connection import get_connection
@@ -22,6 +24,18 @@ from app.services.calibrated_selection_contract_service import (
     propensity_bucket_case_sql,
 )
 from app.services.phase11_results_service import PROPENSITY_BUCKET_LABELS
+from app.schemas.campaign_targeting import (
+    MATCH_SCORE_BANDS,
+    MATCH_STRENGTH_THRESHOLDS,
+)
+
+
+FROZEN_LEGACY_TO_V2_MAPPING = {
+    "VERY_STRONG": "0.90",
+    "STRONG": "0.80",
+    "GOOD": "0.70",
+    "BROAD": "0.60",
+}
 
 
 def test_v2_registry_matches_runtime_bounds_labels_and_demo_policy() -> None:
@@ -29,10 +43,11 @@ def test_v2_registry_matches_runtime_bounds_labels_and_demo_policy() -> None:
     assert DEFAULT_PROPENSITY_BUCKET == "0.70"
     assert DEMO_QUALIFICATION_MINIMUM == 10_000
     assert PROPENSITY_BUCKET_KEYS == ("0.90", "0.80", "0.70", "0.60", "0.50")
-    assert PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH == {
-        definition.legacy_match_strength: definition.key
-        for definition in PROPENSITY_BUCKET_DEFINITIONS
-    }
+    assert PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH == (
+        FROZEN_LEGACY_TO_V2_MAPPING
+    )
+    assert PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH["BROAD"] == "0.60"
+    assert PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH["BROAD"] != "0.50"
     for definition in PROPENSITY_BUCKET_DEFINITIONS:
         assert propensity_bucket_bounds(definition.key) == (
             definition.minimum,
@@ -80,3 +95,52 @@ def test_demo_preflight_uses_registry_legacy_mapping() -> None:
     ).read_text(encoding="utf-8")
     assert "PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH" in source
     assert '"VERY_STRONG": "0.90"' not in source
+
+
+def test_frozen_legacy_mapping_matches_business_threshold_contract() -> None:
+    assert MATCH_STRENGTH_THRESHOLDS == {
+        "VERY_STRONG": 0.90,
+        "STRONG": 0.80,
+        "GOOD": 0.70,
+        "BROAD": 0.60,
+    }
+    broad = next(band for band in MATCH_SCORE_BANDS if band.value == "BROAD")
+    assert (broad.minimum, broad.maximum, broad.maximum_inclusive) == (
+        0.60,
+        0.70,
+        False,
+    )
+    assert PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH == (
+        FROZEN_LEGACY_TO_V2_MAPPING
+    )
+
+
+def test_all_canonical_scenarios_use_frozen_legacy_mapping() -> None:
+    scenario_path = Path(
+        "Prompts/Campaign_Implementation_Tool_Demo_Readiness_20_Real_Runs_Prompt_Pack/"
+        "scenarios.json"
+    )
+    scenarios = json.loads(scenario_path.read_text(encoding="utf-8"))["scenarios"]
+    assert len(scenarios) == 20
+    strengths = Counter(item["match_strength"] for item in scenarios)
+    assert strengths == {
+        "VERY_STRONG": 1,
+        "STRONG": 2,
+        "GOOD": 7,
+        "BROAD": 10,
+    }
+    translated = [
+        FROZEN_LEGACY_TO_V2_MAPPING[item["match_strength"]]
+        for item in scenarios
+    ]
+    broad_buckets = [
+        bucket
+        for item, bucket in zip(scenarios, translated, strict=True)
+        if item["match_strength"] == "BROAD"
+    ]
+    assert broad_buckets == ["0.60"] * 10
+    assert "0.50" not in broad_buckets
+    assert translated == [
+        PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH[item["match_strength"]]
+        for item in scenarios
+    ]

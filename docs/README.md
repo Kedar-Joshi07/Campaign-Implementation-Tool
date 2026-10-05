@@ -63,9 +63,14 @@ This folder contains implementation summaries and evidence indexes for the Phase
   - Current runtime, recovery, browser, full-5M, regression, and exact-SHA acceptance.
 - evidence/phase11_runtime_closure/PHASE11_RUNTIME_FINAL_FREEZE_REPORT.md
   - Corrected trusted SHA chain, exact-SHA GitHub Actions results, and final freeze decision.
+- evidence/recovery_hardening/13_6_1_LEGACY_MAPPING_CLOSURE.md
+  - Latest pre-14 authority: frozen legacy-selection mapping closure, canonical
+    scenario proof, regression results, governance status, and exact-SHA CI.
+- evidence/recovery_hardening/13_6_1_LEGACY_MAPPING_CLOSURE.json
+  - Machine-readable Prompt 13.6.1 defect, mapping, scenario, test, and CI evidence.
 - evidence/recovery_hardening/13_6_PRE14_STABILIZATION.md
-  - Current pre-14 runtime, statistical-integrity, schema-31 migration, validation,
-    governance, and exact-SHA certification authority.
+  - Historical Prompt 13.6 stabilization evidence, superseded as the latest
+    pre-14 authority by Prompt 13.6.1 while retained for audit lineage.
 - evidence/recovery_hardening/13_6_PRE14_STABILIZATION.json
   - Machine-readable Prompt 13.6 findings, contract changes, test results,
     migration proof, CI state, and retained limitations.

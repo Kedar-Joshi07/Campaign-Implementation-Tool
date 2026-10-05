@@ -13,6 +13,7 @@ from typing import Literal
 
 
 PropensityBucket = Literal["0.90", "0.80", "0.70", "0.60", "0.50"]
+LegacyMatchStrength = Literal["VERY_STRONG", "STRONG", "GOOD", "BROAD"]
 
 
 @dataclass(frozen=True)
@@ -58,10 +59,17 @@ PROPENSITY_BUCKET_REGISTRY = {
     definition.key: definition for definition in PROPENSITY_BUCKET_DEFINITIONS
 }
 PROPENSITY_BUCKET_KEYS = tuple(PROPENSITY_BUCKET_REGISTRY)
-PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH = {
-    definition.legacy_match_strength: definition.key
-    for definition in PROPENSITY_BUCKET_DEFINITIONS
+PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH: dict[
+    LegacyMatchStrength, PropensityBucket
+] = {
+    "VERY_STRONG": "0.90",
+    "STRONG": "0.80",
+    "GOOD": "0.70",
+    "BROAD": "0.60",
 }
+# Bucket-to-legacy projection is intentionally many-to-one: both 0.60 and
+# 0.50 project to BROAD. Legacy-to-bucket translation is a separately frozen
+# compatibility contract and must never be derived by dictionary inversion.
 PROPENSITY_BUCKETS = {
     key: (
         definition.minimum,
@@ -94,6 +102,7 @@ __all__ = (
     "CALIBRATED_SELECTION_SEMANTICS",
     "DEFAULT_PROPENSITY_BUCKET",
     "DEMO_QUALIFICATION_MINIMUM",
+    "LegacyMatchStrength",
     "PROPENSITY_BUCKET_DEFINITIONS",
     "PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH",
     "PROPENSITY_BUCKET_KEYS",

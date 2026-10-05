@@ -1,0 +1,122 @@
+{
+  "evidence_contract": "PHASE13_6_1_LEGACY_MAPPING_CLOSURE_V1",
+  "recorded_date": "2026-10-05",
+  "starting_sha": "728fa19ef88d891af82bceaa07fd4301d900514d",
+  "candidate_sha": "PENDING_COMMIT",
+  "starting_ci": {
+    "run_id": 37262707196,
+    "head_sha": "728fa19ef88d891af82bceaa07fd4301d900514d",
+    "conclusion": "success",
+    "jobs": {
+      "Repository Hygiene": "success",
+      "Python Validation": "success",
+      "Tests": "success",
+      "Frontend Contract": "success",
+      "Clean-Room Phase1-7": "success"
+    }
+  },
+  "prompt13_6_go_superseded": true,
+  "defect": "legacy BROAD match strength incorrectly translated to v2 bucket 0.50",
+  "root_cause": "lossy inversion of a many-to-one v2 bucket to legacy projection used last-write-wins semantics",
+  "frozen_legacy_mapping": {
+    "VERY_STRONG": "0.90",
+    "STRONG": "0.80",
+    "GOOD": "0.70",
+    "BROAD": "0.60"
+  },
+  "incorrect_prompt13_6_mapping": {
+    "BROAD": "0.50"
+  },
+  "corrected_mapping": {
+    "VERY_STRONG": "0.90",
+    "STRONG": "0.80",
+    "GOOD": "0.70",
+    "BROAD": "0.60"
+  },
+  "canonical_scenarios": {
+    "total": 20,
+    "counts": {
+      "VERY_STRONG": 1,
+      "STRONG": 2,
+      "GOOD": 7,
+      "BROAD": 10
+    },
+    "broad_resolves_to": "0.60",
+    "broad_resolves_to_0_50": false,
+    "scenario_file_mutated": false
+  },
+  "contracts": {
+    "selection_contract_version": "2",
+    "default_propensity_bucket": "0.70",
+    "demo_qualification_minimum": 10000,
+    "explicit_v2_bounds": {
+      "0.90": [0.90, 1.00, true],
+      "0.80": [0.80, 0.90, false],
+      "0.70": [0.70, 0.80, false],
+      "0.60": [0.60, 0.70, false],
+      "0.50": [0.50, 0.60, false]
+    },
+    "v3_introduced": false
+  },
+  "schema_data_impact": {
+    "schema_version": 31,
+    "schema_changed": false,
+    "migration_run": false,
+    "canonical_data_mutated": false,
+    "canonical_database_sha256": "43b6d31ed6c4f33574f2450f3bf1e2ece0ab56d77fd9213e76de9e8e07ef4d77",
+    "calibration_mutated": false,
+    "search_results_mutated": false,
+    "scenario_sha256": "d168deccf2f7cf9723b5bc08a4b99bf0dc49325309c1a402cd59ba4beabb2b77"
+  },
+  "files_changed": [
+    "app/selection_contracts.py",
+    "tests/test_selection_contract_registry.py",
+    "README.md",
+    "docs/README.md",
+    "docs/evidence/recovery_hardening/13_6_1_LEGACY_MAPPING_CLOSURE.md",
+    "docs/evidence/recovery_hardening/13_6_1_LEGACY_MAPPING_CLOSURE.json",
+    "Prompts/campaign_recovery_prompt_pack_f437efd3/13_6_1_Legacy_Selection_Mapping_Semantic_Closure_and_Pre-14_Final_Gate.md"
+  ],
+  "tests": {
+    "focused": {
+      "passed": 92,
+      "duration_seconds": 287.79
+    },
+    "main_non_heavy": {
+      "passed": 1050,
+      "deselected": 121,
+      "duration_seconds": 2305.55
+    },
+    "frontend_api": {
+      "passed": 125,
+      "duration_seconds": 579.23
+    },
+    "phase9": {
+      "passed": 69,
+      "duration_seconds": 630.32
+    },
+    "phase10": {
+      "passed": 90,
+      "duration_seconds": 4296.55
+    },
+    "phase11_bounded": {
+      "passed": 354,
+      "deselected": 5,
+      "duration_seconds": 770.59
+    },
+    "pip_check": "PASS",
+    "compileall": "PASS",
+    "diff_check": "PASS",
+    "cleanroom": {
+      "status": "PASS",
+      "completed_at": "2026-10-05T07:58:18Z"
+    }
+  },
+  "manual_full_validation": "MANUAL FULL VALIDATION REMOTE CERTIFICATION PENDING",
+  "branch_protection": {
+    "protected": false,
+    "status": "BRANCH PROTECTION PENDING - ADMIN ACTION REQUIRED"
+  },
+  "exact_sha_ci": "PENDING_COMMIT_AND_PUSH",
+  "decision": "NO-GO"
+}
