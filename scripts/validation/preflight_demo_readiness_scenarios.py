@@ -16,7 +16,10 @@ if str(ROOT) not in sys.path:
 from app.services.potential_customer_preflight_service import (  # noqa: E402
     exact_preflight_many,
 )
-from app.selection_contracts import DEMO_QUALIFICATION_MINIMUM  # noqa: E402
+from app.selection_contracts import (  # noqa: E402
+    DEMO_QUALIFICATION_MINIMUM,
+    PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH,
+)
 from app.services.targeting_option_catalog_service import (  # noqa: E402
     get_or_build_targeting_catalog,
 )
@@ -29,12 +32,7 @@ SCENARIOS_PATH = (
 )
 DEFAULT_CONTEXT_MANIFEST = ROOT / "output" / "demo_preload" / "demo_20_scenario_checkpoint.json"
 DEFAULT_OUTPUT = ROOT / "output" / "demo_preload" / "recovery_preflight_20.json"
-BUCKET_BY_STRENGTH = {
-    "VERY_STRONG": "0.90",
-    "STRONG": "0.80",
-    "GOOD": "0.70",
-    "BROAD": "0.60",
-}
+BUCKET_BY_STRENGTH = PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH
 CRITERIA_FIELDS = (
     "match_strength",
     "genders",

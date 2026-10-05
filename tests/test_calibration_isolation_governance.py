@@ -191,21 +191,36 @@ def test_cross_artifact_lineage_requires_exact_partition_identity() -> None:
         "model_partition_seed": model_lineage["seed"],
         "model_validation_fraction": model_lineage["validation_fraction"],
     }
-    assert validate_calibration_model_lineage_identity(
-        calibration_lineage, model_lineage
-    )
+    identity = {
+        "calibration_model_run_id": 11,
+        "calibration_scoring_run_id": 22,
+        "expected_model_run_id": 11,
+        "expected_scoring_run_id": 22,
+    }
+
+    def validates(
+        lineage: dict = calibration_lineage, **identity_overrides: int
+    ) -> bool:
+        return validate_calibration_model_lineage_identity(
+            lineage, model_lineage, **(identity | identity_overrides)
+        )
+
+    assert validates()
+    assert not validates(expected_model_run_id=12)
+    assert not validates(expected_scoring_run_id=23)
+    assert not validates(calibration_model_run_id=0)
 
     missing_seed = copy.deepcopy(calibration_lineage)
     missing_seed.pop("model_partition_seed")
-    assert not validate_calibration_model_lineage_identity(missing_seed, model_lineage)
+    assert not validates(missing_seed)
 
     wrong_fraction = copy.deepcopy(calibration_lineage)
     wrong_fraction["model_validation_fraction"] = 0.25
-    assert not validate_calibration_model_lineage_identity(wrong_fraction, model_lineage)
+    assert not validates(wrong_fraction)
 
     reordered = copy.deepcopy(calibration_lineage)
     reordered["model_training_group_ids"].reverse()
-    assert validate_calibration_model_lineage_identity(reordered, model_lineage)
+    assert validates(reordered)
 
     missing = copy.deepcopy(calibration_lineage)
     missing["model_training_group_ids"] = missing[
@@ -216,7 +231,7 @@ def test_cross_artifact_lineage_requires_exact_partition_identity() -> None:
             sorted(missing["model_training_group_ids"]), separators=(",", ":")
         ).encode("utf-8")
     ).hexdigest()
-    assert not validate_calibration_model_lineage_identity(missing, model_lineage)
+    assert not validates(missing)
 
     extra = copy.deepcopy(calibration_lineage)
     extra["calibration_fit_group_ids"].append("extra-group")
@@ -225,13 +240,11 @@ def test_cross_artifact_lineage_requires_exact_partition_identity() -> None:
             sorted(extra["calibration_fit_group_ids"]), separators=(",", ":")
         ).encode("utf-8")
     ).hexdigest()
-    assert not validate_calibration_model_lineage_identity(extra, model_lineage)
+    assert not validates(extra)
 
     hash_mismatch = copy.deepcopy(calibration_lineage)
     hash_mismatch["calibration_evaluation_group_ids_sha256"] = "f" * 64
-    assert not validate_calibration_model_lineage_identity(
-        hash_mismatch, model_lineage
-    )
+    assert not validates(hash_mismatch)
 
     swapped = copy.deepcopy(calibration_lineage)
     swapped["calibration_fit_group_ids"], swapped[
@@ -246,7 +259,7 @@ def test_cross_artifact_lineage_requires_exact_partition_identity() -> None:
         swapped["calibration_evaluation_group_ids_sha256"],
         swapped["calibration_fit_group_ids_sha256"],
     )
-    assert not validate_calibration_model_lineage_identity(swapped, model_lineage)
+    assert not validates(swapped)
 
 def test_schema_30_preserves_model_lineage_and_calibration_v2(tmp_path) -> None:
     path = initialize_database(tmp_path / "calibration-isolation.db")

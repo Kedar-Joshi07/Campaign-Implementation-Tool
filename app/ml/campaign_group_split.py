@@ -105,6 +105,11 @@ def _sha(values: Sequence[str]) -> str:
 def validate_calibration_model_lineage_identity(
     calibration_lineage: Mapping[str, Any] | None,
     model_lineage: Mapping[str, Any] | None,
+    *,
+    calibration_model_run_id: int,
+    calibration_scoring_run_id: int,
+    expected_model_run_id: int,
+    expected_scoring_run_id: int,
 ) -> bool:
     """Prove a calibration names the exact partitions recorded by its model.
 
@@ -116,6 +121,23 @@ def validate_calibration_model_lineage_identity(
 
     if not isinstance(calibration_lineage, Mapping) or not isinstance(
         model_lineage, Mapping
+    ):
+        return False
+    identifiers = (
+        calibration_model_run_id,
+        calibration_scoring_run_id,
+        expected_model_run_id,
+        expected_scoring_run_id,
+    )
+    if any(
+        isinstance(identifier, bool)
+        or not isinstance(identifier, int)
+        or identifier <= 0
+        for identifier in identifiers
+    ):
+        return False
+    if calibration_model_run_id != expected_model_run_id or (
+        calibration_scoring_run_id != expected_scoring_run_id
     ):
         return False
     if calibration_lineage.get("strategy_version") != model_lineage.get(

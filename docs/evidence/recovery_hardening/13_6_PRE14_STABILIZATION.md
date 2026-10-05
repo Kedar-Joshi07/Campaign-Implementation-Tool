@@ -9,6 +9,34 @@
 - Remote status: exact-candidate-SHA CI is green; manual Full Validation dispatch remains permission-bound and explicitly pending.
 - Prompt 13.6 status at this evidence revision: **GO**.
 
+## Literal requirement closure revision — 2026-10-05
+
+The already-green Prompt 13.6 baseline at `7b0e2bcd9c7cf64e10f384465795648a4f6b7765` was re-audited requirement by requirement. This revision closes the remaining literal coverage gaps without changing schema version, public bucket semantics, the `0.50` minimum, the `10,000` qualification minimum, or any historical artifact:
+
+- the demo-readiness validator now consumes the authoritative legacy-to-v2 mapping from `app/selection_contracts.py` instead of maintaining a duplicate mapping;
+- the shared cross-artifact validator itself now validates exact `model_run_id` and `scoring_run_id` identity in addition to exact partition identities and hashes;
+- challenger evidence now explicitly persists same-window candidate/incumbent metrics, both calibration identities, the immutable evaluation population identity, historical incumbent metrics as audit-only evidence, and a bounded comparison-source declaration;
+- adversarial tests prove deliberately misleading historical incumbent metrics cannot promote a challenger that loses on the same frozen evaluation population;
+- HTTP preflight tests now exercise the real database-backed resolver path for absent, current, stale, legacy-v1, malformed, wrong-model, candidate, rejected, and unverified states;
+- a real publication replacement test proves the old calibration becomes stale, preflight caches are invalidated, and historical snapshot calibration identity remains immutable.
+
+Literal-closure validation results:
+
+| Gate | Result |
+|---|---|
+| Focused Prompt 13.6 statistical/API/lineage/registry/parity set | 109 passed in 199.08 s |
+| Main non-heavy suite | 1,048 passed, 121 deselected in 2,202.79 s |
+| Frontend/API browser-or-integration gate | 125 passed in 384.24 s |
+| Phase 9 | 69 passed in 466.74 s |
+| Phase 10 | 90 passed in 457.59 s |
+| Phase 11 bounded with real system Chrome | 354 passed, 5 deselected in 762.96 s |
+| Clean-Room Phase1-7 | PASS; completed `2026-10-04T19:30:56Z` |
+| Fresh canonical-copy migration | PASS; schema 26→31, integrity `ok`, 0 FK violations, semantic idempotence proven |
+
+The fresh migration used `PHASE13_6_CANONICAL_COPY_MIGRATION_V1`. The canonical source remained byte-identical at SHA-256 `43b6d31ed6c4f33574f2450f3bf1e2ece0ab56d77fd9213e76de9e8e07ef4d77`; only the explicit disposable copy was removed after validation, while its bounded JSON report was retained in the process temp directory.
+
+Literal-closure implementation SHA and exact-SHA CI are pending the commit/push gate at this evidence revision.
+
 ## Working tree before
 
 The repository started on the required SHA with `main` and `origin/main` aligned. The only initial working-tree item was the untracked operator-supplied prompt:

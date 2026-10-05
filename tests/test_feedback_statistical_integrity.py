@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from app.jobs.feedback_retraining_worker import (
+    build_challenger_comparison_evidence,
     compare_calibrations_on_evaluation_window,
     evaluation_population_sha256,
 )
@@ -99,6 +100,98 @@ def test_candidate_and_incumbent_use_the_identical_evaluation_window() -> None:
 
     assert candidate_metrics["brier_score"] < incumbent_metrics["brier_score"]
     assert promote is True
+
+
+def test_historical_incumbent_metrics_are_never_the_comparison_oracle() -> None:
+    scores = np.linspace(0.01, 0.99, 400)
+    labels = (scores >= 0.5).astype(np.int8)
+    candidate = {
+        "method": "ISOTONIC",
+        "x_thresholds": [0.0, 1.0],
+        "y_thresholds": [0.5, 0.5],
+    }
+    incumbent = {
+        "method": "ISOTONIC",
+        "x_thresholds": [0.0, 1.0],
+        "y_thresholds": [0.0, 1.0],
+    }
+    misleading_historical_metrics = {
+        "brier_score": 0.99,
+        "log_loss": 9.0,
+        "expected_calibration_error": 0.99,
+        "roc_auc": 0.0,
+        "average_precision": 0.0,
+        "top_decile_lift": 0.0,
+    }
+
+    candidate_metrics, recomputed_incumbent, promote = (
+        compare_calibrations_on_evaluation_window(
+            candidate, incumbent, scores, labels
+        )
+    )
+
+    assert candidate_metrics["brier_score"] < misleading_historical_metrics[
+        "brier_score"
+    ]
+    assert candidate_metrics["brier_score"] > recomputed_incumbent["brier_score"]
+    assert recomputed_incumbent != misleading_historical_metrics
+    assert promote is False
+
+
+def test_comparison_evidence_persists_one_population_and_both_identities() -> None:
+    scores = np.linspace(0.01, 0.99, 400)
+    labels = (scores >= 0.5).astype(np.int8)
+    candidate_artifact = {
+        "method": "ISOTONIC",
+        "x_thresholds": [0.0, 1.0],
+        "y_thresholds": [0.0, 1.0],
+    }
+    incumbent_artifact = {
+        "method": "ISOTONIC",
+        "x_thresholds": [0.0, 1.0],
+        "y_thresholds": [0.5, 0.5],
+    }
+    candidate, incumbent, promote = compare_calibrations_on_evaluation_window(
+        candidate_artifact, incumbent_artifact, scores, labels
+    )
+    records = [
+        {
+            "feedback_batch_id": 7,
+            "search_run_id": index // 200 + 1,
+            "person_id": f"P{index:04d}",
+            "outcome": int(label),
+            "raw_score": float(score),
+        }
+        for index, (score, label) in enumerate(
+            zip(scores, labels, strict=True), start=1
+        )
+    ]
+    evidence = build_challenger_comparison_evidence(
+        candidate_metrics=candidate,
+        incumbent_recomputed_metrics=incumbent,
+        incumbent_historical_metrics={"brier_score": 0.99},
+        evaluation_records=records,
+        evaluation_group_ids={"component-a", "component-b"},
+        feedback_batch_cutoff=7,
+        model_run_id=3,
+        candidate_calibration_artifact_id=12,
+        incumbent_calibration_artifact_id=11,
+        feedback_grouping_sha256="a" * 64,
+    )
+
+    assert evidence["promotion_checks_passed"] is promote is True
+    assert evidence["comparison_metric_source"] == (
+        "RECOMPUTED_SAME_EVALUATION_POPULATION"
+    )
+    assert evidence["evaluation_record_count"] == len(records)
+    assert evidence["evaluation_positive_count"] == int(labels.sum())
+    assert evidence["evaluation_negative_count"] == len(labels) - int(labels.sum())
+    assert evidence["evaluation_population_sha256"] == (
+        evaluation_population_sha256(records)
+    )
+    assert evidence["candidate_calibration_artifact_id"] == 12
+    assert evidence["incumbent_calibration_artifact_id"] == 11
+    assert evidence["incumbent_historical_metrics"] == {"brier_score": 0.99}
 
 
 def test_evaluation_population_identity_changes_on_any_record_mutation() -> None:

@@ -35,6 +35,10 @@ from app.services.potential_customer_preflight_service import (
 from app.services.potential_customer_search_submission_service import (
     normalize_search_definition,
 )
+from app.services.propensity_calibration_service import (
+    FittedCalibration,
+    publish_fitted_calibration,
+)
 from app.services.source_currentness_service import (
     reconcile_source_currentness,
     resolve_governed_calibration_eligibility,
@@ -482,6 +486,97 @@ def test_cache_identity_binds_bucket_selection_catalog_sources_and_calibration(
         ).fetchall()
     assert len({str(row[0]) for row in rows}) == 3
     assert sum(row["currentness_state"] == "CURRENT" for row in rows) == 1
+
+
+def test_calibration_replacement_stales_preflight_cache_and_preserves_snapshot_identity(
+    parity_case,
+) -> None:
+    path, project_root, context_id, generation, calibration_id = parity_case
+    catalog = get_or_build_targeting_catalog(path)
+    exact_preflight(
+        path,
+        context=_context(path, context_id),
+        criteria=_criteria(),
+        propensity_bucket="0.70",
+        catalog_version=catalog["catalog_version"],
+    )
+    run, _branches = _run_for(
+        path,
+        context_id,
+        generation,
+        calibration_id,
+        bucket="0.70",
+        criteria=_criteria(),
+    )
+    repository = CampaignResultRegistryRepository(path)
+    result_cache_key = build_result_cache_key(run, generation)
+    snapshot_id = materialize_result_snapshot(
+        path,
+        run,
+        generation,
+        result_cache_key,
+        None,
+        iter_selected_members(path, run, generation),
+        project_root=project_root,
+    )
+    snapshot_before = repository.fetch_snapshot(snapshot_id)
+    with get_connection(path) as connection:
+        lineage = json.loads(
+            connection.execute(
+                """SELECT split_lineage_json FROM score_calibration_artifacts
+                   WHERE calibration_artifact_id=?""",
+                (calibration_id,),
+            ).fetchone()[0]
+        )
+    replacement = FittedCalibration(
+        method="ISOTONIC",
+        artifact={
+            "method": "ISOTONIC",
+            "x_thresholds": [0.0, 1.0],
+            "y_thresholds": [0.0, 1.0],
+        },
+        metrics={
+            "brier_score": 0.1,
+            "log_loss": 0.2,
+            "expected_calibration_error": 0.03,
+            "roc_auc": 0.8,
+            "average_precision": 0.7,
+            "top_decile_lift": 2.0,
+        },
+        split_lineage=lineage,
+    )
+    published = publish_fitted_calibration(
+        path,
+        int(generation["scoring_run_id"]),
+        replacement,
+        source_checksum="f" * 64,
+        promote=True,
+        batch_size=10,
+    )
+
+    assert published["calibration_artifact_id"] != calibration_id
+    with get_connection(path) as connection:
+        statuses = {
+            int(row["calibration_artifact_id"]): str(row["status"])
+            for row in connection.execute(
+                """SELECT calibration_artifact_id,status
+                   FROM score_calibration_artifacts
+                   WHERE scoring_run_id=?""",
+                (generation["scoring_run_id"],),
+            )
+        }
+        cache_states = {
+            str(row["currentness_state"])
+            for row in connection.execute(
+                "SELECT currentness_state FROM search_preflight_cache"
+            )
+        }
+    assert statuses[calibration_id] == "STALE"
+    assert statuses[int(published["calibration_artifact_id"])] == "PROMOTED"
+    assert cache_states == {"STALE"}
+    snapshot_after = repository.fetch_snapshot(snapshot_id)
+    assert snapshot_after["calibration_artifact_id"] == calibration_id
+    assert snapshot_after["snapshot_sha256"] == snapshot_before["snapshot_sha256"]
 
 
 def test_result_cache_identity_binds_v2_catalog_bucket_and_calibration(parity_case) -> None:

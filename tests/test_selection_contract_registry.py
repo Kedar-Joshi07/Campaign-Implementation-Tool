@@ -12,6 +12,7 @@ from app.selection_contracts import (
     DEFAULT_PROPENSITY_BUCKET,
     DEMO_QUALIFICATION_MINIMUM,
     PROPENSITY_BUCKET_DEFINITIONS,
+    PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH,
     PROPENSITY_BUCKET_KEYS,
     PROPENSITY_BUCKET_REGISTRY,
 )
@@ -28,6 +29,10 @@ def test_v2_registry_matches_runtime_bounds_labels_and_demo_policy() -> None:
     assert DEFAULT_PROPENSITY_BUCKET == "0.70"
     assert DEMO_QUALIFICATION_MINIMUM == 10_000
     assert PROPENSITY_BUCKET_KEYS == ("0.90", "0.80", "0.70", "0.60", "0.50")
+    assert PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH == {
+        definition.legacy_match_strength: definition.key
+        for definition in PROPENSITY_BUCKET_DEFINITIONS
+    }
     for definition in PROPENSITY_BUCKET_DEFINITIONS:
         assert propensity_bucket_bounds(definition.key) == (
             definition.minimum,
@@ -67,3 +72,11 @@ def test_frontend_does_not_redefine_probability_ranges() -> None:
     for definition in PROPENSITY_BUCKET_DEFINITIONS:
         assert definition.display_label not in source
         assert definition.result_label not in source
+
+
+def test_demo_preflight_uses_registry_legacy_mapping() -> None:
+    source = Path(
+        "scripts/validation/preflight_demo_readiness_scenarios.py"
+    ).read_text(encoding="utf-8")
+    assert "PROPENSITY_BUCKET_BY_LEGACY_MATCH_STRENGTH" in source
+    assert '"VERY_STRONG": "0.90"' not in source

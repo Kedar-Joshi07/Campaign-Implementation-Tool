@@ -98,6 +98,79 @@ def evaluation_population_sha256(records: list[dict]) -> str:
     ).hexdigest()
 
 
+def build_challenger_comparison_evidence(
+    *,
+    candidate_metrics: dict[str, float],
+    incumbent_recomputed_metrics: dict[str, float],
+    incumbent_historical_metrics: dict | None,
+    evaluation_records: list[dict],
+    evaluation_group_ids: set[str],
+    feedback_batch_cutoff: int,
+    model_run_id: int,
+    candidate_calibration_artifact_id: int,
+    incumbent_calibration_artifact_id: int,
+    feedback_grouping_sha256: str,
+) -> dict:
+    """Build durable proof for one like-for-like challenger decision.
+
+    Historical incumbent metrics remain audit evidence only. Promotion is
+    always recomputed from candidate and incumbent transforms applied to the
+    exact same immutable evaluation records.
+    """
+
+    promotion_checks_passed = challenger_meets_promotion_gates(
+        candidate_metrics, incumbent_recomputed_metrics
+    )
+    positive_count = sum(int(record["outcome"]) for record in evaluation_records)
+    group_ids_sha256 = hashlib.sha256(
+        json.dumps(sorted(evaluation_group_ids), separators=(",", ":")).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+    return {
+        "candidate": candidate_metrics,
+        "incumbent": incumbent_recomputed_metrics,
+        "incumbent_historical_metrics": incumbent_historical_metrics,
+        "comparison_metric_source": "RECOMPUTED_SAME_EVALUATION_POPULATION",
+        "promotion_checks_passed": promotion_checks_passed,
+        "promotion_checks": {
+            "brier_improved": (
+                candidate_metrics["brier_score"]
+                < incumbent_recomputed_metrics["brier_score"]
+            ),
+            "roc_auc_non_regression": (
+                candidate_metrics["roc_auc"]
+                >= incumbent_recomputed_metrics["roc_auc"] - 0.01
+            ),
+            "average_precision_non_regression": (
+                candidate_metrics["average_precision"]
+                >= incumbent_recomputed_metrics["average_precision"] - 0.01
+            ),
+            "top_decile_lift_non_regression": (
+                candidate_metrics["top_decile_lift"]
+                >= incumbent_recomputed_metrics["top_decile_lift"]
+            ),
+        },
+        "operation": "RECALIBRATION",
+        "model_run_id": model_run_id,
+        "model_created": False,
+        "raw_scores_reused": True,
+        "feedback_batch_cutoff": feedback_batch_cutoff,
+        "evaluation_record_count": len(evaluation_records),
+        "evaluation_positive_count": positive_count,
+        "evaluation_negative_count": len(evaluation_records) - positive_count,
+        "evaluation_group_ids": sorted(evaluation_group_ids),
+        "evaluation_group_ids_sha256": group_ids_sha256,
+        "evaluation_population_sha256": evaluation_population_sha256(
+            evaluation_records
+        ),
+        "feedback_grouping_contract_version": FEEDBACK_GROUPING_CONTRACT_VERSION,
+        "feedback_grouping_sha256": feedback_grouping_sha256,
+        "candidate_calibration_artifact_id": candidate_calibration_artifact_id,
+        "incumbent_calibration_artifact_id": incumbent_calibration_artifact_id,
+    }
+
+
 class FeedbackRecalibrationWorker:
     def __init__(self) -> None:
         self._executor = ThreadPoolExecutor(
@@ -356,7 +429,7 @@ class FeedbackRecalibrationWorker:
                     (scoring_run_id, batch_cutoff),
                 ).fetchall()
                 incumbent = connection.execute(
-                    """SELECT calibration_artifact_id,artifact_json
+                    """SELECT calibration_artifact_id,artifact_json,metrics_json
                        FROM score_calibration_artifacts
                        WHERE scoring_run_id=? AND status='PROMOTED'
                        ORDER BY promoted_at DESC LIMIT 1""",
@@ -491,46 +564,32 @@ class FeedbackRecalibrationWorker:
                 path, scoring_run_id, fitted, source_checksum=source_checksum, promote=promote,
             )
             outcome = "PROMOTED" if promote else "REJECTED"
-            comparison = {
-                "candidate": candidate, "incumbent": incumbent_metrics,
-                "promotion_checks_passed": promote,
-                "promotion_checks": {
-                    "brier_improved": (
-                        candidate["brier_score"] < incumbent_metrics["brier_score"]
-                    ),
-                    "roc_auc_non_regression": (
-                        candidate["roc_auc"] >= incumbent_metrics["roc_auc"] - 0.01
-                    ),
-                    "average_precision_non_regression": (
-                        candidate["average_precision"]
-                        >= incumbent_metrics["average_precision"] - 0.01
-                    ),
-                    "top_decile_lift_non_regression": (
-                        candidate["top_decile_lift"]
-                        >= incumbent_metrics["top_decile_lift"]
-                    ),
-                },
-                "operation": "RECALIBRATION",
-                "model_run_id": int(model["model_run_id"]),
-                "model_created": False,
-                "raw_scores_reused": True,
-                "feedback_batch_cutoff": batch_cutoff,
-                "evaluation_record_count": len(evaluation_indexes),
-                "evaluation_positive_count": int(evaluation_labels.sum()),
-                "evaluation_negative_count": int(
-                    evaluation_labels.size - evaluation_labels.sum()
-                ),
-                "evaluation_group_ids_sha256": evaluation_group_ids_sha256,
-                "evaluation_population_sha256": evaluation_population_identity,
-                "feedback_grouping_contract_version": FEEDBACK_GROUPING_CONTRACT_VERSION,
-                "feedback_grouping_sha256": grouping.grouping_sha256,
-                "candidate_calibration_artifact_id": int(
+            try:
+                incumbent_historical_metrics = json.loads(
+                    str(incumbent["metrics_json"])
+                )
+            except (TypeError, ValueError, json.JSONDecodeError):
+                incumbent_historical_metrics = None
+            comparison = build_challenger_comparison_evidence(
+                candidate_metrics=candidate,
+                incumbent_recomputed_metrics=incumbent_metrics,
+                incumbent_historical_metrics=incumbent_historical_metrics,
+                evaluation_records=population_identity,
+                evaluation_group_ids=evaluation_groups,
+                feedback_batch_cutoff=batch_cutoff,
+                model_run_id=int(model["model_run_id"]),
+                candidate_calibration_artifact_id=int(
                     published["calibration_artifact_id"]
                 ),
-                "incumbent_calibration_artifact_id": int(
+                incumbent_calibration_artifact_id=int(
                     incumbent["calibration_artifact_id"]
                 ),
-            }
+                feedback_grouping_sha256=grouping.grouping_sha256,
+            )
+            if comparison["promotion_checks_passed"] is not promote:
+                raise RuntimeError(
+                    "Challenger comparison evidence disagrees with promotion decision."
+                )
             with get_connection(path, write=True) as connection:
                 completed = connection.execute(
                     """UPDATE feedback_retraining_decisions
@@ -637,6 +696,7 @@ __all__ = (
     "FeedbackRecalibrationWorker",
     "FeedbackRetrainingWorker",
     "challenger_meets_promotion_gates",
+    "build_challenger_comparison_evidence",
     "compare_calibrations_on_evaluation_window",
     "evaluation_population_sha256",
 )

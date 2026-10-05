@@ -150,7 +150,12 @@ def resolve_governed_calibration_eligibility(
             expected_validation_fraction=PHASE10_AUTOMATED_TRAINING_VALIDATION_FRACTION,
         )
     ) or not validate_calibration_model_lineage_identity(
-        calibration_lineage, model_lineage
+        calibration_lineage,
+        model_lineage,
+        calibration_model_run_id=int(facts["model_run_id"]),
+        calibration_scoring_run_id=int(facts["scoring_run_id"]),
+        expected_model_run_id=int(generation["model_run_id"]),
+        expected_scoring_run_id=int(generation["scoring_run_id"]),
     ):
         return GovernedCalibrationEligibility(
             False, identifier, "INELIGIBLE", "CALIBRATION_LINEAGE_INVALID",

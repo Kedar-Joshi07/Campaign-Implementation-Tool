@@ -400,21 +400,6 @@ def publish_fitted_calibration(
         ).fetchone()
     if scoring is None or len(source_checksum) != 64:
         raise PropensityCalibrationError("Completed scoring and a governed source checksum are required.")
-    if promote:
-        try:
-            model_lineage = json.loads(str(scoring["model_split_lineage_json"]))
-        except (TypeError, ValueError, json.JSONDecodeError) as exc:
-            raise PropensityCalibrationError(
-                "Calibration promotion requires valid model split lineage."
-            ) from exc
-        if not validate_campaign_group_split_lineage(model_lineage) or not (
-            validate_calibration_model_lineage_identity(
-                fitted.split_lineage, model_lineage
-            )
-        ):
-            raise PropensityCalibrationError(
-                "Calibration lineage does not match the scoring model partitions."
-            )
     generation = next(
         (
             item
@@ -429,6 +414,26 @@ def publish_fitted_calibration(
             raise PropensityCalibrationError(
                 "A ready intelligence generation is required before calibration promotion."
             )
+        try:
+            model_lineage = json.loads(str(scoring["model_split_lineage_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise PropensityCalibrationError(
+                "Calibration promotion requires valid model split lineage."
+            ) from exc
+        if not validate_campaign_group_split_lineage(model_lineage) or not (
+            validate_calibration_model_lineage_identity(
+                fitted.split_lineage,
+                model_lineage,
+                calibration_model_run_id=int(scoring["model_run_id"]),
+                calibration_scoring_run_id=int(scoring_run_id),
+                expected_model_run_id=int(generation["model_run_id"]),
+                expected_scoring_run_id=int(generation["scoring_run_id"]),
+            )
+        ):
+            raise PropensityCalibrationError(
+                "Calibration lineage does not match the scoring model partitions."
+            )
+    if promote:
         if not has_current_attestation(path, generation):
             attestation = record_deep_verification_attestation(path, generation)
             if attestation["status"] != "VERIFIED":
