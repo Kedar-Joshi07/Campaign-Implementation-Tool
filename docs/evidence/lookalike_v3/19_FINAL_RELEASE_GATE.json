@@ -121,8 +121,22 @@
       "remedy": "pass_empty_environ_in_three_pure_browser_resolver_tests",
       "local_retest": "13_harness_tests_pass_with_workflow_browser_environment"
     },
-    "corrective_commit_sha": "PENDING",
-    "corrective_exact_sha_gate": "PENDING"
+    "corrective_commit_sha": "5eb4d5ee7caed2810dc99e693e9d7da1d1b2d823",
+    "corrective_exact_sha_gate": "CI_SUCCESS_MANUAL_STEP2_FAILURE"
   },
-  "minimal_resume": "Commit the browser-harness test isolation fix and this addendum, then verify PR CI and Manual Full Validation on that exact new SHA; record the actual run outcomes in PR #1 without another documentation-only SHA loop. Predictive and governance limits remain independent."
+  "source_generation_lock_checkpoint": {
+    "date_ist": "2026-10-12",
+    "second_candidate_sha": "5eb4d5ee7caed2810dc99e693e9d7da1d1b2d823",
+    "pr_ci_run_id": 38170580504,
+    "pr_ci_event": "pull_request",
+    "pr_ci_conclusion": "success_all_five_jobs",
+    "manual_run_id": 38171414135,
+    "manual_baseline": "success_1303_passed",
+    "manual_full_fresh": "failure_step2_canonical_hash_drift_before_import_training_scoring",
+    "local_accepted_hash_reproduction": "five_of_five_match_with_numpy_2_4_6_pandas_3_0_5_faker_40_36_0",
+    "faker_40_38_drift": "LIKELY_INFERENCE_NOT_DIRECTLY_PROVEN_FROM_FAILED_CI_ARTIFACT",
+    "remedy": "pin_faker_40_36_0_and_print_strict_per_dataset_hash_mismatch",
+    "new_exact_sha_ci_and_manual": "PENDING"
+  },
+  "minimal_resume": "Commit the accepted-source Faker lock correction and strict hash-diagnostic tests, then verify PR CI and Manual Full Validation on the same new SHA; record actual remote run outcomes in PR #1 without another documentation-only SHA loop. Predictive and governance limits remain independent."
 }

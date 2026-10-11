@@ -640,7 +640,11 @@ def _assert_hashes_match_accepted(*, accepted_hashes: dict[str, dict[str, str]],
                 }
             )
 
-    _require(not canonical_mismatches, "Generated source canonical hashes drifted from accepted baseline.")
+    _require(
+        not canonical_mismatches,
+        "Generated source canonical hashes drifted from accepted baseline: "
+        + json.dumps(canonical_mismatches, sort_keys=True),
+    )
     return {
         "status": "PASS",
         "canonical_mismatches": canonical_mismatches,

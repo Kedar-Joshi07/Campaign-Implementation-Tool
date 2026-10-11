@@ -190,3 +190,37 @@ This addendum accompanies the corrective commit. Its new SHA and the
 subsequent PR CI/manual workflow outcomes must be recorded against the actual
 remote runs (for example in PR #1) before final release GO. The predictive
 response/lift NO-GO and governance limitations remain unchanged.
+
+## Exact-SHA addendum — source-generation lock correction (2026-10-12 IST)
+
+Corrective commit `5eb4d5ee7caed2810dc99e693e9d7da1d1b2d823` passed
+all five jobs in pull-request CI run
+[38170580504](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/38170580504)
+(`head_sha` equals that commit; event `pull_request`). Manual Full Validation
+run [38171414135](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/38171414135)
+on that same SHA passed its baseline step (**1,303 tests passed**) and
+entered the full-fresh runner. It then failed at Step 2, after regenerating
+125,000 customer, 570,000 sales, and 5,000,000 demographic rows, because at
+least one generated canonical source hash differed from the accepted input.
+No import, training, or scoring ran in that manual attempt. The old hash gate
+did not print the dataset name, so that run alone cannot identify which file
+drifted.
+
+A disposable Windows generation probe under the local accepted-source
+environment reproduced all five canonical hashes. A second probe under the
+project `.venv` (NumPy 2.4.6, pandas 3.0.5, Faker 40.36.0) also reproduced
+the complete 125K customer, 570K sales, 5M demographic, campaign-master,
+and product-master canonical hashes. CI's lock had NumPy 2.4.6 and pandas
+3.0.5 but Faker 40.38.0. **Inference:** the newer Faker pin is the likely
+source of CI generation drift; the failed CI artifact does not expose its
+per-dataset hashes, so this is not represented as direct proof. The lock is
+returned to Faker 40.36.0, the exact accepted-data reproduction environment.
+The full-fresh hash gate remains strict; its failure now includes per-dataset
+accepted and generated hashes, with unit tests for canonical mismatch,
+missing output, and compressed-container-only drift. No canonical input or
+historical score was changed.
+
+The next exact-SHA PR CI and manual full-fresh run are **PENDING**. A final
+GO cannot be inferred from the earlier green CI, from the local probes, or
+from a full-fresh run that stopped at Step 2. Record the actual new SHA and
+remote conclusions in PR #1 to avoid an endless evidence-only commit loop.
