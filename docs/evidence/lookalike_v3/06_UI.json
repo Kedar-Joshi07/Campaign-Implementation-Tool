@@ -1,0 +1,51 @@
+{
+  "stage": "14B_06",
+  "date_local": "2026-10-08",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate": "UNCOMMITTED",
+  "preceding_stage": "14B_05",
+  "bounded_stage_gate": "GO",
+  "release_gate": "NOT_CERTIFIED",
+  "canonical_work_performed": false,
+  "committed_or_pushed": false,
+  "changed_files": [
+    "app/schemas/potential_customer_search.py",
+    "app/services/potential_customer_search_submission_service.py",
+    "frontend/index.html",
+    "frontend/css/components.css",
+    "frontend/js/business-search-form.js",
+    "frontend/js/business-search-status.js",
+    "tests/test_phase11_business_search_form.py",
+    "tests/test_lookalike_v3_business_ui.py",
+    "docs/evidence/lookalike_v3/06_UI.md",
+    "docs/evidence/lookalike_v3/06_UI.json"
+  ],
+  "test_results": [
+    {"command": "python -m pytest tests/test_phase11_business_search_form.py tests/test_lookalike_v3_business_ui.py -q", "passed": 69, "failed": 0},
+    {"command": "python -m pytest tests/test_phase11_results_history_detail.py -q", "passed": 14, "failed": 0},
+    {"command": "python -m pytest tests/test_selection_contract_registry.py tests/test_lookalike_v3_preflight_search.py -q", "passed": 11, "failed": 0},
+    {"command": "python -m pytest tests/test_phase11_api_backward_compatibility.py tests/test_targeting_catalog_lifecycle.py -q", "passed": 22, "failed": 0},
+    {"command": "python -m pytest tests/test_lookalike_v3_business_ui.py -q", "passed": 11, "failed": 0},
+    {"command": "python -m pytest tests/test_lookalike_v3_business_ui.py -q -k current_v3_preflight_displays_distinct_exact_counts_without_probability", "passed": 1, "failed": 0},
+    {"command": "python -m pytest tests/test_lookalike_v3_business_ui.py -q -k browser_prepare_starts_bounded_v3_build_without_probability_calibration", "passed": 1, "failed": 0},
+    {"command": "python -m pytest tests/test_lookalike_v3_business_ui.py -q -k mode_controls_labels_keyboard_and_responsive_layout", "passed": 3, "failed": 0}
+  ],
+  "fixture_screenshots": [
+    "06_ui_fixture_screenshots/FIXTURE_v3_form_1280.png",
+    "06_ui_fixture_screenshots/FIXTURE_v3_not_prepared_preflight_1280.png",
+    "06_ui_fixture_screenshots/FIXTURE_v3_unsupported_product_1280.png",
+    "06_ui_fixture_screenshots/FIXTURE_v3_current_preflight_1280.png",
+    "06_ui_fixture_screenshots/FIXTURE_v3_valid_zero_preflight_1280.png",
+    "06_ui_fixture_screenshots/FIXTURE_v3_saved_result_1280.png",
+    "06_ui_fixture_screenshots/FIXTURE_v3_browser_built_result_1280.png",
+    "06_ui_fixture_screenshots/FIXTURE_v2_saved_result_1280.png",
+    "06_ui_fixture_screenshots/FIXTURE_v3_mode_controls_390.png",
+    "06_ui_fixture_screenshots/FIXTURE_v3_mode_controls_768.png",
+    "06_ui_fixture_screenshots/FIXTURE_v3_mode_controls_1280.png"
+  ],
+  "known_limits": [
+    "No canonical 5M or full-scale generation was run.",
+    "V3 exportable count and download require Stage 14B-07.",
+    "Fixture screenshots do not certify production data or predictive quality."
+  ]
+}

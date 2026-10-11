@@ -1,0 +1,172 @@
+{
+  "pack_version": "1.0",
+  "created_date": "2026-10-05",
+  "trusted_starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "purpose": "Approved additive product-aware look-alike v3 implementation prompts with retained purchase probability",
+  "stage_count": 10,
+  "companion_count": 5,
+  "concurrent_lane_count": 4,
+  "status": "PROMPT_PACK_REVIEWED; IMPLEMENTATION_NOT_RUN",
+  "files": [
+    {
+      "name": "00_GUARDRAILS_AND_EXECUTION_ORDER.md",
+      "bytes": 6252,
+      "sha256": "e5df7fc80faa852b6080fc8e128cf2d2819067b6d9fc1c30118ea30485e31738"
+    },
+    {
+      "name": "00_README_START_HERE.md",
+      "bytes": 3461,
+      "sha256": "300d6385a31b3c9a112c2beb2ad7708d616738b48e14464783e6f66d2d41f503"
+    },
+    {
+      "name": "01_APPROVED_V3_SEMANTICS.md",
+      "bytes": 8117,
+      "sha256": "8bd37b636f6114bb0f415f63e6c9b9112728b309bf8bad641ad5315ec7fd0422"
+    },
+    {
+      "name": "02_REPOSITORY_REVIEW_AND_INTEGRATION_MAP.md",
+      "bytes": 7572,
+      "sha256": "0cd5092a970c3dce316a0fafc0697c94334afe521aa55542c41192c79bb4d49e"
+    },
+    {
+      "name": "03_INTERFACE_AND_DATA_CONTRACT.md",
+      "bytes": 4960,
+      "sha256": "f6a41f7e6aad2eb22f6797da6092681a22500c3e00c6739ec8dbfa32b9e3b9b5"
+    },
+    {
+      "name": "04_ACCEPTANCE_MATRIX_AND_TEST_ORACLES.md",
+      "bytes": 4828,
+      "sha256": "b30078c7860bc75caa8ab3b3d91aaf4d17dbb8d03b067cfe74c4ab6e84b9bf45"
+    },
+    {
+      "name": "05_CLIENT_EXPLANATION_AND_OPERATOR_CHECKLIST.md",
+      "bytes": 2823,
+      "sha256": "d79de0df028657e255dd0736b0c9004a974eadcf50267881e3119dd595c3fdb5"
+    },
+    {
+      "name": "06_DESIGN_DECISIONS_RISKS_AND_RESUME_POINTS.md",
+      "bytes": 2763,
+      "sha256": "83082e75efc4cc788c5c1e7686b35a6a2240b2246a62ecdfc7e6d73184c3ddfb"
+    },
+    {
+      "name": "14B_00_BASELINE_POLICY_AND_GOLDEN_COMPATIBILITY.md",
+      "bytes": 4683,
+      "sha256": "244349a5bd90518bc1d7cdc526880a065448c202d314ddfc5931c19003e657fc"
+    },
+    {
+      "name": "14B_01_REGISTRY_API_SCHEMA_AND_MIGRATION.md",
+      "bytes": 5689,
+      "sha256": "84042160f7aaeec81ff5e7833fc193c71160ca7d96c5c14a9435ac39265d939e"
+    },
+    {
+      "name": "14B_02_PRODUCT_BUYER_COHORTS_AND_SOURCE_ALIGNMENT.md",
+      "bytes": 5157,
+      "sha256": "041074250da4d4cbdadaeb78a174af368266343b0459b9cf4323093b4fbc48f3"
+    },
+    {
+      "name": "14B_03_LEARNED_BUYER_PROFILES_AND_SCORE_METHOD.md",
+      "bytes": 5934,
+      "sha256": "29f822031e9460eb37c8741f6d294eea232d44301a525bdefd28c9413476cb32"
+    },
+    {
+      "name": "14B_04_RESUMABLE_SCORING_ATTESTATION_AND_REUSE.md",
+      "bytes": 5205,
+      "sha256": "c8bd58789f658f65908d97f38f28787b93e272db35b27cc11f738197b14fb74e"
+    },
+    {
+      "name": "14B_05_INTELLIGENCE_PREFLIGHT_SEARCH_AND_CACHE.md",
+      "bytes": 6115,
+      "sha256": "a83c29a33b1f21521beb3a86a0eef97064e7e131cdf084d688bae9585cc7c87e"
+    },
+    {
+      "name": "14B_06_BUSINESS_UI_OPTIONS_HISTORY_AND_MODE_SWITCHING.md",
+      "bytes": 5116,
+      "sha256": "d4f8db0cf491a8e7d4c68b9ac2fd9784d46ecbfb362ad9e41c98eb293bf59c93"
+    },
+    {
+      "name": "14B_07_SNAPSHOTS_EXPORT_FEEDBACK_AND_LINEAGE.md",
+      "bytes": 6172,
+      "sha256": "a894d096cfa6ffe8f88fc10feab4d9258509d82ee8719998527401faa90cebcb"
+    },
+    {
+      "name": "14B_08_MODEL_ASSURANCE_DRIFT_AND_EXPLANATIONS.md",
+      "bytes": 5382,
+      "sha256": "f4ae2e4801634319986df37d6296b066601f402d8b1de586dc6844dd3e753b66"
+    },
+    {
+      "name": "14B_09_INTEGRATION_CLOSURE_AND_FEATURE_ENABLEMENT.md",
+      "bytes": 4865,
+      "sha256": "de4835c62f32d386e026e16db08a9bd104624d2e635ce5d3a55a8434ccc8f2bb"
+    },
+    {
+      "name": "14B_MASTER_COMPREHENSIVE.md",
+      "bytes": 9977,
+      "sha256": "a4b4afa76ffef5b645ba258cd91cc1efc17b687e54423e1d89347252028635d6"
+    },
+    {
+      "name": "15_FAULT_INJECTION_RESTART_CONCURRENCY_AND_RECOVERY.md",
+      "bytes": 5363,
+      "sha256": "a097d093f9f74f6e99bab6ce91b77ad2dc7e2e7fa384ae0be406d26392f13bea"
+    },
+    {
+      "name": "16_PERFORMANCE_AND_5M_CANONICAL_CERTIFICATION.md",
+      "bytes": 5875,
+      "sha256": "ffad4f5cad0af36d556b877410cd6bfb65aae327159244c79c86121f1becefc0"
+    },
+    {
+      "name": "17_CANONICAL_20_SCENARIO_PREFLIGHT_AND_REAL_RUNS.md",
+      "bytes": 5951,
+      "sha256": "ac4f0036ede7f7e2b7ddf0c69f7912f20e82c3da2032eb9b54472f89e882abd6"
+    },
+    {
+      "name": "18_DOCUMENTATION_ARCHITECTURE_AND_CLIENT_EXPLANATION.md",
+      "bytes": 5467,
+      "sha256": "6f6d4efad68bcdd7b161376521d34a0041374318c3dcf51951d51ce1a9b1f22c"
+    },
+    {
+      "name": "19_FULL_REGRESSION_EXACT_SHA_CI_AND_FINAL_GATE.md",
+      "bytes": 6227,
+      "sha256": "175c744878782704e91b894e66026f0e8f114045b05b2042d2d5919de17b046e"
+    },
+    {
+      "name": "C1_CONCURRENT_READ_ONLY_DATA_AND_TOPOLOGY_AUDIT.md",
+      "bytes": 4380,
+      "sha256": "d274a3ed02c27589133819e86780e43d32bd4e924c95b8c3c7256760e0521540"
+    },
+    {
+      "name": "C2_CONCURRENT_COMPATIBILITY_AND_ADVERSARIAL_TESTS.md",
+      "bytes": 4430,
+      "sha256": "1e03022f4a5f0e7c5b7f726e236ddff93f31d8486cd438a4668e378fe2600173"
+    },
+    {
+      "name": "C3_CONCURRENT_ISOLATED_UI_COMPONENT_AND_COPY.md",
+      "bytes": 4330,
+      "sha256": "2a7ad15c206935a61817b8a4094aa6926b8394143fefc40bc6d077b20dc85de6"
+    },
+    {
+      "name": "C4_CONCURRENT_ARCHITECTURE_FACTSHEET_AND_RUNBOOK_DRAFT.md",
+      "bytes": 4263,
+      "sha256": "79b93d36af6a577c89b0e5b9c09a6f3e4d0ee11abff15e36087ce08b4ef74f2b"
+    },
+    {
+      "name": "PACK_REVIEW_AND_VALIDATION.md",
+      "bytes": 1958,
+      "sha256": "e13c237d6d70cdac43c879c0bddb8349824c8277523889a485cdfb8fcf8d16ee"
+    },
+    {
+      "name": "POLICY_AND_EXECUTION_CONTRACT.json",
+      "bytes": 3449,
+      "sha256": "e8cd0ceb76dc73d0c8892421e9d5d6d1f69545e80ac5f4c362944efd076ecb17"
+    },
+    {
+      "name": "PRODUCT_HISTORY_OBSERVATIONS.json",
+      "bytes": 5765,
+      "sha256": "a7f633d72167c2e64f45437727e47ab44f37945144816c833e62accdbd5c8024"
+    },
+    {
+      "name": "REVIEWED_SOURCE_INDEX.json",
+      "bytes": 24380,
+      "sha256": "143acbf19a9853f61ffc09f7a5f3291e3cef172cfc2675730b4bed3456f3eb37"
+    }
+  ]
+}

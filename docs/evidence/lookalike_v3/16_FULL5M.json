@@ -1,0 +1,143 @@
+{
+  "stage": "14B_16",
+  "recorded_at_utc": "2026-10-09",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate": "UNCOMMITTED",
+  "runner": "scripts/validation/run_14b_16_full5m.py",
+  "disposable_manifest": "output/lookalike_stage16_full5m/run_manifest.json",
+  "schema_version": 33,
+  "decision": "FULL5M_NO_GO_RECORDED_CONTEXT",
+  "reason": "Recorded product PRD001 has 200 attributed buyers but 158 fit and 42 holdout buyers; fit minimum is 160. The exact three-product context cannot be prepared or certified.",
+  "recorded_products": ["PRD001", "PRD003", "PRD004"],
+  "recorded_context_preflight": {
+    "reason_code": "PROFILE_NOT_ELIGIBLE",
+    "build_available": false,
+    "selected_count": null,
+    "seconds": 8.804
+  },
+  "canonical_inputs": {
+    "customers": {
+      "rows": 125000,
+      "import_id": 1,
+      "compressed_sha256": "8a2c5601a96dc54708246a84cfd7715cf53e3d6f95e67472b1e2c2428bf0d18f",
+      "import_source_checksum": "99a09d2f0db06980afe290cf74a4db1df76cf8c340534fb2088879fb093d9ea9"
+    },
+    "campaign_sales": {
+      "rows": 570000,
+      "import_id": 2,
+      "compressed_sha256": "89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116",
+      "import_source_checksum": "2fdb11c576a180b7349e50e0bf9d3b0a66d0d354ba8d42062756c8cd840965c4"
+    },
+    "demographics": {
+      "rows": 5000000,
+      "import_id": 3,
+      "compressed_sha256": "27d8e2a978458a095e16fc51a682e1f3373e41b663a4e61defa47e2d1bdf8b1d",
+      "import_source_checksum": "336cbef90fb601d84e2206b191a71b355810da282c918ec0b6e469528f70215f"
+    },
+    "product_catalog_sha256": "317778cd2f591ad34757413915c33ad9298c7fb70fbbe22605d8078be3b9ba6a"
+  },
+  "hardware": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.0",
+    "sqlite": "3.42.0",
+    "logical_cpus": 12,
+    "physical_cpus": 10,
+    "ram_bytes": 16849256448,
+    "initial_available_ram_bytes": 3314294784,
+    "initial_free_disk_bytes": 292145549312
+  },
+  "predeclared_budgets_seconds": {
+    "source_audit": 600,
+    "fresh_import": 3600,
+    "cohort_and_profiles": 1800,
+    "score_one_product": 5400,
+    "deep_verify_one_product": 1200,
+    "warm_generation_reuse": 10,
+    "exact_preflight": 180,
+    "result_materialization": 600,
+    "history_projection": 2,
+    "export_first_byte": 10
+  },
+  "observed_seconds": {
+    "source_audit": 14.133,
+    "fresh_import": 542.774,
+    "cohort_and_profiles": 22.855,
+    "prd003_score_and_verification": 2088.216,
+    "prd004_score_and_verification": 3704.424,
+    "full_independent_integrity": 542.909,
+    "targeting_options": 1.022,
+    "recorded_context_blocked_preflight": 8.804,
+    "prd003_warm_reuse": 0.058,
+    "prd004_warm_reuse": 0.054
+  },
+  "restart": {
+    "product_id": "PRD003",
+    "committed_checkpoint_rows": 25000,
+    "generation_id_before_and_after": 1,
+    "published_before_restart": false,
+    "stale_lease_recovered": true
+  },
+  "supported_products": {
+    "PRD003": {
+      "profile_id": 1,
+      "generation_id": 1,
+      "population": 5000000,
+      "valid": 5000000,
+      "invalid": 0,
+      "missing": 0,
+      "extra": 0,
+      "minimum": 0.23111454557320232,
+      "maximum": 0.9996736931410298,
+      "cumulative_at_least_50_60_70_80_90": [4555404, 3230996, 1337086, 264622, 17489],
+      "quantiles_p05_p25_p50_p75_p95": [0.47933884297520657, 0.5790077898346514, 0.6484915723837605, 0.7041826606467996, 0.8017584973272502],
+      "scalar_sample_checks": 13,
+      "scalar_mismatches": 0,
+      "attestation_key_sha256": "e0643d9aef94e75acf32bd7c73833e5588784035a23230a14bc1f7dd5fa1235f"
+    },
+    "PRD004": {
+      "profile_id": 2,
+      "generation_id": 2,
+      "population": 5000000,
+      "valid": 5000000,
+      "invalid": 0,
+      "missing": 0,
+      "extra": 0,
+      "minimum": 0.2941176470588234,
+      "maximum": 0.9997456554776272,
+      "cumulative_at_least_50_60_70_80_90": [4834668, 3695342, 1676385, 332915, 21368],
+      "quantiles_p05_p25_p50_p75_p95": [0.5156782202665955, 0.5972327315965841, 0.6694183564680871, 0.7310359664350012, 0.8128691969707567],
+      "scalar_sample_checks": 13,
+      "scalar_mismatches": 0,
+      "attestation_key_sha256": "f2eeafbd317d53915c289080a82ef019d0f42043f4846c7c93002da4eddc3738"
+    }
+  },
+  "supported_generation_pair_diagnostic_only": {
+    "full_population": 5000000,
+    "prd003_winners": 1859374,
+    "prd004_winners": 3140626,
+    "ties_won_by_prd003": 1,
+    "not_a_ready_two_product_context": true
+  },
+  "altered_two_product_preflight_probe": {
+    "status": "BLOCKED_EXACT_CONTEXT_IDENTITY",
+    "api_reason_code": "SIMILARITY_SOURCE_STALE",
+    "selected_count": null,
+    "not_a_replacement_recorded_scenario": true
+  },
+  "disposable_db_bytes": 5318819840,
+  "profile_artifact_bytes": [5521, 7076],
+  "wal_bytes_after_run": 0,
+  "not_certified": [
+    "recorded-context exact selected count and snapshot count/hash",
+    "recorded-context result materialization/history/export",
+    "peak process RAM and index/publication substage latency",
+    "full-scale source replacement and v2 calibration-promotion independence",
+    "full-scale browser and demo readiness"
+  ],
+  "tests": {
+    "preflight_and_cohort": "16 passed",
+    "source_invalidation_and_v2_isolation": "2 passed",
+    "nonretryable_blocked_run": "1 passed",
+    "ruff": "pass"
+  }
+}

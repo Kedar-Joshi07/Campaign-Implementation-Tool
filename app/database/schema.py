@@ -34,14 +34,19 @@ from app.database.search_recovery_schema import (
     SEARCH_RECOVERY_INDEX_STATEMENTS,
     SEARCH_RECOVERY_TABLE_STATEMENTS,
 )
+from app.database.lookalike_v3_schema import (
+    LOOKALIKE_V3_INDEX_STATEMENTS,
+    LOOKALIKE_V3_TABLE_STATEMENTS,
+    LOOKALIKE_V3_TRIGGER_STATEMENTS,
+)
 
 
 logger = logging.getLogger(__name__)
 PHASE_ONE_SCHEMA_VERSION = 1
-CURRENT_SCHEMA_VERSION = 31
+CURRENT_SCHEMA_VERSION = 33
 SCHEMA_VERSION = str(CURRENT_SCHEMA_VERSION)
 
-EXPECTED_TABLES = (
+SCHEMA_32_EXPECTED_TABLES = (
     "app_metadata",
     "data_import_runs",
     "customers",
@@ -80,7 +85,17 @@ EXPECTED_TABLES = (
     "campaign_feedback_batches",
     "campaign_feedback_outcomes",
     "feedback_retraining_decisions",
+    "buyer_similarity_profiles",
+    "buyer_similarity_profile_artifacts",
+    "buyer_similarity_score_generations",
+    "buyer_similarity_generation_stages",
+    "buyer_similarity_score_stage",
+    "buyer_similarity_scores",
+    "buyer_similarity_generation_attestations",
+    "buyer_similarity_result_snapshots",
+    "similarity_preflight_cache",
 )
+EXPECTED_TABLES = (*SCHEMA_32_EXPECTED_TABLES, "buyer_similarity_export_events")
 
 HISTORICAL_ANALYSIS_RUN_COLUMNS = (
     "analysis_run_id",
@@ -3598,6 +3613,451 @@ def _migrate_to_version_31(connection: sqlite3.Connection) -> None:
         )
 
 
+def _replace_verified_table_sql(
+    connection: sqlite3.Connection,
+    *,
+    table: str,
+    old: str,
+    new: str,
+) -> None:
+    """Broaden one verified SQLite constraint without rewriting live rows."""
+
+    row = connection.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
+    ).fetchone()
+    definition = "" if row is None else str(row["sql"] or "")
+    if old not in definition:
+        if new in definition:
+            return
+        raise UnsupportedSchemaVersionError(
+            f"{table} is not the supported schema-31 definition."
+        )
+    revised = definition.replace(old, new, 1)
+    try:
+        connection.execute("PRAGMA writable_schema=ON")
+        cursor = connection.execute(
+            "UPDATE sqlite_master SET sql=? WHERE type='table' AND name=? AND sql=?",
+            (revised, table, definition),
+        )
+    finally:
+        connection.execute("PRAGMA writable_schema=OFF")
+    if cursor.rowcount != 1:
+        raise UnsupportedSchemaVersionError(
+            f"{table} constraint could not be broadened safely."
+        )
+    cookie = int(connection.execute("PRAGMA schema_version").fetchone()[0])
+    connection.execute(f"PRAGMA schema_version={cookie + 1}")
+
+
+def _migrate_to_version_32(connection: sqlite3.Connection) -> None:
+    """Add the isolated product-buyer-similarity v3 registry and discriminators."""
+
+    required = (
+        "campaign_search_runs",
+        "campaign_search_attempts",
+        "campaign_result_snapshots",
+        "data_import_runs",
+    )
+    if any(not _table_exists(connection, table) for table in required):
+        raise UnsupportedSchemaVersionError(
+            "Cannot migrate to version 32 because the schema-31 search registry is missing."
+        )
+
+    for statement in LOOKALIKE_V3_TABLE_STATEMENTS:
+        connection.execute(statement)
+    for statement in LOOKALIKE_V3_INDEX_STATEMENTS:
+        connection.execute(statement)
+    for statement in LOOKALIKE_V3_TRIGGER_STATEMENTS:
+        connection.execute(statement)
+
+    run_additions = (
+        ("score_semantics", "TEXT CHECK (score_semantics IS NULL OR score_semantics='PRODUCT_BUYER_SIMILARITY')"),
+        ("similarity_minimum", "REAL CHECK (similarity_minimum IS NULL OR similarity_minimum IN (0.50,0.60,0.70,0.80,0.90))"),
+        ("similarity_threshold_predicate", "TEXT CHECK (similarity_threshold_predicate IS NULL OR similarity_threshold_predicate='GREATER_THAN_OR_EQUAL')"),
+        ("similarity_product_match_policy", "TEXT CHECK (similarity_product_match_policy IS NULL OR similarity_product_match_policy='ANY_SELECTED_PRODUCT_MAX_V1')"),
+        ("similarity_score_method_version", "TEXT CHECK (similarity_score_method_version IS NULL OR similarity_score_method_version='BUYER_PROFILE_DISTANCE_V1')"),
+        ("similarity_profile_set_sha256", "TEXT CHECK (similarity_profile_set_sha256 IS NULL OR length(similarity_profile_set_sha256)=64)"),
+        ("similarity_composite_context_sha256", "TEXT CHECK (similarity_composite_context_sha256 IS NULL OR length(similarity_composite_context_sha256)=64)"),
+        ("similarity_generation_id", "INTEGER REFERENCES buyer_similarity_score_generations(similarity_generation_id) ON DELETE RESTRICT"),
+        ("similarity_result_snapshot_id", "INTEGER REFERENCES buyer_similarity_result_snapshots(similarity_result_snapshot_id) ON DELETE RESTRICT"),
+    )
+    attempt_additions = run_additions[:-1]
+    for table, additions in (
+        ("campaign_search_runs", run_additions),
+        ("campaign_search_attempts", attempt_additions),
+    ):
+        columns = {
+            str(row["name"])
+            for row in connection.execute(f"PRAGMA table_info({table})")
+        }
+        for name, definition in additions:
+            if name not in columns:
+                connection.execute(
+                    f'ALTER TABLE {table} ADD COLUMN "{name}" {definition}'
+                )
+
+    _replace_verified_table_sql(
+        connection,
+        table="campaign_search_runs",
+        old="CHECK (selection_contract_version IN ('1','2'))",
+        new="CHECK (selection_contract_version IN ('1','2','3'))",
+    )
+    _replace_verified_table_sql(
+        connection,
+        table="campaign_search_attempts",
+        old="CHECK (selection_contract_version IN ('1','2'))",
+        new="CHECK (selection_contract_version IN ('1','2','3'))",
+    )
+    _replace_verified_table_sql(
+        connection,
+        table="campaign_search_attempts",
+        old="""CHECK ((selection_contract_version='1' AND propensity_bucket IS NULL)
+            OR (selection_contract_version='2' AND propensity_bucket IS NOT NULL
+                AND bucket_minimum IS NOT NULL AND bucket_maximum IS NOT NULL
+                AND bucket_maximum_inclusive IS NOT NULL))""",
+        new="""CHECK ((selection_contract_version='1' AND propensity_bucket IS NULL
+                AND similarity_minimum IS NULL AND score_semantics IS NULL)
+            OR (selection_contract_version='2' AND propensity_bucket IS NOT NULL
+                AND bucket_minimum IS NOT NULL AND bucket_maximum IS NOT NULL
+                AND bucket_maximum_inclusive IS NOT NULL
+                AND similarity_minimum IS NULL AND score_semantics IS NULL)
+            OR (selection_contract_version='3' AND propensity_bucket IS NULL
+                AND bucket_minimum IS NULL AND bucket_maximum IS NULL
+                AND bucket_maximum_inclusive IS NULL
+                AND calibration_artifact_id IS NULL
+                AND score_semantics='PRODUCT_BUYER_SIMILARITY'
+                AND similarity_minimum IN (0.50,0.60,0.70,0.80,0.90)
+                AND similarity_threshold_predicate='GREATER_THAN_OR_EQUAL'
+                AND similarity_product_match_policy='ANY_SELECTED_PRODUCT_MAX_V1'
+                AND similarity_score_method_version='BUYER_PROFILE_DISTANCE_V1'))""",
+    )
+    _replace_verified_table_sql(
+        connection,
+        table="campaign_search_runs",
+        old="""CHECK (status != 'COMPLETED' OR (generation_id IS NOT NULL AND analysis_run_id IS NOT NULL
+            AND model_run_id IS NOT NULL AND scoring_run_id IS NOT NULL AND result_snapshot_id IS NOT NULL
+            AND result_source IS NOT NULL AND selected_count IS NOT NULL AND safe_error_message IS NULL))""",
+        new="""CHECK (status != 'COMPLETED' OR (
+            (selection_contract_version IN ('1','2')
+                AND generation_id IS NOT NULL AND analysis_run_id IS NOT NULL
+                AND model_run_id IS NOT NULL AND scoring_run_id IS NOT NULL
+                AND result_snapshot_id IS NOT NULL
+                AND similarity_generation_id IS NULL
+                AND similarity_result_snapshot_id IS NULL)
+            OR (selection_contract_version='3'
+                AND generation_id IS NULL AND analysis_run_id IS NULL
+                AND model_run_id IS NULL AND scoring_run_id IS NULL
+                AND result_snapshot_id IS NULL
+                AND similarity_generation_id IS NOT NULL
+                AND similarity_result_snapshot_id IS NOT NULL)
+            ) AND result_source IS NOT NULL AND selected_count IS NOT NULL
+              AND safe_error_message IS NULL)""",
+    )
+
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_attempt_create")
+    connection.execute(
+        """CREATE TRIGGER campaign_search_attempt_create
+        AFTER INSERT ON campaign_search_runs
+        BEGIN
+            INSERT INTO campaign_search_attempts (
+                search_run_id,attempt_number,attempt_contract_version,
+                selection_contract_version,propensity_bucket,bucket_minimum,
+                bucket_maximum,bucket_maximum_inclusive,status,
+                execution_lease_token,created_at,started_at,
+                score_semantics,similarity_minimum,similarity_threshold_predicate,
+                similarity_product_match_policy,similarity_score_method_version,
+                similarity_profile_set_sha256,similarity_composite_context_sha256,
+                similarity_generation_id
+            ) VALUES (
+                NEW.search_run_id,NEW.current_attempt_number,'1',
+                NEW.selection_contract_version,NEW.propensity_bucket,
+                CASE NEW.propensity_bucket
+                    WHEN '0.90' THEN 0.90 WHEN '0.80' THEN 0.80
+                    WHEN '0.70' THEN 0.70 WHEN '0.60' THEN 0.60
+                    WHEN '0.50' THEN 0.50 END,
+                CASE NEW.propensity_bucket
+                    WHEN '0.90' THEN 1.00 WHEN '0.80' THEN 0.90
+                    WHEN '0.70' THEN 0.80 WHEN '0.60' THEN 0.70
+                    WHEN '0.50' THEN 0.60 END,
+                CASE WHEN NEW.propensity_bucket='0.90' THEN 1
+                    WHEN NEW.propensity_bucket IS NOT NULL THEN 0 END,
+                NEW.status,lower(hex(randomblob(32))),NEW.created_at,
+                CASE WHEN NEW.status='QUEUED' THEN NULL ELSE NEW.started_at END,
+                NEW.score_semantics,NEW.similarity_minimum,
+                NEW.similarity_threshold_predicate,
+                NEW.similarity_product_match_policy,
+                NEW.similarity_score_method_version,
+                NEW.similarity_profile_set_sha256,
+                NEW.similarity_composite_context_sha256,
+                NEW.similarity_generation_id
+            );
+        END"""
+    )
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_v3_discriminator_insert")
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_v3_discriminator_update")
+    discriminator = """
+        NOT (
+            (NEW.selection_contract_version='1' AND NEW.propensity_bucket IS NULL
+                AND NEW.score_semantics IS NULL AND NEW.similarity_minimum IS NULL
+                AND NEW.similarity_threshold_predicate IS NULL
+                AND NEW.similarity_product_match_policy IS NULL
+                AND NEW.similarity_score_method_version IS NULL
+                AND NEW.similarity_profile_set_sha256 IS NULL
+                AND NEW.similarity_composite_context_sha256 IS NULL
+                AND NEW.similarity_generation_id IS NULL
+                AND NEW.similarity_result_snapshot_id IS NULL)
+            OR (NEW.selection_contract_version='2' AND NEW.propensity_bucket IS NOT NULL
+                AND NEW.score_semantics IS NULL AND NEW.similarity_minimum IS NULL
+                AND NEW.similarity_threshold_predicate IS NULL
+                AND NEW.similarity_product_match_policy IS NULL
+                AND NEW.similarity_score_method_version IS NULL
+                AND NEW.similarity_profile_set_sha256 IS NULL
+                AND NEW.similarity_composite_context_sha256 IS NULL
+                AND NEW.similarity_generation_id IS NULL
+                AND NEW.similarity_result_snapshot_id IS NULL)
+            OR (NEW.selection_contract_version='3' AND NEW.propensity_bucket IS NULL
+                AND NEW.calibration_artifact_id IS NULL
+                AND NEW.generation_id IS NULL AND NEW.analysis_run_id IS NULL
+                AND NEW.model_run_id IS NULL AND NEW.scoring_run_id IS NULL
+                AND NEW.result_snapshot_id IS NULL
+                AND NEW.score_semantics='PRODUCT_BUYER_SIMILARITY'
+                AND NEW.similarity_minimum IN (0.50,0.60,0.70,0.80,0.90)
+                AND NEW.similarity_threshold_predicate='GREATER_THAN_OR_EQUAL'
+                AND NEW.similarity_product_match_policy='ANY_SELECTED_PRODUCT_MAX_V1'
+                AND NEW.similarity_score_method_version='BUYER_PROFILE_DISTANCE_V1')
+        )
+    """
+    connection.execute(
+        "CREATE TRIGGER campaign_search_v3_discriminator_insert "
+        "BEFORE INSERT ON campaign_search_runs WHEN " + discriminator
+        + " BEGIN SELECT RAISE(ABORT,'invalid search selection discriminator'); END"
+    )
+    connection.execute(
+        "CREATE TRIGGER campaign_search_v3_discriminator_update "
+        "BEFORE UPDATE OF selection_contract_version,propensity_bucket,calibration_artifact_id,"
+        "score_semantics,similarity_minimum,similarity_threshold_predicate,"
+        "similarity_product_match_policy,similarity_score_method_version,"
+        "similarity_profile_set_sha256,similarity_composite_context_sha256,"
+        "similarity_generation_id,similarity_result_snapshot_id,generation_id,"
+        "analysis_run_id,model_run_id,scoring_run_id,result_snapshot_id "
+        "ON campaign_search_runs WHEN " + discriminator
+        + " BEGIN SELECT RAISE(ABORT,'invalid search selection discriminator'); END"
+    )
+
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_attempt_v3_discriminator_insert")
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_attempt_v3_discriminator_update")
+    attempt_discriminator = """
+        NOT (
+            (NEW.selection_contract_version='1' AND NEW.propensity_bucket IS NULL
+                AND NEW.score_semantics IS NULL AND NEW.similarity_minimum IS NULL
+                AND NEW.similarity_threshold_predicate IS NULL
+                AND NEW.similarity_product_match_policy IS NULL
+                AND NEW.similarity_score_method_version IS NULL
+                AND NEW.similarity_profile_set_sha256 IS NULL
+                AND NEW.similarity_composite_context_sha256 IS NULL
+                AND NEW.similarity_generation_id IS NULL)
+            OR (NEW.selection_contract_version='2' AND NEW.propensity_bucket IS NOT NULL
+                AND NEW.bucket_minimum IS NOT NULL AND NEW.bucket_maximum IS NOT NULL
+                AND NEW.bucket_maximum_inclusive IS NOT NULL
+                AND NEW.score_semantics IS NULL AND NEW.similarity_minimum IS NULL
+                AND NEW.similarity_threshold_predicate IS NULL
+                AND NEW.similarity_product_match_policy IS NULL
+                AND NEW.similarity_score_method_version IS NULL
+                AND NEW.similarity_profile_set_sha256 IS NULL
+                AND NEW.similarity_composite_context_sha256 IS NULL
+                AND NEW.similarity_generation_id IS NULL)
+            OR (NEW.selection_contract_version='3' AND NEW.propensity_bucket IS NULL
+                AND NEW.bucket_minimum IS NULL AND NEW.bucket_maximum IS NULL
+                AND NEW.bucket_maximum_inclusive IS NULL
+                AND NEW.score_semantics='PRODUCT_BUYER_SIMILARITY'
+                AND NEW.similarity_minimum IN (0.50,0.60,0.70,0.80,0.90)
+                AND NEW.similarity_threshold_predicate='GREATER_THAN_OR_EQUAL'
+                AND NEW.similarity_product_match_policy='ANY_SELECTED_PRODUCT_MAX_V1'
+                AND NEW.similarity_score_method_version='BUYER_PROFILE_DISTANCE_V1')
+        )
+    """
+    connection.execute(
+        "CREATE TRIGGER campaign_search_attempt_v3_discriminator_insert "
+        "BEFORE INSERT ON campaign_search_attempts WHEN " + attempt_discriminator
+        + " BEGIN SELECT RAISE(ABORT,'invalid attempt selection discriminator'); END"
+    )
+    connection.execute(
+        "CREATE TRIGGER campaign_search_attempt_v3_discriminator_update "
+        "BEFORE UPDATE OF selection_contract_version,propensity_bucket,bucket_minimum,"
+        "bucket_maximum,bucket_maximum_inclusive,score_semantics,similarity_minimum,"
+        "similarity_threshold_predicate,similarity_product_match_policy,"
+        "similarity_score_method_version,similarity_profile_set_sha256,"
+        "similarity_composite_context_sha256,similarity_generation_id "
+        "ON campaign_search_attempts WHEN " + attempt_discriminator
+        + " BEGIN SELECT RAISE(ABORT,'invalid attempt selection discriminator'); END"
+    )
+
+    # The earlier immutable trigger predates v3 completion. Permit only the
+    # fenced analytical lineage fields to move from queued to completed while
+    # keeping submitted context, criteria, and delivery identity immutable.
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_runs_immutable_identity")
+    mutable = {
+        "generation_id", "analysis_run_id", "model_run_id", "scoring_run_id",
+        "result_snapshot_id", "result_source", "status", "selected_count",
+        "started_at", "completed_at", "processing_seconds",
+        "safe_error_message", "current_attempt_number", "calibration_artifact_id",
+        "similarity_profile_set_sha256", "similarity_composite_context_sha256",
+        "similarity_generation_id", "similarity_result_snapshot_id",
+    }
+    immutable_condition = " OR ".join(
+        f"NEW.{column} IS NOT OLD.{column}"
+        for column in CAMPAIGN_SEARCH_RUN_COLUMNS if column not in mutable
+    )
+    connection.execute(
+        "CREATE TRIGGER campaign_search_runs_immutable_identity "
+        "BEFORE UPDATE ON campaign_search_runs WHEN " + immutable_condition
+        + " BEGIN SELECT RAISE(ABORT,'immutable registry identity'); END"
+    )
+
+    violations = connection.execute("PRAGMA foreign_key_check").fetchall()
+    if violations:
+        raise UnsupportedSchemaVersionError(
+            "Lookalike v3 migration failed foreign-key verification."
+        )
+    # A full integrity scan is an explicit certification operation.  Running it
+    # inside an application-startup migration would repeatedly scan multi-GB
+    # analytical tables.  The migration itself verifies all FKs atomically;
+    # fresh/populated/canonical-copy certification owns PRAGMA integrity_check.
+
+
+def _repair_v3_completion_trigger(connection: sqlite3.Connection) -> None:
+    """Idempotently repair v3 completion mutability on existing schema-32 DBs.
+
+    Stage 14B-01 installed the discriminator but the prior run-identity trigger
+    still rejected fenced similarity lineage updates. This metadata-only
+    repair does not touch historical rows, scores, or result artifacts.
+    """
+
+    required = ("campaign_search_runs", "campaign_search_attempts",
+                "buyer_similarity_result_snapshots")
+    if any(not _table_exists(connection, table) for table in required):
+        raise UnsupportedSchemaVersionError(
+            "Lookalike v3 completion registry is unavailable."
+        )
+    connection.execute("DROP TRIGGER IF EXISTS campaign_search_runs_immutable_identity")
+    mutable = {
+        "generation_id", "analysis_run_id", "model_run_id", "scoring_run_id",
+        "result_snapshot_id", "result_source", "status", "selected_count",
+        "started_at", "completed_at", "processing_seconds",
+        "safe_error_message", "current_attempt_number", "calibration_artifact_id",
+        "similarity_profile_set_sha256", "similarity_composite_context_sha256",
+        "similarity_generation_id", "similarity_result_snapshot_id",
+    }
+    immutable_condition = " OR ".join(
+        f"NEW.{column} IS NOT OLD.{column}"
+        for column in CAMPAIGN_SEARCH_RUN_COLUMNS if column not in mutable
+    )
+    connection.execute(
+        "CREATE TRIGGER campaign_search_runs_immutable_identity "
+        "BEFORE UPDATE ON campaign_search_runs WHEN " + immutable_condition
+        + " BEGIN SELECT RAISE(ABORT,'immutable registry identity'); END"
+    )
+
+
+def _v3_completion_trigger_needs_repair(connection: sqlite3.Connection) -> bool:
+    if _stored_schema_version(connection) != 32:
+        return False
+    row = connection.execute(
+        "SELECT sql FROM sqlite_master WHERE type='trigger' "
+        "AND name='campaign_search_runs_immutable_identity'"
+    ).fetchone()
+    return row is None or (
+        "NEW.similarity_generation_id IS NOT OLD.similarity_generation_id"
+        in str(row[0])
+    )
+
+
+def _migrate_to_version_33(connection: sqlite3.Connection) -> None:
+    """Separate similarity export audit and feedback identity from probability lineage."""
+
+    if _v3_completion_trigger_needs_repair(connection):
+        _repair_v3_completion_trigger(connection)
+
+    connection.execute("""CREATE TABLE IF NOT EXISTS buyer_similarity_export_events (
+        export_event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        search_run_id INTEGER NOT NULL REFERENCES campaign_search_runs(search_run_id) ON DELETE RESTRICT,
+        similarity_result_snapshot_id INTEGER NOT NULL REFERENCES buyer_similarity_result_snapshots(similarity_result_snapshot_id) ON DELETE RESTRICT,
+        export_profile TEXT NOT NULL,
+        profile_version TEXT NOT NULL CHECK (profile_version='2'),
+        status TEXT NOT NULL CHECK (status IN ('RUNNING','COMPLETED','FAILED','ABORTED')),
+        selected_count INTEGER NOT NULL CHECK (selected_count>=0),
+        deliverable_count INTEGER NOT NULL CHECK (deliverable_count>=0),
+        undeliverable_count INTEGER NOT NULL CHECK (undeliverable_count>=0),
+        row_count INTEGER NOT NULL DEFAULT 0 CHECK (row_count>=0),
+        csv_sha256 TEXT CHECK (csv_sha256 IS NULL OR length(csv_sha256)=64),
+        started_at TEXT NOT NULL, completed_at TEXT,
+        currentness_state TEXT NOT NULL CHECK (currentness_state IN ('CURRENT','STALE','UNVERIFIED')),
+        safe_error_message TEXT,
+        CHECK (selected_count=deliverable_count+undeliverable_count),
+        CHECK ((status='RUNNING' AND completed_at IS NULL) OR (status!='RUNNING' AND completed_at IS NOT NULL)),
+        CHECK (status!='COMPLETED' OR (row_count=deliverable_count AND csv_sha256 IS NOT NULL AND currentness_state='CURRENT'))
+    )""")
+    connection.execute("CREATE INDEX IF NOT EXISTS idx_similarity_export_run ON buyer_similarity_export_events(search_run_id,started_at DESC)")
+    existing_feedback_columns = {
+        str(row["name"]) for row in connection.execute("PRAGMA table_info(campaign_feedback_batches)")
+    }
+    for name, definition in (
+        ("selection_contract_version", "TEXT NOT NULL DEFAULT '1' CHECK (selection_contract_version IN ('1','2','3'))"),
+        ("similarity_result_snapshot_id", "INTEGER REFERENCES buyer_similarity_result_snapshots(similarity_result_snapshot_id) ON DELETE RESTRICT"),
+        ("similarity_generation_id", "INTEGER REFERENCES buyer_similarity_score_generations(similarity_generation_id) ON DELETE RESTRICT"),
+        ("similarity_profile_set_sha256", "TEXT"),
+        ("similarity_score_method_version", "TEXT"),
+        ("similarity_snapshot_sha256", "TEXT"),
+    ):
+        if name not in existing_feedback_columns:
+            connection.execute(f'ALTER TABLE campaign_feedback_batches ADD COLUMN "{name}" {definition}')
+    existing_outcome_columns = {
+        str(row["name"]) for row in connection.execute("PRAGMA table_info(campaign_feedback_outcomes)")
+    }
+    for name, definition in (
+        ("matched_product_id", "TEXT"),
+        ("buyer_similarity_score", "REAL"),
+        ("similarity_generation_id", "INTEGER REFERENCES buyer_similarity_score_generations(similarity_generation_id) ON DELETE RESTRICT"),
+    ):
+        if name not in existing_outcome_columns:
+            connection.execute(f'ALTER TABLE campaign_feedback_outcomes ADD COLUMN "{name}" {definition}')
+    connection.execute(
+        """UPDATE campaign_feedback_batches SET selection_contract_version=(
+             SELECT COALESCE(r.selection_contract_version,'1')
+             FROM campaign_search_runs r WHERE r.search_run_id=campaign_feedback_batches.search_run_id
+           ) WHERE selection_contract_version!='3'"""
+    )
+    connection.execute("""CREATE TRIGGER IF NOT EXISTS v3_feedback_batch_identity_insert
+        BEFORE INSERT ON campaign_feedback_batches
+        WHEN NEW.selection_contract_version='3' AND (
+            NEW.similarity_result_snapshot_id IS NULL OR NEW.similarity_generation_id IS NULL
+            OR NEW.similarity_profile_set_sha256 IS NULL OR NEW.similarity_score_method_version IS NULL
+            OR NEW.similarity_snapshot_sha256 IS NULL OR NOT EXISTS (
+                SELECT 1 FROM campaign_search_runs r
+                JOIN buyer_similarity_result_snapshots s
+                  ON s.similarity_result_snapshot_id=NEW.similarity_result_snapshot_id
+                WHERE r.search_run_id=NEW.search_run_id AND r.selection_contract_version='3'
+                  AND r.status='COMPLETED' AND r.current_attempt_number=NEW.attempt_number
+                  AND r.similarity_result_snapshot_id=s.similarity_result_snapshot_id
+                  AND s.similarity_generation_id=NEW.similarity_generation_id
+                  AND s.profile_set_sha256=NEW.similarity_profile_set_sha256
+                  AND s.score_method_version=NEW.similarity_score_method_version
+                  AND s.snapshot_sha256=NEW.similarity_snapshot_sha256
+            )
+        ) BEGIN SELECT RAISE(ABORT,'invalid similarity feedback lineage'); END""")
+    connection.execute("""CREATE TRIGGER IF NOT EXISTS v3_feedback_outcome_identity_insert
+        BEFORE INSERT ON campaign_feedback_outcomes
+        WHEN EXISTS (
+            SELECT 1 FROM campaign_feedback_batches b WHERE b.feedback_batch_id=NEW.feedback_batch_id
+              AND b.selection_contract_version='3'
+        ) AND (NEW.matched_product_id IS NULL OR NEW.buyer_similarity_score IS NULL
+            OR NEW.buyer_similarity_score<0 OR NEW.buyer_similarity_score>1
+            OR NEW.similarity_generation_id IS NULL)
+        BEGIN SELECT RAISE(ABORT,'invalid similarity feedback member lineage'); END""")
+    if connection.execute("PRAGMA foreign_key_check").fetchone() is not None:
+        raise UnsupportedSchemaVersionError("Similarity export/feedback migration has invalid foreign keys.")
+
+
 MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     2: _migrate_to_version_2,
     3: _migrate_to_version_3,
@@ -3629,6 +4089,8 @@ MIGRATIONS: dict[int, Callable[[sqlite3.Connection], None]] = {
     29: _migrate_to_version_29,
     30: _migrate_to_version_30,
     31: _migrate_to_version_31,
+    32: _migrate_to_version_32,
+    33: _migrate_to_version_33,
 }
 
 
@@ -3679,6 +4141,17 @@ def initialize_database(database_path: str | Path | None = None) -> Path:
                 """,
                 (str(target_version), timestamp),
             )
+
+    # Stage 14B-01 shipped schema 32 with an older identity trigger on some
+    # already-initialized databases. A tiny, conditional repair keeps the
+    # frozen schema-32 contract while making fenced v3 completion reachable.
+    with get_connection(path) as connection:
+        repair_needed = _v3_completion_trigger_needs_repair(connection)
+    if repair_needed:
+        with get_connection(path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            if _v3_completion_trigger_needs_repair(connection):
+                _repair_v3_completion_trigger(connection)
 
     with get_connection(path) as connection:
         application_version_row = connection.execute(

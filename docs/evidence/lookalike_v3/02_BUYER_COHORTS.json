@@ -1,0 +1,147 @@
+{
+  "evidence_contract": "LOOKALIKE_V3_STAGE_02_BUYER_COHORTS_V1",
+  "recorded_date": "2026-10-06",
+  "stage": "14B_02_PRODUCT_BUYER_COHORTS_AND_SOURCE_ALIGNMENT",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "actual_head": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate_sha": "UNCOMMITTED",
+  "branch": "main",
+  "preceding_stage": {
+    "name": "14B_01_REGISTRY_API_SCHEMA_AND_MIGRATION",
+    "status": "GO",
+    "evidence": "docs/evidence/lookalike_v3/01_CONTRACT_MIGRATION.json"
+  },
+  "implementation": {
+    "cohort_contract_version": "1",
+    "conversion_definition": "ATTRIBUTED_PURCHASE",
+    "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+    "minimum_distinct_buyers": 200,
+    "minimum_fit_buyers": 160,
+    "minimum_holdout_buyers": 40,
+    "split_strategy_version": "CUSTOMER_UNION_HASH_ORDER_80_20_V1",
+    "split_seed": 20261005,
+    "filter_before_dedup": true,
+    "one_distinct_customer_per_product": true,
+    "repeat_orders_reweighted": false,
+    "union_level_split": true,
+    "fuzzy_product_mapping": false,
+    "category_fallback": false,
+    "prospect_filters_in_cohort_identity": false,
+    "delivery_channel_in_cohort_identity": false,
+    "historical_channel_context_supported": true,
+    "unattributed_rows_are": "UNLABELED_NOT_VERIFIED_NONBUYER",
+    "dynamic_wall_clock_age": false
+  },
+  "canonical_read_only_audit": {
+    "status": "PASS",
+    "database_path": "data/campaign_poc.db",
+    "database_open_mode": "READ_ONLY",
+    "operator_database_modified": false,
+    "customers": 125000,
+    "campaign_sales": 570000,
+    "prospects": 5000000,
+    "customer_primary_keys_unique": true,
+    "orphan_sales": 0,
+    "invalid_contact_dates": 0,
+    "invalid_attributed_rows": 0,
+    "label_flag_mismatches": 0,
+    "customer_prospect_id_overlap": 0,
+    "mapping_required": false,
+    "customer_distinct_states": 27,
+    "prospect_distinct_states": 27,
+    "customer_states_missing_from_prospects": [],
+    "shared_categorical_vocabulary_gaps": 0,
+    "missing_customer_feature_values": 0,
+    "catalog_products": 48,
+    "observed_sales_products": 36,
+    "canonical_full_catalog_union_buyers": 25473,
+    "canonical_full_catalog_union_fit": 20378,
+    "canonical_full_catalog_union_holdout": 5095,
+    "canonical_full_catalog_eligible_products": 31,
+    "canonical_full_catalog_unsupported_products": 17,
+    "support_manifest": "docs/evidence/lookalike_v3/02_PRODUCT_SUPPORT_MANIFEST.json"
+  },
+  "generator_reporting_correction": {
+    "historical_raw_summary_preserved": true,
+    "historical_summary_reported_distinct_products": 48,
+    "actual_observed_product_ids": 36,
+    "catalog_product_ids": 48,
+    "future_generator_reports_observed_and_catalog_counts_separately": true,
+    "canonical_raw_files_modified": false,
+    "prior_evidence_rewritten": false
+  },
+  "tests": {
+    "focused": {
+      "command": ".venv\\Scripts\\python.exe -m pytest tests/test_buyer_similarity_cohort_service.py -q",
+      "result": "10 passed",
+      "duration_seconds": 21.18
+    },
+    "affected_regression": {
+      "command": ".venv\\Scripts\\python.exe -m pytest tests/test_buyer_similarity_cohort_service.py tests/test_training_cohort_service.py tests/test_phase10_historical_context_extension.py tests/test_feature_preprocessing.py tests/test_lookalike_v3_contract_migration.py tests/test_selection_contract_registry.py -q",
+      "result": "65 passed",
+      "duration_seconds": 67.84
+    },
+    "canonical_audit": {
+      "command": ".venv\\Scripts\\python.exe scripts/validation/audit_14b_02_buyer_cohorts.py",
+      "result": "PASS",
+      "read_only": true
+    },
+    "lint": {
+      "command": "ruff check <Stage 14B_02 changed Python files>",
+      "result": "All checks passed"
+    }
+  },
+  "requirements_proved": [
+    "Exact product/context/window selection precedes customer deduplication.",
+    "Repeated attributed orders never multiply buyer weight.",
+    "A customer in several product cohorts receives one union-level split.",
+    "Fit and holdout customer identities are disjoint and represented publicly only by hashes.",
+    "The exact 199/200 support boundary and 160/40 realized floors fail closed.",
+    "Unknown, no-history, insufficient-support, and insufficient-split cases have bounded reasons and no fallback.",
+    "Historical age is completed age at the fixed window end; no wall clock enters identity.",
+    "Customer and prospect identifier namespaces are independent with zero exact overlap.",
+    "Customer PK, sales FK, attribution/date, missing-value, state, vocabulary, income, family, and age conventions pass the canonical audit.",
+    "Source checksum changes invalidate the saved identity.",
+    "PU label zero remains unlabeled rather than a verified negative.",
+    "Future generator summaries report observed product coverage separately from the catalog."
+  ],
+  "acceptance_rows": {
+    "A01-A08": "PASS_INHERITED",
+    "A09": "PASS",
+    "A10": "PASS",
+    "A11": "PASS",
+    "A12": "PASS",
+    "A13-A45": "NOT_RUN_BY_STAGE_14B_02"
+  },
+  "changed_files": [
+    "README.md",
+    "docs/README.md",
+    "app/services/buyer_similarity_cohort_service.py",
+    "data_generation_scripts/generate_campaign_sales.py",
+    "scripts/validation/audit_14b_02_buyer_cohorts.py",
+    "tests/test_buyer_similarity_cohort_service.py",
+    "docs/evidence/lookalike_v3/02_PRODUCT_SUPPORT_MANIFEST.json",
+    "docs/evidence/lookalike_v3/02_BUYER_COHORTS.md",
+    "docs/evidence/lookalike_v3/02_BUYER_COHORTS.json"
+  ],
+  "schema_api_data_impact": {
+    "schema_changed": false,
+    "public_api_changed": false,
+    "probability_training_changed": false,
+    "canonical_database_changed": false,
+    "canonical_source_changed": false,
+    "historical_summary_rewritten": false,
+    "training_run": false,
+    "profile_build_run": false,
+    "scoring_run": false
+  },
+  "limitations": [
+    "Product eligibility is context and selected-product-composite dependent; the 48-product manifest is not a promise that every subset has the same split counts.",
+    "Twelve catalog products have no observed sales history; four observed products have fewer than 200 attributed buyers in the full window; PRD001 fails only the full-catalog union holdout floor.",
+    "No descriptive profiles, similarity scores, full-5M execution, UI, export, scenario run, remote CI, commit, push, or deployment was performed.",
+    "Descriptive-model quality, predictive validation, full-5M readiness, and demo readiness remain separate decisions."
+  ],
+  "decision": "GO",
+  "decision_reason": "The buyer cohort is exactly reproducible from current source identities, exact joins and attributed-purchase semantics are enforced, split lineage is deterministic and customer-disjoint, unsupported products fail closed, and canonical source alignment passes without mutating inputs or probability behavior.",
+  "next_stage": "14B_03_LEARNED_BUYER_PROFILES_AND_SCORE_METHOD.md"
+}

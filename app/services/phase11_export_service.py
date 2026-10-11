@@ -12,6 +12,8 @@ import csv
 import gzip
 import hashlib
 import io
+import json
+import math
 from collections.abc import AsyncIterator, Iterator, Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -24,6 +26,10 @@ from starlette.responses import StreamingResponse
 from app.database.connection import get_connection
 from app.repositories.campaign_result_registry_repository import (
     CampaignResultRegistryRepository,
+)
+from app.repositories.buyer_similarity_export_repository import (
+    create_similarity_export_event, finish_similarity_export_event,
+    reconcile_similarity_export_events, SimilarityExportAuditError,
 )
 from app.repositories.phase10_intelligence_repository import (
     Phase10IntelligenceRepository,
@@ -41,8 +47,10 @@ from app.services.omnichannel_profile_contracts import (
     EXPORT_PROFILE_WHATSAPP_CONTACT_V1,
     PROFILE_AVAILABILITY_AVAILABLE,
     OmnichannelExportProfile,
+    SIMILARITY_PROFILE_REGISTRY,
     build_profile_filename,
     get_omnichannel_profile,
+    get_omnichannel_profile_for_channel,
     mitigate_csv_formula_injection,
     project_profile_row,
     resolve_profile_availability,
@@ -54,6 +62,8 @@ from app.services.phase11_result_contracts import (
 )
 from app.services.phase11_result_snapshot_service import validate_result_snapshot
 from app.services.source_currentness_service import result_lineage_is_current
+from app.services.buyer_similarity_result_service import validate_similarity_result_snapshot
+from app.services.buyer_similarity_selection_service import resolve_similarity_context, _current_sources
 
 
 DEFAULT_PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -88,6 +98,11 @@ _PROFILE_SOURCE_FIELDS = {
         "web_visitor_id", "onsite_targetable",
     ),
 }
+_PROFILE_SOURCE_FIELDS.update({
+    name: _PROFILE_SOURCE_FIELDS[profile.export_profile.removesuffix("_CONTACT_ONLY_V2").removesuffix("_V2") + "_V1"]
+    for name, profile in SIMILARITY_PROFILE_REGISTRY.items()
+    if profile.profile_version == "2"
+})
 
 _UNAVAILABLE_MESSAGES = {
     "UNAVAILABLE_MISSING_IDENTIFIER": (
@@ -237,15 +252,30 @@ def _membership_chunks(
                         "probability_bucket": str(raw["probability_bucket"]),
                         "raw_propensity_score": propensity_score,
                     }
+                elif membership_contract_version == "3":
+                    score = float(raw["buyer_similarity_score"])
+                    coverage = float(raw["feature_coverage"])
+                    if not math.isfinite(score) or not math.isfinite(coverage) or not 0 <= score <= 1 or not 0.80 <= coverage <= 1:
+                        raise ValueError("invalid similarity membership")
+                    member = {
+                        "person_id": str(raw["person_id"]),
+                        "buyer_similarity_score": score,
+                        "similarity_tier": str(raw["similarity_tier"]),
+                        "matched_product_id": str(raw["matched_product_id"]),
+                        "score_method_version": str(raw["score_method_version"]),
+                        "feature_coverage": coverage,
+                        "similarity_generation_id": int(raw["similarity_generation_id"]),
+                    }
                 else:
                     raise ValueError("unsupported membership contract")
-                member = {
-                    "person_id": str(raw["person_id"]),
-                    "propensity_score": propensity_score,
-                    "percentile_bucket": int(raw["percentile_bucket"]),
-                    "decile": int(raw["decile"]),
-                    "rank_band": str(raw["rank_band"]),
-                } | semantic_fields
+                if membership_contract_version != "3":
+                    member = {
+                        "person_id": str(raw["person_id"]),
+                        "propensity_score": propensity_score,
+                        "percentile_bucket": int(raw["percentile_bucket"]),
+                        "decile": int(raw["decile"]),
+                        "rank_band": str(raw["rank_band"]),
+                    } | semantic_fields
             except (KeyError, TypeError, ValueError) as exc:
                 raise Phase11ExportConflictError(
                     "The result snapshot is unavailable for download."
@@ -480,6 +510,12 @@ def stream_phase11_result_export_csv(
 ) -> StreamingResponse:
     """Preflight, audit, and stream one governed profile-specific CSV."""
 
+    run = CampaignResultRegistryRepository(database_path).fetch_search_run(search_run_id)
+    if run is not None and str(run.get("selection_contract_version") or "1") == "3":
+        return _stream_similarity_result_export_csv(
+            database_path, run=run, request=request, project_root=project_root,
+        )
+
     plan = _prepare_export(
         database_path, search_run_id=search_run_id, project_root=project_root
     )
@@ -631,6 +667,126 @@ def stream_phase11_result_export_csv(
     )
 
 
+def _stream_similarity_result_export_csv(
+    database_path: str | Path, *, run: Mapping[str, Any], request: Request,
+    project_root: str | Path | None,
+) -> StreamingResponse:
+    path = Path(database_path)
+    root = (DEFAULT_PROJECT_ROOT if project_root is None else Path(project_root)).resolve()
+    if run.get("status") != "COMPLETED" or run.get("similarity_result_snapshot_id") is None:
+        raise Phase11ExportConflictError("The similarity result is not completed for download.")
+    with get_connection(path) as connection:
+        context_row = connection.execute(
+            "SELECT campaign_context_json FROM campaign_targeting_contexts WHERE targeting_context_id=?",
+            (run["targeting_context_id"],),
+        ).fetchone()
+        snapshot_row = connection.execute(
+            "SELECT * FROM buyer_similarity_result_snapshots WHERE similarity_result_snapshot_id=?",
+            (run["similarity_result_snapshot_id"],),
+        ).fetchone()
+        available_fields = _available_demographic_fields(connection)
+    if context_row is None or snapshot_row is None:
+        raise Phase11ExportConflictError("The immutable similarity lineage is unavailable.")
+    snapshot = dict(snapshot_row)
+    context = json.loads(context_row["campaign_context_json"])
+    try:
+        resolution = resolve_similarity_context(path, context, project_root=root)
+    except Exception as exc:
+        raise Phase11ExportConflictError("Current similarity intelligence is unavailable.") from exc
+    if not validate_similarity_result_snapshot(snapshot, run, resolution, project_root=root):
+        raise Phase11ExportConflictError("The immutable similarity result is stale or invalid.")
+    stored_profile = get_omnichannel_profile(str(run["export_profile"]))
+    profile = (
+        get_omnichannel_profile_for_channel(stored_profile.channel_code, selection_contract_version="3")
+        if stored_profile.profile_version == "1" else stored_profile
+    )
+    if profile.profile_version != "2" or profile.channel_code != run["delivery_channel"]:
+        raise Phase11ExportConflictError("The saved profile is unsupported for buyer similarity.")
+    if resolve_profile_availability(profile.export_profile, available_source_fields=available_fields) != PROFILE_AVAILABILITY_AVAILABLE:
+        raise Phase11ExportConflictError("The governed contact fields are unavailable.")
+    expected_uri = f"artifacts/similarity_results/snapshot_{int(snapshot['similarity_result_snapshot_id']):06d}/members.csv.gz"
+    if snapshot["storage_uri"] != expected_uri or snapshot["storage_format"] != "CSV_GZIP":
+        raise Phase11ExportConflictError("The immutable similarity file is unavailable.")
+    members_path = (root / expected_uri).resolve()
+    if not members_path.is_relative_to(root) or not members_path.is_file():
+        raise Phase11ExportConflictError("The immutable similarity file is unavailable.")
+    selected, deliverable, excluded = _count_deliverability(
+        path, members_path=members_path, membership_contract_version="3", profile=profile,
+    )
+    if selected != snapshot["resolved_count"] or selected != run["selected_count"] or selected != deliverable + excluded:
+        raise Phase11ExportConflictError("Selected and exportable counts do not reconcile.")
+    try:
+        event_id = create_similarity_export_event(
+            path, run_id=int(run["search_run_id"]),
+            snapshot_id=int(snapshot["similarity_result_snapshot_id"]),
+            profile=profile, selected=selected, deliverable=deliverable,
+            source_identity=resolution.source_identity,
+        )
+    except SimilarityExportAuditError as exc:
+        raise Phase11ExportConflictError(str(exc)) from exc
+
+    async def stream() -> AsyncIterator[bytes]:
+        row_count = 0
+        digest = hashlib.sha256()
+        buffer = io.StringIO(newline="")
+        writer = csv.writer(buffer, lineterminator="\n")
+        try:
+            if await request.is_disconnected():
+                raise Phase11ExportAbortedError("Download interrupted.")
+            with get_connection(path) as connection:
+                connection.execute("BEGIN")
+                if _current_sources(connection) != resolution.source_identity:
+                    raise Phase11ExportConflictError("The source changed before download.")
+                header = _csv_bytes(list(profile.output_columns), writer, buffer)
+                digest.update(header)
+                yield header
+                for index, (_member, projected) in enumerate(_joined_profile_rows(
+                    connection, members_path=members_path,
+                    membership_contract_version="3", profile=profile,
+                )):
+                    if index % EXPORT_JOIN_CHUNK_SIZE == 0 and await request.is_disconnected():
+                        raise Phase11ExportAbortedError("Download interrupted.")
+                    if projected is None:
+                        continue
+                    encoded = _csv_bytes(
+                        [projected[column] for column in profile.output_columns], writer, buffer,
+                    )
+                    digest.update(encoded)
+                    row_count += 1
+                    yield encoded
+            with get_connection(path) as connection:
+                if _current_sources(connection) != resolution.source_identity:
+                    raise Phase11ExportConflictError("The source changed during download.")
+            if row_count != deliverable or _file_sha256(members_path) != snapshot["snapshot_sha256"]:
+                raise Phase11ExportConflictError("The immutable result changed during download.")
+            finish_similarity_export_event(
+                path, event_id, status="COMPLETED", row_count=row_count,
+                digest=digest.hexdigest(), source_identity=resolution.source_identity,
+            )
+        except asyncio.CancelledError:
+            finish_similarity_export_event(path, event_id, status="ABORTED", row_count=row_count)
+            raise
+        except Phase11ExportAbortedError:
+            finish_similarity_export_event(path, event_id, status="ABORTED", row_count=row_count)
+        except Exception:
+            finish_similarity_export_event(path, event_id, status="FAILED", row_count=row_count)
+            raise
+
+    filename = build_profile_filename(profile.export_profile, search_run_id=int(run["search_run_id"]))
+    return StreamingResponse(
+        stream(), media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
+            "X-Export-Profile": profile.export_profile,
+            "X-Result-Membership-Contract-Version": "3",
+            "X-Export-Score-Semantics": "PRODUCT_BUYER_SIMILARITY",
+            "X-Selected-Count": str(selected), "X-Exportable-Count": str(deliverable),
+            "X-Excluded-Count": str(excluded),
+        },
+    )
+
+
 def reconcile_stale_result_export_events(
     database_path: str | Path, *, limit: int = 100,
 ) -> int:
@@ -638,11 +794,17 @@ def reconcile_stale_result_export_events(
 
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(seconds=EXPORT_RECOVERY_THRESHOLD_SECONDS)
-    return CampaignResultRegistryRepository(database_path).reconcile_stale_export_events(
+    legacy_count = CampaignResultRegistryRepository(database_path).reconcile_stale_export_events(
         stale_started_at_max=cutoff.isoformat(timespec="seconds").replace("+00:00", "Z"),
         timestamp=now.isoformat(timespec="seconds").replace("+00:00", "Z"),
         limit=limit,
     )
+    similarity_count = reconcile_similarity_export_events(
+        Path(database_path),
+        cutoff=cutoff.isoformat(timespec="seconds").replace("+00:00", "Z"),
+        limit=limit,
+    )
+    return legacy_count + similarity_count
 
 
 __all__ = (

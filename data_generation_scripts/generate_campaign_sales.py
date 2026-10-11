@@ -61,6 +61,7 @@ from collections import Counter
 from dataclasses import dataclass, asdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -247,6 +248,12 @@ def normalize_weights(w: np.ndarray) -> np.ndarray:
 
 def to_date(s: str) -> date:
     return datetime.strptime(s, "%Y-%m-%d").date()
+
+
+def observed_product_ids(campaigns: Iterable[Campaign]) -> list[str]:
+    """Return exact products that will emit rows, not the reference catalog size."""
+
+    return sorted({campaign.product_id for campaign in campaigns})
 
 
 def product_catalog(rng: np.random.Generator) -> list[Product]:
@@ -963,12 +970,19 @@ def generate(args: argparse.Namespace) -> None:
         sw.writerows(sample_rows)
 
     positives = counters["attributed"]
+    # Report the products actually emitted into campaign_sales separately from
+    # the full reference catalog.  The historical generator summary used the
+    # catalog size here, which overstated observed sales coverage.
+    emitted_product_ids = observed_product_ids(campaigns)
     summary = {
         "rows": row_sequence,
         "columns": len(CAMPAIGN_SALES_HEADERS),
         "customer_rows_loaded": n_customers,
         "distinct_campaigns": len(campaigns),
-        "distinct_products": len(products),
+        "distinct_products": len(emitted_product_ids),
+        "distinct_products_observed": len(emitted_product_ids),
+        "catalog_products": len(products),
+        "observed_product_ids": emitted_product_ids,
         "data_start": DATA_START.isoformat(),
         "data_end": DATA_END.isoformat(),
         "attribution_window_days": ATTRIBUTION_WINDOW_DAYS,

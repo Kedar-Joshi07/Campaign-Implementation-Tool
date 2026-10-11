@@ -8,6 +8,8 @@ from collections.abc import Mapping
 from typing import Any
 
 from app.selection_contracts import (
+    BUYER_SIMILARITY_MEMBERSHIP_CONTRACT_VERSION,
+    BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION,
     CALIBRATED_MEMBERSHIP_CONTRACT_VERSION,
     CALIBRATED_SELECTION_CONTRACT_VERSION,
 )
@@ -16,6 +18,7 @@ from app.selection_contracts import (
 SEARCH_RUN_CONTRACT_VERSION = "1"
 RESULT_MEMBERSHIP_V1_CONTRACT_VERSION = "1"
 RESULT_MEMBERSHIP_V2_CONTRACT_VERSION = CALIBRATED_MEMBERSHIP_CONTRACT_VERSION
+RESULT_MEMBERSHIP_V3_CONTRACT_VERSION = BUYER_SIMILARITY_MEMBERSHIP_CONTRACT_VERSION
 # Frozen compatibility alias. New code must resolve the membership version from
 # the immutable selection contract instead of treating this as a latest version.
 RESULT_MEMBERSHIP_CONTRACT_VERSION = RESULT_MEMBERSHIP_V1_CONTRACT_VERSION
@@ -26,6 +29,11 @@ RESULT_MEMBERSHIP_V1_COLUMNS = (
 RESULT_MEMBERSHIP_V2_COLUMNS = (
     "person_id", "calibrated_purchase_probability", "probability_bucket",
     "raw_propensity_score", "percentile_bucket", "decile", "rank_band",
+)
+RESULT_MEMBERSHIP_V3_COLUMNS = (
+    "person_id", "buyer_similarity_score", "similarity_tier",
+    "matched_product_id", "score_method_version", "feature_coverage",
+    "similarity_generation_id",
 )
 # Frozen compatibility alias for legacy callers and v1 export schemas.
 RESULT_MEMBERSHIP_COLUMNS = RESULT_MEMBERSHIP_V1_COLUMNS
@@ -57,6 +65,8 @@ def result_membership_contract_for_selection(selection_contract_version: Any) ->
         return RESULT_MEMBERSHIP_V1_CONTRACT_VERSION
     if version == CALIBRATED_SELECTION_CONTRACT_VERSION:
         return RESULT_MEMBERSHIP_V2_CONTRACT_VERSION
+    if version == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION:
+        return RESULT_MEMBERSHIP_V3_CONTRACT_VERSION
     raise Phase11RegistryValidationError("Unsupported selection contract version.")
 
 
@@ -66,6 +76,8 @@ def result_membership_columns(contract_version: Any) -> tuple[str, ...]:
         return RESULT_MEMBERSHIP_V1_COLUMNS
     if version == RESULT_MEMBERSHIP_V2_CONTRACT_VERSION:
         return RESULT_MEMBERSHIP_V2_COLUMNS
+    if version == RESULT_MEMBERSHIP_V3_CONTRACT_VERSION:
+        return RESULT_MEMBERSHIP_V3_COLUMNS
     raise Phase11RegistryValidationError("Unsupported membership contract version.")
 
 

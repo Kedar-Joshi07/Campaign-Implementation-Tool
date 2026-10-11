@@ -14,6 +14,11 @@ CAMPAIGN_SEARCH_RUN_COLUMNS = (
     "processing_seconds", "created_by_user_id", "safe_error_message",
     "current_attempt_number", "selection_contract_version", "propensity_bucket",
     "catalog_version", "calibration_artifact_id",
+    "score_semantics", "similarity_minimum",
+    "similarity_threshold_predicate", "similarity_product_match_policy",
+    "similarity_score_method_version", "similarity_profile_set_sha256",
+    "similarity_composite_context_sha256", "similarity_generation_id",
+    "similarity_result_snapshot_id",
 )
 CAMPAIGN_RESULT_SNAPSHOT_COLUMNS = (
     "result_snapshot_id", "result_membership_contract_version", "generation_id",

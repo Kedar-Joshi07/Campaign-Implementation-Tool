@@ -1,0 +1,392 @@
+{
+  "evidence_contract": "LOOKALIKE_V3_STAGE_00_BASELINE_V1",
+  "recorded_date": "2026-10-05",
+  "stage": "14B_00_BASELINE_POLICY_AND_GOLDEN_COMPATIBILITY",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "actual_head": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate_sha": "UNCOMMITTED",
+  "branch": "main",
+  "preceding_stage": {
+    "name": "Prompt 13.6.1 legacy selection mapping closure",
+    "implementation_sha": "a35dabbf0baa43e12dfe4bddc9ad72c29bdf5acb",
+    "evidence_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+    "exact_sha_ci_run_id": 37281401935,
+    "status": "GO"
+  },
+  "initial_working_tree": [
+    "?? Prompts/Campaign_Implementation_Tool_14B_Lookalike_Prompt_Pack/"
+  ],
+  "baseline_file_manifest": [
+    ["README.md", "8748c67998f4f13f5ad7437343d2d22cfb27985941f0813ade5f53927a5637dc"],
+    ["docs/README.md", "8f66a8ca6378ec82a4cca2df3b8163c9d333e155af6277c78263f8b9cd685629"],
+    ["app/database/schema.py", "c8c1aebdce50c5325db383a69bc99eeb6fe257d4e183d4c744925841a03f3b83"],
+    ["app/ml/feature_contract.py", "b3e3f382080b480751080da4b1a03c9fdb3ed25fc7740e9490723a2c880234be"],
+    ["app/selection_contracts.py", "0adb6dc803fb30d8116028a0ad08f1cc1135f75fbadbdb3e406e4c0649feec96"],
+    ["app/schemas/potential_customer_search.py", "d6a5c39b9e6befa99bb145288988a9af5ffdf5375e440bde7a5f8540bebfbdcb"],
+    ["app/services/calibrated_selection_contract_service.py", "c9e11ada4bfb5a46432d89b7ba02568be9b55c8cd33d81b170d8b860df8d0c4e"],
+    ["app/services/potential_customer_preflight_service.py", "113552980c51815330fa54302a1aa9493205952f46ed3caf1ef10fadc82a72e3"],
+    ["app/services/potential_customer_search_submission_service.py", "d586ed91802fcaf21bb597b18af4f6dadb3520a9dc2eace01ae2af8da483e2a9"],
+    ["app/services/phase11_result_contracts.py", "fb788f3cbc7d34851428d93e8f883d038a0d754ae51abcdf55ba1e99201ba005"],
+    ["app/services/phase11_result_snapshot_service.py", "90ecc4da4d774559ee44a0a0b616317ad2651697c2f7f2a423db41e7c264ad6f"],
+    ["app/services/phase11_results_service.py", "4afa52e31c7bb92c78c044e1c4aaaed4cf02280c385346313c4f96e5af00ebd1"],
+    ["app/services/phase11_export_service.py", "667257e4b80975f1bdab8c5ceab4c9910a06274be10c06445af32e16e4d78105"],
+    ["frontend/js/business-search-form.js", "0d07502c1faeaa52a95cbd9a387fb19a10d553ca6c38155f43381a796127a6f1"],
+    ["scripts/validation/preflight_demo_readiness_scenarios.py", "d3085453c4a4795a13960d24171d7cb32849a1f37a323c92f46ffca9602f5d0c"],
+    ["tests/test_selection_contract_registry.py", "becd4c4364a7e11fee3d558bc0776a4477f325d26c7d0278fa79204597311d25"],
+    ["tests/test_preflight_http_contract.py", "06b378801c22b44e4963633d78be32d1970641ed812b1386c813d76cf98a1ed8"],
+    ["tests/test_preflight_materialization_parity.py", "8b8498eaf05d69d7d66fa4d4e2e22d57f2852bb91b43d400ad56af4981587837"],
+    ["tests/test_phase11_api_backward_compatibility.py", "3d1bca750c82e622c0e47b09b03a077d463ca340252281bbd554e5638b2f9e5c"],
+    ["tests/test_phase11_results_history_detail.py", "7208613e6df45e38f0b31ecd61e2093c77adb70c5593345868747ae6b259d563"],
+    ["tests/test_phase11_omnichannel_export_engine.py", "1336a4fc3756a0c00f9307baa19ad3b8b485e44634cfd7af01b4561aa757f3c3"],
+    ["docs/evidence/recovery_hardening/13_SELECTION_POLICY_DECISION.md", "677a149a66abf0158361f7945eaa2300106432621b73f339677ef5fb460ad5e3"],
+    ["docs/evidence/recovery_hardening/13_5_INTEGRATION_CLOSURE.json", "f98ae400b8a7d18f23178e891fd077e1b2bc21cde43b80f8cba20e5bf1f21a86"],
+    ["docs/evidence/recovery_hardening/13_6_PRE14_STABILIZATION.json", "4c4ef9730c5c8a9740d2b2a17d1786ad9d2d0be52c586dfd29f2366e68aa1164"],
+    ["docs/evidence/recovery_hardening/13_6_1_LEGACY_MAPPING_CLOSURE.json", "3142b107ad57fb046b9c1315dd69c5f18eac917acefd0d821f5b145e8ab6dbe4"],
+    ["Prompts/Campaign_Implementation_Tool_Demo_Readiness_20_Real_Runs_Prompt_Pack/scenarios.json", "d168deccf2f7cf9723b5bc08a4b99bf0dc49325309c1a402cd59ba4beabb2b77"]
+  ],
+  "baseline_file_manifest_tuple_contract": ["path", "sha256"],
+  "approved_decision": {
+    "status": "APPROVED",
+    "decision_addendum": "docs/evidence/lookalike_v3/00_APPROVED_V3_DECISION_ADDENDUM.md",
+    "selection_contract_version": "3",
+    "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+    "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+    "membership_contract_version": "3",
+    "threshold_predicate": ">=",
+    "allowed_minimums": [0.5, 0.6, 0.7, 0.8, 0.9],
+    "new_ui_default_minimum": 0.7,
+    "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+    "meaning_of_0_90": "weighted distance to nearest supported buyer prototype is at most 0.10 under the declared method; not probability, percentile, accuracy, confidence, or lift",
+    "retains_purchase_probability": true,
+    "automatic_historical_conversion": false,
+    "replaces_old_percentile_14b_choice": true,
+    "rewrites_prior_evidence": false
+  },
+  "frozen_legacy_contracts": {
+    "v1": {
+      "selection_contract_version": "1",
+      "membership_contract_version": "1",
+      "selection_semantics": "LEGACY_RAW_SCORE",
+      "unversioned_submission_resolves_to_v1": true,
+      "propensity_bucket": null,
+      "membership_columns": [
+        "person_id",
+        "propensity_score",
+        "percentile_bucket",
+        "decile",
+        "rank_band"
+      ]
+    },
+    "v2": {
+      "selection_contract_version": "2",
+      "membership_contract_version": "2",
+      "selection_semantics": "CALIBRATED_PURCHASE_PROBABILITY",
+      "default_bucket": "0.70",
+      "bounds": {
+        "0.50": [0.5, 0.6, false],
+        "0.60": [0.6, 0.7, false],
+        "0.70": [0.7, 0.8, false],
+        "0.80": [0.8, 0.9, false],
+        "0.90": [0.9, 1.0, true]
+      },
+      "legacy_mapping": {
+        "VERY_STRONG": "0.90",
+        "STRONG": "0.80",
+        "GOOD": "0.70",
+        "BROAD": "0.60"
+      },
+      "explicit_point_50_preserved": true,
+      "broad_point_60_preserved": true
+    },
+    "demo_qualification_minimum": 10000,
+    "currentness_vocabulary": [
+      "CURRENT",
+      "NOT_AVAILABLE",
+      "STALE",
+      "UNVERIFIED"
+    ],
+    "golden_fixture": "tests/fixtures/lookalike_v3/14b_00_legacy_contract_golden.json"
+  },
+  "boundary_oracle": [
+    {"value": "0.49", "v2_bucket": null},
+    {"value": "0.50", "v2_bucket": "0.50"},
+    {"value": "nextafter(0.60,0)", "v2_bucket": "0.50"},
+    {"value": "0.60", "v2_bucket": "0.60"},
+    {"value": "0.70", "v2_bucket": "0.70"},
+    {"value": "0.80", "v2_bucket": "0.80"},
+    {"value": "0.90", "v2_bucket": "0.90"},
+    {"value": "1.00", "v2_bucket": "0.90"}
+  ],
+  "invalid_oracle": {
+    "scores_rejected": ["NaN", "Infinity", "-Infinity", true, false, -0.01, 1.0000000001],
+    "buckets_rejected": [0.7, true, false, null, "0.40", "0.700", "BROAD"]
+  },
+  "canonical_scenarios": {
+    "path": "Prompts/Campaign_Implementation_Tool_Demo_Readiness_20_Real_Runs_Prompt_Pack/scenarios.json",
+    "file_sha256": "d168deccf2f7cf9723b5bc08a4b99bf0dc49325309c1a402cd59ba4beabb2b77",
+    "count": 20,
+    "strength_distribution": {
+      "VERY_STRONG": 1,
+      "STRONG": 2,
+      "GOOD": 7,
+      "BROAD": 10
+    },
+    "all_twenty_individual_hashes_pinned_in_golden_fixture": true,
+    "mutated": false,
+    "historical_minimum_101_is_not_authoritative": true,
+    "current_demo_minimum": 10000
+  },
+  "source_inventory": {
+    "feature_contract": {
+      "version": "1",
+      "sha256": "a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535",
+      "ordered_features": [
+        "age",
+        "gender",
+        "state",
+        "individual_yearly_income",
+        "marital_status",
+        "education",
+        "employment_status",
+        "resident_status",
+        "resident_type",
+        "family_member_count",
+        "type_of_employment"
+      ],
+      "age_reference": "saved_contact_date_to",
+      "categorical_policy": "trim; blank/null becomes Unknown/Other; no fuzzy matching",
+      "numeric_units": {
+        "age": "completed whole years",
+        "individual_yearly_income": "nonnegative yearly currency amount",
+        "family_member_count": "integer at least one when present"
+      }
+    },
+    "import_order": ["customers", "campaign_sales", "demographics"],
+    "customer_source": {
+      "path": "data/customer_master_125000.csv.gz",
+      "sha256": "8a2c5601a96dc54708246a84cfd7715cf53e3d6f95e67472b1e2c2428bf0d18f"
+    },
+    "sales_source": {
+      "path": "data/campaign_sales_570000.csv.gz",
+      "sha256": "89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116",
+      "rows": 570000,
+      "distinct_customers": 119909,
+      "observed_distinct_products": 36
+    },
+    "product_master": {
+      "path": "data/product_master.csv",
+      "sha256": "317778cd2f591ad34757413915c33ad9298c7fb70fbbe22605d8078be3b9ba6a",
+      "catalog_products": 48,
+      "tracked_and_unchanged_at_starting_sha": true,
+      "pack_recorded_sha256": "82f55d63f3d043d978fc6a136e05c50f9cb25d575d7deb99cab6a08ede853b3c",
+      "pack_hash_discrepancy": "RESOLVED_TO_CURRENT_TRACKED_BYTES",
+      "corroborating_evidence": "docs/evidence/full_fresh_e2e/full_fresh_run_manifest.json"
+    },
+    "demographic_source": {
+      "path": "data/usa_demographic_synthetic_5000000_rows.csv.gz",
+      "sha256": "27d8e2a978458a095e16fc51a682e1f3373e41b663a4e61defa47e2d1bdf8b1d",
+      "size_bytes": 512842205
+    },
+    "buyer_definition": "campaign_attributed_sale_flag == 1; distinct customer_id per product before later context/window/feature-quality filters",
+    "product_support_unfiltered": [
+      ["PRD001", 200, true], ["PRD002", 930, true], ["PRD003", 251, true],
+      ["PRD004", 1461, true], ["PRD005", 273, true], ["PRD006", 755, true],
+      ["PRD007", 2629, true], ["PRD008", 2263, true], ["PRD009", 1955, true],
+      ["PRD010", 237, true], ["PRD011", 614, true], ["PRD012", 693, true],
+      ["PRD013", 1808, true], ["PRD014", 2598, true], ["PRD015", 774, true],
+      ["PRD016", 631, true], ["PRD017", 421, true], ["PRD018", 1426, true],
+      ["PRD019", 634, true], ["PRD020", 142, false], ["PRD021", 677, true],
+      ["PRD022", 78, false], ["PRD023", 721, true], ["PRD024", 1932, true],
+      ["PRD025", 1873, true], ["PRD026", 0, false], ["PRD027", 936, true],
+      ["PRD028", 663, true], ["PRD029", 817, true], ["PRD030", 133, false],
+      ["PRD031", 624, true], ["PRD032", 1481, true], ["PRD033", 0, false],
+      ["PRD034", 0, false], ["PRD035", 0, false], ["PRD036", 0, false],
+      ["PRD037", 642, true], ["PRD038", 133, false], ["PRD039", 604, true],
+      ["PRD040", 1182, true], ["PRD041", 0, false], ["PRD042", 0, false],
+      ["PRD043", 564, true], ["PRD044", 0, false], ["PRD045", 0, false],
+      ["PRD046", 0, false], ["PRD047", 0, false], ["PRD048", 0, false]
+    ],
+    "product_support_tuple_contract": ["product_id", "distinct_attributed_buyers_unfiltered", "meets_initial_200_buyer_floor"]
+  },
+  "database_identity": {
+    "disposable_schema_31": {
+      "schema_identity_sha256": "93df3ec3c6887d52f17c0e8f3e815ee3dafb2c871b3269fdf951d642ed7ab3d2",
+      "second_initialize_schema_identity_sha256": "93df3ec3c6887d52f17c0e8f3e815ee3dafb2c871b3269fdf951d642ed7ab3d2",
+      "initialize_idempotent": true,
+      "object_count": 132,
+      "table_count": 38,
+      "integrity_check": "ok",
+      "foreign_key_violations": 0
+    },
+    "canonical_database": {
+      "available": true,
+      "path": "data/campaign_poc.db",
+      "size_bytes": 7574577152,
+      "opened_read_only": true,
+      "stored_schema_version": 26,
+      "code_schema_version": 31,
+      "migrated_or_mutated": false,
+      "operational_note": "Any future migration certification must use an authorized disposable copy; Stage 00 did not migrate the operator database."
+    }
+  },
+  "requirements_to_callers": [
+    {
+      "requirement": "v1/v2 constants, bounds, labels, defaults and legacy mapping",
+      "callers": [
+        "app/selection_contracts.py",
+        "app/services/calibrated_selection_contract_service.py",
+        "app/schemas/campaign_targeting.py",
+        "app/services/phase11_results_service.py"
+      ]
+    },
+    {
+      "requirement": "unversioned v1 versus explicit v2 submission",
+      "callers": [
+        "app/schemas/potential_customer_search.py",
+        "app/routers/potential_customer_search.py",
+        "app/services/potential_customer_search_submission_service.py",
+        "app/repositories/campaign_result_registry_repository.py"
+      ]
+    },
+    {
+      "requirement": "options, OpenAPI and currentness vocabulary",
+      "callers": [
+        "app/routers/potential_customer_search.py",
+        "app/schemas/potential_customer_search.py",
+        "app/services/campaign_targeting_context_service.py",
+        "frontend/js/business-search-form.js"
+      ]
+    },
+    {
+      "requirement": "preflight and materialization parity",
+      "callers": [
+        "app/services/potential_customer_preflight_service.py",
+        "app/services/phase11_search_orchestration_service.py",
+        "app/services/audience_query_service.py"
+      ]
+    },
+    {
+      "requirement": "persisted run/attempt/snapshot identity and historical reopen",
+      "callers": [
+        "app/database/schema.py",
+        "app/repositories/campaign_result_registry_repository.py",
+        "app/services/phase11_result_snapshot_service.py",
+        "app/services/phase11_results_service.py"
+      ]
+    },
+    {
+      "requirement": "versioned membership export and contact safeguards",
+      "callers": [
+        "app/services/phase11_result_contracts.py",
+        "app/services/phase11_export_service.py",
+        "app/services/omnichannel_profile_contracts.py"
+      ]
+    },
+    {
+      "requirement": "scenario mapping and 10K qualification",
+      "callers": [
+        "app/selection_contracts.py",
+        "scripts/validation/preflight_demo_readiness_scenarios.py",
+        "Prompts/Campaign_Implementation_Tool_Demo_Readiness_20_Real_Runs_Prompt_Pack/scenarios.json"
+      ]
+    },
+    {
+      "requirement": "source/import/feature/date/category conventions",
+      "callers": [
+        "app/services/data_import_service.py",
+        "app/ml/feature_contract.py",
+        "app/services/training_cohort_service.py",
+        "app/services/historical_analysis_service.py"
+      ]
+    }
+  ],
+  "gap_matrix": [
+    ["Explicit v3 registry/API discriminator", "NOT_IMPLEMENTED", "14B_01"],
+    ["Additive schema migration from 31", "NOT_IMPLEMENTED", "14B_01"],
+    ["Product buyer cohort and support service", "NOT_IMPLEMENTED", "14B_02"],
+    ["Profile learning and artifact persistence", "NOT_IMPLEMENTED", "14B_03"],
+    ["Five-million prospect similarity scoring", "NOT_IMPLEMENTED", "14B_04"],
+    ["Similarity readiness/preflight/search/cache", "NOT_IMPLEMENTED", "14B_05"],
+    ["Similarity UI and safe mode switching", "NOT_IMPLEMENTED", "14B_06"],
+    ["Membership v3/export/feedback lineage", "NOT_IMPLEMENTED", "14B_07"],
+    ["Descriptive assurance/drift/explanations", "NOT_IMPLEMENTED", "14B_08"],
+    ["Integrated production-path enablement", "NOT_IMPLEMENTED", "14B_09"],
+    ["Fault/restart/full5m/scenario/release certification", "NOT_RUN", "15-19"],
+    ["Canonical DB schema 26 to current code schema", "ACCEPTED_OPERATIONAL_BOUNDARY", "Future authorized disposable-copy migration only"],
+    ["Governed predictive response/lift validation", "UNAVAILABLE", "Needs independent outcome evidence; not a v3 descriptive blocker"]
+  ],
+  "preservation_plan": [
+    "Keep app/selection_contracts.py v1/v2 exports and meanings unchanged; add v3 names separately.",
+    "Keep omitted API discriminator behavior pinned to v1 and require explicit v3 requests.",
+    "Do not rewrite historical migrations, runs, attempts, snapshots, exports, calibrations, scenarios, or evidence.",
+    "Preserve v2 BROAD to 0.60, explicit 0.50, default 0.70 and discrete upper bounds.",
+    "Preserve the 10,000 demo qualification minimum and all twenty scenario bytes.",
+    "Give v3 separate readiness, currentness, cache, score, membership and export identities.",
+    "Use disposable databases for migration and certification; do not mutate data/campaign_poc.db without the authorized operational workflow."
+  ],
+  "tests": {
+    "pre_change_bounded_compatibility": {
+      "command": ".venv\\Scripts\\python.exe -m pytest -q tests\\test_selection_contract_registry.py tests\\test_preflight_http_contract.py tests\\test_phase11_api_backward_compatibility.py tests\\test_preflight_materialization_parity.py tests\\test_phase11_results_history_detail.py tests\\test_phase11_omnichannel_export_engine.py",
+      "sandbox_result": "81 passed, 9 Playwright setup errors caused by WinError 5 named-pipe permission",
+      "duration_seconds": 408.91,
+      "application_assertion_failures": 0
+    },
+    "permission_adjusted_browser_rerun": {
+      "command": ".venv\\Scripts\\python.exe -m pytest -q tests\\test_phase11_results_history_detail.py",
+      "result": "14 passed",
+      "duration_seconds": 88.31
+    },
+    "stage_00_golden": {
+      "command": ".venv\\Scripts\\python.exe -m pytest -q tests\\test_lookalike_v3_baseline_compatibility.py",
+      "result": "6 passed",
+      "duration_seconds": 70.13
+    },
+    "final_affected_regression": {
+      "command": ".venv\\Scripts\\python.exe -m pytest -q tests\\test_selection_contract_registry.py tests\\test_phase11_api_backward_compatibility.py tests\\test_lookalike_v3_baseline_compatibility.py",
+      "result": "26 passed",
+      "duration_seconds": 118.74
+    },
+    "source_audit": {
+      "command": ".venv\\Scripts\\python.exe scripts\\validation\\audit_14b_00_baseline.py",
+      "result": "PASS",
+      "canonical_database_opened_read_only": true,
+      "disposable_database_only": true
+    }
+  },
+  "acceptance_rows": {
+    "A01": "PASS",
+    "A02": "PASS",
+    "A03": "PASS",
+    "A04": "PASS",
+    "A05": "PASS",
+    "A06": "PASS",
+    "A07-A45": "NOT_RUN_BY_STAGE_00"
+  },
+  "schema_api_data_impact": {
+    "production_code_changed": false,
+    "schema_changed": false,
+    "migration_run": false,
+    "canonical_database_changed": false,
+    "canonical_sources_changed": false,
+    "scenario_changed": false,
+    "new_test_and_evidence_only": true
+  },
+  "changed_files": [
+    "scripts/validation/audit_14b_00_baseline.py",
+    "tests/fixtures/lookalike_v3/14b_00_legacy_contract_golden.json",
+    "tests/test_lookalike_v3_baseline_compatibility.py",
+    "docs/evidence/lookalike_v3/00_APPROVED_V3_DECISION_ADDENDUM.md",
+    "docs/evidence/lookalike_v3/00_BASELINE.md",
+    "docs/evidence/lookalike_v3/00_BASELINE.json"
+  ],
+  "limitations": [
+    "Stage 00 did not implement or certify v3 runtime behavior.",
+    "No profile training, similarity scoring, full-5M execution, browser certification, scenario preload, commit, push, or remote CI was performed.",
+    "The canonical database is available but remains schema 26 and was opened read-only.",
+    "The product-master hash written in the prompt pack differs from current tracked bytes; current tracked hash is independently verified and matches earlier full-fresh evidence.",
+    "Product support counts are raw unfiltered observations; later context/window/feature-quality rules can only reduce eligibility."
+  ],
+  "decision": "GO",
+  "decision_reason": "The trusted baseline is reproducible, legacy behavior is pinned by independent golden tests, the approved v3 decision is recorded without rewriting history, source identities and support are reconciled, and all implementation gaps have owners.",
+  "next_stage": "14B_01_REGISTRY_API_SCHEMA_AND_MIGRATION.md"
+}

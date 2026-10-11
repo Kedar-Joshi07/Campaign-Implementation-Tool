@@ -1,0 +1,202 @@
+{
+  "evidence_contract": "LOOKALIKE_V3_STAGE_01_CONTRACT_MIGRATION_V1",
+  "recorded_date": "2026-10-06",
+  "stage": "14B_01_REGISTRY_API_SCHEMA_AND_MIGRATION",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "actual_head": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate_sha": "UNCOMMITTED",
+  "branch": "main",
+  "preceding_stage": {
+    "name": "14B_00_BASELINE_POLICY_AND_GOLDEN_COMPATIBILITY",
+    "status": "GO",
+    "evidence": "docs/evidence/lookalike_v3/00_BASELINE.json"
+  },
+  "working_tree_boundary": {
+    "stage_00_artifacts_were_already_uncommitted": true,
+    "unrelated_changes_preserved": true,
+    "operator_database_modified": false,
+    "canonical_sources_modified": false,
+    "scenario_definitions_modified": false,
+    "commit_or_push_performed": false
+  },
+  "frozen_interface": "docs/evidence/lookalike_v3/01_FROZEN_INTERFACE.json",
+  "contract": {
+    "selection_contract_version": "3",
+    "membership_contract_version": "3",
+    "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+    "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+    "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+    "allowed_similarity_minimums": [0.9, 0.8, 0.7, 0.6, 0.5],
+    "default_similarity_minimum": 0.7,
+    "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+    "probability_readiness_separate": true,
+    "automatic_historical_conversion": false
+  },
+  "schema": {
+    "previous_version": 31,
+    "current_version": 32,
+    "migration_owner": "14B_01",
+    "additive_tables": [
+      "buyer_similarity_profiles",
+      "buyer_similarity_profile_artifacts",
+      "buyer_similarity_score_generations",
+      "buyer_similarity_generation_stages",
+      "buyer_similarity_score_stage",
+      "buyer_similarity_scores",
+      "buyer_similarity_result_snapshots",
+      "similarity_preflight_cache"
+    ],
+    "run_and_attempt_metadata_extended": true,
+    "strict_mode_discriminators": true,
+    "one_published_profile_per_immutable_identity": true,
+    "published_scores_immutable": true,
+    "worker_owner_token_heartbeat_fields": true,
+    "bounded_states_and_messages": true
+  },
+  "api": {
+    "v3_explicit_request_required": true,
+    "unversioned_behavior_unchanged": true,
+    "v1_behavior_unchanged": true,
+    "v2_behavior_unchanged": true,
+    "mixed_similarity_probability_fields_rejected": true,
+    "unsupported_version_rejected": true,
+    "bool_nan_infinity_and_out_of_set_thresholds_rejected": true,
+    "unknown_semantics_rejected": true,
+    "absent_similarity_counts_are_null_not_zero": true,
+    "demographic_count_available_before_similarity_intelligence": true,
+    "queued_dependency_backed_submission_reachable": true,
+    "probability_coordinator_cannot_process_v3_runs": true,
+    "dedicated_similarity_build_execution_stage": "14B_02_TO_14B_05"
+  },
+  "migration_proofs": {
+    "fresh_database": {
+      "status": "PASS",
+      "schema_after": 32,
+      "integrity_check": "ok",
+      "foreign_key_violations": 0
+    },
+    "populated_schema_31_fixture": {
+      "status": "PASS",
+      "v1_and_v2_rows_preserved": true,
+      "semantic_counts_and_ids_unchanged": true,
+      "schema_after": 32
+    },
+    "repeated_initialize": {
+      "status": "PASS",
+      "idempotent": true
+    },
+    "failed_step_rollback": {
+      "status": "PASS",
+      "injected_failure_left_version_31": true,
+      "partial_schema_32_objects_published": false
+    },
+    "direct_sql_invariants": {
+      "status": "PASS",
+      "mixed_mode_insert_rejected": true,
+      "duplicate_published_profile_rejected": true,
+      "unfenced_stage_write_rejected": true,
+      "published_score_mutation_rejected": true
+    },
+    "canonical_database": {
+      "available": true,
+      "source_path": "data/campaign_poc.db",
+      "source_size_bytes": 7574577152,
+      "source_schema_version": 26,
+      "source_opened_read_only": true,
+      "source_modified": false,
+      "prior_exact_copy_26_to_31_status": "PASS",
+      "prior_exact_copy_evidence": "docs/evidence/recovery_hardening/13_6_PRE14_STABILIZATION.json",
+      "prior_source_sha256": "43b6d31ed6c4f33574f2450f3bf1e2ece0ab56d77fd9213e76de9e8e07ef4d77",
+      "stage_01_direct_copy_26_to_32_status": "TIME_BOUNDED",
+      "stage_01_time_limit_seconds": 900,
+      "stage_01_copy_schema_after_interrupt": 26,
+      "stage_01_transaction_rolled_back": true,
+      "stage_01_copy_removed_after_verification": true,
+      "chain_of_proof": "Previously certified exact canonical 26-to-31 migration plus current populated 31-to-32 migration proof",
+      "direct_uninterrupted_26_to_32_certification_claimed": false
+    }
+  },
+  "tests": {
+    "focused_stage_contract": {
+      "command": ".venv\\Scripts\\python.exe -m pytest tests/test_lookalike_v3_contract_migration.py tests/test_lookalike_v3_baseline_compatibility.py tests/test_selection_contract_registry.py -q",
+      "result": "26 passed",
+      "duration_seconds": 58.63
+    },
+    "affected_database_api_compatibility": {
+      "command": ".venv\\Scripts\\python.exe -m pytest tests/test_phase11_api_backward_compatibility.py tests/test_phase11_search_result_registry.py tests/test_database_schema.py -q",
+      "result": "97 passed",
+      "duration_seconds": 383.75
+    },
+    "browser_compatibility": {
+      "full_module_result": "55 passed, 5 failed before reverting an out-of-scope default-form change",
+      "focused_corrected_rerun": "10 passed, 50 deselected",
+      "current_frontend_diff": "NONE",
+      "application_failures_remaining": 0
+    },
+    "lint": {
+      "command": "ruff check <Stage 14B_01 changed Python files>",
+      "result": "All checks passed",
+      "ruff_version": "0.15.20"
+    },
+    "compile": {
+      "command": ".venv\\Scripts\\python.exe -m compileall -q app",
+      "result": "PASS"
+    }
+  },
+  "acceptance_rows": {
+    "A01": "PASS_INHERITED_FROM_14B_00",
+    "A02": "PASS",
+    "A03": "PASS_INHERITED_AND_REGRESSION_VERIFIED",
+    "A04": "PASS_INHERITED_AND_REGRESSION_VERIFIED",
+    "A05": "PASS_INHERITED_AND_REGRESSION_VERIFIED",
+    "A06": "PASS_INHERITED_AND_REGRESSION_VERIFIED",
+    "A07": "PASS",
+    "A08": "PASS",
+    "A09-A45": "NOT_RUN_BY_STAGE_14B_01"
+  },
+  "changed_files": [
+    "README.md",
+    "docs/README.md",
+    "app/selection_contracts.py",
+    "app/database/lookalike_v3_schema.py",
+    "app/database/schema.py",
+    "app/database/phase11_schema.py",
+    "app/repositories/campaign_result_registry_repository.py",
+    "app/schemas/potential_customer_search.py",
+    "app/routers/potential_customer_search.py",
+    "app/services/buyer_similarity_preflight_service.py",
+    "app/services/potential_customer_search_submission_service.py",
+    "app/jobs/phase11_search_coordinator.py",
+    "app/services/phase11_result_contracts.py",
+    "app/services/phase11_results_service.py",
+    "tests/test_lookalike_v3_contract_migration.py",
+    "tests/test_lookalike_v3_baseline_compatibility.py",
+    "docs/evidence/lookalike_v3/01_FROZEN_INTERFACE.json",
+    "docs/evidence/lookalike_v3/01_CONTRACT_MIGRATION.md",
+    "docs/evidence/lookalike_v3/01_CONTRACT_MIGRATION.json"
+  ],
+  "schema_api_data_impact": {
+    "production_schema_allocation": 32,
+    "historical_rows_reinterpreted": false,
+    "historical_probability_artifacts_changed": false,
+    "operator_database_changed": false,
+    "canonical_input_changed": false,
+    "training_run": false,
+    "scoring_run": false,
+    "scenario_run": false
+  },
+  "rollback": {
+    "supported_boundary": "Restore a pre-migration backup and run the schema-31 application before any schema-32 writes; old binaries must not write schema 32.",
+    "automatic_downgrade_supported": false,
+    "forward_migration_is_idempotent": true
+  },
+  "limitations": [
+    "The direct uninterrupted migration of a fresh 7.57 GB canonical copy from schema 26 to 32 exceeded the bounded 15-minute Stage 01 check; it was interrupted, transactionally rolled back to schema 26, and removed. The source database was never modified.",
+    "The v3 API can persist and rejoin a durable queued dependency-backed run, but profile learning and five-million-row similarity scoring are intentionally owned by later stages 14B_02 through 14B_05.",
+    "No v3 business-form integration, v3 export, full-5M execution, scenario execution, remote CI, commit, push, or deployment was performed.",
+    "Runtime correctness, descriptive-model quality, predictive validation, full-5M readiness, and demo readiness remain separate later-stage decisions."
+  ],
+  "decision": "GO",
+  "decision_reason": "Schema 32 and the explicit v3 database/API contract are enforced on fresh and populated disposable databases, invalid mixed identities fail closed, queued v3 dependency creation is reachable, and the affected regressions prove unchanged v1/v2 behavior. The large direct canonical-copy check is disclosed as time-bounded and is supported without overclaiming by the prior exact canonical 26-to-31 proof plus the current populated 31-to-32 proof.",
+  "next_stage": "14B_02_PRODUCT_BUYER_COHORTS_AND_SOURCE_ALIGNMENT.md"
+}

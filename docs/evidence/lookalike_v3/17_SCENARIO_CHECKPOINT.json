@@ -1,0 +1,2324 @@
+{
+  "browser": {
+    "metadata": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headless",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "screenshots": {
+      "1": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_01_run_3.png",
+        "search_run_id": 3,
+        "sha256": "e685a16aff9606bb865fea0599dd1995ef246665d5cd739b1bb4c7b106bc98c2",
+        "technical_details_open": true,
+        "title": "14B17 canonical 01 d168deccf2"
+      },
+      "10": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_10_run_12.png",
+        "search_run_id": 12,
+        "sha256": "3e3c8b86278066419a608ec9b6a8e242771be4c1220e00a5ed5fd6e91b12d15f",
+        "technical_details_open": true,
+        "title": "14B17 canonical 10 d168deccf2"
+      },
+      "11": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_11_run_13.png",
+        "search_run_id": 13,
+        "sha256": "0d8d35f35f7702d0d06b4e1910a3e63b607c84422f3eeac14b717685454facb9",
+        "technical_details_open": true,
+        "title": "14B17 canonical 11 d168deccf2"
+      },
+      "12": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_12_run_14.png",
+        "search_run_id": 14,
+        "sha256": "6dad4438d9aaf3f39f8d359c618288bf522ceb6924a2caec8e4472350237c58f",
+        "technical_details_open": true,
+        "title": "14B17 canonical 12 d168deccf2"
+      },
+      "13": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_13_run_15.png",
+        "search_run_id": 15,
+        "sha256": "4e0499e12810ba638301284880584d09576750b5f13e9891ff854f83c52f296c",
+        "technical_details_open": true,
+        "title": "14B17 canonical 13 d168deccf2"
+      },
+      "14": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_14_run_16.png",
+        "search_run_id": 16,
+        "sha256": "6337b9fe3498372a66d97ea2fa57a1f408c85a00e971007cc4f552650a90e643",
+        "technical_details_open": true,
+        "title": "14B17 canonical 14 d168deccf2"
+      },
+      "15": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_15_run_17.png",
+        "search_run_id": 17,
+        "sha256": "72f18f0f0f79df601e61987cb670c8aac5b4328505c82ac7f9c785849aa0f587",
+        "technical_details_open": true,
+        "title": "14B17 canonical 15 d168deccf2"
+      },
+      "16": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_16_run_18.png",
+        "search_run_id": 18,
+        "sha256": "b624ed2987c4388f114b799c1a35719882db5df56cae85d69fed5f6c1cf84478",
+        "technical_details_open": true,
+        "title": "14B17 canonical 16 d168deccf2"
+      },
+      "17": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_17_run_19.png",
+        "search_run_id": 19,
+        "sha256": "66df59b08c7b2384a8de333163aaf317870f3d4b4caa1e2e35c372ac56f2f8ca",
+        "technical_details_open": true,
+        "title": "14B17 canonical 17 d168deccf2"
+      },
+      "18": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_18_run_20.png",
+        "search_run_id": 20,
+        "sha256": "fb9e289b0631419f4e3e39f1004ee754568dca05cb545a551dc633124a226b15",
+        "technical_details_open": true,
+        "title": "14B17 canonical 18 d168deccf2"
+      },
+      "19": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_19_run_21.png",
+        "search_run_id": 21,
+        "sha256": "458fd495436ddd412f091850f73733daedbfcc2a0a04a01614812d53957be1ad",
+        "technical_details_open": true,
+        "title": "14B17 canonical 19 d168deccf2"
+      },
+      "2": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_02_run_4.png",
+        "search_run_id": 4,
+        "sha256": "a078b7c161119b4808e0a37f79d39a88d9746b0fa8b8e12983d680ece152adf2",
+        "technical_details_open": true,
+        "title": "14B17 canonical 02 d168deccf2"
+      },
+      "20": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_20_run_22.png",
+        "search_run_id": 22,
+        "sha256": "bec12098553cf20f47f88b4f9cdfa3c9387d51b5959fdd4ff101a00c72e9e269",
+        "technical_details_open": true,
+        "title": "14B17 canonical 20 d168deccf2"
+      },
+      "3": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_03_run_5.png",
+        "search_run_id": 5,
+        "sha256": "9c91b540c57246c095796f3f56307d06941c222750edf8000ddc3d01f625b7ee",
+        "technical_details_open": true,
+        "title": "14B17 canonical 03 d168deccf2"
+      },
+      "4": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_04_run_6.png",
+        "search_run_id": 6,
+        "sha256": "63b23dda2134a1c0fc65ab2e9f86b1e1722d4c5dd7ed86b475609bb192fcb868",
+        "technical_details_open": true,
+        "title": "14B17 canonical 04 d168deccf2"
+      },
+      "5": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_05_run_7.png",
+        "search_run_id": 7,
+        "sha256": "1599d66ea9c2fa2b520d25066c0386f3606e22dc0f5f0074326f73b254ce5764",
+        "technical_details_open": true,
+        "title": "14B17 canonical 05 d168deccf2"
+      },
+      "6": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_06_run_8.png",
+        "search_run_id": 8,
+        "sha256": "52ebe04d3fc31556aca8c805397125bb9faa9f406ea1ca8deb90c37d338e5a57",
+        "technical_details_open": true,
+        "title": "14B17 canonical 06 d168deccf2"
+      },
+      "7": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_07_run_9.png",
+        "search_run_id": 9,
+        "sha256": "b8cec394df5c4ea5775184d5ecd79c2e6bc07de7fcd887c2f73cf417f97e5c0d",
+        "technical_details_open": true,
+        "title": "14B17 canonical 07 d168deccf2"
+      },
+      "8": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_08_run_10.png",
+        "search_run_id": 10,
+        "sha256": "99d44dd1021b738c4beec050336535bd1f2796795f566db3679634283491dee0",
+        "technical_details_open": true,
+        "title": "14B17 canonical 08 d168deccf2"
+      },
+      "9": {
+        "buyer_similarity_visible": true,
+        "path": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_09_run_11.png",
+        "search_run_id": 11,
+        "sha256": "9c470871b52da213cc8ff08698b1c45f9efce83f854d32ee5c2dabf2c6e8f180",
+        "technical_details_open": true,
+        "title": "14B17 canonical 09 d168deccf2"
+      }
+    }
+  },
+  "candidate": "UNCOMMITTED",
+  "context_manifest_sha256": "a355dbfca4d65e9522a15653a8fe5665e2f99f59646b4eea59e11828455c6e7c",
+  "created_at": "2026-10-10T06:55:30+00:00",
+  "database": "output\\lookalike_stage16_2_measurements\\certification.db",
+  "preflights": {
+    "1": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 141.775,
+      "legacy_strength": "STRONG",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "a964b21e3c65287775de44eca4899754f46fcda531bdfa636a6887add0ce76ea",
+        "demographic_eligible_count": 1389349,
+        "filter_branches_sha256": "d9eaf4a8b0d27c51f20895bafb095a7d410c8d04698c1a4aa024c555f8a04a4a",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 254233,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.8,
+        "similarity_qualifying_count": 254233,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T06:57:53+00:00",
+      "scenario_id": 1,
+      "scenario_name": "Working-Age Mainstream",
+      "similarity_minimum": 0.8
+    },
+    "10": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 321.424,
+      "legacy_strength": "GOOD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "63b8cb89606b159b7aab52a6267ad0a607bd66ec34ebaf8de47e74ed81a64f40",
+        "demographic_eligible_count": 460423,
+        "filter_branches_sha256": "6ce6eff477fa43dac9e295afddebb678a9f591c89998c9551e272d7576fbd141",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 215443,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.7,
+        "similarity_qualifying_count": 215443,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:42:30+00:00",
+      "scenario_id": 10,
+      "scenario_name": "Older Retired Middle-Income",
+      "similarity_minimum": 0.7
+    },
+    "11": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 321.109,
+      "legacy_strength": "BROAD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "73301ec8f0843beed7a62d3ad9f65150daa758ca4ae936208ef99271e8a69aca",
+        "demographic_eligible_count": 105496,
+        "filter_branches_sha256": "40c0fa8d9c2ffbdab954e98934b55ac853d2a9e88e884086002db8a781a908e0",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 102246,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.6,
+        "similarity_qualifying_count": 102246,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:47:51+00:00",
+      "scenario_id": 11,
+      "scenario_name": "Urban Young Professionals",
+      "similarity_minimum": 0.6
+    },
+    "12": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 301.017,
+      "legacy_strength": "BROAD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "cb98e2ca22eb4477543184258ee9181d594d19c34bc143af426eda2d1670a7e8",
+        "demographic_eligible_count": 129595,
+        "filter_branches_sha256": "3411fe4bf2e30d7a8afe0e5223020e7e9063cc85d3f38f7a4ade3e08d0afbd53",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 128122,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.6,
+        "similarity_qualifying_count": 128122,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:52:52+00:00",
+      "scenario_id": 12,
+      "scenario_name": "Established Inner-Suburban Families",
+      "similarity_minimum": 0.6
+    },
+    "13": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 312.096,
+      "legacy_strength": "BROAD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "59b6bc2d0ba447c4abbffb471d01d3a79d434f2d6fbb9f737a98765f10d79791",
+        "demographic_eligible_count": 159164,
+        "filter_branches_sha256": "7c5fc49b4b63d8369b49f0c4125b63d9ec7703fa8962c21da260dc6afefff658",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 131253,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.6,
+        "similarity_qualifying_count": 131253,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:58:04+00:00",
+      "scenario_id": 13,
+      "scenario_name": "Self-Employed / Gig Professionals",
+      "similarity_minimum": 0.6
+    },
+    "14": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 345.388,
+      "legacy_strength": "GOOD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "cb0bdba39dbcd733ff544f96a4976eee83d415220b4268f34395b635e7a05a52",
+        "demographic_eligible_count": 840022,
+        "filter_branches_sha256": "de9f2231cc8cbea0e09e2add2cedb0c49551a8b2240223d8c790943897c44f91",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 627218,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.7,
+        "similarity_qualifying_count": 627218,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T08:03:50+00:00",
+      "scenario_id": 14,
+      "scenario_name": "Private-Sector Urban/Suburban Workforce",
+      "similarity_minimum": 0.7
+    },
+    "15": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 345.612,
+      "legacy_strength": "GOOD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "e6963ffe5963ee383746035a0bd964021d38d777d98a1567331a63563c6370fe",
+        "demographic_eligible_count": 202805,
+        "filter_branches_sha256": "5d7c835440d9a63ccb49e2f856bc69df32ec21106e0b385fc727f26c6e14fecb",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 138667,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.7,
+        "similarity_qualifying_count": 138667,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T08:09:35+00:00",
+      "scenario_id": 15,
+      "scenario_name": "Women \u2014 Four Largest Markets",
+      "similarity_minimum": 0.7
+    },
+    "16": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 322.132,
+      "legacy_strength": "BROAD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "38a2fd9fa1886992df3a0b194b313e05850703095049ace961c3318db47a7432",
+        "demographic_eligible_count": 133497,
+        "filter_branches_sha256": "cd166b78787aa26b1f1cc976398a9473f1702df3a8292d1d6dfe0fcf1c497055",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 128120,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.6,
+        "similarity_qualifying_count": 128120,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T08:14:58+00:00",
+      "scenario_id": 16,
+      "scenario_name": "Men \u2014 Four Largest Markets",
+      "similarity_minimum": 0.6
+    },
+    "17": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 297.409,
+      "legacy_strength": "BROAD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "fe72f86cb66e0a9b493e934e45d4ab02460a3f23081c54fa5219be9064fbe79a",
+        "demographic_eligible_count": 156188,
+        "filter_branches_sha256": "8e8c203fb205a68baee280aee56ad3367d610b7ab62a3342d926911c7b23b6ca",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 146363,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.6,
+        "similarity_qualifying_count": 146363,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T08:19:55+00:00",
+      "scenario_id": 17,
+      "scenario_name": "Higher-Education / Higher-Income",
+      "similarity_minimum": 0.6
+    },
+    "18": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 155.241,
+      "legacy_strength": "STRONG",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "ac559accd1e483b7d9e8e0332cc50a95fe09ee05d629b951a79e507b0a6915d7",
+        "demographic_eligible_count": 948268,
+        "filter_branches_sha256": "998b8ea7540dbd838c53fb1d705fe5fd403d3e52f69311ac48df39c2093767a6",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 74630,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.8,
+        "similarity_qualifying_count": 74630,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T08:22:30+00:00",
+      "scenario_id": 18,
+      "scenario_name": "Young Value Seekers",
+      "similarity_minimum": 0.8
+    },
+    "19": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 242.492,
+      "legacy_strength": "BROAD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "0b5890b6280a48a7d1209b1d201e805662dd88e92f59ee26aadcfa99f1c70e7b",
+        "demographic_eligible_count": 212846,
+        "filter_branches_sha256": "e02d2ae059074a9895f3ed9dd05db1bb205f552154a257e133d70e5325bb80c9",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 209751,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.6,
+        "similarity_qualifying_count": 209751,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T08:26:33+00:00",
+      "scenario_id": 19,
+      "scenario_name": "Mature Suburban Households",
+      "similarity_minimum": 0.6
+    },
+    "2": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 165.535,
+      "legacy_strength": "GOOD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "57428a1e72a89d7eb92166e20d05938646d10514caafdba8e3a770d48e6fd63f",
+        "demographic_eligible_count": 168533,
+        "filter_branches_sha256": "a0d513431156fb1c6faca593fbfd2e84fc2b4b452c206be03ef5c921cf52eaee",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 133886,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.7,
+        "similarity_qualifying_count": 133886,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:00:38+00:00",
+      "scenario_id": 2,
+      "scenario_name": "CA + TX Younger Professionals",
+      "similarity_minimum": 0.7
+    },
+    "20": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 9.848,
+      "legacy_strength": "VERY_STRONG",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": true,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "b8c8426aed1061bcf77ad6113286ae446c56d3144861285f147a14d3be29220f",
+        "demographic_eligible_count": 2114560,
+        "filter_branches_sha256": "41c0dde534e4cefc6a1b18eddf66c01614fcc364eaea7c78abe70f4d632189e5",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 25765,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.9,
+        "similarity_qualifying_count": 25765,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T08:26:43+00:00",
+      "scenario_id": 20,
+      "scenario_name": "National High-Confidence Match",
+      "similarity_minimum": 0.9
+    },
+    "3": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 209.799,
+      "legacy_strength": "GOOD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "11c8ceb119b3226de6833dd209c46077d34523a9ef66e87b14faf7900f78a509",
+        "demographic_eligible_count": 258616,
+        "filter_branches_sha256": "804adc783423e0aa5c2cd5b2c7db463e83fc3802e205d83492f3877dfbcce554",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 137516,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.7,
+        "similarity_qualifying_count": 137516,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:04:08+00:00",
+      "scenario_id": 3,
+      "scenario_name": "NY/NJ/FL Mature Middle Income",
+      "similarity_minimum": 0.7
+    },
+    "4": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 308.95,
+      "legacy_strength": "BROAD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "0806534afdde3f7549986490dbcc0570718baaa249a2ddf161aba7a48f03cf6c",
+        "demographic_eligible_count": 182172,
+        "filter_branches_sha256": "97d0289e87ce5daed1620e3306f4663e0bf8cfbfe94f9dd7f57fd8cacfa850d2",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 171988,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.6,
+        "similarity_qualifying_count": 171988,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:09:17+00:00",
+      "scenario_id": 4,
+      "scenario_name": "Midwest Value Market",
+      "similarity_minimum": 0.6
+    },
+    "5": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 311.136,
+      "legacy_strength": "GOOD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "c741bd0f4f64a1aff73b06a45fe7082b0256d256cdaded115b5f63a91687d58e",
+        "demographic_eligible_count": 167301,
+        "filter_branches_sha256": "157a80d5d9210ecfc5f1531b8b2b6540ad639dad13d17093b60212bd9a062ca1",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 131247,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.7,
+        "similarity_qualifying_count": 131247,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:14:28+00:00",
+      "scenario_id": 5,
+      "scenario_name": "Western Growth Markets",
+      "similarity_minimum": 0.7
+    },
+    "6": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 350.833,
+      "legacy_strength": "BROAD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "fe82c2933f423fee21fe4a48dde20050418f46d8fed89f23020c777acd242ba4",
+        "demographic_eligible_count": 74514,
+        "filter_branches_sha256": "720516817dac98a489e92df765b4b81d7218f49303b64e55de6d3605d042ba8d",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 67625,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.6,
+        "similarity_qualifying_count": 67625,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:20:19+00:00",
+      "scenario_id": 6,
+      "scenario_name": "East Coast Affluent Professionals",
+      "similarity_minimum": 0.6
+    },
+    "7": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 325.103,
+      "legacy_strength": "GOOD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "52390f3e11c80b7efc58b0ed8509a038156e34e436f96eb00456db36d7834aa0",
+        "demographic_eligible_count": 265247,
+        "filter_branches_sha256": "c15aed7d649455534df97e8b226445d785c89d30bfc9bf4fc66051a338c2f215",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 163260,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.7,
+        "similarity_qualifying_count": 163260,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:25:44+00:00",
+      "scenario_id": 7,
+      "scenario_name": "Southern Family-Value Market",
+      "similarity_minimum": 0.7
+    },
+    "8": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 339.215,
+      "legacy_strength": "BROAD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "7137846a2f5105d329b3c19398893eb8832c78e9dd8da3e2f8be40b2ab0d4d0d",
+        "demographic_eligible_count": 164862,
+        "filter_branches_sha256": "932f5336aa6613f8715a05ebe5bdef6c75de3828636113200fb66caa6b5525b8",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 161368,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.6,
+        "similarity_qualifying_count": 161368,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:31:23+00:00",
+      "scenario_id": 8,
+      "scenario_name": "Married Family Households",
+      "similarity_minimum": 0.6
+    },
+    "9": {
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "elapsed_seconds": 344.971,
+      "legacy_strength": "BROAD",
+      "preflight": {
+        "build_available": true,
+        "cache_hit": false,
+        "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+        "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "criteria_sha256": "7120a2161e5e56476177145ed0452dc72f0b6eb010ac79cec434fddd8859e516",
+        "demographic_eligible_count": 148110,
+        "filter_branches_sha256": "973cbe51297228b033699ce11449fa361dce4281412b0266b4ccbd0f2675db52",
+        "invalid_similarity_count": 0,
+        "probability_currentness": null,
+        "probability_eligibility": null,
+        "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+        "profile_ids": [
+          3,
+          4,
+          5
+        ],
+        "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "publication_cutoff": "2026-10-10T05:34:25Z",
+        "reason_code": "ELIGIBLE",
+        "safe_message": "Current buyer similarity is ready.",
+        "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+        "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+        "selected_count": 142089,
+        "selection_contract_version": "3",
+        "selection_mode": "ALL_MATCHING",
+        "similarity_currentness": "CURRENT",
+        "similarity_eligibility": "ELIGIBLE",
+        "similarity_generation_id": 3,
+        "similarity_generation_ids": [
+          3,
+          4,
+          5
+        ],
+        "similarity_minimum": 0.6,
+        "similarity_qualifying_count": 142089,
+        "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+        "source_snapshot_version": "LATEST_IMPORT_IDENTITY_V1",
+        "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+        "top_n": null,
+        "valid_similarity_count": 5000000,
+        "work_estimate": {
+          "missing_profile_count": 0,
+          "missing_score_generation_count": 0,
+          "operator_confirmation_recommended": false,
+          "product_count": 3
+        }
+      },
+      "qualifies": true,
+      "recorded_at": "2026-10-10T07:37:08+00:00",
+      "scenario_id": 9,
+      "scenario_name": "Educated Full-Time Professionals",
+      "similarity_minimum": 0.6
+    }
+  },
+  "qualification_minimum": 10000,
+  "recorded_context": {
+    "campaign_categories": [],
+    "campaign_channel": "EMAIL",
+    "campaign_types": [],
+    "historical_campaign_channels": [],
+    "offer_types": [],
+    "product_ids": [
+      "PRD001",
+      "PRD003",
+      "PRD004"
+    ]
+  },
+  "runs": {
+    "1": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 01 d168deccf2",
+      "created_at": "2026-10-10T09:56:35+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 254233,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 2
+      },
+      "membership": {
+        "member_count": 254233,
+        "membership_sha256": "4f9e1c62cf43a7703b7e804a50d963f4cfe271bce24d0a646a921ccda28a95ec",
+        "storage_uri": "artifacts/similarity_results/snapshot_000002/members.csv.gz"
+      },
+      "poll_wait_seconds": 286.617,
+      "processing_seconds": 283.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 254233,
+        "selection_label": "Buyer Similarity"
+      },
+      "representative_export": {
+        "bytes": 26709301,
+        "contact_data_saved": false,
+        "elapsed_seconds": 19.378,
+        "first_byte_seconds": 10.034,
+        "status": "PASS",
+        "stream_sha256": "ca740a3d009537f87fdf5e9496dceae44c8f076d4ac6792442b14537ca8bc6ad"
+      },
+      "scenario_id": 1,
+      "search_run_id": 3,
+      "submission_seconds": 1.472,
+      "terminal_at": "2026-10-10T10:01:22+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 284.0
+    },
+    "10": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 10 d168deccf2",
+      "created_at": "2026-10-10T15:50:31+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 215443,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 11
+      },
+      "membership": {
+        "member_count": 215443,
+        "membership_sha256": "4eae7703fc033bbc1f100def794dc2d6095f749d4b4bb2f2a1fe5eeb2034b64b",
+        "storage_uri": "artifacts/similarity_results/snapshot_000011/members.csv.gz"
+      },
+      "poll_wait_seconds": 712.406,
+      "processing_seconds": 711.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 215443,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 10,
+      "search_run_id": 12,
+      "submission_seconds": 0.772,
+      "terminal_at": "2026-10-10T16:02:23+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 712.0
+    },
+    "11": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 11 d168deccf2",
+      "created_at": "2026-10-10T16:02:31+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 102246,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 12
+      },
+      "membership": {
+        "member_count": 102246,
+        "membership_sha256": "452adfac7a91201656972f8090586d6b76fee6595007662f87c62f4ef202961d",
+        "storage_uri": "artifacts/similarity_results/snapshot_000012/members.csv.gz"
+      },
+      "poll_wait_seconds": 805.649,
+      "processing_seconds": 801.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 102246,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 11,
+      "search_run_id": 13,
+      "submission_seconds": 0.695,
+      "terminal_at": "2026-10-10T16:15:57+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 801.0
+    },
+    "12": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 12 d168deccf2",
+      "created_at": "2026-10-10T16:16:01+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 128122,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 13
+      },
+      "membership": {
+        "member_count": 128122,
+        "membership_sha256": "82b7bea77e9bd85e1c7f84ddcbdcb971900d152f8c68c09ff18383c9b1c31bd7",
+        "storage_uri": "artifacts/similarity_results/snapshot_000013/members.csv.gz"
+      },
+      "poll_wait_seconds": 1074.575,
+      "processing_seconds": 1069.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 128122,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 12,
+      "search_run_id": 14,
+      "submission_seconds": 0.908,
+      "terminal_at": "2026-10-10T16:33:56+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 1069.0
+    },
+    "13": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 13 d168deccf2",
+      "created_at": "2026-10-10T16:34:07+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 131253,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 14
+      },
+      "membership": {
+        "member_count": 131253,
+        "membership_sha256": "32b377c2aa349bf8b6479e24dd424c84d335525d94ae0c185641ec0a2eb4d44c",
+        "storage_uri": "artifacts/similarity_results/snapshot_000014/members.csv.gz"
+      },
+      "poll_wait_seconds": 1439.777,
+      "processing_seconds": 1438.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 131253,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 13,
+      "search_run_id": 15,
+      "submission_seconds": 1.279,
+      "terminal_at": "2026-10-10T16:58:07+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 1439.0
+    },
+    "14": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 14 d168deccf2",
+      "created_at": "2026-10-10T16:58:19+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 627218,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 15
+      },
+      "membership": {
+        "member_count": 627218,
+        "membership_sha256": "9942788065def1ebf4295c8ad1de7072c3674a77caa592b35f0dfb2672f39ef4",
+        "storage_uri": "artifacts/similarity_results/snapshot_000015/members.csv.gz"
+      },
+      "poll_wait_seconds": 4210.348,
+      "processing_seconds": 4198.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 627218,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 14,
+      "search_run_id": 16,
+      "submission_seconds": 1.233,
+      "terminal_at": "2026-10-10T18:08:23+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 4199.0
+    },
+    "15": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 15 d168deccf2",
+      "created_at": "2026-10-10T18:08:31+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 138667,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 16
+      },
+      "membership": {
+        "member_count": 138667,
+        "membership_sha256": "ad50861e390f9a6ab79ccea6af43ad477164b1652ef696d9371412df068e17be",
+        "storage_uri": "artifacts/similarity_results/snapshot_000016/members.csv.gz"
+      },
+      "poll_wait_seconds": 409.355,
+      "processing_seconds": 408.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 138667,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 15,
+      "search_run_id": 17,
+      "submission_seconds": 0.44,
+      "terminal_at": "2026-10-10T18:15:21+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 408.0
+    },
+    "16": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 16 d168deccf2",
+      "created_at": "2026-10-10T18:15:23+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 128120,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 17
+      },
+      "membership": {
+        "member_count": 128120,
+        "membership_sha256": "d3f9920ec6ecfe32ec148d2e6647b4abff9e415ab76ce1faa94836b730ceaddb",
+        "storage_uri": "artifacts/similarity_results/snapshot_000017/members.csv.gz"
+      },
+      "poll_wait_seconds": 480.156,
+      "processing_seconds": 479.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 128120,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 16,
+      "search_run_id": 18,
+      "submission_seconds": 0.429,
+      "terminal_at": "2026-10-10T18:23:24+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 479.0
+    },
+    "17": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 17 d168deccf2",
+      "created_at": "2026-10-10T18:23:27+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 146363,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 18
+      },
+      "membership": {
+        "member_count": 146363,
+        "membership_sha256": "7d91c78aacb20bd5ee2a189dc626a8010688fb8913299ebb8b90a095b9a0a41b",
+        "storage_uri": "artifacts/similarity_results/snapshot_000018/members.csv.gz"
+      },
+      "poll_wait_seconds": 510.943,
+      "processing_seconds": 510.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 146363,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 17,
+      "search_run_id": 19,
+      "submission_seconds": 0.365,
+      "terminal_at": "2026-10-10T18:31:58+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 510.0
+    },
+    "18": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 18 d168deccf2",
+      "created_at": "2026-10-10T18:32:04+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 74630,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 19
+      },
+      "membership": {
+        "member_count": 74630,
+        "membership_sha256": "350e058594f9dde06083512feabf678db36a42f1748efed75e03eb29f0e7c47a",
+        "storage_uri": "artifacts/similarity_results/snapshot_000019/members.csv.gz"
+      },
+      "poll_wait_seconds": 187.177,
+      "processing_seconds": 183.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 74630,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 18,
+      "search_run_id": 20,
+      "submission_seconds": 0.498,
+      "terminal_at": "2026-10-10T18:35:11+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 184.0
+    },
+    "19": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 19 d168deccf2",
+      "created_at": "2026-10-10T18:35:13+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 209751,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 20
+      },
+      "membership": {
+        "member_count": 209751,
+        "membership_sha256": "fbdd1d09b95f7c07749f4d5154a4bdab0922af7e4c52ee1ee40a8d9f372c399d",
+        "storage_uri": "artifacts/similarity_results/snapshot_000020/members.csv.gz"
+      },
+      "poll_wait_seconds": 561.67,
+      "processing_seconds": 558.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 209751,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 19,
+      "search_run_id": 21,
+      "submission_seconds": 0.427,
+      "terminal_at": "2026-10-10T18:44:35+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 558.0
+    },
+    "2": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 02 d168deccf2",
+      "created_at": "2026-10-10T10:01:30+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 133886,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 3
+      },
+      "membership": {
+        "member_count": 133886,
+        "membership_sha256": "10c405bcc9a767c1f70326124cea7a9cf56e30612965ee856f98277e441c5d16",
+        "storage_uri": "artifacts/similarity_results/snapshot_000003/members.csv.gz"
+      },
+      "poll_wait_seconds": 628.178,
+      "processing_seconds": 625.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 133886,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 2,
+      "search_run_id": 4,
+      "submission_seconds": 1.183,
+      "terminal_at": "2026-10-10T10:11:58+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 626.0
+    },
+    "20": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 20 d168deccf2",
+      "created_at": "2026-10-10T18:44:39+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "EXACT_RESULT_REUSE",
+        "selected_count": 25765,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 1
+      },
+      "membership": {
+        "member_count": 25765,
+        "membership_sha256": "8905567a1611c8d2851ac6a3f2ccb3691e2b14b8aa097207fcec574e0a1c9895",
+        "storage_uri": "artifacts/similarity_results/snapshot_000001/members.csv.gz"
+      },
+      "poll_wait_seconds": 20.244,
+      "processing_seconds": 18.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 25765,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 20,
+      "search_run_id": 22,
+      "submission_seconds": 0.38,
+      "terminal_at": "2026-10-10T18:44:59+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 19.0
+    },
+    "3": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 03 d168deccf2",
+      "created_at": "2026-10-10T10:12:03+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 137516,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 4
+      },
+      "membership": {
+        "member_count": 137516,
+        "membership_sha256": "c61b81adb2d22b768a8b48d2491bf0265c48d8604bcdef77a0938d524e304507",
+        "storage_uri": "artifacts/similarity_results/snapshot_000004/members.csv.gz"
+      },
+      "poll_wait_seconds": 473.083,
+      "processing_seconds": 469.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 137516,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 3,
+      "search_run_id": 5,
+      "submission_seconds": 0.903,
+      "terminal_at": "2026-10-10T10:19:56+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 469.0
+    },
+    "4": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 04 d168deccf2",
+      "created_at": "2026-10-10T10:20:01+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 171988,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 5
+      },
+      "membership": {
+        "member_count": 171988,
+        "membership_sha256": "afdfebd661e5f850ccb66d5266e95a385f4701123401e70ff7a951c2f02d2ce5",
+        "storage_uri": "artifacts/similarity_results/snapshot_000005/members.csv.gz"
+      },
+      "poll_wait_seconds": 1080.528,
+      "processing_seconds": 1077.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 171988,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 4,
+      "search_run_id": 6,
+      "submission_seconds": 1.047,
+      "terminal_at": "2026-10-10T10:38:02+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 1077.0
+    },
+    "5": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 05 d168deccf2",
+      "created_at": "2026-10-10T10:38:16+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 131247,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 6
+      },
+      "membership": {
+        "member_count": 131247,
+        "membership_sha256": "1b623bc0ac39d3378561460678656b5f4a18005107bf04c9c1adc074064b5d29",
+        "storage_uri": "artifacts/similarity_results/snapshot_000006/members.csv.gz"
+      },
+      "poll_wait_seconds": 899.157,
+      "processing_seconds": 898.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 131247,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 5,
+      "search_run_id": 7,
+      "submission_seconds": 1.157,
+      "terminal_at": "2026-10-10T10:53:15+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 899.0
+    },
+    "6": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 06 d168deccf2",
+      "created_at": "2026-10-10T10:53:19+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 67625,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 7
+      },
+      "membership": {
+        "member_count": 67625,
+        "membership_sha256": "1fd0aafd83cbcce862ef6dc6dccdb06638294ebec1a42de906f6a9705f3d2c48",
+        "storage_uri": "artifacts/similarity_results/snapshot_000007/members.csv.gz"
+      },
+      "poll_wait_seconds": 354.202,
+      "processing_seconds": 353.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 67625,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 6,
+      "search_run_id": 8,
+      "submission_seconds": 0.38,
+      "terminal_at": "2026-10-10T10:59:14+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 353.0
+    },
+    "7": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 07 d168deccf2",
+      "created_at": "2026-10-10T10:59:16+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 163260,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 8
+      },
+      "membership": {
+        "member_count": 163260,
+        "membership_sha256": "c83fd555cbd253d8e4c2b74f297ac04373910b698f6a90e561ae1c38c6c0569f",
+        "storage_uri": "artifacts/similarity_results/snapshot_000008/members.csv.gz"
+      },
+      "poll_wait_seconds": 619.933,
+      "processing_seconds": 15865.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 163260,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 7,
+      "search_run_id": 9,
+      "submission_seconds": 0.474,
+      "terminal_at": "2026-10-10T15:23:43+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 15865.0
+    },
+    "8": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 08 d168deccf2",
+      "created_at": "2026-10-10T15:23:48+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 161368,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 9
+      },
+      "membership": {
+        "member_count": 161368,
+        "membership_sha256": "260848072f457e0dc627f9e7d6c0516b5a75a1d42209236ab63739429a62afb5",
+        "storage_uri": "artifacts/similarity_results/snapshot_000009/members.csv.gz"
+      },
+      "poll_wait_seconds": 853.506,
+      "processing_seconds": 850.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 161368,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 8,
+      "search_run_id": 10,
+      "submission_seconds": 0.699,
+      "terminal_at": "2026-10-10T15:38:01+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 851.0
+    },
+    "9": {
+      "attempt_number": 1,
+      "campaign_name": "14B17 canonical 09 d168deccf2",
+      "created_at": "2026-10-10T15:38:06+00:00",
+      "created_status": "QUEUED",
+      "exact_count_match": true,
+      "issue": null,
+      "last_stage": "COMPLETED",
+      "last_status": "COMPLETED",
+      "lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 142089,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 10
+      },
+      "membership": {
+        "member_count": 142089,
+        "membership_sha256": "04c85c47f46cbf60ceb3530b67c279089c5575b780b4fb885d45517f35c064c9",
+        "storage_uri": "artifacts/similarity_results/snapshot_000010/members.csv.gz"
+      },
+      "poll_wait_seconds": 740.589,
+      "processing_seconds": 737.0,
+      "reopen": {
+        "currentness": "CURRENT",
+        "download_eligible": true,
+        "export_summary": null,
+        "resolved_count": 142089,
+        "selection_label": "Buyer Similarity"
+      },
+      "scenario_id": 9,
+      "search_run_id": 11,
+      "submission_seconds": 0.474,
+      "terminal_at": "2026-10-10T15:50:26+00:00",
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 738.0
+    }
+  },
+  "scenario_json_sha256": "d168deccf2f7cf9723b5bc08a4b99bf0dc49325309c1a402cd59ba4beabb2b77",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "version": "14B_17_CANONICAL_V3_V1"
+}

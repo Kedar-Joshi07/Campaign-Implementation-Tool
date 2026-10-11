@@ -1,0 +1,232 @@
+{
+  "recorded_date": "2026-10-05",
+  "repository_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "source_path": "data/campaign_sales_570000.csv.gz",
+  "source_sha256": "89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116",
+  "product_master_path": "data/product_master.csv",
+  "product_master_sha256": "82f55d63f3d043d978fc6a136e05c50f9cb25d575d7deb99cab6a08ede853b3c",
+  "observed_sales_rows": 570000,
+  "observed_distinct_customers": 119909,
+  "observed_distinct_products": 36,
+  "catalog_products": 48,
+  "buyer_definition": "campaign_attributed_sale_flag == 1; distinct customer_id per product; no added context/window/feature-quality filtering",
+  "scope": "Fresh CSV observation; not v3 model eligibility or canonical DB verification",
+  "products": [
+    {
+      "product_id": "PRD001",
+      "name": "Wireless Earbuds 01",
+      "rows": 3346,
+      "distinct_attributed_buyers": 200
+    },
+    {
+      "product_id": "PRD002",
+      "name": "Portable Speaker 02",
+      "rows": 18510,
+      "distinct_attributed_buyers": 930
+    },
+    {
+      "product_id": "PRD003",
+      "name": "Tablet 03",
+      "rows": 5353,
+      "distinct_attributed_buyers": 251
+    },
+    {
+      "product_id": "PRD004",
+      "name": "Laptop 04",
+      "rows": 27056,
+      "distinct_attributed_buyers": 1461
+    },
+    {
+      "product_id": "PRD005",
+      "name": "Smart Watch 05",
+      "rows": 3943,
+      "distinct_attributed_buyers": 273
+    },
+    {
+      "product_id": "PRD006",
+      "name": "Portable SSD 06",
+      "rows": 21766,
+      "distinct_attributed_buyers": 755
+    },
+    {
+      "product_id": "PRD007",
+      "name": "Air Fryer 07",
+      "rows": 34867,
+      "distinct_attributed_buyers": 2629
+    },
+    {
+      "product_id": "PRD008",
+      "name": "Coffee Maker 08",
+      "rows": 35810,
+      "distinct_attributed_buyers": 2263
+    },
+    {
+      "product_id": "PRD009",
+      "name": "Vacuum Cleaner 09",
+      "rows": 30159,
+      "distinct_attributed_buyers": 1955
+    },
+    {
+      "product_id": "PRD010",
+      "name": "Cookware Set 10",
+      "rows": 8620,
+      "distinct_attributed_buyers": 237
+    },
+    {
+      "product_id": "PRD011",
+      "name": "Water Purifier 11",
+      "rows": 14210,
+      "distinct_attributed_buyers": 614
+    },
+    {
+      "product_id": "PRD012",
+      "name": "Stand Mixer 12",
+      "rows": 13490,
+      "distinct_attributed_buyers": 693
+    },
+    {
+      "product_id": "PRD013",
+      "name": "Fitness Band 13",
+      "rows": 27719,
+      "distinct_attributed_buyers": 1808
+    },
+    {
+      "product_id": "PRD014",
+      "name": "Yoga Kit 14",
+      "rows": 26171,
+      "distinct_attributed_buyers": 2598
+    },
+    {
+      "product_id": "PRD015",
+      "name": "Adjustable Dumbbell Set 15",
+      "rows": 14932,
+      "distinct_attributed_buyers": 774
+    },
+    {
+      "product_id": "PRD016",
+      "name": "Massage Device 16",
+      "rows": 9944,
+      "distinct_attributed_buyers": 631
+    },
+    {
+      "product_id": "PRD017",
+      "name": "Exercise Bike 17",
+      "rows": 6892,
+      "distinct_attributed_buyers": 421
+    },
+    {
+      "product_id": "PRD018",
+      "name": "Nutrition Blender 18",
+      "rows": 33822,
+      "distinct_attributed_buyers": 1426
+    },
+    {
+      "product_id": "PRD019",
+      "name": "Electric Grooming Kit 19",
+      "rows": 10846,
+      "distinct_attributed_buyers": 634
+    },
+    {
+      "product_id": "PRD020",
+      "name": "Skin Care Set 20",
+      "rows": 2174,
+      "distinct_attributed_buyers": 142
+    },
+    {
+      "product_id": "PRD021",
+      "name": "Hair Styling Tool 21",
+      "rows": 10424,
+      "distinct_attributed_buyers": 677
+    },
+    {
+      "product_id": "PRD022",
+      "name": "Electric Toothbrush 22",
+      "rows": 3435,
+      "distinct_attributed_buyers": 78
+    },
+    {
+      "product_id": "PRD023",
+      "name": "Personal Care Bundle 23",
+      "rows": 12227,
+      "distinct_attributed_buyers": 721
+    },
+    {
+      "product_id": "PRD024",
+      "name": "Travel Grooming Kit 24",
+      "rows": 41544,
+      "distinct_attributed_buyers": 1932
+    },
+    {
+      "product_id": "PRD025",
+      "name": "Everyday Jacket 25",
+      "rows": 24144,
+      "distinct_attributed_buyers": 1873
+    },
+    {
+      "product_id": "PRD027",
+      "name": "Travel Backpack 27",
+      "rows": 13436,
+      "distinct_attributed_buyers": 936
+    },
+    {
+      "product_id": "PRD028",
+      "name": "Casual Watch 28",
+      "rows": 20042,
+      "distinct_attributed_buyers": 663
+    },
+    {
+      "product_id": "PRD029",
+      "name": "Premium Wallet 29",
+      "rows": 19209,
+      "distinct_attributed_buyers": 817
+    },
+    {
+      "product_id": "PRD030",
+      "name": "Athleisure Set 30",
+      "rows": 2921,
+      "distinct_attributed_buyers": 133
+    },
+    {
+      "product_id": "PRD031",
+      "name": "Camping Tent 31",
+      "rows": 11950,
+      "distinct_attributed_buyers": 624
+    },
+    {
+      "product_id": "PRD032",
+      "name": "Hiking Pack 32",
+      "rows": 21637,
+      "distinct_attributed_buyers": 1481
+    },
+    {
+      "product_id": "PRD037",
+      "name": "Ergonomic Chair 37",
+      "rows": 8498,
+      "distinct_attributed_buyers": 642
+    },
+    {
+      "product_id": "PRD038",
+      "name": "Mechanical Keyboard 38",
+      "rows": 4269,
+      "distinct_attributed_buyers": 133
+    },
+    {
+      "product_id": "PRD039",
+      "name": "Monitor 39",
+      "rows": 6962,
+      "distinct_attributed_buyers": 604
+    },
+    {
+      "product_id": "PRD040",
+      "name": "Webcam 40",
+      "rows": 13380,
+      "distinct_attributed_buyers": 1182
+    },
+    {
+      "product_id": "PRD043",
+      "name": "Smart Speaker 43",
+      "rows": 6292,
+      "distinct_attributed_buyers": 564
+    }
+  ]
+}

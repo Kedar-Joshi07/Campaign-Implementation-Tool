@@ -33,6 +33,7 @@ from app.services.phase10_orchestration_service import (
     reconcile_phase10_orchestrations,
 )
 from app.services.phase11_export_service import reconcile_stale_result_export_events
+from app.services.buyer_similarity_result_service import reconcile_similarity_result_publications
 from app.services.phase11_result_snapshot_service import ResultSnapshotMaterializer
 from app.services.potential_customer_search_submission_service import (
     configure_phase11_search_executor,
@@ -150,6 +151,16 @@ async def lifespan(_: FastAPI):
         )
     except Exception:
         logger.exception("Result export startup reconciliation failed")
+    try:
+        orphaned_similarity_artifacts = reconcile_similarity_result_publications(
+            runtime_database_path, project_root=PROJECT_ROOT,
+        )
+        logger.info(
+            "Similarity result startup reconciliation completed | removed_old_unregistered=%s",
+            orphaned_similarity_artifacts,
+        )
+    except Exception:
+        logger.exception("Similarity result startup reconciliation failed")
     try:
         yield
     finally:

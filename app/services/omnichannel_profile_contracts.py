@@ -9,7 +9,7 @@ for every declared profile; runtime source availability is still checked.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import re
 from types import MappingProxyType
@@ -59,6 +59,12 @@ BASE_EXPORT_COLUMNS = (
     "decile",
     "rank_band",
 )
+SIMILARITY_EXPORT_COLUMNS = (
+    "person_id", "buyer_similarity_score", "similarity_tier",
+    "matched_product_id", "score_method_version", "feature_coverage",
+    "similarity_generation_id",
+)
+SIMILARITY_CONTACT_ONLY_COLUMNS = ("person_id",)
 
 OMNICHANNEL_AUDIT_FIELDS = (
     "export_event_id",
@@ -354,9 +360,29 @@ _PROFILES = (
     ),
 )
 
-OMNICHANNEL_PROFILE_REGISTRY: Mapping[str, OmnichannelExportProfile] = (
-    MappingProxyType({profile.export_profile: profile for profile in _PROFILES})
-)
+def _similarity_profile(profile: OmnichannelExportProfile, *, analytical: bool) -> OmnichannelExportProfile:
+    suffix = "_V2" if analytical else "_CONTACT_ONLY_V2"
+    name = profile.export_profile.removesuffix("_V1") + suffix
+    columns = (SIMILARITY_EXPORT_COLUMNS if analytical else SIMILARITY_CONTACT_ONLY_COLUMNS) + (
+        profile.output_columns[len(BASE_EXPORT_COLUMNS):]
+    )
+    return replace(
+        profile, export_profile=name, profile_version="2", output_columns=columns,
+        field_allowlist=columns, prohibited_fields=_profile_prohibited_fields(columns),
+    )
+
+
+SIMILARITY_PROFILE_REGISTRY: Mapping[str, OmnichannelExportProfile] = MappingProxyType({
+    derived.export_profile: derived
+    for original in _PROFILES
+    for derived in (
+        _similarity_profile(original, analytical=True),
+        _similarity_profile(original, analytical=False),
+    )
+})
+OMNICHANNEL_PROFILE_REGISTRY: Mapping[str, OmnichannelExportProfile] = MappingProxyType({
+    profile.export_profile: profile for profile in _PROFILES
+})
 CHANNEL_OMNICHANNEL_PROFILE: Mapping[str, str] = MappingProxyType(
     {profile.channel_code: profile.export_profile for profile in _PROFILES}
 )
@@ -369,12 +395,15 @@ def get_omnichannel_profile(export_profile: str) -> OmnichannelExportProfile:
         raise ValueError("export_profile must be text.")
     normalized = export_profile.strip().upper()
     try:
-        return OMNICHANNEL_PROFILE_REGISTRY[normalized]
+        return OMNICHANNEL_PROFILE_REGISTRY.get(normalized) or SIMILARITY_PROFILE_REGISTRY[normalized]
     except KeyError as exc:
         raise ValueError("export_profile is invalid.") from exc
 
 
-def get_omnichannel_profile_for_channel(channel_code: str) -> OmnichannelExportProfile:
+def get_omnichannel_profile_for_channel(
+    channel_code: str, *, selection_contract_version: str = "1",
+    analytical: bool = True,
+) -> OmnichannelExportProfile:
     """Resolve the backend-owned channel mapping."""
 
     if not isinstance(channel_code, str):
@@ -384,7 +413,19 @@ def get_omnichannel_profile_for_channel(channel_code: str) -> OmnichannelExportP
         profile_name = CHANNEL_OMNICHANNEL_PROFILE[normalized]
     except KeyError as exc:
         raise ValueError("channel_code is invalid.") from exc
+    if selection_contract_version == "3":
+        return _similarity_profile(
+            OMNICHANNEL_PROFILE_REGISTRY[profile_name], analytical=analytical,
+        )
     return OMNICHANNEL_PROFILE_REGISTRY[profile_name]
+
+
+def _legacy_profile_code(export_profile: str) -> str:
+    profile = get_omnichannel_profile(export_profile)
+    if profile.profile_version == "1":
+        return profile.export_profile
+    base = profile.export_profile.removesuffix("_CONTACT_ONLY_V2").removesuffix("_V2")
+    return base + "_V1"
 
 
 def resolve_profile_availability(
@@ -473,7 +514,7 @@ def is_profile_row_deliverable(export_profile: str, row: Mapping[str, Any]) -> b
     """Apply the exact identifier and consent rules for one selected person."""
 
     profile = get_omnichannel_profile(export_profile)
-    code = profile.export_profile
+    code = _legacy_profile_code(profile.export_profile)
     if code == EXPORT_PROFILE_EMAIL_CONTACT_V1:
         return normalize_email_identifier(row.get("email")) is not None and _is_true(
             row.get("email_contactable")
@@ -532,15 +573,16 @@ def project_profile_row(
         return None
 
     projected = {column: row.get(column, "") for column in profile.output_columns}
-    if profile.export_profile == EXPORT_PROFILE_EMAIL_CONTACT_V1:
+    code = _legacy_profile_code(profile.export_profile)
+    if code == EXPORT_PROFILE_EMAIL_CONTACT_V1:
         projected["email"] = normalize_email_identifier(row.get("email")) or ""
-    elif profile.export_profile in {
+    elif code in {
         EXPORT_PROFILE_SMS_CONTACT_V1,
         EXPORT_PROFILE_WHATSAPP_CONTACT_V1,
         EXPORT_PROFILE_TELEMARKETING_CONTACT_V1,
     }:
         projected["phone_number"] = normalize_us_phone_identifier(row.get("phone_number")) or ""
-    elif profile.export_profile in {
+    elif code in {
         EXPORT_PROFILE_PAID_SOCIAL_AUDIENCE_V1,
         EXPORT_PROFILE_PAID_SEARCH_AUDIENCE_V1,
     }:
@@ -550,15 +592,15 @@ def project_profile_row(
         )
         projected["sha256_email"] = match_keys.get("sha256_email", "")
         projected["sha256_phone"] = match_keys.get("sha256_phone", "")
-    elif profile.export_profile == EXPORT_PROFILE_DISPLAY_AUDIENCE_V1:
+    elif code == EXPORT_PROFILE_DISPLAY_AUDIENCE_V1:
         projected["advertising_id"] = str(row.get("advertising_id", "")).strip().lower()
-    elif profile.export_profile in {
+    elif code in {
         EXPORT_PROFILE_MOBILE_PUSH_CONTACT_V1,
         EXPORT_PROFILE_WEBSITE_AUDIENCE_V1,
     }:
         field = (
             "push_token"
-            if profile.export_profile == EXPORT_PROFILE_MOBILE_PUSH_CONTACT_V1
+            if code == EXPORT_PROFILE_MOBILE_PUSH_CONTACT_V1
             else "web_visitor_id"
         )
         projected[field] = str(row.get(field, "")).strip()
@@ -603,6 +645,8 @@ __all__ = tuple(
     "OMNICHANNEL_AUDIT_FIELDS",
     "OMNICHANNEL_EXPORT_PROFILE_CONTRACT_VERSION",
     "OMNICHANNEL_PROFILE_REGISTRY",
+    "SIMILARITY_PROFILE_REGISTRY",
+    "SIMILARITY_EXPORT_COLUMNS",
     "OmnichannelExportProfile",
     "build_profile_filename",
     "get_omnichannel_profile",

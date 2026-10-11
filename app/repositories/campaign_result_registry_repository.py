@@ -19,6 +19,12 @@ from typing import Any
 
 from app.database.connection import get_connection
 from app.selection_contracts import (
+    BUYER_SIMILARITY_MINIMUMS,
+    BUYER_SIMILARITY_PRODUCT_MATCH_POLICY,
+    BUYER_SIMILARITY_SCORE_METHOD_VERSION,
+    BUYER_SIMILARITY_SCORE_SEMANTICS,
+    BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION,
+    BUYER_SIMILARITY_THRESHOLD_PREDICATE,
     CALIBRATED_SELECTION_CONTRACT_VERSION,
     PROPENSITY_BUCKET_KEYS,
     propensity_bucket_bounds,
@@ -338,15 +344,28 @@ class CampaignResultRegistryRepository:
         export_profile: str | None = None, description: str | None = None,
         planned_launch_date: str | None = None, created_by_user_id: str | None = None,
         selection_contract_version: str = "1", propensity_bucket: str | None = None,
+        score_semantics: str | None = None,
+        similarity_minimum: float | None = None,
+        similarity_profile_set_sha256: str | None = None,
+        similarity_composite_context_sha256: str | None = None,
         catalog_version: str | None = None,
         connection: sqlite3.Connection | None = None,
         timestamp: str | None = None,
     ) -> int:
         _selection(selection_mode, target_count)
         try:
-            profile = get_omnichannel_profile_for_channel(delivery_channel)
-            if export_profile is not None and get_omnichannel_profile(export_profile) != profile:
-                raise ValueError("mismatched profile")
+            profile = get_omnichannel_profile_for_channel(
+                delivery_channel, selection_contract_version=selection_contract_version,
+            )
+            if export_profile is not None:
+                requested_profile = get_omnichannel_profile(export_profile)
+                if (
+                    requested_profile.channel_code != profile.channel_code
+                    or requested_profile.profile_version != profile.profile_version
+                    or (selection_contract_version != "3" and requested_profile != profile)
+                ):
+                    raise ValueError("mismatched profile")
+                profile = requested_profile
         except ValueError as exc:
             raise Phase11RegistryValidationError("Delivery channel/profile mismatch.") from exc
         criteria_json, criteria_sha = canonical_metadata_json(targeting_criteria)
@@ -360,12 +379,36 @@ class CampaignResultRegistryRepository:
             except (TypeError, ValueError) as exc:
                 raise Phase11RegistryValidationError("Invalid planned launch date.") from exc
         timestamp = _timestamp(timestamp)
-        if selection_contract_version not in {"1", CALIBRATED_SELECTION_CONTRACT_VERSION}:
+        if selection_contract_version not in {
+            "1", CALIBRATED_SELECTION_CONTRACT_VERSION,
+            BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION,
+        }:
             raise Phase11RegistryValidationError("Invalid selection contract version.")
         if selection_contract_version == CALIBRATED_SELECTION_CONTRACT_VERSION and propensity_bucket not in PROPENSITY_BUCKET_KEYS:
             raise Phase11RegistryValidationError("Choose a supported propensity bucket.")
         if selection_contract_version == "1" and propensity_bucket is not None:
             raise Phase11RegistryValidationError("Legacy searches cannot store a propensity bucket.")
+        if selection_contract_version == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION:
+            if (
+                propensity_bucket is not None
+                or score_semantics != BUYER_SIMILARITY_SCORE_SEMANTICS
+                or isinstance(similarity_minimum, bool)
+                or similarity_minimum not in BUYER_SIMILARITY_MINIMUMS
+            ):
+                raise Phase11RegistryValidationError(
+                    "V3 searches require an explicit supported buyer similarity contract."
+                )
+        elif any(
+            value is not None
+            for value in (
+                score_semantics, similarity_minimum,
+                similarity_profile_set_sha256,
+                similarity_composite_context_sha256,
+            )
+        ):
+            raise Phase11RegistryValidationError(
+                "Legacy and calibrated searches cannot store similarity metadata."
+            )
         values = dict(
             search_run_contract_version=SEARCH_RUN_CONTRACT_VERSION,
             campaign_name=_text(campaign_name, 200), description=_text(description, 2000, optional=True),
@@ -380,6 +423,31 @@ class CampaignResultRegistryRepository:
             selection_contract_version=selection_contract_version,
             propensity_bucket=propensity_bucket,
             catalog_version=_text(catalog_version, 128, optional=True),
+            score_semantics=score_semantics,
+            similarity_minimum=similarity_minimum,
+            similarity_threshold_predicate=(
+                BUYER_SIMILARITY_THRESHOLD_PREDICATE
+                if selection_contract_version == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION
+                else None
+            ),
+            similarity_product_match_policy=(
+                BUYER_SIMILARITY_PRODUCT_MATCH_POLICY
+                if selection_contract_version == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION
+                else None
+            ),
+            similarity_score_method_version=(
+                BUYER_SIMILARITY_SCORE_METHOD_VERSION
+                if selection_contract_version == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION
+                else None
+            ),
+            similarity_profile_set_sha256=(
+                _sha(similarity_profile_set_sha256)
+                if similarity_profile_set_sha256 is not None else None
+            ),
+            similarity_composite_context_sha256=(
+                _sha(similarity_composite_context_sha256)
+                if similarity_composite_context_sha256 is not None else None
+            ),
         )
         if connection is not None:
             if not connection.in_transaction:
@@ -772,6 +840,164 @@ class CampaignResultRegistryRepository:
                 ),
             )
 
+    def bind_similarity_lineage(
+        self, search_run_id: int, *, attempt_number: int,
+        execution_lease_token: str, profile_set_sha256: str,
+        composite_context_sha256: str, similarity_generation_id: int,
+    ) -> None:
+        """Fence the active v3 attempt to its current published score set."""
+
+        identifier = _integer(search_run_id)
+        attempt, lease = self._validate_fence(attempt_number, execution_lease_token)
+        with get_connection(self.database_path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            active = connection.execute(
+                """SELECT r.search_run_id FROM campaign_search_runs r
+                   JOIN campaign_search_attempts a ON a.search_run_id=r.search_run_id
+                    AND a.attempt_number=r.current_attempt_number
+                   WHERE r.search_run_id=? AND r.current_attempt_number=?
+                    AND r.selection_contract_version='3' AND r.status='PROCESSING'
+                    AND a.execution_lease_token=? AND a.status='PROCESSING'""",
+                (identifier, attempt, lease),
+            ).fetchone()
+            if active is None:
+                raise Phase11RegistryStateError("The active similarity attempt lost its lease.")
+            changed = connection.execute(
+                """UPDATE campaign_search_runs
+                   SET similarity_profile_set_sha256=?,
+                       similarity_composite_context_sha256=?,similarity_generation_id=?
+                   WHERE search_run_id=? AND current_attempt_number=?
+                     AND status='PROCESSING'""",
+                (_sha(profile_set_sha256), _sha(composite_context_sha256),
+                 _integer(similarity_generation_id), identifier, attempt),
+            ).rowcount
+            attempt_changed = connection.execute(
+                """UPDATE campaign_search_attempts
+                   SET similarity_profile_set_sha256=?,
+                       similarity_composite_context_sha256=?,similarity_generation_id=?,
+                       lease_heartbeat_at=?
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=? AND status='PROCESSING'""",
+                (_sha(profile_set_sha256), _sha(composite_context_sha256),
+                 _integer(similarity_generation_id), _now(), identifier, attempt, lease),
+            ).rowcount
+            if changed != 1 or attempt_changed != 1:
+                raise Phase11RegistryStateError("Similarity lineage could not be bound.")
+
+    def complete_similarity_search_run(
+        self, search_run_id: int, *, attempt_number: int,
+        execution_lease_token: str, similarity_result_snapshot_id: int,
+        result_source: str, timestamp: str | None = None,
+    ) -> None:
+        """Complete v3 only after the immutable membership registry is current."""
+
+        if result_source not in RESULT_SOURCES:
+            raise Phase11RegistryValidationError("Invalid result source.")
+        identifier = _integer(search_run_id)
+        attempt, lease = self._validate_fence(attempt_number, execution_lease_token)
+        moment = _timestamp(timestamp)
+        with get_connection(self.database_path, write=True) as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                """SELECT r.*,a.started_at attempt_started_at,
+                          s.resolved_count,s.currentness_state,s.profile_set_sha256 snapshot_profile_set,
+                          s.composite_context_sha256 snapshot_context,s.targeting_criteria_sha256 snapshot_criteria,
+                          s.filter_branches_sha256 snapshot_branches,s.selection_mode snapshot_mode,
+                          s.target_count snapshot_target,s.similarity_generation_id snapshot_generation
+                   FROM campaign_search_runs r
+                   JOIN campaign_search_attempts a ON a.search_run_id=r.search_run_id
+                     AND a.attempt_number=r.current_attempt_number
+                   JOIN buyer_similarity_result_snapshots s
+                     ON s.similarity_result_snapshot_id=?
+                   WHERE r.search_run_id=? AND r.current_attempt_number=?
+                     AND r.status='PROCESSING' AND r.selection_contract_version='3'
+                     AND a.execution_lease_token=? AND a.status='PROCESSING'""",
+                (_integer(similarity_result_snapshot_id), identifier, attempt, lease),
+            ).fetchone()
+            if row is None or any((
+                row["currentness_state"] != "CURRENT",
+                row["similarity_profile_set_sha256"] != row["snapshot_profile_set"],
+                row["similarity_composite_context_sha256"] != row["snapshot_context"],
+                row["targeting_criteria_sha256"] != row["snapshot_criteria"],
+                row["filter_branches_sha256"] != row["snapshot_branches"],
+                row["selection_mode"] != row["snapshot_mode"],
+                row["target_count"] != row["snapshot_target"],
+                row["similarity_generation_id"] != row["snapshot_generation"],
+            )):
+                raise Phase11RegistryStateError("Similarity snapshot lineage differs from the search.")
+            lineage = connection.execute(
+                """SELECT p.customer_import_id,p.customer_source_checksum,
+                          p.campaign_sales_import_id,p.campaign_sales_source_checksum,
+                          g.demographic_import_id,g.demographic_source_checksum
+                   FROM buyer_similarity_score_generations g
+                   JOIN buyer_similarity_profiles p ON p.profile_id=g.profile_id
+                   WHERE g.similarity_generation_id=?
+                     AND g.publication_state='PUBLISHED'
+                     AND p.publication_state='PUBLISHED'""",
+                (row["similarity_generation_id"],),
+            ).fetchone()
+            if lineage is None:
+                raise Phase11RegistryStateError("Similarity generation is not published.")
+            for dataset, id_field, checksum_field in (
+                ("customers", "customer_import_id", "customer_source_checksum"),
+                ("campaign_sales", "campaign_sales_import_id", "campaign_sales_source_checksum"),
+                ("demographics", "demographic_import_id", "demographic_source_checksum"),
+            ):
+                latest = connection.execute(
+                    """SELECT import_id,source_checksum FROM data_import_runs
+                       WHERE dataset_name=? AND status='COMPLETED'
+                       ORDER BY import_id DESC LIMIT 1""",
+                    (dataset,),
+                ).fetchone()
+                if latest is None or (
+                    int(latest["import_id"]) != int(lineage[id_field])
+                    or str(latest["source_checksum"]) != str(lineage[checksum_field])
+                ):
+                    raise Phase11RegistryStateError("Similarity source changed before completion.")
+            count = int(row["resolved_count"])
+            seconds = self._elapsed(row["attempt_started_at"], moment)
+            changed = connection.execute(
+                """UPDATE campaign_search_runs SET status='COMPLETED',
+                       similarity_result_snapshot_id=?,result_source=?,selected_count=?,
+                       completed_at=?,processing_seconds=?
+                   WHERE search_run_id=? AND current_attempt_number=? AND status='PROCESSING'""",
+                (similarity_result_snapshot_id, result_source, count, moment, seconds,
+                 identifier, attempt),
+            ).rowcount
+            runtime_changed = connection.execute(
+                """UPDATE campaign_search_run_runtime
+                   SET lifecycle_status='COMPLETED',stage_code='COMPLETED',
+                       stage_label='Result ready',progress_percent=100,
+                       processed_count=?,total_count=?,
+                       status_message='Potential-customer results are ready.',
+                       failure_code=NULL,failure_category=NULL,failure_summary=NULL,
+                       resolution_steps_json='[]',retryable=0,
+                       updated_at=?,heartbeat_at=?,state_version=state_version+1
+                   WHERE search_run_id=? AND lifecycle_status='PROCESSING'""",
+                (count, count, moment, moment, identifier),
+            ).rowcount
+            attempt_changed = connection.execute(
+                """UPDATE campaign_search_attempts SET status='COMPLETED',
+                       similarity_generation_id=?,completed_at=?,retryable=0,
+                       lease_heartbeat_at=?
+                   WHERE search_run_id=? AND attempt_number=?
+                     AND execution_lease_token=? AND status='PROCESSING'""",
+                (row["similarity_generation_id"], moment, moment,
+                 identifier, attempt, lease),
+            ).rowcount
+            if (changed, runtime_changed, attempt_changed) != (1, 1, 1):
+                raise Phase11RegistryStateError("Similarity completion lease was lost.")
+            connection.execute(
+                """INSERT INTO campaign_search_progress_events (
+                    search_run_id,attempt_number,stage_code,stage_label,
+                    progress_percent,processed_count,total_count,status_message,
+                    workload_class,recorded_at
+                ) VALUES (?,?,'COMPLETED','Result ready',100,?,?,
+                    'Potential-customer results are ready.',
+                    'NEW_RESULT_MATERIALIZATION',?)""",
+                (identifier, attempt, count, count, moment),
+            )
+
     @staticmethod
     def _elapsed(started: str | None, completed: str) -> float:
         if started is None:
@@ -1085,8 +1311,15 @@ class CampaignResultRegistryRepository:
                        search_run_id,attempt_number,attempt_contract_version,
                        selection_contract_version,propensity_bucket,bucket_minimum,
                        bucket_maximum,bucket_maximum_inclusive,status,idempotency_key,
-                       execution_lease_token,created_at,started_at
-                   ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                       execution_lease_token,created_at,started_at,
+                       score_semantics,similarity_minimum,
+                       similarity_threshold_predicate,
+                       similarity_product_match_policy,
+                       similarity_score_method_version,
+                       similarity_profile_set_sha256,
+                       similarity_composite_context_sha256,
+                       similarity_generation_id
+                   ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (identifier, next_attempt, "1", run["selection_contract_version"],
                  run["propensity_bucket"],
                  (propensity_bucket_bounds(str(run["propensity_bucket"]))[0]
@@ -1095,7 +1328,14 @@ class CampaignResultRegistryRepository:
                   if run["propensity_bucket"] else None),
                  (int(propensity_bucket_bounds(str(run["propensity_bucket"]))[2])
                   if run["propensity_bucket"] else None),
-                 "QUEUED", key, secrets.token_hex(32), moment, None),
+                 "QUEUED", key, secrets.token_hex(32), moment, None,
+                 run["score_semantics"], run["similarity_minimum"],
+                 run["similarity_threshold_predicate"],
+                 run["similarity_product_match_policy"],
+                 run["similarity_score_method_version"],
+                 run["similarity_profile_set_sha256"],
+                 run["similarity_composite_context_sha256"],
+                 run["similarity_generation_id"]),
             )
             connection.execute(
                 """UPDATE campaign_search_runs SET status='QUEUED',current_attempt_number=?,

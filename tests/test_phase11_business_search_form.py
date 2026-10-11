@@ -398,6 +398,9 @@ def form_page(page, client):
     browser.route("**/api/potential-customer-search/**", api)
     open_route(browser, "#find-potential-customers")
     browser.locator("#business-search-form").wait_for(state="visible")
+    # This legacy v2 fixture chooses the explicit advanced mode. Production
+    # new-campaign UI now starts in v3; the assertions below remain unchanged.
+    browser.locator('input[name="business_score_mode"][value="probability"]').check()
     yield browser, errors, requests, bodies
 
 
@@ -538,8 +541,8 @@ def test_failed_options_can_retry_without_creating_work(page, client):
     def options(route):
         attempts.append(True)
         if len(attempts) == 1: route.fulfill(status=503, json={"detail": "Unavailable"})
-        else: route.fulfill(status=200, json=client.get(OPTIONS).json())
-    browser.route("**/api/potential-customer-search/options", options)
+        else: route.fulfill(status=200, json=client.get(OPTIONS + "?include_similarity=true").json())
+    browser.route("**/api/potential-customer-search/options*", options)
     open_route(browser, "#find-potential-customers")
     assert browser.locator("#business-search-error").is_visible()
     assert browser.locator("#business-search-form").is_hidden()
@@ -621,7 +624,7 @@ def test_unavailable_profiles_hidden_by_default_and_empty_products_disable_actio
     payload = client.get(OPTIONS).json()
     payload["profiles"][0].update(availability="BLOCKED", unavailable_reason="Missing identifiers")
     payload["context"]["products"] = []
-    browser.route("**/api/potential-customer-search/options", lambda route: route.fulfill(status=200, json=payload))
+    browser.route("**/api/potential-customer-search/options*", lambda route: route.fulfill(status=200, json=payload))
     open_route(browser, "#find-potential-customers")
     browser.locator("#business-search-form").wait_for(state="visible")
     assert browser.locator("#business-export-profile option").count() == 10  # placeholder + 9 AVAILABLE

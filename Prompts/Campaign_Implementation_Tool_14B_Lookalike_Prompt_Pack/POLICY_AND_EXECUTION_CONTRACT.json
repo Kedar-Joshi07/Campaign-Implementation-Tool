@@ -1,0 +1,94 @@
+{
+  "pack_contract_version": "14B_LOOKALIKE_PACK_1",
+  "trusted_starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "starting_schema_version": 31,
+  "selection_contract_version": "3",
+  "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+  "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+  "membership_contract_version": "3",
+  "threshold_predicate": ">=",
+  "allowed_minimums": [
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9
+  ],
+  "new_ui_default_minimum": 0.7,
+  "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+  "profile_learning": {
+    "kind": "deterministic_mixed_feature_prototypes",
+    "numeric_center": "median",
+    "categorical_center": "mode",
+    "k_candidates": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "max_iterations": 50,
+    "seed": 20261005,
+    "minimum_cluster_support": "max(30,ceil(0.02*n_fit))",
+    "k_selection": "largest candidate with converged supported clusters; no held-out tuning"
+  },
+  "distance": "sum_j w_j*d_j; numeric min(1,abs(x_j-c_j)/(fit_q95-fit_q05)); categorical exact-match 0 otherwise 1; missing/unknown 1",
+  "weights": "equal 1/11; fixed full denominator",
+  "numeric_zero_range_fallback": {
+    "age": 1,
+    "individual_yearly_income": 1,
+    "family_member_count": 1
+  },
+  "score": "1 - min_supported_prototype_distance",
+  "minimum_feature_coverage": 0.8,
+  "minimum_distinct_attributed_buyers_per_product": 200,
+  "minimum_fit_buyers_per_product": 160,
+  "minimum_holdout_buyers_per_product": 40,
+  "split": "80/20 seeded union-level customer-disjoint; per-product floors enforced",
+  "descriptive_only": true,
+  "v2_immutable": true,
+  "v2_broad_mapping": 0.6,
+  "explicit_v2_point50_preserved": true,
+  "demo_qualification_minimum": 10000,
+  "canonical_scenario_count": 20,
+  "canonical_scenario_distribution": {
+    "STRONG": 2,
+    "GOOD": 7,
+    "BROAD": 10,
+    "VERY_STRONG": 1
+  },
+  "scenario_v3_translation": {
+    "VERY_STRONG": 0.9,
+    "STRONG": 0.8,
+    "GOOD": 0.7,
+    "BROAD": 0.6
+  },
+  "canonical_scenario_path": "Prompts/Campaign_Implementation_Tool_Demo_Readiness_20_Real_Runs_Prompt_Pack/scenarios.json",
+  "canonical_scenario_sha256": "d168deccf2f7cf9723b5bc08a4b99bf0dc49325309c1a402cd59ba4beabb2b77",
+  "data_regeneration_in_default_scope": false,
+  "stages": [
+    "14B_00_BASELINE_POLICY_AND_GOLDEN_COMPATIBILITY.md",
+    "14B_01_REGISTRY_API_SCHEMA_AND_MIGRATION.md",
+    "14B_02_PRODUCT_BUYER_COHORTS_AND_SOURCE_ALIGNMENT.md",
+    "14B_03_LEARNED_BUYER_PROFILES_AND_SCORE_METHOD.md",
+    "14B_04_RESUMABLE_SCORING_ATTESTATION_AND_REUSE.md",
+    "14B_05_INTELLIGENCE_PREFLIGHT_SEARCH_AND_CACHE.md",
+    "14B_06_BUSINESS_UI_OPTIONS_HISTORY_AND_MODE_SWITCHING.md",
+    "14B_07_SNAPSHOTS_EXPORT_FEEDBACK_AND_LINEAGE.md",
+    "14B_08_MODEL_ASSURANCE_DRIFT_AND_EXPLANATIONS.md",
+    "14B_09_INTEGRATION_CLOSURE_AND_FEATURE_ENABLEMENT.md"
+  ],
+  "companions": [
+    "15_FAULT_INJECTION_RESTART_CONCURRENCY_AND_RECOVERY.md",
+    "16_PERFORMANCE_AND_5M_CANONICAL_CERTIFICATION.md",
+    "17_CANONICAL_20_SCENARIO_PREFLIGHT_AND_REAL_RUNS.md",
+    "18_DOCUMENTATION_ARCHITECTURE_AND_CLIENT_EXPLANATION.md",
+    "19_FULL_REGRESSION_EXACT_SHA_CI_AND_FINAL_GATE.md"
+  ],
+  "optional_concurrent_lanes": [
+    "C1_CONCURRENT_READ_ONLY_DATA_AND_TOPOLOGY_AUDIT.md",
+    "C2_CONCURRENT_COMPATIBILITY_AND_ADVERSARIAL_TESTS.md",
+    "C3_CONCURRENT_ISOLATED_UI_COMPONENT_AND_COPY.md",
+    "C4_CONCURRENT_ARCHITECTURE_FACTSHEET_AND_RUNBOOK_DRAFT.md"
+  ]
+}

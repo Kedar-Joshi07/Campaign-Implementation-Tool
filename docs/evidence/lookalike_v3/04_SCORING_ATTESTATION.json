@@ -1,0 +1,148 @@
+{
+  "evidence_contract": "LOOKALIKE_V3_STAGE_04_SCORING_ATTESTATION_V1",
+  "recorded_date": "2026-10-06",
+  "stage": "14B_04_RESUMABLE_SCORING_ATTESTATION_AND_REUSE",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "actual_head": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate_sha": "UNCOMMITTED",
+  "branch": "main",
+  "preceding_stage": {
+    "name": "14B_03_LEARNED_BUYER_PROFILES_AND_SCORE_METHOD",
+    "status": "GO",
+    "evidence": "docs/evidence/lookalike_v3/03_PROFILE_METHOD.json"
+  },
+  "implementation": {
+    "score_field": "buyer_similarity_score",
+    "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+    "scorer_contract_version": "1",
+    "attestation_verification_contract_version": "1",
+    "attestation_integrity_contract_version": "1",
+    "generation_identity": [
+      "immutable_profile_identity",
+      "profile_artifact_sha256",
+      "demographic_import_id",
+      "demographic_source_checksum",
+      "score_method_version",
+      "scorer_contract_version"
+    ],
+    "threshold_filter_export_in_generation_identity": false,
+    "stable_chunk_key": "person_id_ASC",
+    "bounded_keyset_pagination": true,
+    "queue_stage_separate": true,
+    "progress_source": "TRANSACTIONALLY_COMMITTED_PERSON_ROWS",
+    "heartbeat_source": "EACH_COMMITTED_CHUNK",
+    "same_token_checkpoint_resume": true,
+    "stale_lease_policy": "CLEAR_INCOMPLETE_STAGE_AND_RESTART_FROM_ZERO",
+    "owner_token_fencing": true,
+    "source_replacement_fails_closed": true,
+    "cancellation_fails_closed": true,
+    "publication": "DEEP_VERIFY_THEN_SINGLE_TRANSACTION_COPY_AND_PUBLISH",
+    "fast_reuse_deep_score_scan": false,
+    "latest_import_metadata_checked_on_reuse": true,
+    "composite_policy": "MAX_VALID_SCORE_PRODUCT_ID_ASC_TIE",
+    "contact_pii_as_features": false,
+    "v2_calibration_dependency": false
+  },
+  "bounded_canonical_audit": {
+    "status": "PASS",
+    "database_path": "data/campaign_poc.db",
+    "database_open_mode": "READ_ONLY",
+    "operator_database_modified": false,
+    "temporary_registry_removed": true,
+    "full_population_run": false,
+    "product_id": "PRD001",
+    "sample_person_count": 1000,
+    "chunk_size": 137,
+    "progress_event_count": 11,
+    "expected_person_count": 1000,
+    "published_person_count": 1000,
+    "valid_score_count": 1000,
+    "invalid_score_count": 0,
+    "staged_rows_after_publication": 0,
+    "duplicate_person_count": 0,
+    "deep_verification_run": true,
+    "fast_reuse_without_deep_verification": true,
+    "estimated_new_score_rows": 1000,
+    "estimated_feature_distance_terms": 22000,
+    "estimated_peak_persistent_bytes": 256000,
+    "demographic_source_checksum": "336cbef90fb601d84e2206b191a71b355810da282c918ec0b6e469528f70215f"
+  },
+  "tests": {
+    "focused": {
+      "command": "pytest -q tests/test_buyer_similarity_scoring_service.py",
+      "result": "13 passed as part of final affected regression"
+    },
+    "affected_regression": {
+      "command": "pytest -q tests/test_buyer_similarity_scoring_service.py tests/test_buyer_similarity_profile_service.py tests/test_buyer_similarity_cohort_service.py tests/test_lookalike_v3_contract_migration.py tests/test_lookalike_v3_baseline_compatibility.py tests/test_training_cohort_service.py tests/test_phase10_historical_context_extension.py tests/test_feature_preprocessing.py tests/test_selection_contract_registry.py",
+      "result": "95 passed",
+      "duration_seconds": 169.89
+    },
+    "bounded_canonical_audit": {
+      "command": "python scripts/validation/audit_14b_04_scoring_attestation.py",
+      "result": "PASS",
+      "read_only_source": true
+    },
+    "compile": {
+      "command": "python -m compileall -q app/database/lookalike_v3_schema.py app/database/schema.py app/repositories/buyer_similarity_scoring_repository.py app/services/buyer_similarity_scoring_service.py tests/test_buyer_similarity_scoring_service.py scripts/validation/audit_14b_04_scoring_attestation.py",
+      "result": "PASS"
+    }
+  },
+  "requirements_proved": [
+    "V3 similarity scoring and storage are separate from v1/v2 probability calibration and use buyer_similarity_score only.",
+    "Profile, artifact, demographic source, and scoring method define a generation; thresholds, filters, and exports do not rescore.",
+    "Bounded stable-key chunks persist exact valid or invalid rows with actual progress, checkpoints, and heartbeats; valid rows below the declared 0.80 feature-coverage floor are rejected.",
+    "Same-token crashes resume; stale leases restart cleanly; stale tokens cannot mutate or publish.",
+    "Cancellation, source replacement, corrupt artifacts, duplicate/missing/extra people, and verification failures publish no partial READY state.",
+    "Deep publication verification persists exact population, bounds, consistency, prototype, model, source, and checksum facts.",
+    "Current attested reuse checks the latest authoritative imports and artifact without repeating the full score scan.",
+    "Composite membership uses maximum valid per-product score, one person row, and ascending product ID for exact ties.",
+    "Preparation estimates expose actual product builds and bounded storage/compute work; a 50-product API bound does not trigger 50 automatic builds.",
+    "Existing v2 calibration publication/currentness is independent of v3 similarity generation state."
+  ],
+  "acceptance_rows": {
+    "A01-A16": "PASS_INHERITED",
+    "A17": "PASS_REINFORCED",
+    "A18": "PASS_INHERITED",
+    "A19": "PASS",
+    "A20-A28": "NOT_RUN_BY_STAGE_14B_04",
+    "A29": "PASS_BOUNDED_FULL_SCALE_REUSE_REMAINS_STAGE_16",
+    "A30-A35": "NOT_RUN_BY_STAGE_14B_04",
+    "A36": "PASS_BOUNDED_SOURCE_REPLACEMENT",
+    "A37": "PASS_BOUNDED_FAULT_MATRIX_REMAINS_STAGE_15",
+    "A38-A45": "NOT_RUN_BY_STAGE_14B_04"
+  },
+  "changed_files": [
+    "app/database/lookalike_v3_schema.py",
+    "app/database/schema.py",
+    "app/repositories/buyer_similarity_scoring_repository.py",
+    "app/services/buyer_similarity_scoring_service.py",
+    "tests/test_buyer_similarity_scoring_service.py",
+    "scripts/validation/audit_14b_04_scoring_attestation.py",
+    "docs/evidence/lookalike_v3/04_SCORING_ATTESTATION.md",
+    "docs/evidence/lookalike_v3/04_SCORING_ATTESTATION.json",
+    "README.md",
+    "docs/README.md"
+  ],
+  "schema_api_data_impact": {
+    "schema_version": 32,
+    "new_attestation_table": "buyer_similarity_generation_attestations",
+    "internal_nonselectable_score_tier": "BELOW_MINIMUM",
+    "public_api_changed": false,
+    "probability_training_changed": false,
+    "v2_calibration_changed": false,
+    "canonical_database_changed": false,
+    "canonical_sources_changed": false,
+    "full_population_similarity_scored": false
+  },
+  "limitations": [
+    "The Stage 14B_04 audit is deliberately bounded to 1000 canonical demographic rows in a disposable database; full 5M proof belongs to Stage 14B_16.",
+    "A buyer-similarity score is a descriptive distance-derived index, not purchase probability, confidence, lift, accuracy, or campaign outcome evidence.",
+    "This stage does not expose v3 through HTTP/UI, materialize final search snapshots, or implement export integration; those are later sequential stages.",
+    "No remote CI, commit, push, merge, deployment, or release certification was performed."
+  ],
+  "decision": "GO",
+  "decision_reason": "The bounded v3 score generation is resumable or safely restartable, token fenced, source current, deeply attested before atomic publication, deterministically composable, and cheaply reusable without coupling to v2 calibration.",
+  "release_classification": "SIMILARITY_SCORING_BOUNDED_GO",
+  "predictive_classification": "PREDICTIVE_VALIDATION_UNAVAILABLE",
+  "next_stage": "14B_05_PREFLIGHT_BUCKETS_AND_TARGETING_OPTIONS.md"
+}

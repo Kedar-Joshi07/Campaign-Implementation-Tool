@@ -11,18 +11,25 @@ from app.dependencies import get_database_path
 from app.repositories.campaign_result_registry_repository import CampaignResultRegistryRepository
 from app.schemas.potential_customer_search import (
     PotentialCustomerSearchRequest,
+    PotentialCustomerSearchV3Request,
     PotentialCustomerPreflightRequest,
+    PotentialCustomerPreflightV3Request,
     PotentialCustomerPreflightResponse,
+    PotentialCustomerSimilarityPreflightResponse,
     FeedbackBatchResponse,
     SearchResultDetail,
+    SearchResultV3Detail,
     SearchResultHistoryItem,
+    SearchResultHistoryV3Item,
     SearchSubmissionStatus,
     SearchSubmissionV2Status,
+    SearchSubmissionV3Status,
 )
 from app.services import potential_customer_search_submission_service as service
 from app.services import phase11_results_service as results_service
 from app.services import phase11_export_service as export_service
 from app.services.potential_customer_preflight_service import exact_preflight
+from app.services.buyer_similarity_preflight_service import exact_similarity_preflight
 from app.services.phase11_feedback_service import (
     FEEDBACK_CSV_TEMPLATE, FEEDBACK_JSON_TEMPLATE,
     FeedbackConflictError, FeedbackValidationError, ingest_feedback,
@@ -64,23 +71,24 @@ def download_feedback_json_template() -> Response:
 
 
 @router.get("/api/export-profiles")
-def export_profiles(database_path: DatabasePath) -> list[dict]:
-    return service.export_profile_options(database_path)
+def export_profiles(database_path: DatabasePath, include_similarity: bool = False) -> list[dict]:
+    return service.export_profile_options(database_path, include_similarity=include_similarity)
 
 
 @router.get("/api/potential-customer-search/options")
-def search_options(request: Request, database_path: DatabasePath) -> dict:
+def search_options(request: Request, database_path: DatabasePath, include_similarity: bool = False) -> dict:
     runtime = getattr(request.app.state, "runtime_health", None)
     return service.search_form_options(
         database_path,
         workflow_available=(
             None if runtime is None else runtime.phase11_search_available
         ),
+        include_similarity=include_similarity,
     )
 
 
-@router.post("/api/potential-customer-search/runs", response_model=SearchSubmissionV2Status | SearchSubmissionStatus, status_code=201)
-def create_search(request: PotentialCustomerSearchRequest, database_path: DatabasePath) -> dict:
+@router.post("/api/potential-customer-search/runs", response_model=SearchSubmissionV3Status | SearchSubmissionV2Status | SearchSubmissionStatus, status_code=201)
+def create_search(request: PotentialCustomerSearchV3Request | PotentialCustomerSearchRequest, database_path: DatabasePath) -> dict:
     try:
         return service.submit_potential_customer_search(database_path, request)
     except (ValueError, CampaignContextValidationError, Phase11RegistryValidationError) as exc:
@@ -92,10 +100,20 @@ def create_search(request: PotentialCustomerSearchRequest, database_path: Databa
 
 @router.post(
     "/api/potential-customer-search/preflight",
-    response_model=PotentialCustomerPreflightResponse,
+    response_model=PotentialCustomerSimilarityPreflightResponse | PotentialCustomerPreflightResponse,
 )
-def preflight_search(request: PotentialCustomerPreflightRequest, database_path: DatabasePath) -> dict:
+def preflight_search(request: PotentialCustomerPreflightV3Request | PotentialCustomerPreflightRequest, database_path: DatabasePath) -> dict:
     try:
+        if isinstance(request, PotentialCustomerPreflightV3Request):
+            return exact_similarity_preflight(
+                database_path,
+                context=request.context,
+                criteria=request.criteria,
+                similarity_minimum=request.similarity_minimum,
+                selection_mode=request.selection_mode,
+                top_n=request.top_n,
+                catalog_version=request.catalog_version,
+            )
         return exact_preflight(
             database_path, context=request.context, criteria=request.criteria,
             propensity_bucket=request.propensity_bucket,
@@ -105,7 +123,7 @@ def preflight_search(request: PotentialCustomerPreflightRequest, database_path: 
         raise HTTPException(422, "Review the targeting choices before checking the exact count.") from exc
 
 
-@router.get("/api/potential-customer-search/runs", response_model=list[SearchSubmissionV2Status | SearchSubmissionStatus])
+@router.get("/api/potential-customer-search/runs", response_model=list[SearchSubmissionV3Status | SearchSubmissionV2Status | SearchSubmissionStatus])
 def search_history(database_path: DatabasePath, limit: Annotated[int, Query(ge=1, le=100)] = 20,
                    before_search_run_id: Annotated[int | None, Query(gt=0, le=2**63-1)] = None) -> list[dict]:
     try:
@@ -117,7 +135,7 @@ def search_history(database_path: DatabasePath, limit: Annotated[int, Query(ge=1
 
 @router.get(
     "/api/potential-customer-search/results",
-    response_model=list[SearchResultHistoryItem],
+    response_model=list[SearchResultHistoryV3Item | SearchResultHistoryItem],
 )
 def result_history(
     database_path: DatabasePath,
@@ -128,6 +146,7 @@ def result_history(
         return results_service.list_result_history(
             database_path, limit=limit,
             before_search_run_id=before_search_run_id,
+            project_root=PROJECT_ROOT,
         )
     except Phase11RegistryStateError as exc:
         raise HTTPException(404, "The result history position was not found.") from exc
@@ -145,7 +164,7 @@ def _project_search_run(search_run_id: int, database_path: Path) -> dict:
 
 @router.get(
     "/api/potential-customer-search/runs/{search_run_id}",
-    response_model=SearchSubmissionV2Status | SearchSubmissionStatus,
+    response_model=SearchSubmissionV3Status | SearchSubmissionV2Status | SearchSubmissionStatus,
 )
 def get_search_run(
     search_run_id: Annotated[int, PathParameter(gt=0, le=2**63 - 1)],
@@ -156,7 +175,7 @@ def get_search_run(
 
 @router.get(
     "/api/potential-customer-search/runs/{search_run_id}/status",
-    response_model=SearchSubmissionV2Status | SearchSubmissionStatus,
+    response_model=SearchSubmissionV3Status | SearchSubmissionV2Status | SearchSubmissionStatus,
 )
 def search_status(
     search_run_id: Annotated[int, PathParameter(gt=0, le=2**63 - 1)],
@@ -167,7 +186,7 @@ def search_status(
 
 @router.post(
     "/api/potential-customer-search/runs/{search_run_id}/retry",
-    response_model=SearchSubmissionV2Status | SearchSubmissionStatus,
+    response_model=SearchSubmissionV3Status | SearchSubmissionV2Status | SearchSubmissionStatus,
     status_code=202,
 )
 def retry_search_run(
@@ -235,7 +254,7 @@ def get_search_feedback(
 
 @router.get(
     "/api/potential-customer-search/runs/{search_run_id}/result",
-    response_model=SearchResultDetail,
+    response_model=SearchResultV3Detail | SearchResultDetail,
 )
 def search_result(
     search_run_id: Annotated[int, PathParameter(gt=0, le=2**63-1)],

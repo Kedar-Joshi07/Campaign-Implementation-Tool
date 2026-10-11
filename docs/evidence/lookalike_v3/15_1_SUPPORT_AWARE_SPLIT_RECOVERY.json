@@ -1,0 +1,56 @@
+{
+  "recorded_at": "2026-10-09",
+  "starting_head": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate": "UNCOMMITTED",
+  "gate": "PROMPT_15_GO",
+  "schema_version": 33,
+  "recorded_products": ["PRD001", "PRD003", "PRD004"],
+  "historical_window": ["2024-01-01", "2025-12-31"],
+  "old_policy": "CUSTOMER_UNION_HASH_ORDER_80_20_V1",
+  "new_policy": "SIMILARITY_CUSTOMER_SPLIT_V2",
+  "objective_version": "PRODUCT_L1_UNION_L1_BASELINE_FLIPS_SIGNATURE_LEX_V1",
+  "seed": 20261005,
+  "rounding": "floor(0.20*n + 0.5), implemented with exact integer arithmetic",
+  "solver_result": "FEASIBLE",
+  "signature_count": 6,
+  "product_deviation": 0,
+  "union_deviation": 0,
+  "baseline_assignment_changes": 11,
+  "old_support": {
+    "PRD001": [200, 158, 42],
+    "PRD003": [251, 206, 45],
+    "PRD004": [1461, 1164, 297]
+  },
+  "new_support": {
+    "PRD001": [200, 160, 40],
+    "PRD003": [251, 201, 50],
+    "PRD004": [1461, 1169, 292]
+  },
+  "new_product_membership_hashes": {
+    "PRD001": {"fit": "8b2b05aa35fb0a6fe1c0ee913c6ff58319f56e8d58cb942f9a819f9a9ae56ba0", "holdout": "4a5ddb9b90704fc9480a90d49f4a610edf996cd51b69870af3cf667faf251c70"},
+    "PRD003": {"fit": "2f42c3f15d4d3287575e3653ae01143d218c1b69dcef318849e280a8732c26ac", "holdout": "18005da9991e14c14976e10ac6a1d81c5f75338876c8654421d426da9864ed2e"},
+    "PRD004": {"fit": "8f4593e84ab5bc0636553ef929ed261567c2ae44755ca3b14579815de06d7f9e", "holdout": "726559051cc2f12b2dc7874718a09ccaf7b9ddfeea965712df47b6e9c13601d2"}
+  },
+  "partition_sha256": "371a8f7d92393c767fd54797202d2a9a582364fab04285df47578411320b3467",
+  "context_sha256": "63c250de563d31c5b111b5dc83b8d847223621828aca77c4b6b4d539d319e4b0",
+  "union_fit_sha256": "780e56fc4b6708a06c86d83da8fcb1e530186297ab07aff2518f23ab40806011",
+  "union_holdout_sha256": "d2d92d6ee4fc49951689f9e5d56fca598138fe7fec14bdbec3f25d669f0bc868",
+  "tests": {
+    "new_split": 12,
+    "cohort": 10,
+    "profile": 11,
+    "scoring": 13,
+    "preflight": 7,
+    "fault_recovery": 27,
+    "affected_regression": 95,
+    "browser_integration": 12
+  },
+  "historical_artifact_reuse": "NONE_FOR_NEW_POLICY",
+  "probability_policy_changed": false,
+  "canonical_inputs_changed": false,
+  "limitations": [
+    "Prompt 16 full-5M scoring and complete-context certification are separate and not yet certified.",
+    "The descriptive buyer holdout is customer-disjoint, not campaign-isolated purchase-response validation.",
+    "SQLite certification is single-node; no distributed-worker guarantee is claimed."
+  ]
+}

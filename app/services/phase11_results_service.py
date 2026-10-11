@@ -11,6 +11,9 @@ from pydantic import ValidationError
 
 from app.database.connection import get_connection
 from app.selection_contracts import (
+    BUYER_SIMILARITY_SCORE_METHOD_VERSION,
+    BUYER_SIMILARITY_SCORE_SEMANTICS,
+    BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION,
     CALIBRATED_SELECTION_CONTRACT_VERSION,
     PROPENSITY_BUCKET_REGISTRY,
 )
@@ -34,6 +37,9 @@ from app.services.phase11_run_lifecycle_service import (
 )
 from app.services.targeting_option_catalog_service import get_product_catalog_entries
 from app.services.source_currentness_service import result_lineage_is_current
+from app.services.buyer_similarity_selection_service import resolve_similarity_context
+from app.services.buyer_similarity_result_service import validate_similarity_result_snapshot
+from app.services.buyer_similarity_assurance_service import summarize_result_explanations
 
 
 RESULT_SOURCE_LABELS = {
@@ -70,9 +76,22 @@ def _decode_contracts(
         context = Phase11SavedCampaignContext.model_validate_json(
             str(context_row["campaign_context_json"])
         ).model_dump(mode="json")
-        criteria = CanonicalBusinessTargetingCriteria.model_validate_json(
-            str(run["targeting_criteria_json"])
-        ).model_dump(mode="json")
+        if str(run.get("selection_contract_version") or "1") == (
+            BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION
+        ):
+            criteria = json.loads(str(run["targeting_criteria_json"]))
+            if (
+                not isinstance(criteria, dict)
+                or criteria.get("selection_contract_version") != "3"
+                or criteria.get("score_semantics") != BUYER_SIMILARITY_SCORE_SEMANTICS
+                or "match_strength" in criteria
+                or "propensity_bucket" in criteria
+            ):
+                raise ValueError("invalid v3 criteria")
+        else:
+            criteria = CanonicalBusinessTargetingCriteria.model_validate_json(
+                str(run["targeting_criteria_json"])
+            ).model_dump(mode="json")
         branches = json.loads(str(run["filter_branches_json"]))
     except (KeyError, TypeError, ValueError, ValidationError) as exc:
         raise Phase11ResultProjectionError(
@@ -167,7 +186,19 @@ def _safe_message(run: Mapping[str, Any]) -> str:
 def _selection_projection(
     run: Mapping[str, Any], criteria: Mapping[str, Any]
 ) -> dict[str, str]:
-    if str(run.get("selection_contract_version") or "1") == CALIBRATED_SELECTION_CONTRACT_VERSION:
+    version = str(run.get("selection_contract_version") or "1")
+    if version == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION:
+        minimum = run.get("similarity_minimum")
+        if minimum is None:
+            raise Phase11ResultProjectionError(
+                "Saved buyer-similarity selection could not be reopened safely."
+            )
+        return {
+            "selection_label": "Buyer Similarity",
+            "selection_value": f"{float(minimum):.0%} or higher",
+            "selection_semantics": BUYER_SIMILARITY_SCORE_SEMANTICS,
+        }
+    if version == CALIBRATED_SELECTION_CONTRACT_VERSION:
         bucket = str(run.get("propensity_bucket") or "")
         label = PROPENSITY_BUCKET_LABELS.get(bucket)
         if label is None:
@@ -211,6 +242,8 @@ def _result_lineage_is_current(
     run: Mapping[str, Any],
     generation: Mapping[str, Any] | None,
 ) -> bool:
+    if str(run.get("selection_contract_version") or "1") == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION:
+        return generation is not None and generation.get("publication_state") == "PUBLISHED"
     calibration_id = run.get("calibration_artifact_id")
     return result_lineage_is_current(
         database_path,
@@ -227,6 +260,21 @@ def _lineage(
 ) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     snapshot = None
     generation = None
+    if str(run.get("selection_contract_version") or "1") == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION:
+        with get_connection(database_path) as connection:
+            if run.get("similarity_result_snapshot_id") is not None:
+                row = connection.execute(
+                    "SELECT * FROM buyer_similarity_result_snapshots WHERE similarity_result_snapshot_id=?",
+                    (int(run["similarity_result_snapshot_id"]),),
+                ).fetchone()
+                snapshot = dict(row) if row is not None else None
+            if run.get("similarity_generation_id") is not None:
+                row = connection.execute(
+                    "SELECT * FROM buyer_similarity_score_generations WHERE similarity_generation_id=?",
+                    (int(run["similarity_generation_id"]),),
+                ).fetchone()
+                generation = dict(row) if row is not None else None
+        return snapshot, generation
     if run.get("result_snapshot_id") is not None:
         snapshot = repository.fetch_snapshot(int(run["result_snapshot_id"]))
     if run.get("generation_id") is not None:
@@ -249,6 +297,7 @@ def _base_projection(
     runtime_override: Mapping[str, Any] | None = None,
     attempt_override: Mapping[str, Any] | None = None,
     queue_positions: Mapping[int, int] | None = None,
+    project_root: str | Path | None = None,
 ) -> dict[str, Any]:
     source = run.get("result_source")
     product_ids = list(context["product_ids"])
@@ -270,12 +319,31 @@ def _base_projection(
             catalog_version=run.get("catalog_version"),
         )
     )
-    currentness = _recorded_currentness(
-        snapshot,
-        generation,
-        _result_lineage_is_current(database_path, run, generation)
-        if demographic_source_current is None else demographic_source_current,
-    )
+    v3 = str(run.get("selection_contract_version") or "1") == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION
+    if v3:
+        if snapshot is None:
+            currentness = "NOT_AVAILABLE"
+        else:
+            try:
+                resolution = resolve_similarity_context(
+                    database_path, context,
+                    project_root=project_root or Path(__file__).resolve().parents[2],
+                )
+                currentness = "CURRENT" if (
+                    resolution.ready
+                    and snapshot["currentness_state"] == "CURRENT"
+                    and snapshot["composite_context_sha256"] == resolution.composite_context_sha256
+                    and snapshot["profile_set_sha256"] == resolution.profile_set_sha256
+                    and int(snapshot["similarity_generation_id"]) == resolution.generation_ids[0]
+                ) else "STALE"
+            except Exception:
+                currentness = "UNVERIFIED"
+    else:
+        currentness = _recorded_currentness(
+            snapshot, generation,
+            _result_lineage_is_current(database_path, run, generation)
+            if demographic_source_current is None else demographic_source_current,
+        )
     channel = str(run["delivery_channel"])
     runtime = runtime_override or repository.fetch_search_runtime(int(run["search_run_id"]))
     attempt = attempt_override or repository.fetch_current_attempt(int(run["search_run_id"]))
@@ -285,6 +353,11 @@ def _base_projection(
     if selection_projection["selection_semantics"] == "CALIBRATED_PURCHASE_PROBABILITY":
         targeting_summary = [
             f"Purchase propensity: {selection_projection['selection_value']}",
+            *targeting_summary,
+        ]
+    elif selection_projection["selection_semantics"] == BUYER_SIMILARITY_SCORE_SEMANTICS:
+        targeting_summary = [
+            f"Buyer similarity: {selection_projection['selection_value']}",
             *targeting_summary,
         ]
     return {
@@ -300,7 +373,7 @@ def _base_projection(
         "delivery_channel": channel,
         "export_profile": str(run["export_profile"]),
         "delivery_profile_label": channel.replace("_", " ").title(),
-        "match_strength": str(criteria["match_strength"]),
+        "match_strength": str(criteria.get("match_strength") or "Not applicable"),
         **selection_projection,
         "targeting_summary": targeting_summary,
         "selected_count": run.get("selected_count"),
@@ -335,6 +408,15 @@ def _base_projection(
         ),
         "propensity_bucket": run.get("propensity_bucket"),
         "selection_contract_version": str(run.get("selection_contract_version") or "1"),
+        **(
+            {
+                "similarity_minimum": run.get("similarity_minimum"),
+                "score_method_version": BUYER_SIMILARITY_SCORE_METHOD_VERSION,
+            }
+            if str(run.get("selection_contract_version") or "1")
+            == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION
+            else {}
+        ),
     }
 
 
@@ -355,6 +437,7 @@ def _load_run_projection(
 def list_result_history(
     database_path: str | Path, *, limit: int = 20,
     before_search_run_id: int | None = None,
+    project_root: str | Path | None = None,
 ) -> list[dict[str, Any]]:
     path = Path(database_path)
     repository = CampaignResultRegistryRepository(path)
@@ -367,6 +450,8 @@ def list_result_history(
     context_ids = [int(run["targeting_context_id"]) for run in runs]
     snapshot_ids = [int(run["result_snapshot_id"]) for run in runs if run.get("result_snapshot_id") is not None]
     generation_ids = [int(run["generation_id"]) for run in runs if run.get("generation_id") is not None]
+    similarity_snapshot_ids = [int(run["similarity_result_snapshot_id"]) for run in runs if run.get("similarity_result_snapshot_id") is not None]
+    similarity_generation_ids = [int(run["similarity_generation_id"]) for run in runs if run.get("similarity_generation_id") is not None]
     run_ids = [int(run["search_run_id"]) for run in runs]
     queue_positions = repository.queue_positions(
         [int(run["search_run_id"]) for run in runs if run["status"] == "QUEUED"]
@@ -383,6 +468,8 @@ def list_result_history(
     contexts = bulk("campaign_targeting_contexts", "targeting_context_id", context_ids)
     snapshots = bulk("campaign_result_snapshots", "result_snapshot_id", snapshot_ids)
     generations = bulk("phase10_intelligence_generations", "generation_id", generation_ids)
+    similarity_snapshots = bulk("buyer_similarity_result_snapshots", "similarity_result_snapshot_id", similarity_snapshot_ids)
+    similarity_generations = bulk("buyer_similarity_score_generations", "similarity_generation_id", similarity_generation_ids)
     runtimes = bulk("campaign_search_run_runtime", "search_run_id", run_ids)
     attempts = repository.fetch_current_attempts(run_ids)
     decoded: list[tuple[dict[str, Any], dict[str, Any], dict[str, Any], list[dict[str, Any]]]] = []
@@ -426,8 +513,12 @@ def list_result_history(
         _saved_run, context, criteria, _branches = next(
             item for item in decoded if item[0]["search_run_id"] == run["search_run_id"]
         )
-        snapshot = snapshots.get(int(run["result_snapshot_id"])) if run.get("result_snapshot_id") is not None else None
-        generation = generations.get(int(run["generation_id"])) if run.get("generation_id") is not None else None
+        if str(run.get("selection_contract_version") or "1") == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION:
+            snapshot = similarity_snapshots.get(int(run["similarity_result_snapshot_id"])) if run.get("similarity_result_snapshot_id") is not None else None
+            generation = similarity_generations.get(int(run["similarity_generation_id"])) if run.get("similarity_generation_id") is not None else None
+        else:
+            snapshot = snapshots.get(int(run["result_snapshot_id"])) if run.get("result_snapshot_id") is not None else None
+            generation = generations.get(int(run["generation_id"])) if run.get("generation_id") is not None else None
         demographic_current = _result_lineage_is_current(path, run, generation)
         result.append(
             _base_projection(
@@ -437,6 +528,7 @@ def list_result_history(
                 runtimes.get(int(run["search_run_id"])),
                 attempts.get(int(run["search_run_id"])),
                 queue_positions,
+                project_root,
             )
         )
     _assert_no_forbidden_keys(result)
@@ -446,6 +538,8 @@ def list_result_history(
 def _score_summary(
     database_path: Path, run: Mapping[str, Any]
 ) -> dict[str, Any] | None:
+    if str(run.get("selection_contract_version") or "1") == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION:
+        return None
     if str(run.get("selection_contract_version") or "1") == CALIBRATED_SELECTION_CONTRACT_VERSION:
         calibration_id = run.get("calibration_artifact_id")
         if isinstance(calibration_id, bool) or not isinstance(calibration_id, int):
@@ -504,7 +598,7 @@ def _demographic_summary(criteria: Mapping[str, Any]) -> dict[str, Any]:
         "family_member_count_min", "family_member_count_max",
         "top_matching_percent",
     )
-    return {key: criteria[key] for key in keys}
+    return {key: criteria.get(key) for key in keys}
 
 
 def get_result_detail(
@@ -522,9 +616,45 @@ def get_result_detail(
     base = _base_projection(
         path, run, context, criteria, snapshot, generation, repository,
         repository.stage_duration_history(),
+        project_root=project_root,
     )
     currentness = base["currentness"]
-    if snapshot is not None and generation is not None:
+    v3 = str(run.get("selection_contract_version") or "1") == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION
+    similarity_explanation = None
+    if v3 and snapshot is not None:
+        try:
+            resolution = resolve_similarity_context(
+                path, context,
+                project_root=project_root or Path(__file__).resolve().parents[2],
+            )
+            valid = validate_similarity_result_snapshot(
+                snapshot, run, resolution,
+                project_root=project_root or Path(__file__).resolve().parents[2],
+            )
+        except Exception:
+            valid = False
+        if valid:
+            currentness = "CURRENT"
+            base["currentness"] = currentness
+            base["download_eligible"] = bool(
+                DOWNLOAD_ENGINE_AVAILABLE and run["status"] == "COMPLETED"
+            )
+            try:
+                similarity_explanation = summarize_result_explanations(
+                    path,
+                    project_root=project_root or Path(__file__).resolve().parents[2],
+                    snapshot=snapshot,
+                    profile_rows=resolution.profile_rows,
+                )
+            except (OSError, ValueError, KeyError, TypeError):
+                similarity_explanation = {"scope": "UNAVAILABLE", "sample_count": 0,
+                                          "feature_drivers": [],
+                                          "meaning": "A current, reconciled explanation is unavailable."}
+        else:
+            currentness = "STALE"
+            base["currentness"] = currentness
+            base["download_eligible"] = False
+    elif not v3 and snapshot is not None and generation is not None:
         validation = validate_result_snapshot(
             snapshot, run, generation,
             str(snapshot["result_cache_key_sha256"]),
@@ -536,7 +666,20 @@ def get_result_detail(
             base["download_eligible"] = False
     source = run.get("result_source")
     provenance = None
-    if snapshot is not None and generation is not None:
+    if v3 and snapshot is not None:
+        provenance = {
+            "similarity_result_snapshot_id": int(snapshot["similarity_result_snapshot_id"]),
+            "membership_contract_version": str(snapshot["result_membership_contract_version"]),
+            "resolved_count": int(snapshot["resolved_count"]),
+            "snapshot_sha256": str(snapshot["snapshot_sha256"]),
+            "created_at": str(snapshot["created_at"]),
+            "last_verified_at": str(snapshot["last_verified_at"]),
+            "similarity_generation_id": int(snapshot["similarity_generation_id"]),
+            "profile_set_sha256": str(snapshot["profile_set_sha256"]),
+            "composite_context_sha256": str(snapshot["composite_context_sha256"]),
+            "currentness": currentness,
+        }
+    elif snapshot is not None and generation is not None:
         provenance = {
             "result_snapshot_id": int(snapshot["result_snapshot_id"]),
             "membership_contract_version": str(
@@ -567,6 +710,7 @@ def get_result_detail(
             str(source), "Result source will be available after completion."
         ),
         "score_summary": _score_summary(path, run),
+        **({"similarity_explanation": similarity_explanation} if v3 else {}),
         "demographic_summary": _demographic_summary(criteria),
         "snapshot_provenance": provenance,
         "technical_details": {
@@ -579,8 +723,26 @@ def get_result_detail(
             "model_run_id": run.get("model_run_id"),
             "scoring_run_id": run.get("scoring_run_id"),
             "result_snapshot_id": run.get("result_snapshot_id"),
+            **({
+                "similarity_generation_id": run.get("similarity_generation_id"),
+                "similarity_result_snapshot_id": run.get("similarity_result_snapshot_id"),
+                "similarity_profile_set_sha256": run.get("similarity_profile_set_sha256"),
+                "similarity_composite_context_sha256": run.get("similarity_composite_context_sha256"),
+            } if v3 else {}),
         },
     }
+    if v3:
+        with get_connection(path) as connection:
+            exported = connection.execute(
+                """SELECT export_profile,selected_count,deliverable_count,
+                          undeliverable_count,completed_at
+                   FROM buyer_similarity_export_events
+                   WHERE search_run_id=? AND similarity_result_snapshot_id=?
+                     AND status='COMPLETED' AND currentness_state='CURRENT'
+                   ORDER BY export_event_id DESC LIMIT 1""",
+                (search_run_id, run.get("similarity_result_snapshot_id")),
+            ).fetchone() if snapshot is not None else None
+        detail["export_summary"] = dict(exported) if exported is not None and currentness == "CURRENT" else None
     _assert_no_forbidden_keys(detail)
     return detail
 

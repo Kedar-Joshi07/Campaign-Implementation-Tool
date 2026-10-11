@@ -1,5 +1,18 @@
 # Feedback learning boundary
 
+## Buyer Similarity v3 boundary (schema 33)
+
+Validated v3 purchase outcomes are attached to the completed immutable
+similarity membership, winning product, score-method/profile-set and
+generation lineage. This is **retention for later governed evaluation**, not
+an automatic v3 profile refit and not an input to the separate v1/v2
+probability recalibration worker. The calibration-only automatic path below
+applies to eligible probability lineage, not merely to any feedback upload.
+The [v3 factsheet](evidence/lookalike_v3/08_MODEL_FACTSHEET.md) and
+[operator guide](BUYER_SIMILARITY_OPERATOR_AND_DEMO.md) give the client-safe
+explanation. True feedback-driven buyer-profile or probability-model
+retraining remains future, separately versioned work.
+
 ## What the current automatic path does
 
 The governed feedback path performs **recalibration**. It validates attributed-

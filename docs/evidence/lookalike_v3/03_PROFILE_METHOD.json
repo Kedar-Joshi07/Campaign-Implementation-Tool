@@ -1,0 +1,170 @@
+{
+  "evidence_contract": "LOOKALIKE_V3_STAGE_03_PROFILE_METHOD_V1",
+  "recorded_date": "2026-10-06",
+  "stage": "14B_03_LEARNED_BUYER_PROFILES_AND_SCORE_METHOD",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "actual_head": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate_sha": "UNCOMMITTED",
+  "branch": "main",
+  "preceding_stage": {
+    "name": "14B_02_PRODUCT_BUYER_COHORTS_AND_SOURCE_ALIGNMENT",
+    "status": "GO",
+    "evidence": "docs/evidence/lookalike_v3/02_BUYER_COHORTS.json"
+  },
+  "implementation": {
+    "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+    "preprocessor_contract_version": "BUYER_PROFILE_Q05_Q95_V1",
+    "preprocessor_contract_sha256": "c126d11f05a6314c8469d12c23dda60d9d81995b4ec510e8ee429a316ff7e320",
+    "serialization_contract_version": "1",
+    "shared_feature_count": 11,
+    "equal_feature_weight": 0.09090909090909091,
+    "numeric_scale": "FIT_BUYER_Q95_MINUS_Q05",
+    "numeric_distance": "MIN_1_ABS_X_MINUS_C_DIVIDED_BY_RANGE",
+    "zero_range_fallbacks": {
+      "age": 1.0,
+      "individual_yearly_income": 1.0,
+      "family_member_count": 1.0
+    },
+    "categorical_distance": "EXACT_CANONICAL_MATCH_0_ELSE_1",
+    "missing_unknown_penalty": 1.0,
+    "minimum_valid_feature_coverage": 0.8,
+    "invalid_coverage_reason": "INSUFFICIENT_FEATURE_COVERAGE",
+    "candidate_k_values": [1, 2, 4, 8, 16],
+    "seed": 20261005,
+    "maximum_iterations": 50,
+    "convergence": "ASSIGNMENTS_UNCHANGED",
+    "initialization": "SEEDED_SORTED_FIRST_THEN_FARTHEST_FIRST",
+    "numeric_center": "MEDIAN",
+    "categorical_center": "MODE_CANONICAL_LEXICAL_TIE",
+    "nearest_tie": "FROZEN_PROTOTYPE_ORDER",
+    "minimum_cluster_support": "MAX_30_CEIL_0_02_N_FIT",
+    "artifact_format": "CANONICAL_JSON",
+    "executable_serialization_allowed": false,
+    "all_pairs_distance_matrix": false,
+    "holdout_used_for_fit_or_k_selection": false,
+    "prospect_distribution_used_for_fit": false,
+    "profile_registry_publication": "TRANSACTIONAL_OWNER_TOKEN_FENCED",
+    "source_currentness_checks": "CLAIM_AND_PUBLICATION",
+    "safe_cancellation": true,
+    "stale_lease_recovery": true
+  },
+  "canonical_bounded_audit": {
+    "status": "PASS",
+    "database_path": "data/campaign_poc.db",
+    "database_open_mode": "READ_ONLY",
+    "operator_database_modified": false,
+    "temporary_artifact_removed": true,
+    "product_id": "PRD001",
+    "fit_support": 160,
+    "holdout_support": 40,
+    "realized_k": 2,
+    "prototype_supports": [84, 76],
+    "minimum_cluster_support": 30,
+    "selected_candidate_converged": true,
+    "selected_candidate_iterations": 4,
+    "artifact_sha256": "54574c212a5fa6af3a0f66a5ed534c6299058f99c13ddcbaaff4cada169e3c63",
+    "profile_payload_sha256": "33f55d3de358d4b0d0013162d993ce1eda872a744ff44ac5033b11eaaced9947",
+    "chunk_size_artifact_deterministic": true,
+    "chunk_size_scores_deterministic": true,
+    "safe_json_round_trip": true,
+    "transactional_profile_publication": true,
+    "idempotent_published_reuse": true,
+    "customer_ids_in_artifact": false,
+    "contact_pii_in_artifact": false,
+    "holdout_description": {
+      "validation_kind": "CUSTOMER_DISJOINT_DESCRIPTIVE_HOLDOUT",
+      "predictive_validation": false,
+      "valid_score_count": 40,
+      "invalid_score_count": 0,
+      "score_min": 0.3423659694815091,
+      "score_max": 0.8824953315345762,
+      "score_mean": 0.6448864754221146,
+      "exact_prototype_match_count": 0
+    }
+  },
+  "independent_score_oracles": {
+    "exact_fully_observed_match": 1.0,
+    "one_known_categorical_mismatch": 0.9090909090909091,
+    "two_known_categorical_mismatches": 0.8181818181818182,
+    "one_mismatch_plus_half_numeric_range": 0.8636363636363636,
+    "all_features_missing": "INVALID_INSUFFICIENT_FEATURE_COVERAGE"
+  },
+  "tests": {
+    "focused": {
+      "command": "pytest -q tests/test_buyer_similarity_profile_service.py",
+      "result": "11 passed",
+      "duration_seconds": 33.66
+    },
+    "affected_regression": {
+      "command": "pytest -q tests/test_buyer_similarity_profile_service.py tests/test_buyer_similarity_cohort_service.py tests/test_training_cohort_service.py tests/test_phase10_historical_context_extension.py tests/test_feature_preprocessing.py tests/test_lookalike_v3_contract_migration.py tests/test_selection_contract_registry.py tests/test_lookalike_v3_baseline_compatibility.py",
+      "result": "82 passed",
+      "duration_seconds": 108.23
+    },
+    "canonical_audit": {
+      "command": "python scripts/validation/audit_14b_03_profile_method.py",
+      "result": "PASS",
+      "read_only_source": true,
+      "bounded_product": "PRD001"
+    },
+    "lint": {
+      "command": "ruff check app/services/buyer_similarity_profile_service.py app/repositories/buyer_similarity_profile_repository.py scripts/validation/audit_14b_03_profile_method.py tests/test_buyer_similarity_profile_service.py",
+      "result": "All checks passed"
+    }
+  },
+  "requirements_proved": [
+    "All eleven frozen shared features have equal declared weight and one shared scorer produces both score and per-feature contributions.",
+    "Numeric q05/q95 ranges, categorical vocabularies, medians, modes, initialization, and k selection use FIT buyers only.",
+    "Missing or unknown values receive distance one and no coverage credit; coverage below 0.80 is explicitly invalid.",
+    "Inference distance saturates at one without clipping an input to a prototype or awarding false match credit.",
+    "The largest converged candidate with every support at least max(30, ceil(0.02*n_fit)) is selected; empty and undersupported candidates fail closed.",
+    "Multimodal groups survive as supported profiles while singleton outliers cannot become retained anchors.",
+    "Row order and assignment chunk size do not change the artifact; holdout and unrelated-product changes do not change fitting.",
+    "Relevant FIT-buyer changes change the artifact and resulting score.",
+    "A score of one requires an exact fully observed prototype match.",
+    "Canonical JSON artifacts have governed paths, atomic writes, checksums, bounded size, exact method/feature validation, and stale-source refusal.",
+    "Prototype payloads contain support and feature values but no internal customer identifiers or contact PII.",
+    "Profile claims and publication are owner/token fenced; publication verifies durable artifact bytes and latest sources in one transaction, exact retries reuse one published row, stale leases can be recovered, and cancellation fails closed.",
+    "A customer or campaign-sales source replacement between claim and publication marks the profile stale and publishes no artifact row.",
+    "Holdout output is explicitly customer-disjoint descriptive validation, not campaign-independent predictive evidence."
+  ],
+  "acceptance_rows": {
+    "A01-A12": "PASS_INHERITED",
+    "A13": "PASS",
+    "A14": "PASS",
+    "A15": "PASS",
+    "A16": "PASS",
+    "A17": "PASS",
+    "A18": "PASS",
+    "A19-A45": "NOT_RUN_BY_STAGE_14B_03"
+  },
+  "changed_files": [
+    "README.md",
+    "docs/README.md",
+    "app/services/buyer_similarity_profile_service.py",
+    "app/repositories/buyer_similarity_profile_repository.py",
+    "scripts/validation/audit_14b_03_profile_method.py",
+    "tests/test_buyer_similarity_profile_service.py",
+    "docs/evidence/lookalike_v3/03_PROFILE_METHOD.md",
+    "docs/evidence/lookalike_v3/03_PROFILE_METHOD.json"
+  ],
+  "schema_api_data_impact": {
+    "schema_changed": false,
+    "public_api_changed": false,
+    "probability_training_changed": false,
+    "legacy_probability_artifacts_changed": false,
+    "canonical_database_changed": false,
+    "canonical_sources_changed": false,
+    "full_population_similarity_scored": false
+  },
+  "limitations": [
+    "Buyer similarity is a method-specific descriptive index; 0.90 means distance at most 0.10, not 90 percent purchase likelihood, accuracy, confidence, percentile, or attribute match rate.",
+    "The 40-buyer holdout is customer-disjoint but not campaign-independent predictive validation; no AUC, lift, response, or purchase claim is made.",
+    "Stage 14B_03 builds, transactionally publishes, reloads, and reuses one bounded canonical product artifact in a disposable schema-32 registry. Runtime worker composition, full prospect scoring, and score-generation attestations belong to Stage 14B_04.",
+    "No 5M run, UI, export, scenario run, remote CI, commit, push, merge, or deployment was performed."
+  ],
+  "decision": "GO",
+  "decision_reason": "The exact declared distance mathematics, deterministic supported prototype fit, fit-only preprocessing, safe integrity-checked artifact, and leakage boundary are implemented and independently verified without changing v1/v2 behavior or canonical data.",
+  "release_classification": "SIMILARITY_DESCRIPTIVE_GO",
+  "predictive_classification": "PREDICTIVE_VALIDATION_UNAVAILABLE",
+  "next_stage": "14B_04_RESUMABLE_SCORING_ATTESTATION_AND_REUSE.md"
+}

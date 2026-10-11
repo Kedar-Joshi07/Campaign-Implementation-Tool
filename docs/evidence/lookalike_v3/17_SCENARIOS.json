@@ -1,0 +1,1145 @@
+{
+  "blocked": 0,
+  "browser": {
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "execution_mode": "headless",
+    "name": "system_chrome",
+    "product_version": "154.0.8037.98"
+  },
+  "candidate": "UNCOMMITTED",
+  "completed": 20,
+  "context_manifest_sha256": "a355dbfca4d65e9522a15653a8fe5665e2f99f59646b4eea59e11828455c6e7c",
+  "current_eligible": 20,
+  "database": "output\\lookalike_stage16_2_measurements\\certification.db",
+  "failed": 0,
+  "generated_at": "2026-10-10T18:53:13+00:00",
+  "qualification_minimum": 10000,
+  "qualifying": 20,
+  "recorded_context": {
+    "campaign_categories": [],
+    "campaign_channel": "EMAIL",
+    "campaign_types": [],
+    "historical_campaign_channels": [],
+    "offer_types": [],
+    "product_ids": [
+      "PRD001",
+      "PRD003",
+      "PRD004"
+    ]
+  },
+  "representative_export": {
+    "bytes": 26709301,
+    "contact_data_saved": false,
+    "elapsed_seconds": 19.378,
+    "first_byte_seconds": 10.034,
+    "status": "PASS",
+    "stream_sha256": "ca740a3d009537f87fdf5e9496dceae44c8f076d4ac6792442b14537ca8bc6ad"
+  },
+  "scenario_json_sha256": "d168deccf2f7cf9723b5bc08a4b99bf0dc49325309c1a402cd59ba4beabb2b77",
+  "scenarios": [
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_01_run_3.png",
+      "browser_screenshot_sha256": "e685a16aff9606bb865fea0599dd1995ef246665d5cd739b1bb4c7b106bc98c2",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 1389349,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 1,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "STRONG",
+      "membership_count": 254233,
+      "membership_sha256": "4f9e1c62cf43a7703b7e804a50d963f4cfe271bce24d0a646a921ccda28a95ec",
+      "name": "Working-Age Mainstream",
+      "processing_seconds": 283.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 254233,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 2
+      },
+      "search_run_id": 3,
+      "selected_count": 254233,
+      "similarity_minimum": 0.8,
+      "similarity_qualifying_count": 254233,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 284.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_02_run_4.png",
+      "browser_screenshot_sha256": "a078b7c161119b4808e0a37f79d39a88d9746b0fa8b8e12983d680ece152adf2",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 168533,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 2,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "GOOD",
+      "membership_count": 133886,
+      "membership_sha256": "10c405bcc9a767c1f70326124cea7a9cf56e30612965ee856f98277e441c5d16",
+      "name": "CA + TX Younger Professionals",
+      "processing_seconds": 625.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 133886,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 3
+      },
+      "search_run_id": 4,
+      "selected_count": 133886,
+      "similarity_minimum": 0.7,
+      "similarity_qualifying_count": 133886,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 626.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_03_run_5.png",
+      "browser_screenshot_sha256": "9c91b540c57246c095796f3f56307d06941c222750edf8000ddc3d01f625b7ee",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 258616,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 3,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "GOOD",
+      "membership_count": 137516,
+      "membership_sha256": "c61b81adb2d22b768a8b48d2491bf0265c48d8604bcdef77a0938d524e304507",
+      "name": "NY/NJ/FL Mature Middle Income",
+      "processing_seconds": 469.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 137516,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 4
+      },
+      "search_run_id": 5,
+      "selected_count": 137516,
+      "similarity_minimum": 0.7,
+      "similarity_qualifying_count": 137516,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 469.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_04_run_6.png",
+      "browser_screenshot_sha256": "63b23dda2134a1c0fc65ab2e9f86b1e1722d4c5dd7ed86b475609bb192fcb868",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 182172,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 4,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "BROAD",
+      "membership_count": 171988,
+      "membership_sha256": "afdfebd661e5f850ccb66d5266e95a385f4701123401e70ff7a951c2f02d2ce5",
+      "name": "Midwest Value Market",
+      "processing_seconds": 1077.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 171988,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 5
+      },
+      "search_run_id": 6,
+      "selected_count": 171988,
+      "similarity_minimum": 0.6,
+      "similarity_qualifying_count": 171988,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 1077.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_05_run_7.png",
+      "browser_screenshot_sha256": "1599d66ea9c2fa2b520d25066c0386f3606e22dc0f5f0074326f73b254ce5764",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 167301,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 5,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "GOOD",
+      "membership_count": 131247,
+      "membership_sha256": "1b623bc0ac39d3378561460678656b5f4a18005107bf04c9c1adc074064b5d29",
+      "name": "Western Growth Markets",
+      "processing_seconds": 898.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 131247,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 6
+      },
+      "search_run_id": 7,
+      "selected_count": 131247,
+      "similarity_minimum": 0.7,
+      "similarity_qualifying_count": 131247,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 899.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_06_run_8.png",
+      "browser_screenshot_sha256": "52ebe04d3fc31556aca8c805397125bb9faa9f406ea1ca8deb90c37d338e5a57",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 74514,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 6,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "BROAD",
+      "membership_count": 67625,
+      "membership_sha256": "1fd0aafd83cbcce862ef6dc6dccdb06638294ebec1a42de906f6a9705f3d2c48",
+      "name": "East Coast Affluent Professionals",
+      "processing_seconds": 353.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 67625,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 7
+      },
+      "search_run_id": 8,
+      "selected_count": 67625,
+      "similarity_minimum": 0.6,
+      "similarity_qualifying_count": 67625,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 353.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_07_run_9.png",
+      "browser_screenshot_sha256": "b8cec394df5c4ea5775184d5ecd79c2e6bc07de7fcd887c2f73cf417f97e5c0d",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 265247,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 7,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "GOOD",
+      "membership_count": 163260,
+      "membership_sha256": "c83fd555cbd253d8e4c2b74f297ac04373910b698f6a90e561ae1c38c6c0569f",
+      "name": "Southern Family-Value Market",
+      "processing_seconds": 15865.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 163260,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 8
+      },
+      "search_run_id": 9,
+      "selected_count": 163260,
+      "similarity_minimum": 0.7,
+      "similarity_qualifying_count": 163260,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 15865.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_08_run_10.png",
+      "browser_screenshot_sha256": "99d44dd1021b738c4beec050336535bd1f2796795f566db3679634283491dee0",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 164862,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 8,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "BROAD",
+      "membership_count": 161368,
+      "membership_sha256": "260848072f457e0dc627f9e7d6c0516b5a75a1d42209236ab63739429a62afb5",
+      "name": "Married Family Households",
+      "processing_seconds": 850.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 161368,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 9
+      },
+      "search_run_id": 10,
+      "selected_count": 161368,
+      "similarity_minimum": 0.6,
+      "similarity_qualifying_count": 161368,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 851.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_09_run_11.png",
+      "browser_screenshot_sha256": "9c470871b52da213cc8ff08698b1c45f9efce83f854d32ee5c2dabf2c6e8f180",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 148110,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 9,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "BROAD",
+      "membership_count": 142089,
+      "membership_sha256": "04c85c47f46cbf60ceb3530b67c279089c5575b780b4fb885d45517f35c064c9",
+      "name": "Educated Full-Time Professionals",
+      "processing_seconds": 737.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 142089,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 10
+      },
+      "search_run_id": 11,
+      "selected_count": 142089,
+      "similarity_minimum": 0.6,
+      "similarity_qualifying_count": 142089,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 738.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_10_run_12.png",
+      "browser_screenshot_sha256": "3e3c8b86278066419a608ec9b6a8e242771be4c1220e00a5ed5fd6e91b12d15f",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 460423,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 10,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "GOOD",
+      "membership_count": 215443,
+      "membership_sha256": "4eae7703fc033bbc1f100def794dc2d6095f749d4b4bb2f2a1fe5eeb2034b64b",
+      "name": "Older Retired Middle-Income",
+      "processing_seconds": 711.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 215443,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 11
+      },
+      "search_run_id": 12,
+      "selected_count": 215443,
+      "similarity_minimum": 0.7,
+      "similarity_qualifying_count": 215443,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 712.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_11_run_13.png",
+      "browser_screenshot_sha256": "0d8d35f35f7702d0d06b4e1910a3e63b607c84422f3eeac14b717685454facb9",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 105496,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 11,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "BROAD",
+      "membership_count": 102246,
+      "membership_sha256": "452adfac7a91201656972f8090586d6b76fee6595007662f87c62f4ef202961d",
+      "name": "Urban Young Professionals",
+      "processing_seconds": 801.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 102246,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 12
+      },
+      "search_run_id": 13,
+      "selected_count": 102246,
+      "similarity_minimum": 0.6,
+      "similarity_qualifying_count": 102246,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 801.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_12_run_14.png",
+      "browser_screenshot_sha256": "6dad4438d9aaf3f39f8d359c618288bf522ceb6924a2caec8e4472350237c58f",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 129595,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 12,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "BROAD",
+      "membership_count": 128122,
+      "membership_sha256": "82b7bea77e9bd85e1c7f84ddcbdcb971900d152f8c68c09ff18383c9b1c31bd7",
+      "name": "Established Inner-Suburban Families",
+      "processing_seconds": 1069.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 128122,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 13
+      },
+      "search_run_id": 14,
+      "selected_count": 128122,
+      "similarity_minimum": 0.6,
+      "similarity_qualifying_count": 128122,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 1069.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_13_run_15.png",
+      "browser_screenshot_sha256": "4e0499e12810ba638301284880584d09576750b5f13e9891ff854f83c52f296c",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 159164,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 13,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "BROAD",
+      "membership_count": 131253,
+      "membership_sha256": "32b377c2aa349bf8b6479e24dd424c84d335525d94ae0c185641ec0a2eb4d44c",
+      "name": "Self-Employed / Gig Professionals",
+      "processing_seconds": 1438.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 131253,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 14
+      },
+      "search_run_id": 15,
+      "selected_count": 131253,
+      "similarity_minimum": 0.6,
+      "similarity_qualifying_count": 131253,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 1439.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_14_run_16.png",
+      "browser_screenshot_sha256": "6337b9fe3498372a66d97ea2fa57a1f408c85a00e971007cc4f552650a90e643",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 840022,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 14,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "GOOD",
+      "membership_count": 627218,
+      "membership_sha256": "9942788065def1ebf4295c8ad1de7072c3674a77caa592b35f0dfb2672f39ef4",
+      "name": "Private-Sector Urban/Suburban Workforce",
+      "processing_seconds": 4198.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 627218,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 15
+      },
+      "search_run_id": 16,
+      "selected_count": 627218,
+      "similarity_minimum": 0.7,
+      "similarity_qualifying_count": 627218,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 4199.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_15_run_17.png",
+      "browser_screenshot_sha256": "72f18f0f0f79df601e61987cb670c8aac5b4328505c82ac7f9c785849aa0f587",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 202805,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 15,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "GOOD",
+      "membership_count": 138667,
+      "membership_sha256": "ad50861e390f9a6ab79ccea6af43ad477164b1652ef696d9371412df068e17be",
+      "name": "Women \u2014 Four Largest Markets",
+      "processing_seconds": 408.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 138667,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 16
+      },
+      "search_run_id": 17,
+      "selected_count": 138667,
+      "similarity_minimum": 0.7,
+      "similarity_qualifying_count": 138667,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 408.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_16_run_18.png",
+      "browser_screenshot_sha256": "b624ed2987c4388f114b799c1a35719882db5df56cae85d69fed5f6c1cf84478",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 133497,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 16,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "BROAD",
+      "membership_count": 128120,
+      "membership_sha256": "d3f9920ec6ecfe32ec148d2e6647b4abff9e415ab76ce1faa94836b730ceaddb",
+      "name": "Men \u2014 Four Largest Markets",
+      "processing_seconds": 479.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 128120,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 17
+      },
+      "search_run_id": 18,
+      "selected_count": 128120,
+      "similarity_minimum": 0.6,
+      "similarity_qualifying_count": 128120,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 479.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_17_run_19.png",
+      "browser_screenshot_sha256": "66df59b08c7b2384a8de333163aaf317870f3d4b4caa1e2e35c372ac56f2f8ca",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 156188,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 17,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "BROAD",
+      "membership_count": 146363,
+      "membership_sha256": "7d91c78aacb20bd5ee2a189dc626a8010688fb8913299ebb8b90a095b9a0a41b",
+      "name": "Higher-Education / Higher-Income",
+      "processing_seconds": 510.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 146363,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 18
+      },
+      "search_run_id": 19,
+      "selected_count": 146363,
+      "similarity_minimum": 0.6,
+      "similarity_qualifying_count": 146363,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 510.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_18_run_20.png",
+      "browser_screenshot_sha256": "fb9e289b0631419f4e3e39f1004ee754568dca05cb545a551dc633124a226b15",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 948268,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 18,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "STRONG",
+      "membership_count": 74630,
+      "membership_sha256": "350e058594f9dde06083512feabf678db36a42f1748efed75e03eb29f0e7c47a",
+      "name": "Young Value Seekers",
+      "processing_seconds": 183.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 74630,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 19
+      },
+      "search_run_id": 20,
+      "selected_count": 74630,
+      "similarity_minimum": 0.8,
+      "similarity_qualifying_count": 74630,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 184.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_19_run_21.png",
+      "browser_screenshot_sha256": "458fd495436ddd412f091850f73733daedbfcc2a0a04a01614812d53957be1ad",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 212846,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 19,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "BROAD",
+      "membership_count": 209751,
+      "membership_sha256": "fbdd1d09b95f7c07749f4d5154a4bdab0922af7e4c52ee1ee40a8d9f372c399d",
+      "name": "Mature Suburban Households",
+      "processing_seconds": 558.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "INTELLIGENCE_REUSE",
+        "selected_count": 209751,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 20
+      },
+      "search_run_id": 21,
+      "selected_count": 209751,
+      "similarity_minimum": 0.6,
+      "similarity_qualifying_count": 209751,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 558.0,
+      "valid_similarity_count": 5000000
+    },
+    {
+      "attempt_number": 1,
+      "browser_screenshot": "docs\\evidence\\lookalike_v3\\17_browser_screenshots\\scenario_20_run_22.png",
+      "browser_screenshot_sha256": "bec12098553cf20f47f88b4f9cdfa3c9387d51b5959fdd4ff101a00c72e9e269",
+      "contact_export_profile_availability": [
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_V2"
+        },
+        {
+          "availability": "AVAILABLE",
+          "export_profile": "EMAIL_CONTACT_CONTACT_ONLY_V2"
+        }
+      ],
+      "currentness": "CURRENT",
+      "demographic_eligible_count": 2114560,
+      "export_summary": null,
+      "generation_ids": [
+        3,
+        4,
+        5
+      ],
+      "id": 20,
+      "invalid_similarity_count": 0,
+      "legacy_match_strength": "VERY_STRONG",
+      "membership_count": 25765,
+      "membership_sha256": "8905567a1611c8d2851ac6a3f2ccb3691e2b14b8aa097207fcec574e0a1c9895",
+      "name": "National High-Confidence Match",
+      "processing_seconds": 18.0,
+      "profile_ids": [
+        3,
+        4,
+        5
+      ],
+      "qualifies_10000": true,
+      "reason": "Current exact membership and browser result verified",
+      "reopen_currentness": "CURRENT",
+      "run_lineage": {
+        "phase10_orchestration_id": null,
+        "result_source": "EXACT_RESULT_REUSE",
+        "selected_count": 25765,
+        "similarity_composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+        "similarity_generation_id": 3,
+        "similarity_profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+        "similarity_result_snapshot_id": 1
+      },
+      "search_run_id": 22,
+      "selected_count": 25765,
+      "similarity_minimum": 0.9,
+      "similarity_qualifying_count": 25765,
+      "technical_details_open": true,
+      "terminal_status": "COMPLETED",
+      "total_elapsed_seconds": 19.0,
+      "valid_similarity_count": 5000000
+    }
+  ],
+  "stage": "14B_PROMPT_17",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "tested": 20,
+  "verdict": "DEMO_GO"
+}

@@ -1,0 +1,128 @@
+{
+  "fixture_contract": "LOOKALIKE_V3_STAGE_00_LEGACY_GOLDEN_V1",
+  "trusted_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "schema_version": 31,
+  "v1": {
+    "selection_contract_version": "1",
+    "membership_contract_version": "1",
+    "selection_semantics": "LEGACY_RAW_SCORE",
+    "selection_label": "Match Strength",
+    "propensity_bucket": null,
+    "membership_columns": [
+      "person_id",
+      "propensity_score",
+      "percentile_bucket",
+      "decile",
+      "rank_band"
+    ],
+    "export_score_semantics": "LEGACY_RAW_PROPENSITY_SCORE"
+  },
+  "v2": {
+    "selection_contract_version": "2",
+    "membership_contract_version": "2",
+    "selection_semantics": "CALIBRATED_PURCHASE_PROBABILITY",
+    "selection_label": "Purchase Propensity",
+    "default_bucket": "0.70",
+    "buckets": {
+      "0.50": {"minimum": 0.5, "maximum": 0.6, "maximum_inclusive": false, "legacy_match_strength": "BROAD"},
+      "0.60": {"minimum": 0.6, "maximum": 0.7, "maximum_inclusive": false, "legacy_match_strength": "BROAD"},
+      "0.70": {"minimum": 0.7, "maximum": 0.8, "maximum_inclusive": false, "legacy_match_strength": "GOOD"},
+      "0.80": {"minimum": 0.8, "maximum": 0.9, "maximum_inclusive": false, "legacy_match_strength": "STRONG"},
+      "0.90": {"minimum": 0.9, "maximum": 1.0, "maximum_inclusive": true, "legacy_match_strength": "VERY_STRONG"}
+    },
+    "legacy_to_bucket": {
+      "VERY_STRONG": "0.90",
+      "STRONG": "0.80",
+      "GOOD": "0.70",
+      "BROAD": "0.60"
+    },
+    "boundary_oracle": [
+      {"value": "0.49", "bucket": null},
+      {"value": "0.50", "bucket": "0.50"},
+      {"value": "nextafter(0.60,0)", "bucket": "0.50"},
+      {"value": "0.60", "bucket": "0.60"},
+      {"value": "0.70", "bucket": "0.70"},
+      {"value": "0.80", "bucket": "0.80"},
+      {"value": "0.90", "bucket": "0.90"},
+      {"value": "1.00", "bucket": "0.90"}
+    ],
+    "invalid_score_values": [
+      "NaN",
+      "Infinity",
+      "-Infinity",
+      "boolean_true",
+      "boolean_false",
+      "-0.01",
+      "1.0000000001"
+    ],
+    "invalid_bucket_values": [0.7, true, false, null, "0.40", "0.700", "BROAD"]
+  },
+  "policy": {
+    "broad_legacy_minimum": 0.6,
+    "demo_qualification_minimum": 10000,
+    "currentness_vocabulary": ["CURRENT", "NOT_AVAILABLE", "STALE", "UNVERIFIED"]
+  },
+  "unversioned_http": {
+    "request_discriminator": "omitted",
+    "resolved_selection_contract_version": "1",
+    "response_model": "SearchSubmissionStatus",
+    "response_fields": [
+      "search_run_id",
+      "campaign_name",
+      "status",
+      "created_at",
+      "completed_at",
+      "selected_count",
+      "delivery_channel",
+      "export_profile",
+      "safe_message"
+    ]
+  },
+  "v2_http": {
+    "response_model": "SearchSubmissionV2Status",
+    "additional_response_fields": [
+      "selection_contract_version",
+      "attempt_number",
+      "queue_position",
+      "propensity_bucket",
+      "progress",
+      "issue",
+      "retry_eligible"
+    ]
+  },
+  "scenarios": {
+    "path": "Prompts/Campaign_Implementation_Tool_Demo_Readiness_20_Real_Runs_Prompt_Pack/scenarios.json",
+    "file_sha256": "d168deccf2f7cf9723b5bc08a4b99bf0dc49325309c1a402cd59ba4beabb2b77",
+    "count": 20,
+    "strength_distribution": {"VERY_STRONG": 1, "STRONG": 2, "GOOD": 7, "BROAD": 10},
+    "scenario_sha256": {
+      "1": "f5217fc0b9bbfca2177f4d0bb1329d2729d3b06a4817191c9ed1b99f23fc0f52",
+      "2": "75e6c71494f9f77895cd8f22768bbbcad9a636d19f6e49aff087791a7016e327",
+      "3": "147e7813e5aeceded8bd1515058ee53fdb1d9c1bc40382c1534f5abeb2e2e7f3",
+      "4": "9414979759eaf1f79d6f06618ad878a34f828e5e672af1fc32ee733da3322173",
+      "5": "91ab91ed1df0f99fe6b526c9b0fc378eb9f631636f22f097eab9a280440e2ced",
+      "6": "6d5c2b30acb5df0aaaa82a8adb407e97d188bdcd0c03a93c7748b7fa28b49dc1",
+      "7": "cded9dbbb80d5712b809e8283171415374742413013d254efaafe24faef610a0",
+      "8": "849af3c1d2ed759b832d37eaadc46767dca29c362c3eaeeb0ebb576990dcb203",
+      "9": "5413696a9cb43ee66342354805bb0676da024b19b04490844e95c006418f9c91",
+      "10": "d87b3fa7cd33e2bf97142c8260d4fe1f979ef2798dde44fa1d4123a740f4817c",
+      "11": "77061de40e142fe9121c6be9f9202825b931012c47b2790db4cfd1f6bd65be56",
+      "12": "3f8fc7cf2ff6119e4ebd193420fc7260da518dc8e006eb71d07d9311fa6447e4",
+      "13": "e8a29524d2ff8dbebee1441264692d1bbbd47ca5c926276726d9cb4f50b58a16",
+      "14": "df5adadcfc941134ffe2ef40b01cedb7a6c29336ffcdf7631505d54510550fb2",
+      "15": "bf286eb71dc68f8b90f8727e48f19e77863c4af51c6845735f075c8ae5fa5eb4",
+      "16": "6b3a50ecdfb03e909cc95352044dfb60033d2385a99682bf25f29a92735e7ce0",
+      "17": "06baa87d8a8b7143a3bc3a3b7c060795e511728485fb4ad152c24ae0f6d18f94",
+      "18": "24c4187b998dae331b207932cff46b30d0e46caa4e4acdeaa9c791718691f165",
+      "19": "b65a6fd08663f63e644d65169d3799ade53a37e51e9921a7f3fca660bb73da93",
+      "20": "6e001634e97b09fbf265f201b76e2fde932000005d014eb3a8735fd1399d74be"
+    }
+  },
+  "disposable_schema_31": {
+    "schema_identity_sha256": "93df3ec3c6887d52f17c0e8f3e815ee3dafb2c871b3269fdf951d642ed7ab3d2",
+    "object_count": 132,
+    "table_count": 38,
+    "integrity_check": "ok",
+    "foreign_key_violations": 0
+  }
+}

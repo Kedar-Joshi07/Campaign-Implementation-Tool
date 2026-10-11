@@ -1293,7 +1293,21 @@
             </fieldset>
             <fieldset class="panel"><legend>Campaign Context</legend><div id="business-context-fields" class="analysis-form-grid"></div></fieldset>
             <fieldset class="panel"><legend>Targeting Preferences</legend>
-              <fieldset class="planner-strength-fieldset"><legend>Calibrated Purchase Propensity</legend><div id="business-match-strength" class="planner-strength-options"></div></fieldset>
+              <fieldset class="planner-strength-fieldset"><legend>How should customers be matched?</legend>
+                <div class="business-mode-choices">
+                  <label title="Model-relative demographic distance to supported product buyer profiles; not purchase probability or percentile"><input type="radio" name="business_score_mode" value="similarity" aria-describedby="business-similarity-help" checked> Buyer Similarity (0-100 index)</label>
+                  <label><input type="radio" name="business_score_mode" value="probability"> Advanced: Purchase Probability</label>
+                </div>
+              </fieldset>
+              <p id="business-mode-readiness" class="panel-note" role="status" aria-live="polite"></p>
+              <fieldset id="business-similarity-fieldset" class="planner-strength-fieldset"><legend>Minimum Buyer Similarity</legend>
+                <p id="business-similarity-help" class="panel-note">This index measures model-relative demographic distance to supported product buyer profiles. It is not a purchase probability or percentile. A minimum of 80 includes scores of 90 and above. Exact products shape the learned buyer context; targeting filters only determine prospect eligibility.</p>
+                <div id="business-similarity-minimums" class="planner-strength-options" aria-describedby="business-similarity-help"></div>
+              </fieldset>
+              <fieldset id="business-probability-fieldset" class="planner-strength-fieldset" hidden><legend>Calibrated Purchase Probability</legend>
+                <p class="panel-note">Advanced mode uses discrete purchase-probability bands. The 0.80 band excludes 0.90 and above; it is different from a buyer-similarity minimum. Availability depends on current governed calibration.</p>
+                <div id="business-match-strength" class="planner-strength-options"></div>
+              </fieldset>
               <div id="business-targeting-fields" class="analysis-form-grid"></div>
               <details class="planner-targeting-more"><summary>More options</summary><div id="business-more-fields" class="analysis-form-grid"></div>
                 <div class="analysis-form-grid">
@@ -1302,7 +1316,7 @@
                 </div>
               </details>
               <div class="analysis-form-grid">
-                <div class="form-field"><label for="business-top-percent">Top Matching % — optional</label><input id="business-top-percent" name="top_matching_percent" type="number" min="1" max="100" step="1"></div>
+                <div id="business-top-percent-field" class="form-field" hidden><label for="business-top-percent">Top Matching % — optional (Purchase Probability only)</label><input id="business-top-percent" name="top_matching_percent" type="number" min="1" max="100" step="1" disabled></div>
                 <div class="form-field"><label for="business-selection-mode">How many Potential Customers?</label><select id="business-selection-mode" name="selection_mode"><option value="ALL_MATCHING">All matching Potential Customers</option><option value="TOP_N">Top number of matching Potential Customers</option></select></div>
                 <div id="business-target-count-field" class="form-field" hidden><label for="business-target-count">Target Count</label><input id="business-target-count" name="target_count" type="number" min="1" step="1" disabled></div>
               </div>
@@ -1315,7 +1329,7 @@
               <button id="business-search-preflight" class="button button-secondary" type="button" disabled>Check Exact Count</button>
               <button id="business-search-submit" class="button button-primary" type="submit" disabled>Find Potential Customers</button>
             </div>
-            <p id="business-search-preflight-result" class="panel-note" role="status" aria-live="polite"></p>
+            <div id="business-search-preflight-result" class="business-preflight-result" role="status" aria-live="polite"></div>
             <p id="business-search-status" role="status" aria-live="polite"></p>
           </form>
           <div id="legacy-campaign-planner-shell" hidden>

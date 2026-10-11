@@ -39,6 +39,17 @@ def test_health_returns_success(client: TestClient) -> None:
     assert response.status_code == 200
 
 
+def test_mode_health_keeps_similarity_independent_of_absent_calibration(
+    client: TestClient,
+) -> None:
+    response = client.get("/api/health/modes")
+    assert response.status_code == 200
+    modes = response.json()
+    assert modes["buyer_similarity"]["workflow_status"] == "AVAILABLE"
+    assert modes["buyer_similarity"]["source_status"] == "AWAITING_GOVERNED_IMPORTS"
+    assert modes["purchase_probability"]["calibration_status"] == "NOT_AVAILABLE"
+
+
 def test_health_payload_contains_application_and_database_details(client: TestClient) -> None:
     payload = client.get("/api/health").json()
 

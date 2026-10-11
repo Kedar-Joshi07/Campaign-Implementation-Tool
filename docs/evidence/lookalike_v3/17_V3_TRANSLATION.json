@@ -1,0 +1,656 @@
+{
+  "catalog_version": "0e40a88ad6a43c9d808dcc21533bc5466eeafe804cb3f0d4a1378b1d2420f26d",
+  "composite_context_sha256": "159508937496a7acc082622a603e8c15f68858e20c82195481d128ad5a2931c2",
+  "current_demo_minimum": 10000,
+  "historical_json_minimum": 101,
+  "mapping": {
+    "BROAD": 0.6,
+    "GOOD": 0.7,
+    "STRONG": 0.8,
+    "VERY_STRONG": 0.9
+  },
+  "profile_ids": [
+    3,
+    4,
+    5
+  ],
+  "profile_set_sha256": "b754deaacf04a6b2781c9b090ed2b476a24c33fa2cb770c7a6c2c7be972e1def",
+  "recorded_context": {
+    "campaign_categories": [],
+    "campaign_channel": "EMAIL",
+    "campaign_types": [],
+    "historical_campaign_channels": [],
+    "offer_types": [],
+    "product_ids": [
+      "PRD001",
+      "PRD003",
+      "PRD004"
+    ]
+  },
+  "recorded_context_manifest": "output\\demo_preload\\demo_20_scenario_checkpoint.json",
+  "recorded_context_manifest_sha256": "a355dbfca4d65e9522a15653a8fe5665e2f99f59646b4eea59e11828455c6e7c",
+  "scenarios": [
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44",
+          "45-54"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "25K-49,999",
+          "50K-74,999",
+          "75K-99,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": []
+      },
+      "id": 1,
+      "match_strength": "STRONG",
+      "similarity_minimum": 0.8
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "50K-74,999",
+          "75K-99,999",
+          "100K-149,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": [
+          "California",
+          "Texas"
+        ]
+      },
+      "id": 2,
+      "match_strength": "GOOD",
+      "similarity_minimum": 0.7
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "35-44",
+          "45-54",
+          "55-64"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "25K-49,999",
+          "50K-74,999",
+          "75K-99,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": [
+          "New York",
+          "New Jersey",
+          "Florida"
+        ]
+      },
+      "id": 3,
+      "match_strength": "GOOD",
+      "similarity_minimum": 0.7
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44",
+          "45-54"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "25K-49,999",
+          "50K-74,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": [
+          "Illinois",
+          "Ohio",
+          "Michigan",
+          "Indiana",
+          "Wisconsin"
+        ]
+      },
+      "id": 4,
+      "match_strength": "BROAD",
+      "similarity_minimum": 0.6
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "50K-74,999",
+          "75K-99,999",
+          "100K-149,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": [
+          "California",
+          "Washington",
+          "Oregon",
+          "Colorado",
+          "Arizona"
+        ]
+      },
+      "id": 5,
+      "match_strength": "GOOD",
+      "similarity_minimum": 0.7
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "35-44",
+          "45-54"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "75K-99,999",
+          "100K-149,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": [
+          "New York",
+          "New Jersey",
+          "Massachusetts",
+          "Maryland",
+          "Virginia"
+        ]
+      },
+      "id": 6,
+      "match_strength": "BROAD",
+      "similarity_minimum": 0.6
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44",
+          "45-54"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "25K-49,999",
+          "50K-74,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": [
+          "Texas",
+          "Georgia",
+          "North Carolina",
+          "South Carolina",
+          "Tennessee",
+          "Louisiana"
+        ]
+      },
+      "id": 7,
+      "match_strength": "GOOD",
+      "similarity_minimum": 0.7
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "35-44",
+          "45-54"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": 5,
+        "family_member_count_min": 3,
+        "genders": [],
+        "income_groups": [
+          "50K-74,999",
+          "75K-99,999",
+          "100K-149,999"
+        ],
+        "marital_statuses": [
+          "Married"
+        ],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": []
+      },
+      "id": 8,
+      "match_strength": "BROAD",
+      "similarity_minimum": 0.6
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44"
+        ],
+        "education_levels": [
+          "Bachelor degree",
+          "Master degree"
+        ],
+        "employment_statuses": [
+          "Employed full-time"
+        ],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "75K-99,999",
+          "100K-149,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": []
+      },
+      "id": 9,
+      "match_strength": "BROAD",
+      "similarity_minimum": 0.6
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "65-74",
+          "75+"
+        ],
+        "education_levels": [],
+        "employment_statuses": [
+          "Retired"
+        ],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "25K-49,999",
+          "50K-74,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": []
+      },
+      "id": 10,
+      "match_strength": "GOOD",
+      "similarity_minimum": 0.7
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "50K-74,999",
+          "75K-99,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [
+          "Urban core"
+        ],
+        "states": []
+      },
+      "id": 11,
+      "match_strength": "BROAD",
+      "similarity_minimum": 0.6
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "35-44",
+          "45-54"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "50K-74,999",
+          "75K-99,999",
+          "100K-149,999"
+        ],
+        "marital_statuses": [
+          "Married"
+        ],
+        "resident_statuses": [],
+        "resident_types": [
+          "Inner suburban"
+        ],
+        "states": []
+      },
+      "id": 12,
+      "match_strength": "BROAD",
+      "similarity_minimum": 0.6
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44",
+          "45-54"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [
+          "Self-employed",
+          "Gig/contract"
+        ],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "25K-49,999",
+          "50K-74,999",
+          "75K-99,999",
+          "100K-149,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": []
+      },
+      "id": 13,
+      "match_strength": "BROAD",
+      "similarity_minimum": 0.6
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44",
+          "45-54"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [
+          "Private sector"
+        ],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "25K-49,999",
+          "50K-74,999",
+          "75K-99,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [
+          "Urban core",
+          "Inner suburban"
+        ],
+        "states": []
+      },
+      "id": 14,
+      "match_strength": "GOOD",
+      "similarity_minimum": 0.7
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [
+          "Female"
+        ],
+        "income_groups": [
+          "25K-49,999",
+          "50K-74,999",
+          "75K-99,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": [
+          "California",
+          "Texas",
+          "Florida",
+          "New York"
+        ]
+      },
+      "id": 15,
+      "match_strength": "GOOD",
+      "similarity_minimum": 0.7
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "35-44",
+          "45-54"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [
+          "Male"
+        ],
+        "income_groups": [
+          "50K-74,999",
+          "75K-99,999",
+          "100K-149,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": [
+          "California",
+          "Texas",
+          "Florida",
+          "New York"
+        ]
+      },
+      "id": 16,
+      "match_strength": "BROAD",
+      "similarity_minimum": 0.6
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44",
+          "45-54"
+        ],
+        "education_levels": [
+          "Bachelor degree",
+          "Master degree",
+          "Professional/Doctoral degree"
+        ],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "75K-99,999",
+          "100K-149,999",
+          "150K-249,999",
+          "250K+"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": [
+          "California",
+          "Texas",
+          "New York",
+          "New Jersey"
+        ]
+      },
+      "id": 17,
+      "match_strength": "BROAD",
+      "similarity_minimum": 0.6
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "18-24",
+          "25-34"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "<25K",
+          "25K-49,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [
+          "Urban core",
+          "Inner suburban"
+        ],
+        "states": []
+      },
+      "id": 18,
+      "match_strength": "STRONG",
+      "similarity_minimum": 0.8
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "55-64",
+          "65-74"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "25K-49,999",
+          "50K-74,999",
+          "75K-99,999"
+        ],
+        "marital_statuses": [
+          "Married"
+        ],
+        "resident_statuses": [],
+        "resident_types": [
+          "Inner suburban",
+          "Outer suburban/peri-urban"
+        ],
+        "states": []
+      },
+      "id": 19,
+      "match_strength": "BROAD",
+      "similarity_minimum": 0.6
+    },
+    {
+      "criteria": {
+        "age_groups": [
+          "25-34",
+          "35-44",
+          "45-54",
+          "55-64"
+        ],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [
+          "25K-49,999",
+          "50K-74,999",
+          "75K-99,999",
+          "100K-149,999"
+        ],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": []
+      },
+      "id": 20,
+      "match_strength": "VERY_STRONG",
+      "similarity_minimum": 0.9
+    }
+  ],
+  "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+  "selection_contract_version": "3",
+  "similarity_generation_ids": [
+    3,
+    4,
+    5
+  ],
+  "source_identity_sha256": "1c465d13b20fbd4400e708fef9876a5fa07be2b06c2b92741ad13817f1b573bb",
+  "source_scenario_json": "Prompts\\Campaign_Implementation_Tool_Demo_Readiness_20_Real_Runs_Prompt_Pack\\scenarios.json",
+  "source_scenario_json_sha256": "d168deccf2f7cf9723b5bc08a4b99bf0dc49325309c1a402cd59ba4beabb2b77",
+  "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+  "version": "CANONICAL_20_LEGACY_STRENGTH_TO_V3_SIMILARITY_V1"
+}
