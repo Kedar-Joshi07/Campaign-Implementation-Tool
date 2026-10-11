@@ -96,5 +96,33 @@
     "manual_full_validation_and_branch_governance_pending",
     "standalone_js_lint_unavailable_on_local_host"
   ],
-  "minimal_resume": "With explicit operator authorization, review and commit/push through an authorized PR-capable path; verify exact candidate SHA, required CI jobs, manual Full Validation at that SHA, and governance before release GO."
+  "post_commit_checkpoint": {
+    "date_ist": "2026-10-12",
+    "first_candidate_sha": "f480a3ca9e046ed61b3d0358bf0989a5d0d8205f",
+    "branch": "feature/14b-lookalike-final-gate",
+    "draft_pr_number": 1,
+    "pr_ci": {
+      "run_id": 38168396109,
+      "event": "pull_request",
+      "head_sha": "f480a3ca9e046ed61b3d0358bf0989a5d0d8205f",
+      "conclusion": "success",
+      "repository_hygiene": "success",
+      "python_validation": "success",
+      "tests": "success_1171_passed_132_deselected",
+      "frontend_contract": "success_125_frontend_api_69_phase9_90_phase10_356_phase11",
+      "cleanroom_phase1_to_7": "success"
+    },
+    "manual_full_validation": {
+      "run_id": 38169298180,
+      "head_sha": "f480a3ca9e046ed61b3d0358bf0989a5d0d8205f",
+      "conclusion": "failure",
+      "baseline": "1300_passed_3_browser_harness_environment_isolation_failures",
+      "full_fresh": "skipped",
+      "remedy": "pass_empty_environ_in_three_pure_browser_resolver_tests",
+      "local_retest": "13_harness_tests_pass_with_workflow_browser_environment"
+    },
+    "corrective_commit_sha": "PENDING",
+    "corrective_exact_sha_gate": "PENDING"
+  },
+  "minimal_resume": "Commit the browser-harness test isolation fix and this addendum, then verify PR CI and Manual Full Validation on that exact new SHA; record the actual run outcomes in PR #1 without another documentation-only SHA loop. Predictive and governance limits remain independent."
 }

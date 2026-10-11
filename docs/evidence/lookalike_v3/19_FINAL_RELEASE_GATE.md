@@ -160,3 +160,33 @@ through its authorized trigger, verify run ID/head SHA/event and every required
 job, run Manual Full Validation at that same SHA, and recheck branch-governance
 requirements. Append an exact-SHA addendum to this report; do not rewrite
 the local result or promote predictive claims without independent outcomes.
+
+## Exact-SHA addendum — first candidate and manual-gate correction (2026-10-12 IST)
+
+The sections above are the recorded pre-commit local checkpoint. The operator
+subsequently authorized a feature branch and PR, not a direct `main` push.
+Commit `f480a3ca9e046ed61b3d0358bf0989a5d0d8205f` was pushed to
+`feature/14b-lookalike-final-gate` and draft PR #1 was opened. Pull-request CI
+run [38168396109](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/38168396109)
+had `head_sha=f480a3ca9e046ed61b3d0358bf0989a5d0d8205f`, event
+`pull_request`, and conclusion `success`. Repository Hygiene, Python
+Validation, Tests (1,171 passed, 132 deselected), Frontend Contract (125
+frontend/API, 69 Phase 9, 90 Phase 10, 356 Phase 11 passed), and Clean-Room
+Phase1-7 all concluded `success`. Locked dependency installation passed in
+CI; the local `.venv` pin mismatch remains a local-environment disclosure.
+
+Manual Full Validation run
+[38169298180](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/38169298180)
+on the same SHA failed its baseline step after 1,300 passes and three
+`test_system_browser_harness.py` failures. That workflow deliberately sets
+`SYSTEM_BROWSER_PATH=/usr/bin/google-chrome`; three pure resolver tests had
+implicitly inherited it instead of supplying an empty `environ`. The
+full-fresh step was consequently **skipped**, not passed. The tests now supply
+`environ={}` for the intended no-override cases. With both workflow browser
+variables set locally, all 13 harness tests pass. This test-isolation change
+does not alter production browser resolution or weaken the assertions.
+
+This addendum accompanies the corrective commit. Its new SHA and the
+subsequent PR CI/manual workflow outcomes must be recorded against the actual
+remote runs (for example in PR #1) before final release GO. The predictive
+response/lift NO-GO and governance limitations remain unchanged.
