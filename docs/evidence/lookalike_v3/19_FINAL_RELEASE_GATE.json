@@ -1,19 +1,19 @@
 {
   "stage": "14B_PROMPT_19",
-  "recorded_date_ist": "2026-10-11",
+  "recorded_date_ist": "2026-10-12",
   "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
-  "current_head": "336875c30fc32b00323d916ecc45b232016168a1",
-  "candidate": "UNCOMMITTED",
+  "current_head": "ec0c28920cf64301c3ce75dd27be0d706571cf24",
+  "candidate": "ec0c28920cf64301c3ce75dd27be0d706571cf24",
   "preceding_stage": "18_DOCUMENTATION_GO",
-  "verdict": "FINAL_RELEASE_NO_GO_CI_PENDING",
+  "verdict": "FINAL_RELEASE_NO_GO_MANUAL_FULL_FRESH_GOVERNED_SPLIT",
   "local_technical_verdict": "GO_BOUNDED_WITH_PRIOR_FULL5M_EVIDENCE",
   "decisions": {
     "implementation_runtime": "GO_LOCAL_SINGLE_NODE",
     "descriptive_similarity": "GO_DECLARED_INDEX_ONLY",
     "predictive_response_lift": "NO_GO_UNAVAILABLE",
-    "full5m": "GO_NAMED_HARDWARE_UNCOMMITTED",
+    "full5m": "GO_NAMED_HARDWARE_RECORDED_CONTEXT",
     "twenty_scenario_demo": "DEMO_GO_LOCAL",
-    "exact_sha_release": "NO_GO_CI_PENDING"
+    "exact_sha_release": "NO_GO_MANUAL_FULL_FRESH_GOVERNED_SPLIT"
   },
   "acceptance": {
     "A01": "PASS", "A02": "PASS", "A03": "PASS", "A04": "PASS", "A05": "PASS",
@@ -24,7 +24,7 @@
     "A26": "PASS", "A27": "PASS", "A28": "PASS", "A29": "PASS", "A30": "PASS",
     "A31": "PASS", "A32": "PASS", "A33": "PASS", "A34": "PASS", "A35": "PASS",
     "A36": "PASS", "A37": "PASS", "A38": "PASS", "A39": "PASS_WITH_MEASUREMENT_LIMITS", "A40": "PASS",
-    "A41": "PASS", "A42": "PASS", "A43": "PASS_LOCAL", "A44": "BLOCKED_UNCOMMITTED", "A45": "PASS"
+    "A41": "PASS", "A42": "PASS", "A43": "PASS_EXACT_SHA_PR_CI", "A44": "BLOCKED_MANUAL_FULL_FRESH_STEP4", "A45": "PASS"
   },
   "local_gates": {
     "pip_check": "PASS",
@@ -73,11 +73,18 @@
     "main_sha": "336875c30fc32b00323d916ecc45b232016168a1",
     "old_head_ci_run_id": 37282486202,
     "old_head_ci_conclusion": "success_NOT_CANDIDATE",
-    "candidate_ci_run_id": null,
-    "candidate_ci_head_sha": null,
-    "candidate_ci_event": null,
-    "required_jobs_conclusions": null,
-    "candidate_manual_full_validation": "NOT_RUN",
+    "candidate_ci_run_id": 38198011573,
+    "candidate_ci_head_sha": "ec0c28920cf64301c3ce75dd27be0d706571cf24",
+    "candidate_ci_event": "pull_request",
+    "required_jobs_conclusions": {
+      "repository_hygiene": "success",
+      "python_validation": "success",
+      "tests": "success",
+      "frontend_contract": "success",
+      "cleanroom_phase1_to_7": "success"
+    },
+    "candidate_manual_full_validation": "FAILURE_STEP4_GOVERNED_CAMPAIGN_GROUP_SPLIT",
+    "candidate_manual_run_id": 38198876255,
     "main_protected_read_only_metadata": false,
     "rulesets_returned": 0,
     "branch_protection_detail": "403_RESOURCE_NOT_ACCESSIBLE_BY_INTEGRATION"
@@ -90,10 +97,10 @@
     "prompt19_evidence": ["docs/evidence/lookalike_v3/19_FINAL_RELEASE_GATE.md", "docs/evidence/lookalike_v3/19_FINAL_RELEASE_GATE.json"]
   },
   "risks": [
-    "uncommitted_candidate_cannot_receive_exact_sha_remote_ci",
+    "manual_full_fresh_model_scoring_blocked_by_canonical_one_campaign_connected_component",
     "predictive_response_and_product_specific_lift_unvalidated",
     "full5m_timings_are_named_hardware_specific",
-    "manual_full_validation_and_branch_governance_pending",
+    "main_branch_protection_and_ruleset_administrator_review_pending",
     "standalone_js_lint_unavailable_on_local_host"
   ],
   "post_commit_checkpoint": {
@@ -154,5 +161,22 @@
     "local_hash_tests": "18_passed_including_browser_harness",
     "next_exact_sha_ci_and_manual": "PENDING"
   },
-  "minimal_resume": "Commit the proven plain-CSV line-ending canonicalization and tests, then verify PR CI and Manual Full Validation on the same new SHA; record actual remote run outcomes in PR #1 without another documentation-only SHA loop. Predictive and governance limits remain independent."
+  "latest_exact_sha_checkpoint": {
+    "validated_executable_sha": "ec0c28920cf64301c3ce75dd27be0d706571cf24",
+    "draft_pr": 1,
+    "pr_ci_run_id": 38198011573,
+    "pr_ci_event": "pull_request",
+    "pr_ci_conclusion": "success_all_five_jobs",
+    "manual_run_id": 38198876255,
+    "manual_event": "workflow_dispatch",
+    "manual_conclusion": "failure",
+    "manual_baseline": "success_1308_passed",
+    "manual_full_fresh_step2": "pass_all_regenerated_source_canonical_hashes",
+    "manual_full_fresh_step3": "pass_fresh_import_125000_customers_570000_sales_5000000_demographics_and_reconciliation",
+    "manual_full_fresh_step4": "failure_fewer_than_three_independent_campaign_connected_groups_before_model_or_scoring_certification",
+    "known_data_limitation": "canonical_campaign_history_forms_one_connected_component",
+    "prohibited_shortcuts": ["random_customer_split", "minimum_campaign_id_grouping", "fabricated_canonical_campaign_components"],
+    "pr_comment_id": 6117320412
+  },
+  "minimal_resume": "Obtain genuine independent campaign/outcome groups or an explicit product/governance decision on this full-fresh limitation; do not weaken campaign-connected isolation. Then run exact-SHA CI and applicable manual validation on the resulting executable candidate. Predictive and branch-governance limits remain separate."
 }

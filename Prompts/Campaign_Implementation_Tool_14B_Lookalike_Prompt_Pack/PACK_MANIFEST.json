@@ -1,12 +1,16 @@
 {
-  "pack_version": "1.0",
+  "pack_version": "1.1",
   "created_date": "2026-10-05",
+  "updated_date": "2026-10-12",
   "trusted_starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
   "purpose": "Approved additive product-aware look-alike v3 implementation prompts with retained purchase probability",
   "stage_count": 10,
-  "companion_count": 5,
+  "companion_count": 6,
   "concurrent_lane_count": 4,
-  "status": "PROMPT_PACK_REVIEWED; IMPLEMENTATION_NOT_RUN",
+  "status": "IMPLEMENTED_WITH_PROMPT_19_MANUAL_FULL_FRESH_NO_GO",
+  "last_validated_executable_sha": "ec0c28920cf64301c3ce75dd27be0d706571cf24",
+  "last_exact_sha_ci_run_id": 38198011573,
+  "last_manual_full_validation_run_id": 38198876255,
   "files": [
     {
       "name": "00_GUARDRAILS_AND_EXECUTION_ORDER.md",
@@ -15,8 +19,8 @@
     },
     {
       "name": "00_README_START_HERE.md",
-      "bytes": 3461,
-      "sha256": "300d6385a31b3c9a112c2beb2ad7708d616738b48e14464783e6f66d2d41f503"
+      "bytes": 5373,
+      "sha256": "ead03bea3c4e682bd6c14ad9de89c37b8e64ce1056062a5ab1d0deb7bb7c701d"
     },
     {
       "name": "01_APPROVED_V3_SEMANTICS.md",
@@ -105,28 +109,33 @@
     },
     {
       "name": "15_FAULT_INJECTION_RESTART_CONCURRENCY_AND_RECOVERY.md",
-      "bytes": 5363,
-      "sha256": "a097d093f9f74f6e99bab6ce91b77ad2dc7e2e7fa384ae0be406d26392f13bea"
+      "bytes": 5762,
+      "sha256": "2cfbebec68f213ca33ac96b644f3132a75fbb6b476be311049e2410440cddee2"
+    },
+    {
+      "name": "Prompt_15_1_Support_Aware_Split_Recovery_and_Prompt_16_Handoff.md",
+      "bytes": 21419,
+      "sha256": "3548112ad762ecd6f89a1750e2fd946c42b64ee50518fce4de06a9a8ae796af9"
     },
     {
       "name": "16_PERFORMANCE_AND_5M_CANONICAL_CERTIFICATION.md",
-      "bytes": 5875,
-      "sha256": "ffad4f5cad0af36d556b877410cd6bfb65aae327159244c79c86121f1becefc0"
+      "bytes": 6342,
+      "sha256": "e5232bc7fbb5e4a6b5f7e054ea2f8d295f8a077e22023147400c8248ed3623c9"
     },
     {
       "name": "17_CANONICAL_20_SCENARIO_PREFLIGHT_AND_REAL_RUNS.md",
-      "bytes": 5951,
-      "sha256": "ac4f0036ede7f7e2b7ddf0c69f7912f20e82c3da2032eb9b54472f89e882abd6"
+      "bytes": 6254,
+      "sha256": "d3299ff10b2d2c3bd3c178419d96475e4dc91f4d29c43929f94f68f994486914"
     },
     {
       "name": "18_DOCUMENTATION_ARCHITECTURE_AND_CLIENT_EXPLANATION.md",
-      "bytes": 5467,
-      "sha256": "6f6d4efad68bcdd7b161376521d34a0041374318c3dcf51951d51ce1a9b1f22c"
+      "bytes": 5841,
+      "sha256": "75f13e58a9890428a064fdc835eca690a615865031fd2d4f17083a83a7c53bb6"
     },
     {
       "name": "19_FULL_REGRESSION_EXACT_SHA_CI_AND_FINAL_GATE.md",
-      "bytes": 6227,
-      "sha256": "175c744878782704e91b894e66026f0e8f114045b05b2042d2d5919de17b046e"
+      "bytes": 6595,
+      "sha256": "02f7777b996b92360b4073afc7ac8ac804f658b11560b3a33190d2bab42a8c66"
     },
     {
       "name": "C1_CONCURRENT_READ_ONLY_DATA_AND_TOPOLOGY_AUDIT.md",

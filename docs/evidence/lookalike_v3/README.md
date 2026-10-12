@@ -1,5 +1,15 @@
 # 14B look-alike evidence authority
 
+The latest [Prompt 19 exact-SHA checkpoint](19_FINAL_RELEASE_GATE.md) records
+all five PR CI jobs green at `ec0c28920cf64301c3ce75dd27be0d706571cf24`,
+but manual Full Validation **NO-GO** at governed model training because the
+canonical campaign history has fewer than three independent connected groups.
+The strict regenerated-source hash and fresh 5M import gates passed before
+that failure. The PR remains draft; the terminal run is also recorded in its
+[conversation](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/pull/1#issuecomment-6117320412).
+This does not revoke the separate, source-specific similarity and demo gates
+below, nor promote descriptive similarity to response prediction.
+
 The dated [Prompt 15.1 support-aware split recovery](15_1_SUPPORT_AWARE_SPLIT_RECOVERY.md) supersedes the older split-policy conclusion in [Prompt 15's fault report](15_FAULT_RECOVERY.md) without erasing that report. Prompt 15.1 is **GO** for the bounded single-node runtime.
 
 The [Prompt 16.2 full-5M measurement closure](16_2_FULL5M_MEASUREMENTS.md) is the current scale/performance authority for `SIMILARITY_CUSTOMER_SPLIT_V2`. It records process RSS and separate verification, indexed publication, and index-rebuild timings, along with the unrelaxed history gate. The [Prompt 16.1 recertification](16_1_SUPPORT_AWARE_FULL5M.md) preserves the earlier 2.053-second history miss; the original [Prompt 16 NO-GO](16_FULL5M.md) remains historical evidence for V1's PRD001 158/42 shortfall.

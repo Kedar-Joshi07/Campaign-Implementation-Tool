@@ -1,5 +1,15 @@
 # Prompt 19 — final regression and release gate
 
+**Current checkpoint (2026-10-12 IST): FINAL RELEASE NO-GO.** The latest
+validated executable candidate is `ec0c28920cf64301c3ce75dd27be0d706571cf24`
+on draft PR #1. All five exact-SHA PR CI jobs passed. Manual Full Validation
+passed 1,308 baseline tests, strict regenerated-source hashes, the fresh
+125K/570K/5M import, and reconciliation, then stopped at the governed
+probability-model split because the canonical campaign history has fewer than
+three independent campaign-connected groups. The dated sections below retain
+their original checkpoint wording; the final run IDs and decision are in the
+latest addendum at the end of this report.
+
 Recorded 2026-10-11 (IST). Trusted starting and current HEAD:
 `336875c30fc32b00323d916ecc45b232016168a1`. Candidate: **UNCOMMITTED**
 14B worktree; preceding Stage 18 documentation gate was GO. The worktree
@@ -256,3 +266,41 @@ real Windows catalog files now compute the GitHub accepted LF hashes. This
 does not modify canonical sources or weaken customer/sales/demographic
 integrity checks. PR CI and manual full-fresh on the next SHA remain pending;
 the two prior manual runs are failures, not release evidence.
+
+## Exact-SHA addendum — terminal CI and governed full-fresh outcome (2026-10-12 IST)
+
+Commit `ec0c28920cf64301c3ce75dd27be0d706571cf24` on
+`feature/14b-lookalike-final-gate` passed all five jobs in pull-request CI
+[38198011573](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/38198011573):
+Repository Hygiene, Python Validation, Tests, Frontend Contract, and Clean-Room
+Phase1-7. The run's `head_sha` equals the candidate and its event is
+`pull_request`.
+
+Manual Full Validation
+[38198876255](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/38198876255)
+was dispatched on the same exact SHA. Its baseline step passed **1,308 tests**.
+Full-fresh Step 2 regenerated all canonical sources and passed the strict
+canonical-hash gate, including the two plain-CSV catalogs. Step 3 imported
+125,000 customers, 570,000 sales, and 5,000,000 demographics into a fresh
+schema-33 database and reconciled the sources. Step 4 then failed before
+model/scoring certification with
+`CampaignGroupSplitError: At least three independent campaign-connected groups are required.`
+This is the already documented canonical one-connected-component limitation,
+not a hash or import failure. Prompt 13.6 explicitly prohibits random
+customer splitting, `MIN(campaign_id)` grouping, or changing canonical
+campaign data merely to fabricate disconnected components. None was done.
+
+Independent decisions: bounded implementation and exact-SHA PR CI **GO**;
+prior named-hardware 5M buyer-similarity and 20-scenario evidence remain
+source/context-specific **GO**; predictive response/lift **NO-GO / unvalidated**;
+this candidate's manual full-fresh Phase1-7 model/scoring path **NO-GO**; final
+release **NO-GO**. The PR remains draft and unmerged. Read-only branch metadata
+reports `main` unprotected with zero rulesets; administrator review is pending.
+The terminal evidence is also recorded in
+[PR #1 comment](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/pull/1#issuecomment-6117320412).
+
+Safe resume: obtain genuine independent campaign/outcome groups sufficient for
+governed train/calibration/evaluation, or an explicit product/governance decision
+about accepting this full-fresh limitation. Do not silently weaken the gate.
+Any resulting executable candidate needs its own exact-SHA CI and applicable
+manual validation before final release GO.

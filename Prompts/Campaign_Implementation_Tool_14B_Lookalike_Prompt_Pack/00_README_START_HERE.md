@@ -1,5 +1,18 @@
 # Campaign Implementation Tool — approved 14B look-alike implementation pack
 
+**2026-10-12 current execution checkpoint:** Stages 14B_00–09 and companion
+Prompts 15–18 have been implemented and tested at their recorded scopes;
+Prompt 15.1 supersedes the original Prompt 15 fault NO-GO, and Prompt 16.2
+supersedes the initial Prompt 16 performance NO-GO. Exact-SHA PR CI passed
+all five jobs for `ec0c28920cf64301c3ce75dd27be0d706571cf24`.
+The manual full-fresh run passed baseline tests, source hashes, and fresh 5M
+import/reconciliation, but failed governed model training because the canonical
+campaign history lacks three independent campaign-connected groups. Final
+release remains **NO-GO**; see the [Prompt 19 terminal checkpoint](../../docs/evidence/lookalike_v3/19_FINAL_RELEASE_GATE.md)
+and [draft PR #1](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/pull/1).
+The C1–C4 concurrent lanes were optional and were not executed as separate
+lanes; their substantive integration work was handled sequentially.
+
 Prepared 2026-10-05 against `336875c30fc32b00323d916ecc45b232016168a1`. This is a prompt deliverable, not a completed implementation or fresh model certification.
 
 **2026-10-11 execution-status addendum:** the paragraph above describes this
