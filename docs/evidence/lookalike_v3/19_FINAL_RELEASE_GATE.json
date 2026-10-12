@@ -134,9 +134,25 @@
     "manual_baseline": "success_1303_passed",
     "manual_full_fresh": "failure_step2_canonical_hash_drift_before_import_training_scoring",
     "local_accepted_hash_reproduction": "five_of_five_match_with_numpy_2_4_6_pandas_3_0_5_faker_40_36_0",
-    "faker_40_38_drift": "LIKELY_INFERENCE_NOT_DIRECTLY_PROVEN_FROM_FAILED_CI_ARTIFACT",
+    "faker_40_38_drift": "HISTORICAL_HYPOTHESIS_UNCONFIRMED_BY_FIRST_CI_ARTIFACT",
     "remedy": "pin_faker_40_36_0_and_print_strict_per_dataset_hash_mismatch",
     "new_exact_sha_ci_and_manual": "PENDING"
   },
-  "minimal_resume": "Commit the accepted-source Faker lock correction and strict hash-diagnostic tests, then verify PR CI and Manual Full Validation on the same new SHA; record actual remote run outcomes in PR #1 without another documentation-only SHA loop. Predictive and governance limits remain independent."
+  "cross_platform_catalog_hash_checkpoint": {
+    "date_ist": "2026-10-12",
+    "third_candidate_sha": "2b7b0145f872d2c00a6aaca5e10dc767cbd98b7c",
+    "pr_ci_run_id": 38174491203,
+    "pr_ci_conclusion": "success_all_five_jobs",
+    "manual_run_id": 38175147476,
+    "manual_baseline": "success",
+    "manual_full_fresh": "failure_step2_only_campaign_and_product_master_csv_line_endings",
+    "campaign_master_accepted_lf_sha256": "d6f6101f65884f7a4afe87e1c220de144d4ddc0cc99cd9052ecb51eee22da9a5",
+    "campaign_master_generated_crlf_sha256": "1e453d77ad8dae2bb2c4dc997f53b900b1706117b7a22d095f0b13281b67be84",
+    "product_master_accepted_lf_sha256": "82f55d63f3d043d978fc6a136e05c50f9cb25d575d7deb99cab6a08ede853b3c",
+    "product_master_generated_crlf_sha256": "317778cd2f591ad34757413915c33ad9298c7fb70fbbe22605d8078be3b9ba6a",
+    "remedy": "normalize_CRLF_to_LF_only_for_plain_CSV_canonical_hashes_preserve_exact_gzip_payload_hashes",
+    "local_hash_tests": "18_passed_including_browser_harness",
+    "next_exact_sha_ci_and_manual": "PENDING"
+  },
+  "minimal_resume": "Commit the proven plain-CSV line-ending canonicalization and tests, then verify PR CI and Manual Full Validation on the same new SHA; record actual remote run outcomes in PR #1 without another documentation-only SHA loop. Predictive and governance limits remain independent."
 }

@@ -172,10 +172,18 @@ def _sha256_file(path: Path) -> str:
 
 def _canonical_sha(path: Path) -> str:
     if path.suffix.lower() == ".gz":
+        digest = hashlib.sha256()
         with gzip.open(path, "rb") as handle:
-            payload = handle.read()
-    else:
-        payload = path.read_bytes()
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+
+    payload = path.read_bytes()
+    if path.suffix.lower() == ".csv":
+        # Git stores catalog CSVs as LF, while csv.writer emits CRLF on every
+        # platform. Only transport line endings are normalized; row bytes and
+        # field values remain under an exact canonical hash.
+        payload = payload.replace(b"\r\n", b"\n")
     return _sha256_bytes(payload)
 
 
@@ -647,10 +655,11 @@ def _assert_hashes_match_accepted(*, accepted_hashes: dict[str, dict[str, str]],
     )
     return {
         "status": "PASS",
+        "canonicalization": "gzip_decompressed_payload_or_plain_csv_lf_v2",
         "canonical_mismatches": canonical_mismatches,
         "compressed_mismatches": compressed_mismatches,
         "compressed_mismatch_explanation": (
-            "Compressed GZIP bytes can vary due to container metadata while canonical decompressed payload remains identical."
+            "Stored bytes may differ because of GZIP metadata or plain-CSV CRLF/LF line endings; canonical payload must match."
             if compressed_mismatches
             else "none"
         ),

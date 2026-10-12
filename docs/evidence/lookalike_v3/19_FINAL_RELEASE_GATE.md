@@ -224,3 +224,35 @@ The next exact-SHA PR CI and manual full-fresh run are **PENDING**. A final
 GO cannot be inferred from the earlier green CI, from the local probes, or
 from a full-fresh run that stopped at Step 2. Record the actual new SHA and
 remote conclusions in PR #1 to avoid an endless evidence-only commit loop.
+
+## Exact-SHA addendum — confirmed cross-platform catalog hashing (2026-10-12 IST)
+
+Commit `2b7b0145f872d2c00a6aaca5e10dc767cbd98b7c` passed all five PR CI
+jobs in [38174491203](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/38174491203).
+Manual run [38175147476](https://github.com/Kedar-Joshi07/Campaign-Implementation-Tool/actions/runs/38175147476)
+passed baseline validation and then reached full-fresh Step 2. Its improved
+strict hash diagnostic reported **only two** mismatches:
+
+| Plain CSV catalog | GitHub accepted LF SHA-256 | Generated CRLF SHA-256 |
+|---|---|---|
+| `campaign_master.csv` | `d6f6101f65884f7a4afe87e1c220de144d4ddc0cc99cd9052ecb51eee22da9a5` | `1e453d77ad8dae2bb2c4dc997f53b900b1706117b7a22d095f0b13281b67be84` |
+| `product_master.csv` | `82f55d63f3d043d978fc6a136e05c50f9cb25d575d7deb99cab6a08ede853b3c` | `317778cd2f591ad34757413915c33ad9298c7fb70fbbe22605d8078be3b9ba6a` |
+
+`git ls-files --eol` reports the repository blobs as LF and the existing
+Windows worktree copies as CRLF. Locally replacing CRLF with LF in those
+catalogs yields exactly the GitHub accepted hashes above. The generator uses
+`csv.writer`, whose CSV line terminator is CRLF on Linux too. This is a
+confirmed serialization mismatch, not a changed catalog row. The earlier
+Faker-version hypothesis is **not established as the cause of this remaining
+failure**. Faker 40.36.0 remains pinned because the full local 5M probe with
+that version reproduced every accepted source; the first run with 40.38.0 did
+not expose per-dataset mismatches, so no stronger claim is made about it.
+
+The canonical hash now normalizes CRLF to LF for **plain `.csv` files only**,
+while gzip sources retain exact decompressed-payload hashing. Raw stored-byte
+hashes remain recorded separately. Tests prove LF/CRLF equivalence, changed
+field values still fail, and gzip line endings are not normalized. The two
+real Windows catalog files now compute the GitHub accepted LF hashes. This
+does not modify canonical sources or weaken customer/sales/demographic
+integrity checks. PR CI and manual full-fresh on the next SHA remain pending;
+the two prior manual runs are failures, not release evidence.
