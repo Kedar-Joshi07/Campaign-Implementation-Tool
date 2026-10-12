@@ -1,5 +1,11 @@
 # Phase 11 Result Snapshots and Smart Reuse
 
+> Historical v1/v2 membership account. Schema 33 retains these immutable
+> probability snapshots and adds a separate version-3 similarity membership
+> with matched-product and score-method lineage. See the
+> [current Buyer Similarity architecture](BUYER_SIMILARITY_ARCHITECTURE.md)
+> and [Prompt 17 real-run evidence](evidence/lookalike_v3/17_SCENARIOS.md).
+
 ## Search history is not snapshot storage
 
 Every valid intentional submission creates a new immutable `campaign_search_runs` row. A `campaign_result_snapshots` row represents reusable analytical membership. Therefore repeated identical searches have distinct history IDs while sharing one validated snapshot; delivery-profile or campaign-description changes also retain their own history without rebuilding membership.

@@ -19,6 +19,7 @@ from app.services.feedback_grouping import (
     FEEDBACK_GROUPING_CONTRACT_VERSION,
     build_feedback_grouping,
 )
+from app.services.buyer_similarity_result_service import _inspect_membership, SimilarityResultError
 
 
 MAX_FEEDBACK_ROWS = 100_000
@@ -233,6 +234,15 @@ def _selection_basis_sha256(run: Mapping[str, Any]) -> str:
         "targeting_criteria_sha256": run.get("targeting_criteria_sha256"),
         "filter_branches_sha256": run.get("filter_branches_sha256"),
     }
+    if str(run.get("selection_contract_version") or "1") == "3":
+        basis.update({
+            "similarity_result_snapshot_id": run.get("similarity_result_snapshot_id"),
+            "similarity_generation_id": run.get("similarity_generation_id"),
+            "similarity_profile_set_sha256": run.get("similarity_profile_set_sha256"),
+            "similarity_score_method_version": run.get("similarity_score_method_version"),
+            "similarity_minimum": run.get("similarity_minimum"),
+            "current_attempt_number": run.get("current_attempt_number"),
+        })
     encoded = json.dumps(basis, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
@@ -455,6 +465,17 @@ def ingest_feedback(
     canonical = json.dumps(normalized, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
     checksum = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     with get_connection(path) as connection:
+        version_row = connection.execute(
+            "SELECT selection_contract_version FROM campaign_search_runs WHERE search_run_id=?",
+            (search_run_id,),
+        ).fetchone()
+    if version_row is not None and str(version_row["selection_contract_version"]) == "3":
+        return _ingest_similarity_feedback(
+            path, search_run_id, normalized=normalized,
+            source_name=source_name.strip(), idempotency_key=idempotency_key.strip(),
+            checksum=checksum, root=root,
+        )
+    with get_connection(path) as connection:
         run = connection.execute(
             """SELECT r.*,s.storage_uri FROM campaign_search_runs AS r
                JOIN campaign_result_snapshots AS s ON s.result_snapshot_id=r.result_snapshot_id
@@ -494,12 +515,12 @@ def ingest_feedback(
                    search_run_id,attempt_number,outcome_definition,source_name,
                    idempotency_key,payload_sha256,selection_basis_sha256,
                    row_count,positive_count,
-                   negative_count,status,created_at
-               ) VALUES (?,?,'ATTRIBUTED_PURCHASE',?,?,?,?,?,?,?, 'ACCEPTED',?)""",
+                   negative_count,status,created_at,selection_contract_version
+               ) VALUES (?,?,'ATTRIBUTED_PURCHASE',?,?,?,?,?,?,?, 'ACCEPTED',?,?)""",
             (search_run_id, int(run["current_attempt_number"]), source_name.strip(),
              idempotency_key.strip(), checksum, selection_basis_sha256,
              len(normalized), positives,
-             len(normalized)-positives, now),
+             len(normalized)-positives, now, str(run["selection_contract_version"] or "1")),
         ).lastrowid)
         connection.executemany(
             """INSERT INTO campaign_feedback_outcomes (
@@ -619,7 +640,126 @@ def ingest_feedback(
     return _project_batch(path, row)
 
 
+def _ingest_similarity_feedback(
+    path: Path, search_run_id: int, *, normalized: list[dict[str, Any]],
+    source_name: str, idempotency_key: str, checksum: str, root: Path,
+) -> dict[str, Any]:
+    """Retain governed v3 outcomes without entering probability recalibration."""
+
+    with get_connection(path) as connection:
+        run_row = connection.execute(
+            "SELECT * FROM campaign_search_runs WHERE search_run_id=?", (search_run_id,),
+        ).fetchone()
+        snapshot_row = connection.execute(
+            "SELECT * FROM buyer_similarity_result_snapshots WHERE similarity_result_snapshot_id=?",
+            (run_row["similarity_result_snapshot_id"],),
+        ).fetchone() if run_row is not None and run_row["similarity_result_snapshot_id"] is not None else None
+        existing = connection.execute(
+            "SELECT * FROM campaign_feedback_batches WHERE search_run_id=? AND idempotency_key=?",
+            (search_run_id, idempotency_key),
+        ).fetchone()
+    if run_row is None or run_row["status"] != "COMPLETED" or snapshot_row is None:
+        raise FeedbackConflictError("Feedback requires a completed immutable similarity result.")
+    run, snapshot = dict(run_row), dict(snapshot_row)
+    if existing is not None:
+        if existing["payload_sha256"] != checksum:
+            raise FeedbackConflictError("The idempotency key was already used for different feedback.")
+        return _project_batch(path, dict(existing))
+    expected_uri = f"artifacts/similarity_results/snapshot_{int(snapshot['similarity_result_snapshot_id']):06d}/members.csv.gz"
+    artifact = (root / expected_uri).resolve()
+    if snapshot["storage_uri"] != expected_uri or not artifact.is_relative_to(root) or not artifact.is_file():
+        raise FeedbackConflictError("The immutable similarity membership is unavailable.")
+    try:
+        count, digest = _inspect_membership(artifact, float(run["similarity_minimum"]))
+    except (OSError, ValueError, SimilarityResultError) as exc:
+        raise FeedbackConflictError("The immutable similarity membership is invalid.") from exc
+    if count != snapshot["resolved_count"] or digest != snapshot["snapshot_sha256"]:
+        raise FeedbackConflictError("The immutable similarity membership changed.")
+    requested = {item["person_id"] for item in normalized}
+    selected_details: dict[str, dict[str, str]] = {}
+    with gzip.open(artifact, "rt", encoding="utf-8", newline="") as source:
+        for member in csv.DictReader(source):
+            if member["person_id"] in requested:
+                selected_details[member["person_id"]] = member
+    if set(selected_details) != requested:
+        raise FeedbackValidationError("Every feedback person must belong to the immutable result snapshot.")
+    basis = _selection_basis_sha256(run)
+    with get_connection(path, write=True) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        current = connection.execute(
+            "SELECT status,current_attempt_number,similarity_result_snapshot_id FROM campaign_search_runs WHERE search_run_id=?",
+            (search_run_id,),
+        ).fetchone()
+        if current is None or current["status"] != "COMPLETED" or current["current_attempt_number"] != run["current_attempt_number"] or current["similarity_result_snapshot_id"] != snapshot["similarity_result_snapshot_id"]:
+            raise FeedbackConflictError("The search lineage changed during feedback ingestion.")
+        duplicate_key = connection.execute(
+            "SELECT * FROM campaign_feedback_batches WHERE search_run_id=? AND idempotency_key=?",
+            (search_run_id, idempotency_key),
+        ).fetchone()
+        if duplicate_key is not None:
+            if duplicate_key["payload_sha256"] != checksum:
+                raise FeedbackConflictError("The idempotency key was already used for different feedback.")
+            return _project_batch(path, dict(duplicate_key))
+        marks = ",".join("?" for _ in requested)
+        if connection.execute(
+            f"""SELECT 1 FROM campaign_feedback_outcomes o JOIN campaign_feedback_batches b
+                ON b.feedback_batch_id=o.feedback_batch_id
+                WHERE b.search_run_id=? AND o.person_id IN ({marks}) LIMIT 1""",
+            (search_run_id, *sorted(requested)),
+        ).fetchone() is not None:
+            raise FeedbackConflictError("Feedback for one or more members was already recorded for this search.")
+        positives = sum(item["outcome"] for item in normalized)
+        batch_id = int(connection.execute(
+            """INSERT INTO campaign_feedback_batches (
+                search_run_id,attempt_number,outcome_definition,source_name,
+                idempotency_key,payload_sha256,selection_basis_sha256,row_count,
+                positive_count,negative_count,status,created_at,
+                selection_contract_version,similarity_result_snapshot_id,
+                similarity_generation_id,similarity_profile_set_sha256,
+                similarity_score_method_version,similarity_snapshot_sha256
+            ) VALUES (?,?,'ATTRIBUTED_PURCHASE',?,?,?,?,?,?,?,'ACCEPTED',?,'3',?,?,?,?,?)""",
+            (search_run_id, int(run["current_attempt_number"]), source_name,
+             idempotency_key, checksum, basis, len(normalized), positives,
+             len(normalized) - positives, _now(),
+             int(snapshot["similarity_result_snapshot_id"]), int(snapshot["similarity_generation_id"]),
+             str(snapshot["profile_set_sha256"]), str(snapshot["score_method_version"]),
+             str(snapshot["snapshot_sha256"])),
+        ).lastrowid)
+        connection.executemany(
+            """INSERT INTO campaign_feedback_outcomes
+                (feedback_batch_id,person_id,outcome,outcome_at,outcome_value,
+                 matched_product_id,buyer_similarity_score,similarity_generation_id)
+                VALUES (?,?,?,?,?,?,?,?)""",
+            ((batch_id, item["person_id"], item["outcome"], item["outcome_at"], item["outcome_value"],
+              selected_details[item["person_id"]]["matched_product_id"],
+              float(selected_details[item["person_id"]]["buyer_similarity_score"]),
+              int(selected_details[item["person_id"]]["similarity_generation_id"]))
+             for item in normalized),
+        )
+        row = dict(connection.execute(
+            "SELECT * FROM campaign_feedback_batches WHERE feedback_batch_id=?", (batch_id,),
+        ).fetchone())
+    return _project_batch(path, row)
+
+
 def _project_batch(path: Path, row: dict[str, Any]) -> dict[str, Any]:
+    if str(row.get("selection_contract_version") or "1") == "3":
+        reason = (
+            "Buyer similarity is descriptive. This feedback is retained with its immutable "
+            "selection lineage, but no independently valid purchase-probability raw-score "
+            "lineage is linked; probability recalibration and profile retraining are unavailable."
+        )
+        return {
+            "feedback_batch_id": int(row["feedback_batch_id"]),
+            "search_run_id": int(row["search_run_id"]),
+            "attempt_number": int(row["attempt_number"]),
+            "status": str(row["status"]), "row_count": int(row["row_count"]),
+            "positive_count": int(row["positive_count"]),
+            "negative_count": int(row["negative_count"]),
+            "created_at": str(row["created_at"]),
+            "recalibration_status": "NOT_AVAILABLE", "recalibration_reason": reason,
+            "retraining_status": "NOT_AVAILABLE", "retraining_reason": reason,
+        }
     with get_connection(path) as connection:
         scoring = connection.execute(
             "SELECT scoring_run_id FROM campaign_search_runs WHERE search_run_id=?",

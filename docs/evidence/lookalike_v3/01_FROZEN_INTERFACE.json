@@ -1,0 +1,96 @@
+{
+  "interface_manifest_version": "1",
+  "frozen_at_stage": "14B_01",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate_sha": "UNCOMMITTED",
+  "schema_version": 32,
+  "selection": {
+    "selection_contract_version": "3",
+    "membership_contract_version": "3",
+    "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+    "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+    "similarity_minimums": [0.9, 0.8, 0.7, 0.6, 0.5],
+    "default_similarity_minimum": 0.7,
+    "threshold_predicate": "GREATER_THAN_OR_EQUAL",
+    "product_match_policy": "ANY_SELECTED_PRODUCT_MAX_V1",
+    "tiers": [
+      {"minimum": 0.9, "maximum": 1.0, "maximum_inclusive": true, "key": "VERY_STRONG", "label": "Very Strong"},
+      {"minimum": 0.8, "maximum": 0.9, "maximum_inclusive": false, "key": "STRONG", "label": "Strong"},
+      {"minimum": 0.7, "maximum": 0.8, "maximum_inclusive": false, "key": "GOOD", "label": "Good"},
+      {"minimum": 0.6, "maximum": 0.7, "maximum_inclusive": false, "key": "BROAD", "label": "Broad"},
+      {"minimum": 0.5, "maximum": 0.6, "maximum_inclusive": false, "key": "EXPLORATORY", "label": "Exploratory"}
+    ]
+  },
+  "request": {
+    "required": ["selection_contract_version", "score_semantics", "similarity_minimum", "campaign_name", "context", "criteria", "selection_mode", "export_profile", "catalog_version"],
+    "optional": ["description", "planned_launch_date", "top_n"],
+    "forbidden": ["propensity_bucket", "match_strength", "top_matching_percent"],
+    "explicit_version_required": true,
+    "numeric_policy": "FINITE_JSON_FLOAT_EXACT_SET_NO_BOOL_NO_INTEGER_PERCENT"
+  },
+  "preflight": {
+    "endpoint": "POST /api/potential-customer-search/preflight",
+    "counts_when_intelligence_absent": null,
+    "demographic_count_remains_exact": true,
+    "similarity_currentness": ["CURRENT", "STALE", "UNVERIFIED", "NOT_AVAILABLE", "BUILDING"],
+    "similarity_eligibility": ["ELIGIBLE", "NOT_ELIGIBLE"],
+    "probability_readiness_is_separate_and_optional": true,
+    "build_submission_endpoint": "POST /api/potential-customer-search/runs",
+    "initial_build_submission_state": "QUEUED",
+    "runtime_owner": "DEDICATED_BUYER_SIMILARITY_COORDINATOR_NOT_PROBABILITY_COORDINATOR"
+  },
+  "registry": {
+    "profiles": "buyer_similarity_profiles",
+    "profile_artifacts": "buyer_similarity_profile_artifacts",
+    "generations": "buyer_similarity_score_generations",
+    "generation_stages": "buyer_similarity_generation_stages",
+    "score_stage": "buyer_similarity_score_stage",
+    "published_scores": "buyer_similarity_scores",
+    "result_snapshots": "buyer_similarity_result_snapshots",
+    "preflight_cache": "similarity_preflight_cache",
+    "one_published_profile_per_immutable_identity": true,
+    "published_scores_immutable": true
+  },
+  "membership": {
+    "required_columns": ["person_id", "buyer_similarity_score", "similarity_tier", "matched_product_id", "score_method_version", "feature_coverage", "similarity_generation_id"],
+    "probability_fields_are_not_overloaded": true,
+    "contact_pii_prohibited": true
+  },
+  "optional_lanes": {
+    "C2": {
+      "ownership": "tests and fixtures only",
+      "consume": ["selection", "request", "preflight", "registry", "membership"],
+      "must_not_allocate_schema_version": true
+    },
+    "C3": {
+      "ownership": "standalone UI component and mock contract only",
+      "payload_contract": "request",
+      "integration_stage": "14B_06",
+      "must_not_edit_current_business_form": true
+    },
+    "C4": {
+      "ownership": "documentation-only isolated namespace",
+      "measurement_placeholders": "NEEDS_MEASUREMENT",
+      "must_not_claim_runtime_or_demo_go": true
+    }
+  },
+  "legacy": {
+    "unversioned_request_behavior": "UNCHANGED",
+    "v1_membership": "1",
+    "v2_selection": "2",
+    "v2_membership": "2",
+    "broad_legacy_mapping": "0.60",
+    "explicit_v2_0_50_preserved": true,
+    "historical_conversion": false
+  },
+  "export": {
+    "v3_export_requires_new_explicit_projection_or_profile_version": true,
+    "legacy_probability_headers_must_not_be_fabricated": true,
+    "implementation_stage": "LATER_STAGE"
+  },
+  "rollback": {
+    "supported_boundary": "Restore a pre-migration backup and run a schema-31 application before any schema-32 writes; old binaries must not write schema 32.",
+    "automatic_downgrade_supported": false,
+    "operator_database_migrated_by_stage": false
+  }
+}

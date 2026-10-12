@@ -32,6 +32,8 @@ from app.services.potential_customer_preflight_service import (
     count_calibrated_members,
     exact_preflight,
 )
+from app.services.buyer_similarity_preflight_service import exact_similarity_preflight
+from app.repositories.campaign_targeting_context_repository import CampaignTargetingContextRepository
 from app.services.potential_customer_search_submission_service import (
     normalize_search_definition,
 )
@@ -269,6 +271,34 @@ def test_governed_calibration_consumption_gate_accepts_exact_current_lineage(
     )
     assert decision.eligible is True
     assert decision.reason_code == "ELIGIBLE"
+
+
+def test_ready_probability_does_not_fabricate_similarity_readiness(
+    parity_case, tmp_path: Path,
+) -> None:
+    path, root, context_id, generation, calibration_id = parity_case
+    assert resolve_governed_calibration_eligibility(
+        path, generation, calibration_id
+    ).eligible is True
+    saved = CampaignTargetingContextRepository(path).fetch_context(context_id)
+    assert saved is not None
+    context = json.loads(saved["campaign_context_json"])
+    context.pop("campaign_targeting_context_contract_version", None)
+    catalog = tmp_path / "product_master.csv"
+    catalog.write_text(
+        "product_id,product_name,product_category\nP1,Product One,Category A\n",
+        encoding="utf-8",
+    )
+    version = get_or_build_targeting_catalog(path)["catalog_version"]
+    preflight = exact_similarity_preflight(
+        path, context=context, criteria={}, similarity_minimum=.70,
+        selection_mode="ALL_MATCHING", top_n=None,
+        catalog_version=version, project_root=root,
+        product_catalog_path=catalog,
+    )
+    assert preflight["selected_count"] is None
+    assert preflight["similarity_currentness"] == "NOT_AVAILABLE"
+    assert preflight["similarity_eligibility"] == "NOT_ELIGIBLE"
 
 
 def test_legacy_promoted_calibration_remains_historical_but_is_not_v2_eligible(

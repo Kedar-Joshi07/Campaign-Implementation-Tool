@@ -1,5 +1,13 @@
 # Phase 11 Runtime Architecture
 
+> Historical schema-19 runtime account. The current schema-33 application
+> retains durable coordination but also has fenced immutable attempts,
+> an eligible `POST /api/potential-customer-search/runs/{id}/retry` action,
+> and a distinct explicit-v3 Buyer Similarity path. The statements below
+> that retry is absent or always creates a new search are historical. Read
+> the [current v3 architecture](BUYER_SIMILARITY_ARCHITECTURE.md) and
+> [operator guide](BUYER_SIMILARITY_OPERATOR_AND_DEMO.md) for present behavior.
+
 ## Scope
 
 This document describes the normal Phase 11 runtime in schema version 19. The production entry point is:

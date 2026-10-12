@@ -37,6 +37,7 @@ def test_explicit_path_override_has_highest_priority() -> None:
 def test_auto_prefers_chrome_then_edge() -> None:
     target = resolve_system_browser(
         system_browser="auto",
+        environ={},
         path_exists=lambda path: path == DEFAULT_CHROME_PATH,
     )
 
@@ -47,6 +48,7 @@ def test_auto_prefers_chrome_then_edge() -> None:
 def test_auto_falls_back_to_edge_when_chrome_missing() -> None:
     target = resolve_system_browser(
         system_browser="auto",
+        environ={},
         path_exists=lambda path: path == DEFAULT_EDGE_PATH,
     )
 
@@ -79,7 +81,7 @@ def test_invalid_browser_choice_fails_clearly() -> None:
 
 def test_missing_selected_browser_fails_clearly() -> None:
     with pytest.raises(SystemBrowserResolutionError) as exc:
-        resolve_system_browser(system_browser="chrome", path_exists=lambda _: False)
+        resolve_system_browser(system_browser="chrome", environ={}, path_exists=lambda _: False)
 
     assert "SYSTEM_BROWSER=chrome requested" in str(exc.value)
 

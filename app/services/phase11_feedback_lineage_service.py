@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from app.database.connection import get_connection
+from app.services.feedback_grouping import (
+    FEEDBACK_GROUPING_CONTRACT_VERSION, build_feedback_grouping,
+)
 
 
 class Phase11FeedbackLineageError(RuntimeError):
@@ -85,6 +88,90 @@ def get_completed_search_lineage(
         raise Phase11FeedbackLineageError(
             "Future outcome lineage is available only for completed searches."
         )
+    if str(payload.get("selection_contract_version") or "1") == "3":
+        with get_connection(database_path) as connection:
+            snapshot = connection.execute(
+                "SELECT * FROM buyer_similarity_result_snapshots WHERE similarity_result_snapshot_id=?",
+                (payload["similarity_result_snapshot_id"],),
+            ).fetchone()
+            generation = connection.execute(
+                "SELECT * FROM buyer_similarity_score_generations WHERE similarity_generation_id=?",
+                (payload["similarity_generation_id"],),
+            ).fetchone()
+            profile = connection.execute(
+                "SELECT * FROM buyer_similarity_profiles WHERE profile_id=?",
+                (generation["profile_id"],),
+            ).fetchone() if generation is not None else None
+            similarity_exports = connection.execute(
+                "SELECT export_event_id FROM buyer_similarity_export_events WHERE search_run_id=? ORDER BY export_event_id",
+                (search_run_id,),
+            ).fetchall()
+            feedback_batches = connection.execute(
+                "SELECT feedback_batch_id FROM campaign_feedback_batches WHERE search_run_id=? ORDER BY feedback_batch_id",
+                (search_run_id,),
+            ).fetchall()
+            related_feedback = connection.execute(
+                """SELECT b.search_run_id,o.person_id
+                   FROM campaign_feedback_batches b
+                   JOIN campaign_feedback_outcomes o ON o.feedback_batch_id=b.feedback_batch_id
+                   WHERE b.selection_contract_version='3'
+                     AND b.similarity_profile_set_sha256=? AND b.status='ACCEPTED'
+                   ORDER BY b.search_run_id,o.person_id,b.feedback_batch_id""",
+                (snapshot["profile_set_sha256"],),
+            ).fetchall() if snapshot is not None else []
+        if snapshot is None or generation is None or profile is None or any(payload.get(field) is None for field in (
+            "campaign_context_json", "campaign_context_sha256",
+            "targeting_criteria_sha256", "filter_branches_sha256",
+            "similarity_profile_set_sha256", "completed_at",
+        )):
+            raise Phase11FeedbackLineageError("The completed similarity lineage is incomplete.")
+        if (
+            snapshot["result_membership_contract_version"] != "3"
+            or snapshot["profile_set_sha256"] != payload["similarity_profile_set_sha256"]
+            or snapshot["similarity_generation_id"] != payload["similarity_generation_id"]
+            or snapshot["resolved_count"] != payload["selected_count"]
+        ):
+            raise Phase11FeedbackLineageError("The similarity result identity is inconsistent.")
+        grouping = build_feedback_grouping([dict(row) for row in related_feedback])
+        return {
+            "selection_contract_version": "3",
+            "search": {"search_run_id": search_run_id, "campaign_name": payload["campaign_name"],
+                       "created_at": payload["created_at"], "completed_at": payload["completed_at"]},
+            "business_context": {"targeting_context_id": int(payload["targeting_context_id"]),
+                                 "campaign_context_sha256": payload["campaign_context_sha256"],
+                                 "modeling_context_sha256": payload["modeling_context_sha256"]},
+            "targeting": {"criteria_sha256": payload["targeting_criteria_sha256"],
+                          "filter_branches_sha256": payload["filter_branches_sha256"],
+                          "selection_mode": payload["selection_mode"],
+                          "selected_count": int(payload["selected_count"])},
+            "delivery": {"channel": payload["delivery_channel"],
+                         "export_profile": payload["export_profile"],
+                         "export_event_ids": [int(row["export_event_id"]) for row in similarity_exports]},
+            "result": {"similarity_result_snapshot_id": int(snapshot["similarity_result_snapshot_id"]),
+                       "membership_contract_version": "3",
+                       "result_cache_key_sha256": snapshot["result_cache_key_sha256"],
+                       "snapshot_sha256": snapshot["snapshot_sha256"],
+                       "storage_uri": snapshot["storage_uri"]},
+            "intelligence": {"similarity_generation_id": int(generation["similarity_generation_id"]),
+                             "profile_set_sha256": snapshot["profile_set_sha256"],
+                             "composite_context_sha256": snapshot["composite_context_sha256"],
+                             "score_method_version": snapshot["score_method_version"],
+                             "score_semantics": snapshot["score_semantics"],
+                             "source_identity": {
+                                 "customers": (profile["customer_import_id"], profile["customer_source_checksum"]),
+                                 "campaign_sales": (profile["campaign_sales_import_id"], profile["campaign_sales_source_checksum"]),
+                                 "demographics": (generation["demographic_import_id"], generation["demographic_source_checksum"]),
+                             }},
+            "feedback_batch_ids": [int(row["feedback_batch_id"]) for row in feedback_batches],
+            "feedback_grouping": {
+                "contract_version": FEEDBACK_GROUPING_CONTRACT_VERSION,
+                "observation_count": len(related_feedback),
+                "independent_group_count": len(grouping.independent_group_ids),
+                "grouping_sha256": grouping.grouping_sha256,
+                "status": "DESCRIPTIVE_LINEAGE_ONLY",
+            },
+            "learning_status": "NOT_AVAILABLE_WITHOUT_INDEPENDENT_PROBABILITY_LINEAGE",
+        }
     required = (
         "generation_id",
         "analysis_run_id",

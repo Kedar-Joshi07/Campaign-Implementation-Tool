@@ -1,0 +1,31 @@
+{
+  "stage": "14B_07",
+  "date": "2026-10-08",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate": "UNCOMMITTED",
+  "preceding_stage": "14B_06",
+  "schema_version": 33,
+  "decision": "14B_07_BOUNDED_GO",
+  "membership_contract_version": "3",
+  "export_profile_version": "2",
+  "legacy_profiles_preserved": true,
+  "probability_recalibration_from_v3_feedback": false,
+  "canonical_database_migrated": false,
+  "full_five_million_scoring_run": false,
+  "remote_ci_claimed": false,
+  "tests": [
+    {"suite": "Stage 07 snapshot/export/feedback", "passed": 8, "failed": 0},
+    {"suite": "Stage 01 and 05 migration/search", "passed": 19, "failed": 0},
+    {"suite": "Scoped combined sandbox", "passed": 115, "failed": 0, "environment_errors": 1, "error": "Playwright Windows named-pipe permission"},
+    {"suite": "Browser result history plus v3 business UI with browser permission", "passed": 25, "failed": 0},
+    {"suite": "Stage 07 plus historical calibration feedback", "passed": 31, "failed": 0},
+    {"suite": "Feedback statistical integrity", "passed": 7, "failed": 0}
+  ],
+  "limitations": [
+    "Canonical full-five-million certification belongs to a later stage and was not run.",
+    "No independently valid probability lineage is linked to v3 feedback; recalibration and profile retraining are not claimed.",
+    "Exportable/excluded counts are shown after a governed export reconciliation, not speculatively before it.",
+    "Node CLI is unavailable; edited JavaScript loaded during passing real-browser fixture suites."
+  ],
+  "next_stage_not_started": "14B_08"
+}

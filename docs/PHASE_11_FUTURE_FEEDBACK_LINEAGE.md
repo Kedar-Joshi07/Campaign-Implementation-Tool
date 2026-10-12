@@ -1,5 +1,13 @@
 # Phase 11 Future Feedback and Retraining Lineage
 
+> Historical future-seam design. The current schema-33 application has
+> governed feedback ingestion. Explicit v3 feedback is retained against
+> immutable similarity membership but does not automatically refit buyer
+> profiles or recalibrate purchase probability. Governed v1/v2 feedback can
+> trigger calibration-only work; true model retraining remains unimplemented.
+> See [current feedback boundary](FEEDBACK_LEARNING_BOUNDARY.md) and the
+> [Buyer Similarity operator guide](BUYER_SIMILARITY_OPERATOR_AND_DEMO.md).
+
 ## Scope and present boundary
 
 Phase 11 preserves enough immutable evidence to support a future closed-loop feedback system. It does not activate campaigns, ingest outcomes, create supervised labels, schedule retraining, select a challenger model, or modify a model from feedback.

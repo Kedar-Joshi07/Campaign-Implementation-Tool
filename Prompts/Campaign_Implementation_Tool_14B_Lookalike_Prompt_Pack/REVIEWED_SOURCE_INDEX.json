@@ -1,0 +1,757 @@
+[
+  {
+    "path": ".github/workflows/ci.yml",
+    "bytes": 4744,
+    "sha256": "9b0695571bb7d97ad793df2a7787690efbd726d79040c97d37e84ce155ffe33c"
+  },
+  {
+    "path": ".github/workflows/full-validation.yml",
+    "bytes": 1794,
+    "sha256": "e1a1e70e3c50935cfeaeed5a26beba7c4fcec99c8dd8925b44d54ec29f6e8b0a"
+  },
+  {
+    "path": "app/config.py",
+    "bytes": 2840,
+    "sha256": "f549c46e87d3e676e1e719893d8701d58bc4885b67fcd0e4b65bae3086f9eedc"
+  },
+  {
+    "path": "app/database/__init__.py",
+    "bytes": 63,
+    "sha256": "96b1893470f8102f00b1de216463259c8d78f80e795f6409e6071ffb648336c2"
+  },
+  {
+    "path": "app/database/connection.py",
+    "bytes": 1726,
+    "sha256": "52f6f5317bf43ff3b7238959c2099bb8a8049fa0799f682b5efd9969a4266c22"
+  },
+  {
+    "path": "app/database/phase11_feedback_schema.py",
+    "bytes": 4392,
+    "sha256": "e7801f30db14b8f0d76c9c2ad509f9b86c38e9448b9f305a7e5e1ac1f0831918"
+  },
+  {
+    "path": "app/database/phase11_schema.py",
+    "bytes": 22079,
+    "sha256": "c7d4b9d347629ca82900c12652a2ac9745d3960af218268a4a0702fc44907517"
+  },
+  {
+    "path": "app/database/schema.py",
+    "bytes": 151927,
+    "sha256": "c8c1aebdce50c5325db383a69bc99eeb6fe257d4e183d4c744925841a03f3b83"
+  },
+  {
+    "path": "app/database/search_recovery_schema.py",
+    "bytes": 14705,
+    "sha256": "7fa335cd4e242bc9678e26ab048d86c8e5f074981ff004ff3a2a19ffd3786518"
+  },
+  {
+    "path": "app/jobs/__init__.py",
+    "bytes": 994,
+    "sha256": "6e0c094718b3f93831328d222e880f21bf231c0c0a83931b58a0c8957867b947"
+  },
+  {
+    "path": "app/jobs/audience_preparation_worker.py",
+    "bytes": 7097,
+    "sha256": "a5cf6910f50a34cf8b4f9598a0b4de94845fe5179aa07e5226e15cb68abed956"
+  },
+  {
+    "path": "app/jobs/executor.py",
+    "bytes": 4075,
+    "sha256": "284b25b886fc44c47d3aea3241ad7d9322be7be23ebf3c1b43e0d6820bca40c3"
+  },
+  {
+    "path": "app/jobs/feedback_retraining_worker.py",
+    "bytes": 30939,
+    "sha256": "161f666b7cf1aa5de06299d5dd720826cedf6144549f617d85dab62ad8c8fdf6"
+  },
+  {
+    "path": "app/jobs/model_training_worker.py",
+    "bytes": 5588,
+    "sha256": "0d30e8cfa3168c99f4bf110181bb90f6a78f0ec2e28f184096be7205f8c71399"
+  },
+  {
+    "path": "app/jobs/phase11_search_coordinator.py",
+    "bytes": 12242,
+    "sha256": "a8642eb808e896da5da07c8965a28f9323381300841e1da7ebcaa4b8362427e6"
+  },
+  {
+    "path": "app/jobs/prospect_scoring_worker.py",
+    "bytes": 7148,
+    "sha256": "7435228580e87644dc80af4a426df515d9cae485ae03c887b8bac8e7549754e7"
+  },
+  {
+    "path": "app/main.py",
+    "bytes": 9156,
+    "sha256": "ada7144d6db89d6d2596f4bb4fbdaae92e5d635156fc1204e381f8bbbd8af175"
+  },
+  {
+    "path": "app/ml/__init__.py",
+    "bytes": 61,
+    "sha256": "741a4a8af1dbecddf106b32eb8ef7e1222828f09b240fd60127b8e62bd6bb89e"
+  },
+  {
+    "path": "app/ml/campaign_group_split.py",
+    "bytes": 15231,
+    "sha256": "e290f51ed9bd2d2189e59342475b04b7dc265c771238213400a44f26fde4ad34"
+  },
+  {
+    "path": "app/ml/evaluation.py",
+    "bytes": 18976,
+    "sha256": "0768b07b1848862eafe162e19ba6e3781762518e063c102147d0f1214987fbcb"
+  },
+  {
+    "path": "app/ml/feature_contract.py",
+    "bytes": 7188,
+    "sha256": "b3e3f382080b480751080da4b1a03c9fdb3ed25fc7740e9490723a2c880234be"
+  },
+  {
+    "path": "app/ml/model_roles.py",
+    "bytes": 1477,
+    "sha256": "d7a9d265df00ac56f83be1118aa283e3342835e5170a8aad4b0797fd8311df08"
+  },
+  {
+    "path": "app/ml/preprocessing.py",
+    "bytes": 13241,
+    "sha256": "f18ddb06fddd82922768a6910bdb5a46ed936d9f765922356bc1161d63eafa74"
+  },
+  {
+    "path": "app/ml/pu_estimators.py",
+    "bytes": 3665,
+    "sha256": "3a95cbcb655138981fa3071e1aba35967d3b924993349ad9c461e8322208ecae"
+  },
+  {
+    "path": "app/ml/training.py",
+    "bytes": 14770,
+    "sha256": "d064ca2fb181d66ffe2a32fed26afa031bd90b32c294935f06a98bb00aacc7e7"
+  },
+  {
+    "path": "app/repositories/__init__.py",
+    "bytes": 585,
+    "sha256": "3e820de12b02ec4ec01e900cf3fce7d897111b6422c4c31b4e11fb5eaafd457e"
+  },
+  {
+    "path": "app/repositories/audience_analytics_snapshot_repository.py",
+    "bytes": 14191,
+    "sha256": "5e0132c55a55f30e22d0d34311a35db8f3ecfcd1a7098cd3c502d5a65c26da70"
+  },
+  {
+    "path": "app/repositories/audience_rank_repository.py",
+    "bytes": 6954,
+    "sha256": "c1217f5926a472bf91e00ae074d16eff212541efc1e0ad1cac9fcf27e2b68384"
+  },
+  {
+    "path": "app/repositories/business_dashboard_repository.py",
+    "bytes": 3339,
+    "sha256": "8b5fdfd6cb9cc9de12003d7306cdd686970a17d6db96b0135899d19cca932805"
+  },
+  {
+    "path": "app/repositories/campaign_export_repository.py",
+    "bytes": 20181,
+    "sha256": "c9f409ecf0026604493fa6bcc3a8ef092c900aa127874cd9a56954ebb82b3cd3"
+  },
+  {
+    "path": "app/repositories/campaign_repository.py",
+    "bytes": 20955,
+    "sha256": "d82caed1a602111d0bb6b8f7399a8307d5a4509bb5228d4f05bc48f4a1c665b2"
+  },
+  {
+    "path": "app/repositories/campaign_result_registry_repository.py",
+    "bytes": 80644,
+    "sha256": "d5db42b8cb7d5b5441f28cde30659df08a2197536a8afea0f11fff00f26c92d3"
+  },
+  {
+    "path": "app/repositories/campaign_targeting_context_repository.py",
+    "bytes": 18273,
+    "sha256": "5044c37c619db3184a598057fdf05ac77c5793849daa52dd8b9778d0eddeb0f9"
+  },
+  {
+    "path": "app/repositories/data_repository.py",
+    "bytes": 8816,
+    "sha256": "a23d6d3e1936838d0b8d66bfd7a5f191d5b867b87728a05dc2d47b50550c32ce"
+  },
+  {
+    "path": "app/repositories/historical_repository.py",
+    "bytes": 41639,
+    "sha256": "1dc989c74c1ea762ac902a92130e9577eb45f68a722c0b8247d84f47768b8398"
+  },
+  {
+    "path": "app/repositories/job_repository.py",
+    "bytes": 46243,
+    "sha256": "4b172f81ad857ddf0a92010e0072e94a46299c731cc3be8cd8352798550f6458"
+  },
+  {
+    "path": "app/repositories/model_run_repository.py",
+    "bytes": 7339,
+    "sha256": "265419b621eb748fc0bedc89a9ad14f8dd817970f54555904cbfe7ac8aec2e25"
+  },
+  {
+    "path": "app/repositories/model_training_repository.py",
+    "bytes": 4391,
+    "sha256": "ce729290ac5501216ace5431c148be6ef97233cfa84bfbf0648cc5c2377c7fc4"
+  },
+  {
+    "path": "app/repositories/phase10_intelligence_repository.py",
+    "bytes": 63274,
+    "sha256": "9e4c81bca355d5c2d5d9529aa043e45062b6e3cb0b3fb9317904e6858ae97cdc"
+  },
+  {
+    "path": "app/repositories/prospect_scoring_repository.py",
+    "bytes": 10320,
+    "sha256": "961435657b8106eb44f31b243626a46338e796c71b625a34d210cd5abfe6bcdb"
+  },
+  {
+    "path": "app/repositories/saved_audience_repository.py",
+    "bytes": 13941,
+    "sha256": "de526fd531b15f6ce03c1ed0754847d4e815e714899bf92b215ddb99d8f01034"
+  },
+  {
+    "path": "app/repositories/scoring_repository.py",
+    "bytes": 35975,
+    "sha256": "504d8d7abba003293eb185b6f2cc5515bfcaf7ec485e176ad05c40f223a6bb5b"
+  },
+  {
+    "path": "app/routers/__init__.py",
+    "bytes": 27,
+    "sha256": "898cc2f109a457288141af600abaff2095b4569672dd956f0b9003cc4059d3b6"
+  },
+  {
+    "path": "app/routers/business.py",
+    "bytes": 983,
+    "sha256": "1f851ff3303accf34474f9556c5309f5f3972c083dc16cecd7fc09457af322c7"
+  },
+  {
+    "path": "app/routers/campaign_targeting.py",
+    "bytes": 15206,
+    "sha256": "ea05e6fbf1423a51c37895997d5f3475a1b42d12b6e3edd8133a3d7f1bd14349"
+  },
+  {
+    "path": "app/routers/campaigns.py",
+    "bytes": 6433,
+    "sha256": "a9e8d85f9a1092363a2b765708878bb5f1a5d469f257cc8b47805e31eaf697af"
+  },
+  {
+    "path": "app/routers/data.py",
+    "bytes": 1391,
+    "sha256": "55473e6aa3187085d89ee8f4832d04802210b2ac34e11d4052a7d1803a9c1022"
+  },
+  {
+    "path": "app/routers/health.py",
+    "bytes": 3281,
+    "sha256": "e9db3478a30e2f857b13cf7cd5045cb30de1c97cb5107dd0fa6e8cb619cf603c"
+  },
+  {
+    "path": "app/routers/historical.py",
+    "bytes": 4851,
+    "sha256": "eddf29841b3c770671d98176ad0c2b29cff93ad1bc514d9437b770e6cb0f73b7"
+  },
+  {
+    "path": "app/routers/models.py",
+    "bytes": 13194,
+    "sha256": "9df8028cffd7f2ef3acd51576beb5fc351eef097067f1e8dbf4a856a77a7cee9"
+  },
+  {
+    "path": "app/routers/potential_customer_search.py",
+    "bytes": 11594,
+    "sha256": "a8ab48959e1a3d0d44d1d927833d7af85fa802e56a413cb8853019f8471f191a"
+  },
+  {
+    "path": "app/routers/reference.py",
+    "bytes": 1694,
+    "sha256": "e5754c11c792fe31ee6d95d8537bb5322f52514975536bebbdb5fed018a7d76d"
+  },
+  {
+    "path": "app/runtime_health.py",
+    "bytes": 923,
+    "sha256": "8dd94fad212291765ae6d59023800501037369d08a1ebcae255b7f76301f21fd"
+  },
+  {
+    "path": "app/schemas/__init__.py",
+    "bytes": 1031,
+    "sha256": "05413957f957e92d7d1990f5d747197188328df67bf87a0bf25b7b9942d870d2"
+  },
+  {
+    "path": "app/schemas/audience.py",
+    "bytes": 10149,
+    "sha256": "0bd7eb086cb77c75c7fd9d4e788afa3a6292f036d1ad0fa2a382ad32b0f545b8"
+  },
+  {
+    "path": "app/schemas/business_dashboard.py",
+    "bytes": 1117,
+    "sha256": "66c799f5b6e8b79c97390ff6614bd6da55d7c823b37f0214cd5a261987bab7eb"
+  },
+  {
+    "path": "app/schemas/campaign_targeting.py",
+    "bytes": 23761,
+    "sha256": "60cab432cf039b6909e2dc8f1bf4bb3c1bc9ce9752f189ff469194dd792caaa8"
+  },
+  {
+    "path": "app/schemas/campaigns.py",
+    "bytes": 6951,
+    "sha256": "15091f409e070b1ede44b208045a23367aa185958a218b340b41dee0926306d0"
+  },
+  {
+    "path": "app/schemas/data.py",
+    "bytes": 1509,
+    "sha256": "6ef4635db65604e70398fd1661f44934525783df35ef0f0b472e6219047fe54f"
+  },
+  {
+    "path": "app/schemas/historical.py",
+    "bytes": 11690,
+    "sha256": "710075979ef21b3260cd240366cbe7dcd773e8bbe9c8a1c97a5111370e8982b3"
+  },
+  {
+    "path": "app/schemas/models.py",
+    "bytes": 6384,
+    "sha256": "8ccf5d2f687043c0681dcefbd04e663e5f5a826e6ab2dbae7483448518f60c5b"
+  },
+  {
+    "path": "app/schemas/phase10_intelligence.py",
+    "bytes": 16347,
+    "sha256": "0b8dcfb2bb775e813409138bde448c56adabfb39f74d3e770edf21eca60e7328"
+  },
+  {
+    "path": "app/schemas/potential_customer_search.py",
+    "bytes": 9229,
+    "sha256": "d6a5c39b9e6befa99bb145288988a9af5ffdf5375e440bde7a5f8540bebfbdcb"
+  },
+  {
+    "path": "app/schemas/reference.py",
+    "bytes": 754,
+    "sha256": "9a9c5745b9a69073e28765a4b8196ef3f73bd2696a8a1207b56f2cf1aafcfe3f"
+  },
+  {
+    "path": "app/selection_contracts.py",
+    "bytes": 3668,
+    "sha256": "0adb6dc803fb30d8116028a0ad08f1cc1135f75fbadbdb3e406e4c0649feec96"
+  },
+  {
+    "path": "app/services/__init__.py",
+    "bytes": 394,
+    "sha256": "0842bf73a140d0c755d6b0dfb4e5cd3f3098cf8c653db834f8ea15b4227c8c51"
+  },
+  {
+    "path": "app/services/audience_preparation_service.py",
+    "bytes": 76205,
+    "sha256": "f2fd862303fa7eb5ec414993f172bb788e90f0f5fd01661fc53c03912aaf8458"
+  },
+  {
+    "path": "app/services/audience_query_service.py",
+    "bytes": 119112,
+    "sha256": "377c3da7d07d5aa6b8036d7c6a0a4c585e016eb83931358c6ed365f8fcba07ff"
+  },
+  {
+    "path": "app/services/business_dashboard_service.py",
+    "bytes": 2787,
+    "sha256": "670cbed732957b8cb03e0fe9186f07728053343b445b1b7ac007180b8866bd50"
+  },
+  {
+    "path": "app/services/calibrated_selection_contract_service.py",
+    "bytes": 3616,
+    "sha256": "c9e11ada4bfb5a46432d89b7ba02568be9b55c8cd33d81b170d8b860df8d0c4e"
+  },
+  {
+    "path": "app/services/campaign_contracts.py",
+    "bytes": 2487,
+    "sha256": "358ee0c04b2daab3a90964698860290577d08a91a9a8896aa80b9cd6824a6e78"
+  },
+  {
+    "path": "app/services/campaign_service.py",
+    "bytes": 63694,
+    "sha256": "f802b86e60af93eed6df20526680921373a0e4abe3f3a1cfa93cf9950a93cc81"
+  },
+  {
+    "path": "app/services/campaign_targeting_context_service.py",
+    "bytes": 15348,
+    "sha256": "efb9fe4e45115e681e1b5cce97ea01b4d3e97a7c4397bb917e2a49fa5ec790be"
+  },
+  {
+    "path": "app/services/campaign_targeting_contract_service.py",
+    "bytes": 11765,
+    "sha256": "22c9e4981d18e369a9d89a2d1d20a7a0321f53864eb7540e4d3f9ac72a54ac9c"
+  },
+  {
+    "path": "app/services/data_api_service.py",
+    "bytes": 6520,
+    "sha256": "8faa43a16f963da64869128cfdfd37942f1fa78bbaa6f3949b86ac108c227154"
+  },
+  {
+    "path": "app/services/data_import_service.py",
+    "bytes": 29887,
+    "sha256": "ccc83ef0f50043196ced8c102bff0fd861a2361389ea516854e85343d4b4bf77"
+  },
+  {
+    "path": "app/services/data_reconciliation_service.py",
+    "bytes": 20152,
+    "sha256": "d3e5f123f87d2203305266321e2dcff12156a686ecc96d98f1dd6463d5a030cd"
+  },
+  {
+    "path": "app/services/data_validation_service.py",
+    "bytes": 13311,
+    "sha256": "e7b627b170f9ebf4c1596feaa05531d672d5ed5abda66bf13edbfbe96408276e"
+  },
+  {
+    "path": "app/services/feedback_grouping.py",
+    "bytes": 3781,
+    "sha256": "457ea3280415bb9b615d608190aa2c4d3502cc159dfe83875ce5aa270f6070ba"
+  },
+  {
+    "path": "app/services/historical_analysis_service.py",
+    "bytes": 25482,
+    "sha256": "889de2418aa03d2f145dc310395621a4b3163ce9c2adc1e6ad5affa023ac0465"
+  },
+  {
+    "path": "app/services/historical_service.py",
+    "bytes": 4357,
+    "sha256": "018e772790d04fcd1201bae229d90cbe7e969919578e08d01e256b881dfded9d"
+  },
+  {
+    "path": "app/services/historical_source_provenance_service.py",
+    "bytes": 6554,
+    "sha256": "a9f4d39edbe60ceff43eacb750da202cfb453d440b174072e15dcc9e832aa6b8"
+  },
+  {
+    "path": "app/services/intelligence_attestation_service.py",
+    "bytes": 18488,
+    "sha256": "94eafd25b1ce869d5461cc994cb6c93112252490d595ea4c46131a9ac448acb7"
+  },
+  {
+    "path": "app/services/match_strength_recommendation_service.py",
+    "bytes": 7551,
+    "sha256": "6f504bb34fdb15b0ed5c1d08a86cb3d8a71c0f9b00020837ba22305355911a97"
+  },
+  {
+    "path": "app/services/model_api_service.py",
+    "bytes": 37895,
+    "sha256": "33e58a3f671b6be23c23f882d2e68a03d83e05681186bdc6fc5b267ce0a9452f"
+  },
+  {
+    "path": "app/services/model_job_service.py",
+    "bytes": 5159,
+    "sha256": "d936c846d7d2d8422b42019cd78dbf2d214da51258f393f2ce1f65388bdbb15b"
+  },
+  {
+    "path": "app/services/model_scoring_compatibility.py",
+    "bytes": 12770,
+    "sha256": "5756eda7a43457a34d11e7d6becb62fc03efa4f10431eb0f6d8ab2f1c09e88e1"
+  },
+  {
+    "path": "app/services/model_training_service.py",
+    "bytes": 25607,
+    "sha256": "546306f655b7fcc7a99ef0e546cbc8432f4b5cf4bc1fa3f65f24d022057cb145"
+  },
+  {
+    "path": "app/services/omnichannel_profile_contracts.py",
+    "bytes": 22636,
+    "sha256": "52e5e5f3954eb03944c040101a2ff45a208236652739c949d39bafac0edff48a"
+  },
+  {
+    "path": "app/services/phase10_api_service.py",
+    "bytes": 13112,
+    "sha256": "0720d7a30b042b73153eff3e9e034c16dc79d05f3146f6212e746564dc65befc"
+  },
+  {
+    "path": "app/services/phase10_context_identity_service.py",
+    "bytes": 16514,
+    "sha256": "f1db28034fdec23537a52c6b16d3f4a7e324355172a365ba7b82dc323ad1af40"
+  },
+  {
+    "path": "app/services/phase10_historical_resolution_service.py",
+    "bytes": 14695,
+    "sha256": "b574e111c11abf6a4cec61dba9124059af6744f753e6ab3a7f19508c0be018f5"
+  },
+  {
+    "path": "app/services/phase10_lifecycle_service.py",
+    "bytes": 10895,
+    "sha256": "352030e59041c52a01801ab9297e212d5adfa569a0733b5be74998f7e05cf15a"
+  },
+  {
+    "path": "app/services/phase10_model_resolution_service.py",
+    "bytes": 30828,
+    "sha256": "6ec92bb2f68bbb6b609ed5677418c5b7aedff9cefe5ac162efc553c2aa5eed51"
+  },
+  {
+    "path": "app/services/phase10_orchestration_service.py",
+    "bytes": 27285,
+    "sha256": "5e49832f9cbdabf71a56da2cf52037b02a1ccdbdad7b868483da4f8b50be9cb2"
+  },
+  {
+    "path": "app/services/phase10_scoring_resolution_service.py",
+    "bytes": 30874,
+    "sha256": "5e47c9a0a873e56adac0853bba3913200ed2a0b741747024b6f67bf537712963"
+  },
+  {
+    "path": "app/services/phase11_dependency_retry_service.py",
+    "bytes": 4775,
+    "sha256": "4eb69c5ce598f1762ad7fa8d5fe349c35da1030a8ef9247664a530fb40f44646"
+  },
+  {
+    "path": "app/services/phase11_export_service.py",
+    "bytes": 23789,
+    "sha256": "667257e4b80975f1bdab8c5ceab4c9910a06274be10c06445af32e16e4d78105"
+  },
+  {
+    "path": "app/services/phase11_feedback_lineage_service.py",
+    "bytes": 8030,
+    "sha256": "2157826e89cfe2bacc2e298f18f02061202dbd469b324f4b932629627ef3b85e"
+  },
+  {
+    "path": "app/services/phase11_feedback_service.py",
+    "bytes": 29443,
+    "sha256": "602274d8f7bb19ebfa5a035ccdf90c1564735097a4174cd5d994f3e10aed4019"
+  },
+  {
+    "path": "app/services/phase11_result_contracts.py",
+    "bytes": 5034,
+    "sha256": "fb788f3cbc7d34851428d93e8f883d038a0d754ae51abcdf55ba1e99201ba005"
+  },
+  {
+    "path": "app/services/phase11_result_snapshot_service.py",
+    "bytes": 31707,
+    "sha256": "90ecc4da4d774559ee44a0a0b616317ad2651697c2f7f2a423db41e7c264ad6f"
+  },
+  {
+    "path": "app/services/phase11_results_service.py",
+    "bytes": 25614,
+    "sha256": "4afa52e31c7bb92c78c044e1c4aaaed4cf02280c385346313c4f96e5af00ebd1"
+  },
+  {
+    "path": "app/services/phase11_run_lifecycle_service.py",
+    "bytes": 10221,
+    "sha256": "cb6cf9b165dd717d06f7263a8298272750a99b4d57eff3fff2eca568163b4ab7"
+  },
+  {
+    "path": "app/services/phase11_search_orchestration_service.py",
+    "bytes": 45800,
+    "sha256": "3fa7609681908e85a8fa0b8320372825997b1b1539818502459644066482d528"
+  },
+  {
+    "path": "app/services/potential_customer_preflight_service.py",
+    "bytes": 20130,
+    "sha256": "113552980c51815330fa54302a1aa9493205952f46ed3caf1ef10fadc82a72e3"
+  },
+  {
+    "path": "app/services/potential_customer_search_submission_service.py",
+    "bytes": 19300,
+    "sha256": "d586ed91802fcaf21bb597b18af4f6dadb3520a9dc2eace01ae2af8da483e2a9"
+  },
+  {
+    "path": "app/services/propensity_calibration_service.py",
+    "bytes": 28704,
+    "sha256": "240734958d3201aa17b0cedcd6ada28b932ef39a370cda934c003665590810d9"
+  },
+  {
+    "path": "app/services/prospect_scoring_service.py",
+    "bytes": 67386,
+    "sha256": "1ea999609dc87a5a73bc2a9e116f1832cd09a2ff49ebfc5806bd99c9de1bc77e"
+  },
+  {
+    "path": "app/services/saved_audience_service.py",
+    "bytes": 31717,
+    "sha256": "53ce13f8436b02dcae09ace4c2853b4a35d50109625406c7fa8feb0d1fe4ef22"
+  },
+  {
+    "path": "app/services/scoring_job_service.py",
+    "bytes": 4792,
+    "sha256": "e71d9184bfe8779a4111ae57781c230e6285ef322fbb5f7c4a6ce37824d98d33"
+  },
+  {
+    "path": "app/services/source_currentness_service.py",
+    "bytes": 13161,
+    "sha256": "ad91a5d61d33c84d68816b78fdc6c0a72b0d41fcd4a6559c27fc66ed7e108ab8"
+  },
+  {
+    "path": "app/services/target_group_campaign_service.py",
+    "bytes": 21784,
+    "sha256": "815154af5e6fe2e873f1eef40526d5d854f0dfcf52f587c533056076c007ed4c"
+  },
+  {
+    "path": "app/services/target_group_preview_service.py",
+    "bytes": 22345,
+    "sha256": "b1e88a501cb250b6541dd2018184fad05af20c80cab27fc7acd7c518d43fc5b1"
+  },
+  {
+    "path": "app/services/targeting_intelligence_service.py",
+    "bytes": 15467,
+    "sha256": "8909bc98eb3d5089687273db2a5c871642d33d1c8dff56199363c4c868b2dc43"
+  },
+  {
+    "path": "app/services/targeting_option_catalog_service.py",
+    "bytes": 13167,
+    "sha256": "495cb52909730fd7394978d7678f9e59b7bb7fd63321fef72cf917b9a086ecaf"
+  },
+  {
+    "path": "app/services/training_cohort_service.py",
+    "bytes": 8401,
+    "sha256": "783ab9427ed3cdfbb60de4b2d419b499c033b65713d58cc82dca6ae0466380cc"
+  },
+  {
+    "path": "data_generation_scripts/generate_campaign_sales.py",
+    "bytes": 44155,
+    "sha256": "8c7d2ca83d1557a86ac1bc8682b003e306926877867d7b45643e793c6c56f9a9"
+  },
+  {
+    "path": "data_generation_scripts/generate_us_customer_master.py",
+    "bytes": 25830,
+    "sha256": "3dc827f13c92a10083f48c6895d76a70b707f8b8913d08c02a7801a170b5d4d0"
+  },
+  {
+    "path": "data_generation_scripts/generate_us_demographic_synthetic.py",
+    "bytes": 39555,
+    "sha256": "7c052f81e3634229441e54c07f87241b6841ddfbab90e28134d49fa25f1246cd"
+  },
+  {
+    "path": "data_generation_scripts/requirements_campaign_data.txt",
+    "bytes": 120,
+    "sha256": "cd28b8bc86a93c218be4b19ac4bb803528fcb63bf050aa496f0e1d79f49202fa"
+  },
+  {
+    "path": "frontend/index.html",
+    "bytes": 149947,
+    "sha256": "c3ecea6a76f96f4cd0f9a6d4db9525ac15572be4a74981b16c10aa2502aa9eda"
+  },
+  {
+    "path": "frontend/js/api.js",
+    "bytes": 1660,
+    "sha256": "b1ffd90fcdde87d0c3fdd01d38799cec7ae70efa8e49757bd10b0f20180e95de"
+  },
+  {
+    "path": "frontend/js/app.js",
+    "bytes": 5387,
+    "sha256": "f0f21e6c537df9f04fd1c5530a6f181ca509d9d39e3e2a5139af1df2637badc7"
+  },
+  {
+    "path": "frontend/js/audience-explorer.js",
+    "bytes": 59027,
+    "sha256": "cb82be50c99c0d09467e7e81f55b1c9a0a900e30cdabc34591b58d77118480c3"
+  },
+  {
+    "path": "frontend/js/business-search-form.js",
+    "bytes": 15446,
+    "sha256": "0d07502c1faeaa52a95cbd9a387fb19a10d553ca6c38155f43381a796127a6f1"
+  },
+  {
+    "path": "frontend/js/business-search-status.js",
+    "bytes": 18463,
+    "sha256": "fb405d14ed48c2de36d05558cb2a65c07cf117918e639755a25019fb4852388e"
+  },
+  {
+    "path": "frontend/js/business-targeting.js",
+    "bytes": 17948,
+    "sha256": "21beb5fe81f68c8a8f293c412b2d1d0bf7095c81e86640b0f1c6f26a8df79ea4"
+  },
+  {
+    "path": "frontend/js/campaign-context.js",
+    "bytes": 8307,
+    "sha256": "fd5bef3e11f92dfaf74c1069602b03e1eb420d20081977dafaa8019a646efd88"
+  },
+  {
+    "path": "frontend/js/campaign-planner-form.js",
+    "bytes": 6295,
+    "sha256": "63b7c27d9ed5300b30cbdc06467cda46fca10a66e060251c66e4bb7fb7c77691"
+  },
+  {
+    "path": "frontend/js/campaign-planner-state.js",
+    "bytes": 12977,
+    "sha256": "6a3d8940ed084aa0af71ce2ed29c3cdb3363fe7436cf5a7194216c0b088ba9a4"
+  },
+  {
+    "path": "frontend/js/campaign-review.js",
+    "bytes": 12068,
+    "sha256": "7f810f2a179e5040d06b29415938df053b0619503f09dd2cb50d4b03b87aa538"
+  },
+  {
+    "path": "frontend/js/campaigns.js",
+    "bytes": 46611,
+    "sha256": "7210f05ab675f60c28b7670ed60717cf119b5f655959c8343e08e83c3d2b7d88"
+  },
+  {
+    "path": "frontend/js/components/multi-select-dropdown.js",
+    "bytes": 15910,
+    "sha256": "0892ff23162520f013473aed60cb13e371312c78abdf8cd566fb67eee113f98a"
+  },
+  {
+    "path": "frontend/js/data-status.js",
+    "bytes": 6454,
+    "sha256": "4f314deafcc95fb600656d9ef4099295e4996f899bf6f6b59ae471130a5dcc20"
+  },
+  {
+    "path": "frontend/js/historical-analysis.js",
+    "bytes": 26778,
+    "sha256": "d7b73bb3ef13d2a7e01f168963e5413e1059f6318e8f42465f8b8dc9cc70319a"
+  },
+  {
+    "path": "frontend/js/historical-overview.js",
+    "bytes": 7562,
+    "sha256": "0591de8f4d5e19ce5b4aa5d9dafe1da2759e60ea87ee7a0df2c1851c2ed1f246"
+  },
+  {
+    "path": "frontend/js/model-training.js",
+    "bytes": 39693,
+    "sha256": "c96c8fe955911cf4b5d86c4e3e15f4107831ed04b537bfcc8038256998ec2faf"
+  },
+  {
+    "path": "frontend/js/overview.js",
+    "bytes": 4695,
+    "sha256": "2071b5524a739c23a3434db7f71b2e00bf6879d56f8b4359dadccc80dff0c7f2"
+  },
+  {
+    "path": "frontend/js/run-progress.js",
+    "bytes": 4324,
+    "sha256": "e1bcbbcb6942f5b4d237524778ff4b6015e4a4a74a1e5e987d54714eba4099e8"
+  },
+  {
+    "path": "frontend/js/saved-target-groups.js",
+    "bytes": 3123,
+    "sha256": "4aef4abc9befd0e3fbd7e0c23888b9b6d919a231f84af2815ab338d41c46aba7"
+  },
+  {
+    "path": "frontend/js/sidebar.js",
+    "bytes": 4362,
+    "sha256": "f1b3b45d2e8fc968f3d2cd1e5e51e33c385fb0fa00a268f899690a2bd3670c9e"
+  },
+  {
+    "path": "frontend/js/target-group-preview.js",
+    "bytes": 11382,
+    "sha256": "9c19743fe2b087883cef9e3772435b64a8eedff9c72f9fc94e26f85c5c2ae5fd"
+  },
+  {
+    "path": "frontend/js/targeting-intelligence.js",
+    "bytes": 18312,
+    "sha256": "53e6103457e2aed6541fd9250c7e3ac642e5e9f5e218c03bcee64ff9f79c79da"
+  },
+  {
+    "path": "frontend/js/ui.js",
+    "bytes": 4906,
+    "sha256": "b9f5994894311f8736bb6531895679e48f7e1937cf5be6282ba84ad92113e590"
+  },
+  {
+    "path": "frontend/js/view-contract.js",
+    "bytes": 4431,
+    "sha256": "98b6f52d2b9b0060eb9441bc86812dcb0fae4c00f314ca0cda44fb1cb53f7807"
+  },
+  {
+    "path": "scripts/validation/preflight_demo_readiness_scenarios.py",
+    "bytes": 4707,
+    "sha256": "d3085453c4a4795a13960d24171d7cb32849a1f37a323c92f46ffca9602f5d0c"
+  },
+  {
+    "path": "tests/test_phase11_api_backward_compatibility.py",
+    "bytes": 9120,
+    "sha256": "3d1bca750c82e622c0e47b09b03a077d463ca340252281bbd554e5638b2f9e5c"
+  },
+  {
+    "path": "tests/test_preflight_http_contract.py",
+    "bytes": 7962,
+    "sha256": "06b378801c22b44e4963633d78be32d1970641ed812b1386c813d76cf98a1ed8"
+  },
+  {
+    "path": "tests/test_preflight_materialization_parity.py",
+    "bytes": 31666,
+    "sha256": "8b8498eaf05d69d7d66fa4d4e2e22d57f2852bb91b43d400ad56af4981587837"
+  },
+  {
+    "path": "tests/test_selection_contract_registry.py",
+    "bytes": 5099,
+    "sha256": "becd4c4364a7e11fee3d558bc0776a4477f325d26c7d0278fa79204597311d25"
+  }
+]

@@ -20,6 +20,12 @@ This folder contains implementation summaries and evidence indexes for the Phase
 - PHASE_11_RESULT_SNAPSHOTS_AND_SMART_REUSE.md
 - PHASE_11_BUSINESS_UI.md
 - PHASE_11_FUTURE_FEEDBACK_LINEAGE.md
+- BUYER_SIMILARITY_ARCHITECTURE.md
+  - Current schema-33 v3/v2 boundaries, scoring and selection meaning,
+    dependency/invalidation matrix, immutable results, and SQLite limits.
+- BUYER_SIMILARITY_OPERATOR_AND_DEMO.md
+  - Operator preparation, currentness/retry/export/feedback guidance,
+    OpenAPI example, monitoring and measured client demonstration.
 
 ## Current authoritative references
 
@@ -74,6 +80,59 @@ This folder contains implementation summaries and evidence indexes for the Phase
 - evidence/recovery_hardening/13_6_PRE14_STABILIZATION.json
   - Machine-readable Prompt 13.6 findings, contract changes, test results,
     migration proof, CI state, and retained limitations.
+- evidence/lookalike_v3/00_BASELINE.md
+  - Stage 14B approved product-buyer-similarity baseline, frozen legacy
+    compatibility contract, source inventory, and implementation gap map.
+- evidence/lookalike_v3/01_CONTRACT_MIGRATION.md
+  - Stage 14B_01 schema-32 migration, explicit v3 API/registry contract,
+    preserved v1/v2 behavior, migration proofs, and disclosed certification
+    boundary.
+- evidence/lookalike_v3/01_FROZEN_INTERFACE.json
+  - Machine-readable v3 interface consumed by the later implementation and
+    optional C2/C3/C4 lanes; no later lane owns a separate schema allocation.
+- evidence/lookalike_v3/02_BUYER_COHORTS.md
+  - Stage 14B_02 exact product-buyer cohort, source alignment, deterministic
+    union split, canonical support, and generator-reporting correction evidence.
+- evidence/lookalike_v3/02_PRODUCT_SUPPORT_MANIFEST.json
+  - Count-only canonical 48-product support manifest with no customer IDs or
+    contact data.
+- evidence/lookalike_v3/03_PROFILE_METHOD.md
+  - Stage 14B_03 deterministic mixed-type learned buyer profiles, exact
+    distance mathematics, safe JSON artifact contract, bounded canonical
+    profile proof, and explicit descriptive-versus-predictive boundary.
+- evidence/lookalike_v3/04_SCORING_ATTESTATION.md
+  - Stage 14B_04 bounded, resumable and fenced prospect similarity scoring,
+    deep generation attestation, atomic publication, deterministic composite
+    winners, resource estimation, and current fast-reuse proof.
+- evidence/lookalike_v3/04_SCORING_ATTESTATION.json
+  - Machine-readable Stage 14B_04 implementation, tests, bounded canonical
+    audit, schema/data impact, limitations, and sequential handoff.
+- evidence/lookalike_v3/05_PREFLIGHT_SEARCH.md
+  - Exact v3 preflight, search, cache isolation, and probability-independent
+    readiness on bounded fixtures.
+- evidence/lookalike_v3/06_UI.md
+  - Explicit Buyer Similarity form mode, advanced probability mode, and browser
+    evidence with score semantics kept separate.
+- evidence/lookalike_v3/07_MEMBERSHIP_EXPORT_FEEDBACK.md
+  - Immutable similarity membership, channel export audit, and feedback lineage.
+- evidence/lookalike_v3/08_MODEL_DATA_ASSURANCE.md
+  - Bounded descriptive assurance and the explicit predictive-quality no-go.
+- evidence/lookalike_v3/09_INTEGRATION_CLOSURE.md
+  - Current schema-33 integration, preserved legacy API behavior, full bounded
+    regression, browser, cleanroom, and separate readiness decisions.
+- evidence/lookalike_v3/15_1_SUPPORT_AWARE_SPLIT_RECOVERY.md
+  - Current customer-disjoint descriptive split policy; supersedes earlier
+    union-hash support conclusion without rewriting old artifacts.
+- evidence/lookalike_v3/16_2_FULL5M_MEASUREMENTS.md
+  - Current isolated full-5M scale and resource authority for the named source
+    and hardware; earlier Prompt 16 measurements remain historical.
+- evidence/lookalike_v3/17_SCENARIOS.md
+  - Current unchanged 20-scenario exact preflight, real-run parity,
+    system-browser screenshots and governed representative export.
+- evidence/lookalike_v3/08_MODEL_FACTSHEET.md
+  - Current descriptive meaning and predictive-validation limitations.
+- evidence/lookalike_v3/18_DOCUMENTATION.md
+  - Prompt 18 documentation reconciliation and client-claim gate.
 
 ## Historical phase records
 

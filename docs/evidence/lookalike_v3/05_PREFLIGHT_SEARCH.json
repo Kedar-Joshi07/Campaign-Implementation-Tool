@@ -1,0 +1,37 @@
+{
+  "stage": "14B_05",
+  "recorded_date": "2026-10-07",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate": "UNCOMMITTED",
+  "preceding_stage": "14B_04",
+  "schema_version": 32,
+  "bounded_cycle": {
+    "source": "disposable synthetic attributed-buyer fixture",
+    "selected_count": 10,
+    "preflight_snapshot_reopen_parity": true,
+    "identical_result_reuse": true,
+    "changed_minimum_separate_snapshot": true,
+    "changed_import_requires_catalog_refresh": true,
+    "old_attempt_fence_rejected": true
+  },
+  "tests": {
+    "affected_aggregate_before_final_repair": {
+      "passed": 187,
+      "failed": 1,
+      "deselected": 27,
+      "seconds": 1060.72,
+      "failure": "temporary schema-33 approach violated existing schema-32 assertion"
+    },
+    "post_repair_schema_and_cycle": "3 passed in 101.55s",
+    "post_fence_cycle": "1 passed in 58.75s",
+    "final_changed_path_run": "7 passed in 92.15s",
+    "ready_probability_similarity_absent": "1 passed in 72.74s",
+    "clean_aggregate_after_repair": false
+  },
+  "go_for_bounded_stage": true,
+  "go_for_release": false,
+  "canonical_5m_scored": false,
+  "browser_certified": false,
+  "remote_ci_verified": false,
+  "committed_or_pushed": false
+}

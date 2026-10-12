@@ -1,5 +1,16 @@
 # Phase 11 API and Schema Reference
 
+> Historical Phase 11 schema-19 reference. Current code is schema **33**.
+> Migrations 20–31 add durable attempts, recovery, calibrated v2 selection and
+> governed feedback; migration 32 adds explicit v3 similarity registries and
+> search discriminators; migration 33 adds v3 export audit and feedback
+> identity. The older rows and APIs remain readable, but the current API also
+> exposes explicit v3 preflight/search, retry, and feedback routes. See the
+> [current architecture](BUYER_SIMILARITY_ARCHITECTURE.md),
+> [operator/OpenAPI example](BUYER_SIMILARITY_OPERATOR_AND_DEMO.md), and live
+> `/docs` schema. This historical section is retained for lineage, not as the
+> complete current endpoint inventory.
+
 ## API surface
 
 | Method | Path | Purpose |

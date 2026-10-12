@@ -68,8 +68,8 @@ The latest pre-14 authority is the
 ## Current versions and frozen contracts
 
 - Application version default: 0.1.0
-- Current SQLite schema version: 31 (the operator's canonical local database
-  remains at schema 26 until an in-place migration is explicitly authorized)
+- Current SQLite schema version: 33 (operator databases are migrated only by
+  the existing explicitly authorized operational workflow)
 - Feature contract version: 1
 - Feature contract SHA-256: a0cd5e8f95850337e239cc568b35b7d4f1d1fcca8adc364c3ee1d35c9b5a8535
 - Model role policy version: 2
@@ -77,6 +77,11 @@ The latest pre-14 authority is the
 - Automated training policy version: 2
 - Automated training split strategy: CAMPAIGN_CONNECTED_THREE_WAY_V1
 - Governed calibration contract version: 2
+- Product-buyer-similarity selection/membership contract version: 3
+- Product-buyer-similarity score method: BUYER_PROFILE_DISTANCE_V1
+- Product-buyer cohort contract version: 1
+- Current product-buyer split strategy: SIMILARITY_CUSTOMER_SPLIT_V2
+  (the earlier CUSTOMER_UNION_HASH_ORDER_80_20_V1 artifacts remain historical)
 - Audience filter contract version: 1
 - Audience rank contract version: 1
 - Audience selection contract version: 1
@@ -157,7 +162,42 @@ Checksum policy:
 
 Phase 11 Step 4 extends canonical demographics from 28 to 40 columns with deterministic contactability, consent, and nullable push/advertising/web identifiers. The original 28 columns remain byte-for-byte unchanged. Rates, identifier rules, and regeneration details are in [data/README.md](data/README.md).
 
-The new canonical import checksum is `336cbef90fb601d84e2206b191a71b355810da282c918ec0b6e469528f70215f`. Prior Phase 10 scores are stale for this source; a new full scoring generation is required before current-source targeting/export. Historical/model reuse remains subject to existing Phase 10 compatibility gates because the 11 model features are unchanged. Step 4 does not run scoring.
+The product catalog contains 48 products, while the existing canonical campaign
+sales file contains observations for 36 exact product IDs. The retained
+historical `data/campaign_sales_summary.json` incorrectly reports the catalog
+size as `distinct_products`; it is preserved as historical output. Future
+generator summaries now report observed and catalog product counts separately.
+Buyer-similarity cohorts use only exact attributed-purchase history and never
+invent category aliases for the 12 products without observed sales.
+Eligible product cohorts now support deterministic descriptive buyer profiles:
+fit-only q05/q95 numeric ranges, equal-weight mixed-feature distance, supported
+multi-prototype learning, and integrity-checked non-executable JSON artifacts.
+A similarity score is a method-specific resemblance index, not purchase
+probability, confidence, percentile, or empirical accuracy.
+
+The current application schema is **33**. Schema 32 introduced the separate
+buyer-similarity registries; the additive schema-33 migration adds a separate
+similarity export audit and feedback identity without rewriting v1/v2 runs or
+probability scores. Unversioned API catalog calls still return the ten legacy
+delivery profiles. The Buyer Similarity form explicitly requests
+`?include_similarity=true` to receive the v3 analytical/contact-only profiles;
+new v3 searches must explicitly send selection contract version `3`.
+Bounded integration and browser checks are recorded in
+[Stage 14B_09 evidence](docs/evidence/lookalike_v3/09_INTEGRATION_CLOSURE.md).
+Stage 14B_09 alone did not establish predictive quality, five-million-row
+readiness, or demo qualification; later Prompt 16/17 evidence is linked below.
+
+V3 similarity scores are generated per published product profile and current
+demographic source in bounded stable-key chunks. Generation writes are
+owner/token fenced, checkpointed, source-current, deeply verified once, and
+published atomically; incomplete, cancelled, stale-source, or failed
+verification work cannot become reusable. Current attested generations reuse
+without a full score scan. Multi-product composition takes each person's
+maximum valid score and resolves exact ties by ascending product ID. A work
+estimate identifies exactly which selected product profiles require scoring;
+the 50-product request bound does not trigger automatic catalog-wide builds.
+
+The new canonical import checksum is `336cbef90fb601d84e2206b191a71b355810da282c918ec0b6e469528f70215f`. Prior Phase 10 scores are stale for this source; a new full scoring generation is required before current-source targeting/export. Historical/model reuse remains subject to existing Phase 10 compatibility gates because the 11 model features are unchanged. Stage 14B_04 proved bounded scoring and reuse only. Later [Prompt 16.2](docs/evidence/lookalike_v3/16_2_FULL5M_MEASUREMENTS.md) records full-five-million-row certification for the named isolated hardware and source, not a universal latency guarantee.
 
 If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs pull before imports.
 
@@ -168,7 +208,7 @@ If a .gz file is around 130 bytes and contains git-lfs pointer text, run git lfs
 .\.venv\Scripts\python.exe scripts\init_db.py --inspect
 ```
 
-Initialization is idempotent and creates/verifies schema version 31. Migrations
+Initialization is idempotent and creates/verifies schema version 33. Migrations
 20–26 add durable search attempts, progress, fencing, dependency lineage,
 attestation lineage, and workload-qualified progress. Migrations 27–30 add
 explicit v2 result membership, one-current-catalog enforcement, persisted
@@ -176,7 +216,34 @@ campaign-connected model/calibration lineage, and bounded feedback-recalibration
 decision lineage. Migration 31 enforces the promoted-calibration singleton and
 adds feedback statistical-grouping and evaluation lineage plus worker
 ownership/fencing fields and invariants. Historical rows remain readable and
-immutable under their recorded contracts.
+immutable under their recorded contracts. Migration 32 adds the isolated v3
+buyer-similarity profile, artifact, generation, staging, score, snapshot, and
+preflight registries plus strict v1/v2/v3 search discriminators; it does not
+convert or reinterpret historical searches.
+Migration 33 adds v3 similarity-export audit and feedback identity, preserving
+the separate historical v1/v2 export and probability lineage.
+
+## Buyer Similarity: current descriptive workflow
+
+The business UI offers explicit **Buyer Similarity** (selection version 3)
+and a separate advanced **Purchase Probability** mode. Similarity learns
+supported product-buyer demographic profiles from attributed purchases, scores
+the independent prospect population, applies exact audience filters, and
+selects everyone meeting a cumulative minimum. A score of 90 on the 0–100
+index means weighted distance to the nearest learned profile is at most 0.10;
+it is **not** a 90% chance of buying. Purchase probability retains its
+implemented v1/v2 contracts and calibration-governance limitations.
+
+The current [Prompt 16 full-5M report](docs/evidence/lookalike_v3/16_2_FULL5M_MEASUREMENTS.md)
+is `FULL5M_GO` on its named disposable database/hardware. The
+[Prompt 17 unchanged-scenario report](docs/evidence/lookalike_v3/17_SCENARIOS.md)
+is `DEMO_GO`: 20/20 exact preflights met the unchanged 10,000 minimum, 20/20
+real runs completed with exact current membership, and all 20 browser result
+captures plus a governed representative export passed. These are runtime and
+demo-readiness decisions, **not** prospective lift, purchase-response accuracy,
+or production-release approval. See the [v3 architecture](docs/BUYER_SIMILARITY_ARCHITECTURE.md),
+[operator and demonstration guide](docs/BUYER_SIMILARITY_OPERATOR_AND_DEMO.md),
+and [model factsheet](docs/evidence/lookalike_v3/08_MODEL_FACTSHEET.md).
 
 Phase 11 persists immutable business submissions separately from reusable, contact-PII-free result snapshots. Exact hits reuse a validated snapshot; otherwise the system reuses compatible Phase 10 intelligence or builds only missing layers, then atomically materializes one requested membership. Search-result exports have their own count/checksum/currentness audit records. See [smart reuse and snapshot contracts](docs/PHASE_11_RESULT_SNAPSHOTS_AND_SMART_REUSE.md).
 

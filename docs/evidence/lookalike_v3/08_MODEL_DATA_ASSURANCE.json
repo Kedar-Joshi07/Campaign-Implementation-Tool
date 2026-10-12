@@ -1,0 +1,52 @@
+{
+  "stage": "14B_08",
+  "recorded_date": "2026-10-08",
+  "starting_head": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate": "UNCOMMITTED",
+  "preceding_stage": "14B_07_BOUNDED_GO",
+  "scope": "BOUNDED_DESCRIPTIVE_SAMPLE_NOT_FULL_5M",
+  "source_database_open_mode": "SQLITE_READ_ONLY",
+  "product_id": "PRD001",
+  "unrelated_control_product_id": "PRD010",
+  "source_checksums": {
+    "customers": "99a09d2f0db06980afe290cf74a4db1df76cf8c340534fb2088879fb093d9ea9",
+    "prospects": "336cbef90fb601d84e2206b191a71b355810da282c918ec0b6e469528f70215f"
+  },
+  "sample": {
+    "sampling_rule": "FIRST_256_BY_SOURCE_IDENTIFIER_NOT_RANDOM",
+    "broad_customer_ids_sha256": "9b42c66ef4899380c0d60ffe358d53880d4989eda3376a228fc6bcdecff4c21a",
+    "prospect_person_ids_sha256": "539e2f84bfe3879eba9d02c800afe86b9de0a00bc809eb577b74aa2c16437974",
+    "broad_training_customers": 256,
+    "fit_buyers": 160,
+    "holdout_buyers": 40,
+    "unlabeled_prospects": 256
+  },
+  "distribution_method": {
+    "numeric_bins": "TRAINING_DEFINED_Q05_Q25_Q50_Q75_Q95_PLUS_TAILS_AND_MISSING",
+    "categorical_bins": "TRAINING_CANONICAL_VOCABULARY_PLUS_OTHER_AND_MISSING",
+    "psi_epsilon": 0.000001,
+    "numeric_ks": "EMPIRICAL_CDF_NONMISSING",
+    "categorical_variation": "TOTAL_VARIATION_DISTANCE"
+  },
+  "selected_observations": {
+    "broad_customer_vs_prospect_age_ks": 0.11328125,
+    "broad_customer_vs_prospect_age_psi": 0.08673033063395214,
+    "buyer_fit_vs_prospect_age_ks": 0.23124999999999996,
+    "buyer_fit_vs_prospect_age_psi": 0.39977118847055776,
+    "broad_customer_vs_prospect_gender_variation": 0.046875,
+    "buyer_fit_vs_prospect_gender_variation": 0.014062499999999967,
+    "holdout_score_mean_target": 0.6448864754221146,
+    "holdout_score_mean_unrelated_control": 0.6489000690715176,
+    "unlabeled_prospect_score_mean": 0.5805286926428199,
+    "realized_prototypes": 2,
+    "prototype_supports": [84, 76],
+    "bootstrap_mean_absolute_score_change_range": [0.04488645373536794, 0.06551027489035757],
+    "bootstrap_top_quartile_overlap_jaccard_range": [0.3333333333333333, 0.6666666666666666]
+  },
+  "interpretation": "Measured product separation is weak in this bounded unrelated-control check. The buyer-versus-prospect difference is not automatically corruption. Bootstrap membership is unstable enough to require caution.",
+  "predictive_validation": "UNAVAILABLE_NO_INDEPENDENT_OUTCOME_DESIGN",
+  "response_lift_validation": "UNAVAILABLE",
+  "five_million_distribution_certification": "NOT_RUN_STAGE_16",
+  "model_quality_decision": "NO_GO_FOR_PREDICTIVE_OR_PRODUCT_SPECIFIC_CLAIMS",
+  "runtime_contract_decision": "BOUNDED_GO_BROWSER_11_PASSED_FOCUSED_24_PASSED_BASELINE_PREFLIGHT_16_PASSED"
+}

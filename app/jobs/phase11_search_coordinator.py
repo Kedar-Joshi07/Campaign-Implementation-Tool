@@ -10,16 +10,21 @@ import secrets
 from pathlib import Path
 from threading import Event, Lock
 from typing import Any
+from app.database.connection import get_connection
 
 from app.repositories.campaign_result_registry_repository import (
     AttemptExecutionFence,
     CampaignResultRegistryRepository,
 )
 from app.services.phase11_result_contracts import Phase11RegistryStateError
+from app.selection_contracts import BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION
 from app.services.phase11_search_orchestration_service import (
     SearchOrchestrationOutcome,
     SnapshotMaterializer,
     execute_phase11_search_safely,
+)
+from app.services.buyer_similarity_search_orchestration_service import (
+    execute_similarity_search_safely,
 )
 
 
@@ -31,7 +36,7 @@ PHASE11_COORDINATOR_MAX_TRACKED_RUNS = 100
 PHASE11_COORDINATOR_QUERY_PAGE_SIZE = 100
 
 _TERMINAL_STATUSES = frozenset({"COMPLETED", "BLOCKED", "FAILED"})
-_WAITING_STATUSES = frozenset({"PHASE10_INTELLIGENCE"})
+_WAITING_STATUSES = frozenset({"PHASE10_INTELLIGENCE", "SIMILARITY_DEPENDENCY", "CANCELLED"})
 
 SearchRunner = Callable[..., SearchOrchestrationOutcome]
 
@@ -127,8 +132,23 @@ class Phase11SearchCoordinator:
         run = self._repository.fetch_search_run(identifier)
         if run is None:
             raise Phase11RegistryStateError("Search was not found.")
+        version = str(run.get("selection_contract_version") or "1")
+        if version not in {"1", "2", BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION}:
+            raise Phase11RegistryStateError("Unsupported search selection contract.")
         if str(run["status"]) in _TERMINAL_STATUSES:
             return False
+        if version == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION:
+            # A migrated/fixture database can have campaign rows without the
+            # governed import provenance needed to train a buyer profile. Keep
+            # its durable request queued until imports have been registered.
+            with get_connection(self.database_path) as connection:
+                sources = connection.execute(
+                    "SELECT COUNT(DISTINCT dataset_name) FROM data_import_runs "
+                    "WHERE status='COMPLETED' AND dataset_name IN "
+                    "('customers','campaign_sales','demographics')"
+                ).fetchone()[0]
+            if sources != 3:
+                return False
 
         with self._lock:
             if not self._accepting:
@@ -165,13 +185,23 @@ class Phase11SearchCoordinator:
     ) -> None:
         try:
             while not self._shutdown_event.is_set():
-                outcome = self._runner(
-                    self.database_path,
-                    search_run_id,
-                    **fence.as_kwargs(),
-                    materializer=self.materializer,
-                    project_root=self.project_root,
-                )
+                run = self._repository.fetch_search_run(search_run_id)
+                if run is None:
+                    raise Phase11RegistryStateError("Search was not found.")
+                if str(run.get("selection_contract_version") or "1") == BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION:
+                    outcome = execute_similarity_search_safely(
+                        self.database_path, search_run_id, **fence.as_kwargs(),
+                        project_root=self.project_root,
+                        cancellation_check=self._shutdown_event.is_set,
+                    )
+                else:
+                    outcome = self._runner(
+                        self.database_path,
+                        search_run_id,
+                        **fence.as_kwargs(),
+                        materializer=self.materializer,
+                        project_root=self.project_root,
+                    )
                 if outcome.status in _TERMINAL_STATUSES:
                     return
                 if (

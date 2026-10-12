@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from app.config import APP_NAME, APP_VERSION
 from app.dependencies import get_database_path
 from app.repositories.data_repository import DataRepository
+from app.database.connection import get_connection
 
 
 router = APIRouter(prefix="/api", tags=["system"])
@@ -98,3 +99,41 @@ def health(
 async def version() -> VersionResponse:
     """Return the application name and version."""
     return VersionResponse(application=APP_NAME, version=APP_VERSION)
+
+
+@router.get("/health/modes")
+def health_modes(request: Request, database_path: DatabasePath) -> dict:
+    """Additive mode-specific readiness without changing the legacy health body."""
+
+    runtime = request.app.state.runtime_health
+    try:
+        with get_connection(database_path) as connection:
+            import_count = int(connection.execute(
+                "SELECT COUNT(DISTINCT dataset_name) FROM data_import_runs "
+                "WHERE status='COMPLETED' AND dataset_name IN "
+                "('customers','campaign_sales','demographics')"
+            ).fetchone()[0])
+            calibration_present = connection.execute(
+                "SELECT 1 FROM score_calibration_artifacts "
+                "WHERE status='PROMOTED' LIMIT 1"
+            ).fetchone() is not None
+    except sqlite3.Error:
+        return {
+            "buyer_similarity": {"workflow_status": "UNAVAILABLE", "reason_code": "DATABASE_UNAVAILABLE"},
+            "purchase_probability": {"workflow_status": "UNAVAILABLE", "reason_code": "DATABASE_UNAVAILABLE"},
+        }
+    workflow = runtime.phase11_search_available
+    return {
+        "buyer_similarity": {
+            "workflow_status": "AVAILABLE" if workflow else "UNAVAILABLE",
+            "source_status": "AVAILABLE" if import_count == 3 else "AWAITING_GOVERNED_IMPORTS",
+            "reason_code": "CHECK_EXACT_PREFLIGHT" if import_count == 3 and workflow else
+                           "SOURCE_IMPORTS_REQUIRED" if workflow else "SEARCH_RUNTIME_UNAVAILABLE",
+        },
+        "purchase_probability": {
+            "workflow_status": "AVAILABLE" if workflow else "UNAVAILABLE",
+            "calibration_status": "CHECK_EXACT_PREFLIGHT" if calibration_present else "NOT_AVAILABLE",
+            "reason_code": "CHECK_EXACT_PREFLIGHT" if calibration_present and workflow else
+                           "GOVERNED_CALIBRATION_NOT_AVAILABLE" if workflow else "SEARCH_RUNTIME_UNAVAILABLE",
+        },
+    }

@@ -5,6 +5,7 @@ the later executor, save an inspectable BLOCKED run rather than a fake result.
 """
 from collections.abc import Callable
 from datetime import datetime, timezone
+from functools import lru_cache
 import hashlib
 import json
 import math
@@ -15,13 +16,24 @@ from app.database.schema import initialize_database
 from app.repositories.campaign_result_registry_repository import CampaignResultRegistryRepository
 from app.repositories.campaign_targeting_context_repository import CampaignTargetingContextRepository
 from app.selection_contracts import (
+    BUYER_SIMILARITY_PRODUCT_MATCH_POLICY,
+    BUYER_SIMILARITY_SCORE_METHOD_VERSION,
+    BUYER_SIMILARITY_SCORE_SEMANTICS,
+    BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION,
+    BUYER_SIMILARITY_THRESHOLD_PREDICATE,
     CALIBRATED_SELECTION_CONTRACT_VERSION,
     DEFAULT_PROPENSITY_BUCKET,
     PROPENSITY_BUCKET_DEFINITIONS,
     PROPENSITY_BUCKET_REGISTRY,
+    BUYER_SIMILARITY_MINIMUMS,
+    BUYER_SIMILARITY_TIER_DEFINITIONS,
+    DEFAULT_BUYER_SIMILARITY_MINIMUM,
 )
 from app.schemas.campaign_targeting import TARGETING_SEGMENT_CONTRACT_VERSION, BUSINESS_MATCH_STRENGTH_CONTRACT_VERSION
-from app.schemas.potential_customer_search import PotentialCustomerSearchRequest
+from app.schemas.potential_customer_search import (
+    PotentialCustomerSearchRequest,
+    PotentialCustomerSearchV3Request,
+)
 from app.services.campaign_targeting_context_service import (
     _allowed_values, _targeting_allowed_values,
     decorate_context_options, decorate_targeting_options,
@@ -40,7 +52,7 @@ from app.services.phase11_dependency_retry_service import (
 )
 from app.services.phase11_result_contracts import Phase11RegistryStateError
 from app.services.omnichannel_profile_contracts import (
-    OMNICHANNEL_PROFILE_REGISTRY, get_omnichannel_profile, get_omnichannel_profile_for_channel, resolve_profile_availability,
+    OMNICHANNEL_PROFILE_REGISTRY, SIMILARITY_PROFILE_REGISTRY, get_omnichannel_profile, get_omnichannel_profile_for_channel, resolve_profile_availability,
 )
 from app.services.targeting_option_catalog_service import (
     get_or_build_targeting_catalog, get_targeting_catalog,
@@ -84,24 +96,53 @@ def normalize_search_context(raw_context: dict, allowed_values: dict) -> dict:
                       "campaign_targeting_context_contract_version": PHASE11_CAMPAIGN_CONTEXT_CONTRACT_VERSION}
 
 
-def export_profile_options(database_path: str | Path) -> list[dict]:
+def export_profile_options(
+    database_path: str | Path, *, include_similarity: bool = False,
+) -> list[dict]:
     path = initialize_database(database_path)
     with get_connection(path) as connection:
         fields = {row["name"] for row in connection.execute("PRAGMA table_info(demographics)")}
     result = []
-    for profile in OMNICHANNEL_PROFILE_REGISTRY.values():
+    profiles = list(OMNICHANNEL_PROFILE_REGISTRY.values())
+    if include_similarity:
+        profiles.extend(SIMILARITY_PROFILE_REGISTRY.values())
+    for profile in profiles:
         availability = resolve_profile_availability(profile.export_profile, available_source_fields=fields)
         result.append(dict(
             channel_code=profile.channel_code, export_profile=profile.export_profile,
             profile_version=profile.profile_version,
-            label=profile.channel_code.replace("_", " ").title(), availability=availability,
+            selection_contract_version="3" if profile.profile_version == "2" else "1_OR_2",
+            analytical_fields=(profile.profile_version == "2" and "_CONTACT_ONLY_" not in profile.export_profile),
+            label=(profile.channel_code.replace("_", " ").title() + (
+                " — Buyer Similarity" if profile.profile_version == "2" and "_CONTACT_ONLY_" not in profile.export_profile
+                else " — Contact Only" if profile.profile_version == "2" else ""
+            )), availability=availability,
             unavailable_reason=None if availability == "AVAILABLE" else "Required source identifiers or contact permissions are unavailable.",
         ))
     return result
 
 
+@lru_cache(maxsize=8)
+def _product_buyer_support(database_path: str, catalog_version: str) -> dict[str, int]:
+    """Observed all-history floor only; exact context support is checked at preflight.
+
+    The source-keyed cache avoids repeating a sales aggregation on every form open.
+    A new governed import changes the catalog version and therefore the key.
+    """
+    with get_connection(database_path) as connection:
+        rows = connection.execute(
+            """SELECT product_id,COUNT(DISTINCT customer_id) AS buyers
+               FROM campaign_sales
+               WHERE contacted_flag=1 AND purchase_flag=1
+                 AND campaign_attributed_sale_flag=1
+               GROUP BY product_id"""
+        ).fetchall()
+    return {str(row["product_id"]): int(row["buyers"]) for row in rows}
+
+
 def search_form_options(
-    database_path: str | Path, *, workflow_available: bool | None = None
+    database_path: str | Path, *, workflow_available: bool | None = None,
+    include_similarity: bool = False,
 ) -> dict:
     path = initialize_database(database_path)
     catalog = get_or_build_targeting_catalog(path)
@@ -119,16 +160,74 @@ def search_form_options(
         }
         for definition in PROPENSITY_BUCKET_DEFINITIONS
     ]
+    targeting["buyer_similarity"] = {
+        "selection_contract_version": BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION,
+        "score_semantics": BUYER_SIMILARITY_SCORE_SEMANTICS,
+        "score_method_version": BUYER_SIMILARITY_SCORE_METHOD_VERSION,
+        "threshold_predicate": BUYER_SIMILARITY_THRESHOLD_PREDICATE,
+        "product_match_policy": BUYER_SIMILARITY_PRODUCT_MATCH_POLICY,
+        "default_minimum": DEFAULT_BUYER_SIMILARITY_MINIMUM,
+        "minimums": [
+            {
+                "value": value,
+                "label": next(
+                    item.display_label
+                    for item in BUYER_SIMILARITY_TIER_DEFINITIONS
+                    if item.minimum == value
+                ),
+                "recommended": value == DEFAULT_BUYER_SIMILARITY_MINIMUM,
+            }
+            for value in BUYER_SIMILARITY_MINIMUMS
+        ],
+        "readiness": "INDEPENDENT_FROM_PURCHASE_PROBABILITY",
+        "build_available": True,
+    }
+    with get_connection(database_path) as connection:
+        import_count = int(connection.execute(
+            "SELECT COUNT(DISTINCT dataset_name) FROM data_import_runs "
+            "WHERE status='COMPLETED' AND dataset_name IN "
+            "('customers','campaign_sales','demographics')"
+        ).fetchone()[0])
+        calibration_present = connection.execute(
+            "SELECT 1 FROM score_calibration_artifacts WHERE status='PROMOTED' LIMIT 1"
+        ).fetchone() is not None
+        sales_import = connection.execute(
+            "SELECT 1 FROM data_import_runs WHERE dataset_name='campaign_sales' AND status='COMPLETED' LIMIT 1"
+        ).fetchone() is not None
+    context_options = decorate_context_options(catalog["context"])
+    support = _product_buyer_support(str(path), str(catalog["catalog_version"])) if sales_import else {}
+    for product in context_options["products"]:
+        count = support.get(str(product["product_id"]), 0) if sales_import else None
+        product["buyer_support"] = {
+            "distinct_attributed_buyers": count,
+            "status": "NOT_VERIFIED" if count is None else (
+                "POTENTIALLY_SUPPORTED" if count >= 200 else "INSUFFICIENT_HISTORY"
+            ),
+            "scope": "ALL_HISTORY_BEFORE_CONTEXT_FILTERS",
+            "minimum_required": 200,
+        }
+    infrastructure_ready = (
+        PHASE11_SEARCH_EXECUTOR is not None
+        if workflow_available is None else workflow_available
+    )
     return dict(catalog_version=catalog["catalog_version"],
                 catalog_created_at=catalog["catalog_created_at"],
-                context=decorate_context_options(catalog["context"]),
+                context=context_options,
                 targeting=targeting,
-                profiles=export_profile_options(database_path),
-                workflow_available=(
-                    PHASE11_SEARCH_EXECUTOR is not None
-                    if workflow_available is None
-                    else workflow_available
-                ))
+                profiles=export_profile_options(database_path, include_similarity=include_similarity),
+                workflow_available=infrastructure_ready,
+                mode_readiness={
+                    "buyer_similarity": {
+                        "workflow_available": infrastructure_ready,
+                        "source_status": "AVAILABLE" if import_count == 3 else "AWAITING_GOVERNED_IMPORTS",
+                        "reason_code": "CHECK_EXACT_PREFLIGHT" if import_count == 3 else "SOURCE_IMPORTS_REQUIRED",
+                    },
+                    "purchase_probability": {
+                        "workflow_available": infrastructure_ready,
+                        "calibration_status": "CHECK_EXACT_PREFLIGHT" if calibration_present else "NOT_AVAILABLE",
+                        "reason_code": "CHECK_EXACT_PREFLIGHT" if calibration_present else "GOVERNED_CALIBRATION_NOT_AVAILABLE",
+                    },
+                })
 
 
 def _project_search_status(
@@ -155,7 +254,11 @@ def _project_search_status(
     )} | {
         "safe_message": messages[row["status"]],
     }
-    if str(row.get("selection_contract_version") or "1") != CALIBRATED_SELECTION_CONTRACT_VERSION:
+    contract_version = str(row.get("selection_contract_version") or "1")
+    if contract_version not in {
+        CALIBRATED_SELECTION_CONTRACT_VERSION,
+        BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION,
+    }:
         return payload
 
     issue = project_run_issue(runtime)
@@ -172,7 +275,6 @@ def _project_search_status(
             if repository is not None and row["status"] == "QUEUED"
             else None
         ),
-        "propensity_bucket": row.get("propensity_bucket"),
         "progress": project_run_progress(
             row,
             runtime,
@@ -182,6 +284,14 @@ def _project_search_status(
         "issue": issue,
         "retry_eligible": bool(issue and issue.get("retryable")),
     })
+    if contract_version == CALIBRATED_SELECTION_CONTRACT_VERSION:
+        payload["propensity_bucket"] = row.get("propensity_bucket")
+    else:
+        payload.update({
+            "score_semantics": BUYER_SIMILARITY_SCORE_SEMANTICS,
+            "similarity_minimum": row.get("similarity_minimum"),
+            "score_method_version": BUYER_SIMILARITY_SCORE_METHOD_VERSION,
+        })
     return payload
 
 
@@ -289,20 +399,106 @@ def normalize_search_definition(
     return context, criteria, catalog
 
 
-def submit_potential_customer_search(database_path: str | Path, request: PotentialCustomerSearchRequest) -> dict:
+def normalize_similarity_search_definition(
+    path: Path,
+    *,
+    raw_context: dict,
+    raw_criteria: dict,
+    selection_mode: str,
+    top_n: int | None,
+    similarity_minimum: float,
+    catalog_version: str,
+) -> tuple[dict, object, dict]:
+    """Normalize demographic targeting without introducing probability filters."""
+
+    prohibited = {"match_strength", "propensity_bucket"}.intersection(raw_criteria)
+    if prohibited or raw_criteria.get("top_matching_percent") is not None:
+        raise ValueError("V3 targeting cannot contain probability or rank filters.")
+    catalog = get_targeting_catalog(path, catalog_version)
+    if catalog is None or not catalog.get("is_current", True):
+        raise ValueError("Reload current campaign choices before submitting.")
+    context_options = decorate_context_options(catalog["context"])
+    targeting_options = decorate_targeting_options(catalog["targeting"])
+    context = normalize_search_context(raw_context, _allowed_values(context_options))
+    bridge = dict(raw_criteria)
+    bridge.update(
+        match_strength="GOOD",
+        selection_mode=selection_mode,
+        target_count=top_n,
+    )
+    normalized = normalize_business_targeting_criteria(
+        bridge,
+        allowed_values=_targeting_allowed_values(targeting_options),
+    )
+    branches = tuple(
+        {
+            key: value for key, value in branch.items()
+            if key not in {"score_min", "score_max", "top_percentile_max", "deciles", "rank_bands"}
+        }
+        for branch in normalized.audience_filter_branches
+    )
+    payload = dict(normalized.payload)
+    payload.pop("match_strength", None)
+    payload.pop("business_match_strength_contract_version", None)
+    payload.update(
+        selection_contract_version=BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION,
+        score_semantics=BUYER_SIMILARITY_SCORE_SEMANTICS,
+        similarity_minimum=similarity_minimum,
+        threshold_predicate=BUYER_SIMILARITY_THRESHOLD_PREDICATE,
+        product_match_policy=BUYER_SIMILARITY_PRODUCT_MATCH_POLICY,
+        score_method_version=BUYER_SIMILARITY_SCORE_METHOD_VERSION,
+    )
+    canonical = json.dumps(
+        payload, ensure_ascii=True, allow_nan=False, sort_keys=True,
+        separators=(",", ":"),
+    )
+    return context, type(normalized)(
+        payload=payload,
+        canonical_json=canonical,
+        sha256=hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
+        audience_filter_branches=branches,
+        audience_selection={"mode": selection_mode, "target_count": top_n},
+    ), catalog
+
+
+def submit_potential_customer_search(
+    database_path: str | Path,
+    request: PotentialCustomerSearchRequest | PotentialCustomerSearchV3Request,
+) -> dict:
     path = initialize_database(database_path)
-    profiles = export_profile_options(path)
+    v3 = isinstance(request, PotentialCustomerSearchV3Request)
+    profiles = export_profile_options(path, include_similarity=v3)
     profile = get_omnichannel_profile(request.export_profile)
     selected = next(item for item in profiles if item["export_profile"] == profile.export_profile)
     if selected["availability"] != "AVAILABLE":
         raise ValueError("Choose an available download profile.")
     if request.context.get("campaign_channel") != profile.channel_code:
         raise ValueError("The delivery channel and download profile must match.")
-    context, criteria, catalog = normalize_search_definition(
-        path, raw_context=request.context, raw_criteria=request.criteria,
-        propensity_bucket=request.propensity_bucket,
-        catalog_version=request.catalog_version,
-    )
+    if v3 and profile.profile_version == "1":
+        # Stage 14B-05/06 clients supplied the then-only channel profile.
+        # Resolve that compatibility input to an explicit v3 analytical profile;
+        # the saved run and returned status advertise the resolved version 2.
+        profile = get_omnichannel_profile_for_channel(
+            profile.channel_code, selection_contract_version="3",
+        )
+    if (profile.profile_version == "2") != v3:
+        raise ValueError("Choose a download profile for the selected score mode.")
+    if v3:
+        context, criteria, catalog = normalize_similarity_search_definition(
+            path,
+            raw_context=request.context,
+            raw_criteria=request.criteria,
+            selection_mode=request.selection_mode,
+            top_n=request.top_n,
+            similarity_minimum=request.similarity_minimum,
+            catalog_version=request.catalog_version,
+        )
+    else:
+        context, criteria, catalog = normalize_search_definition(
+            path, raw_context=request.context, raw_criteria=request.criteria,
+            propensity_bucket=request.propensity_bucket,
+            catalog_version=request.catalog_version,
+        )
     identity = derive_modeling_context_from_campaign_context(context)
     # A fresh context per submission prevents later form edits changing a prior run's context.
     context_json = json.dumps(context, ensure_ascii=True, allow_nan=False, sort_keys=True, separators=(",", ":"))
@@ -326,11 +522,17 @@ def submit_potential_customer_search(database_path: str | Path, request: Potenti
             selection_mode=criteria.audience_selection["mode"], target_count=criteria.audience_selection["target_count"],
             delivery_channel=profile.channel_code, export_profile=profile.export_profile,
             selection_contract_version=(
-                CALIBRATED_SELECTION_CONTRACT_VERSION
-                if request.propensity_bucket
-                else "1"
+                BUYER_SIMILARITY_SELECTION_CONTRACT_VERSION if v3 else (
+                    CALIBRATED_SELECTION_CONTRACT_VERSION
+                    if request.propensity_bucket else "1"
+                )
             ),
-            propensity_bucket=request.propensity_bucket,
+            propensity_bucket=None if v3 else request.propensity_bucket,
+            score_semantics=(BUYER_SIMILARITY_SCORE_SEMANTICS if v3 else None),
+            similarity_minimum=(request.similarity_minimum if v3 else None),
+            similarity_composite_context_sha256=(
+                identity.modeling_context_sha256 if v3 else None
+            ),
             catalog_version=catalog["catalog_version"], connection=connection,
             timestamp=timestamp,
         )

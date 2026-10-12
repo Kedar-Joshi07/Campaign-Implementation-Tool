@@ -1,0 +1,102 @@
+{
+  "runner_version": "14B_16_2_UNINTERRUPTED_RESOURCE_MEASUREMENT_V1",
+  "recorded_date": "2026-10-10",
+  "starting_sha": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate": "UNCOMMITTED",
+  "verdict": "FULL5M_GO_ON_NAMED_HARDWARE",
+  "database_isolation": "output/lookalike_stage16_2_measurements/certification.db",
+  "memory_method": "process RSS sampled every 5 seconds; observed peak, not guaranteed instantaneous peak",
+  "budgets_are_timeouts": false,
+  "products": {
+    "PRD001": {
+      "generation_id": 3,
+      "published_person_count": 5000000,
+      "complete_process_seconds": 3984.540,
+      "claim_and_chunk_loop_seconds": 2379.742,
+      "deep_verification_seconds": 95.517,
+      "indexed_score_insert_seconds": 1417.499,
+      "publication_transaction_body_seconds": 1480.377,
+      "verify_and_publish_committed_seconds": 1604.798,
+      "observed_peak_rss_bytes": 346927104,
+      "observed_peak_wal_bytes": 1626736712
+    },
+    "PRD003": {
+      "generation_id": 4,
+      "published_person_count": 5000000,
+      "complete_process_seconds": 1750.860,
+      "claim_and_chunk_loop_seconds": 1533.050,
+      "deep_verification_seconds": 18.575,
+      "indexed_score_insert_seconds": 167.813,
+      "publication_transaction_body_seconds": 187.521,
+      "verify_and_publish_committed_seconds": 217.811,
+      "observed_peak_rss_bytes": 337780736,
+      "observed_peak_wal_bytes": 1616333712
+    },
+    "PRD004": {
+      "generation_id": 5,
+      "published_person_count": 5000000,
+      "complete_successful_retry_seconds": 2088.605,
+      "claim_and_chunk_loop_seconds": 1789.218,
+      "deep_verification_seconds": 23.975,
+      "indexed_score_insert_seconds": 236.944,
+      "publication_transaction_body_seconds": 262.212,
+      "verify_and_publish_committed_seconds": 299.387,
+      "observed_peak_rss_bytes_successful_retry": 347992064,
+      "observed_peak_wal_bytes_successful_retry": 1592050432,
+      "interrupted_prior_checkpoint_rows": 4450000,
+      "interrupted_prior_durable_active_wall_seconds": 1463.000,
+      "observed_active_seconds_across_segments": 3551.605,
+      "prior_interrupted_process_peak_rss_certified": false,
+      "recovery_behavior": "same generation identity; stale staged rows deleted; full rescore under new fenced token"
+    }
+  },
+  "index_rebuild": {
+    "index_name": "idx_buyer_similarity_score_lookup",
+    "reindex_seconds": 158.656,
+    "full_process_seconds": 158.716,
+    "observed_peak_rss_bytes": 205647872,
+    "observed_peak_wal_bytes": 701607192,
+    "interpretation": "standalone rebuild, separate from indexed publication"
+  },
+  "phase_processes": {
+    "audit": {"seconds": 17.303, "observed_peak_rss_bytes": 210448384},
+    "import_copy_and_integrity": {"seconds": 194.771, "observed_peak_rss_bytes": 203526144},
+    "cohort_and_profiles": {"seconds": 28.594, "observed_peak_rss_bytes": 205795328},
+    "common_preflight": {"seconds": 46.965, "observed_peak_rss_bytes": 199217152},
+    "independent_full_verification": {"seconds": 635.180, "observed_peak_rss_bytes": 204136448},
+    "scenario_preflight": {"seconds": 19.496, "observed_peak_rss_bytes": 200249344},
+    "scenario_search_snapshot": {"seconds": 20.453, "observed_peak_rss_bytes": 205111296},
+    "scenario_reuse_export": {"seconds": 17.560, "observed_peak_rss_bytes": 202776576},
+    "history_five_calls": {"seconds": 5.714, "observed_peak_rss_bytes": 199626752}
+  },
+  "full_composite": {
+    "valid": 5000000,
+    "invalid": 0,
+    "winner_counts": {"PRD001": 785715, "PRD003": 1833366, "PRD004": 2380919},
+    "cumulative_minimum_counts": {"0.50": 4935724, "0.60": 4280439, "0.70": 2412119, "0.80": 591372, "0.90": 43384}
+  },
+  "recorded_scenario_20": {
+    "demographic_eligible_count": 2114560,
+    "uncached_preflight_selected_count": 25765,
+    "uncached_preflight_seconds": 18.717,
+    "snapshot_member_count": 25765,
+    "snapshot_sha256": "8905567a1611c8d2851ac6a3f2ccb3691e2b14b8aa097207fcec574e0a1c9895",
+    "snapshot_execution_seconds": 19.118,
+    "exact_reuse_seconds": 8.635,
+    "export_first_byte_seconds": 2.269,
+    "export_bytes": 2813047
+  },
+  "history": {
+    "unchanged_budget_seconds": 2,
+    "reuse_path_seconds": 1.454,
+    "additional_samples_seconds": [1.202, 1.135, 1.088, 1.161, 1.083],
+    "all_new_samples_passed": true,
+    "earlier_16_1_miss_seconds_retained": 2.053
+  },
+  "limits": [
+    "five-second RSS sampling can miss shorter transient spikes",
+    "PRD004 interrupted first-process peak RSS not recoverable",
+    "fresh import was not repeated; verified prior disposable import copied consistently",
+    "no universal latency guarantee or 20-scenario/demo/remote-CI certification"
+  ]
+}

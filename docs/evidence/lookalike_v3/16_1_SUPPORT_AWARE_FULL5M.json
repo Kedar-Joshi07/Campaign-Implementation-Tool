@@ -1,0 +1,28 @@
+{
+  "recorded_at": "2026-10-09",
+  "starting_head": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate": "UNCOMMITTED",
+  "runner_version": "14B_15_1_SUPPORT_AWARE_FULL5M_V1",
+  "scratch_manifest": "output/lookalike_stage15_1_full5m/run_manifest.json",
+  "schema_version": 33,
+  "split_policy": "SIMILARITY_CUSTOMER_SPLIT_V2",
+  "partition_sha256": "371a8f7d92393c767fd54797202d2a9a582364fab04285df47578411320b3467",
+  "recorded_products": ["PRD001", "PRD003", "PRD004"],
+  "canonical_sources": {
+    "customers": {"rows": 125000, "import_id": 1, "compressed_sha256": "8a2c5601a96dc54708246a84cfd7715cf53e3d6f95e67472b1e2c2428bf0d18f", "import_checksum": "99a09d2f0db06980afe290cf74a4db1df76cf8c340534fb2088879fb093d9ea9"},
+    "campaign_sales": {"rows": 570000, "import_id": 2, "compressed_sha256": "89e6f846a9b9de9bdb5a3945bd785dc7d83a98132ed5388e51072b7a44244116", "import_checksum": "2fdb11c576a180b7349e50e0bf9d3b0a66d0d354ba8d42062756c8cd840965c4"},
+    "demographics": {"rows": 5000000, "import_id": 3, "compressed_sha256": "27d8e2a978458a095e16fc51a682e1f3373e41b663a4e61defa47e2d1bdf8b1d", "import_checksum": "336cbef90fb601d84e2206b191a71b355810da282c918ec0b6e469528f70215f"}
+  },
+  "per_product": {
+    "PRD001": {"profile_id": 3, "generation_id": 3, "rows": 5000000, "valid": 4999849, "invalid": 151, "missing": 0, "extra": 0, "score_seconds": 942.778, "warm_reuse_seconds": 0.152, "verdict": "GO"},
+    "PRD003": {"profile_id": 4, "generation_id": 4, "rows": 5000000, "valid": 5000000, "invalid": 0, "missing": 0, "extra": 0, "score_seconds": 1216.213, "warm_reuse_seconds": 0.150, "verdict": "GO"},
+    "PRD004": {"profile_id": 5, "generation_id": 5, "rows": 5000000, "valid": 5000000, "invalid": 0, "missing": 0, "extra": 0, "score_seconds": 1953.178, "warm_reuse_seconds": 0.136, "verdict": "GO"}
+  },
+  "controlled_restart": {"product": "PRD001", "checkpoint_rows": 25000, "interruption_seconds": 15.661, "same_generation_id": 3, "published_before_restart": false},
+  "composite": {"total": 5000000, "valid": 5000000, "invalid": 0, "winner_counts_in_product_order": [785715, 1833366, 2380919], "cumulative_counts": {"0.50": 4935724, "0.60": 4280439, "0.70": 2412119, "0.80": 591372, "0.90": 43384}, "verdict": "GO"},
+  "recorded_context_preflight": {"minimum": 0.70, "selected": 2412119, "currentness": "CURRENT", "first_completed_seconds": 82.943, "initial_aborted_attempt_seconds": "over 600"},
+  "recorded_scenario_20": {"minimum": 0.90, "demographic_eligible": 2114560, "selected": 25765, "first_preflight_seconds": 240.934, "optimized_fresh_preflight_seconds": 40.753, "snapshot_id": 1, "snapshot_sha256": "8905567a1611c8d2851ac6a3f2ccb3691e2b14b8aa097207fcec574e0a1c9895", "materialization_seconds": 22.045, "exact_reuse_seconds": 11.709, "history_seconds": 2.053, "export_first_byte_seconds": 2.354, "export_bytes": 2813047},
+  "budgets_seconds": {"score_one_product": 5400, "deep_verify_one_product": 1200, "exact_preflight": 180, "result_materialization": 600, "history_projection": 2, "export_first_byte": 10, "warm_generation_reuse": 10},
+  "gates": {"per_product_full5m": "GO", "complete_three_product_context": "GO", "overall_prompt16": "NO_GO", "prompt17_demo_scenarios": "NOT_RUN"},
+  "remaining": ["A first history projection measured 2.053 seconds against a declared 2-second budget.", "Scoring-process peak resident memory and separately timed index/publication stages were not captured; after-the-fact system-available-memory samples are not peak RSS.", "A full clean-run performance recertification with resource instrumentation remains required for an unqualified Prompt 16 GO."]
+}

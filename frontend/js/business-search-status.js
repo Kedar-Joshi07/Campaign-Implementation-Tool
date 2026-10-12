@@ -1,5 +1,6 @@
 import { getJSON } from "./api.js";
 import { createRunIssue, createRunProgress, isRunActive } from "./run-progress.js";
+import { restoreBusinessSearchFromResult } from "./business-search-form.js";
 
 export const RESULT_REFRESH_INTERVAL_MS = 5000;
 export const RESULT_REFRESH_MAX_CYCLES = 60;
@@ -35,6 +36,18 @@ const durationText = (value) => value === null || value === undefined
 const probabilityText = (value) => `${(Number(value) * 100).toLocaleString(
   undefined, { maximumFractionDigits: 2 },
 )}%`;
+const similarityRun = (run) => run.selection_contract_version === "3"
+  && run.selection_semantics === "PRODUCT_BUYER_SIMILARITY";
+const selectionText = (run) => similarityRun(run)
+  ? `${Math.round(Number(run.similarity_minimum) * 100)} and above (0-100 buyer-similarity index)`
+  : run.selection_semantics === "LEGACY_RAW_SCORE"
+    ? label(run.selection_value) : run.selection_value;
+const BUSINESS_TARGET_FIELDS = new Set([
+  "genders", "age_groups", "states", "income_groups", "marital_statuses",
+  "education_levels", "employment_statuses", "resident_statuses",
+  "resident_types", "employment_types", "family_member_count_min",
+  "family_member_count_max", "top_matching_percent",
+]);
 const browserIdempotencyKey = (purpose, runId) => {
   const secureCrypto = globalThis.crypto;
   if (typeof secureCrypto?.randomUUID === "function") {
@@ -124,8 +137,7 @@ function resultCard(run) {
     ["Products", products],
     ["Campaign / Offer", context],
     ["Delivery Profile", `${run.delivery_profile_label} · ${run.export_profile}`],
-    [run.selection_label, run.selection_semantics === "LEGACY_RAW_SCORE"
-      ? label(run.selection_value) : run.selection_value],
+    [run.selection_label, selectionText(run)],
     ["Potential Customers", run.selected_count === null
       ? "Pending" : Number(run.selected_count).toLocaleString()],
     ["Result Source", run.result_source_label],
@@ -156,9 +168,22 @@ function resultCard(run) {
     retry.type = "button";
     retry.addEventListener("click", () => retryRun(run.search_run_id, retry));
     actions.append(retry);
-  } else if (run.status === "COMPLETED") {
+  } else if (run.status === "COMPLETED" && !["2", "3"].includes(run.selection_contract_version)) {
     const again = make("a", "button button-secondary", "Run Again");
     again.href = "#find-potential-customers";
+    actions.append(again);
+  } else if (run.status === "COMPLETED") {
+    const again = make("button", "button button-secondary", "Run Again With These Choices");
+    again.type = "button";
+    again.addEventListener("click", async () => {
+      again.disabled = true;
+      try {
+        const detail = await getJSON(`/api/potential-customer-search/runs/${run.search_run_id}/result`);
+        await restoreBusinessSearchFromResult(detail);
+        window.location.hash = "#find-potential-customers";
+      } catch { again.textContent = "Could not reopen choices; view the saved result and try again."; }
+      finally { again.disabled = false; }
+    });
     actions.append(again);
   }
   const issue = createRunIssue(run);
@@ -244,8 +269,22 @@ function renderDetail(run) {
   find("result-detail-content").hidden = false;
   find("result-detail-run-id").textContent = `Search #${run.search_run_id}`;
   find("result-detail-title").textContent = run.campaign_name;
+  find("result-detail-run-again")?.remove();
+  if (run.status === "COMPLETED" && ["2", "3"].includes(run.selection_contract_version)) {
+    const again = make("button", "button button-secondary", "Run Again With These Choices");
+    again.id = "result-detail-run-again";
+    again.type = "button";
+    again.addEventListener("click", async () => {
+      again.disabled = true;
+      if (await restoreBusinessSearchFromResult(run)) window.location.hash = "#find-potential-customers";
+      else again.disabled = false;
+    });
+    find("result-detail-refresh").after(again);
+  }
   find("result-detail-description").textContent = run.description
     || "No campaign description was provided.";
+  find("result-profile-title").textContent = similarityRun(run)
+    ? "Buyer Similarity Summary" : "Score and Demographic Summary";
   const oldBadge = find("result-detail-badge");
   const badge = statusBadge(run.status);
   badge.id = "result-detail-badge";
@@ -286,16 +325,13 @@ function renderDetail(run) {
   ]);
   definitionList(
     find("result-targeting-details"),
-    detailEntries(run.targeting_criteria)
-      .filter(([term]) => !term.includes("Contract Version"))
-      .filter(([term]) => !(
-        run.selection_semantics === "CALIBRATED_PURCHASE_PROBABILITY"
-        && term === "Match Strength"
-      )),
+    Object.entries(run.targeting_criteria)
+      .filter(([key]) => BUSINESS_TARGET_FIELDS.has(key) && !(similarityRun(run) && key === "top_matching_percent"))
+      .map(([key, value]) => [label(key), value])
+      .filter(([term]) => !(run.selection_semantics === "CALIBRATED_PURCHASE_PROBABILITY" && term === "Match Strength")),
   );
   definitionList(find("result-selection-details"), [
-    [run.selection_label, run.selection_semantics === "LEGACY_RAW_SCORE"
-      ? label(run.selection_value) : run.selection_value],
+    [run.selection_label, selectionText(run)],
     ["Selection Mode", label(run.selection.mode)],
     ["Requested Count", run.selection.target_count],
     ["Resolved Count", run.selection.resolved_count],
@@ -304,7 +340,18 @@ function renderDetail(run) {
   ]);
   const calibratedSummary = run.score_summary?.semantics
     === "CALIBRATED_PURCHASE_PROBABILITY";
-  const score = run.score_summary ? [
+  const score = similarityRun(run) ? [
+    ["Score Method", run.score_method_version || "Not available"],
+    ["Score Meaning", "Model-relative demographic distance to supported product buyer profiles; not purchase probability or percentile"],
+    ["Purchase Probability", "Not provided for this buyer-similarity result"],
+    ...(run.similarity_explanation?.feature_drivers?.length ? [
+      ["Explanation Scope", `First ${run.similarity_explanation.sample_count} saved members of ${run.similarity_explanation.result_count}; descriptive sample only`],
+      ["Matched Products in Sample", Object.entries(run.similarity_explanation.selected_product_counts_in_sample || {}).map(([product, count]) => `${product}: ${count}`).join(", ")],
+      ["Historical Buyer Support", Object.entries(run.similarity_explanation.fit_buyer_support_by_product || {}).map(([product, count]) => `${product}: ${count} fit buyers`).join(", ")],
+      ["Largest Observed Distance Drivers", (run.similarity_explanation.feature_drivers || []).slice(0, 3).map((item) => `${label(item.feature)} (${Number(item.mean_weighted_distance).toFixed(4)} weighted distance)`).join(", ")],
+      ["Interpretation", run.similarity_explanation.meaning],
+    ] : [["Explanation", run.similarity_explanation?.meaning || "A bounded, verified explanation is not available for this result."]]),
+  ] : run.score_summary ? [
     ["Score Scope", run.score_summary.scope],
     [calibratedSummary ? "Calibrated Population" : "Scored Population",
       run.score_summary.population_count],
@@ -317,7 +364,7 @@ function renderDetail(run) {
   ] : [["Score Summary", "Available after targeting intelligence completes"]];
   definitionList(
     find("result-profile-details"),
-    [...score, ...detailEntries(run.demographic_summary)],
+    similarityRun(run) ? score : [...score, ...detailEntries(run.demographic_summary)],
   );
   definitionList(
     find("result-provenance-details"),
@@ -329,16 +376,27 @@ function renderDetail(run) {
     ["Delivery Profile", run.delivery_profile_label],
     ["Profile Code", run.export_profile],
     ["Download Status", run.download_eligible ? "Ready" : "Not available"],
+    ...(similarityRun(run) ? [
+      ["Export Fields", run.export_profile.includes("_CONTACT_ONLY_") ? "Contact only" : "Contact and Buyer Similarity"],
+      ["Selected", run.export_summary?.selected_count ?? run.selected_count ?? "Not available"],
+      ["Exportable", run.export_summary?.deliverable_count ?? "Not checked yet"],
+      ["Excluded by contactability", run.export_summary?.undeliverable_count ?? "Not checked yet"],
+    ] : []),
   ]);
   find("result-download-help").textContent = run.download_eligible
     ? "The governed download is ready. Downloading does not activate or send a campaign."
     : "A governed download appears only when the result is completed, current, and export-ready.";
   definitionList(find("result-technical-details"), [
+    ["Selection Contract Version", run.selection_contract_version],
+    ...(similarityRun(run) ? [["Similarity Model Version", run.score_method_version]] : []),
     ...detailEntries(run.technical_details),
     ...detailEntries(run.campaign_context)
       .filter(([term]) => term.includes("Contract Version")),
     ...detailEntries(run.targeting_criteria)
       .filter(([term]) => term.includes("Contract Version")),
+    ...(similarityRun(run) ? Object.entries(run.targeting_criteria)
+      .filter(([key]) => !BUSINESS_TARGET_FIELDS.has(key) && !key.includes("contract_version"))
+      .map(([key, value]) => [label(key), value]) : []),
     ["Filter Branches", JSON.stringify(run.filter_branches)],
   ]);
   const download = find("result-detail-download");

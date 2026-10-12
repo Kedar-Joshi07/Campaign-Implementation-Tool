@@ -1,0 +1,64 @@
+{
+  "stage": "14B_09",
+  "recorded_at_utc": "2026-10-08T15:15:40Z",
+  "starting_head": "336875c30fc32b00323d916ecc45b232016168a1",
+  "candidate": "UNCOMMITTED",
+  "preceding_stage": "14B_08",
+  "current_schema_version": 33,
+  "canonical_database_migrated": false,
+  "decision": {
+    "bounded_runtime_integration": "GO",
+    "v1_v2_compatibility": "GO",
+    "descriptive_method_reproducibility": "GO_BOUNDED",
+    "predictive_or_product_specific_quality": "NO_GO_STAGE08_WEAK_SEPARATION",
+    "full_5m": "NOT_RUN_STAGE16",
+    "demo_20_scenarios": "NOT_RUN_STAGE17",
+    "remote_exact_sha_ci": "NOT_RUN_UNCOMMITTED",
+    "release_readiness": "NOT_CERTIFIED"
+  },
+  "api_contract": {
+    "unversioned_export_profiles": 10,
+    "unversioned_search_options_profiles": 10,
+    "explicit_include_similarity_profiles": 30,
+    "v3_selection_contract_version": "3",
+    "v3_requires_explicit_request": true,
+    "v1_v2_historical_conversion": false
+  },
+  "bounded_integration_fixture": {
+    "governed_imported_buyers": 200,
+    "imported_prospects": 10,
+    "initial_calibration_artifacts": 0,
+    "first_search_selected": 10,
+    "current_exact_preflight_selected": 10,
+    "exported_email_rows": 10,
+    "second_search_selected": 10,
+    "second_result_source": "EXACT_RESULT_REUSE",
+    "published_profiles": 1,
+    "published_score_generations": 1,
+    "chrome_detail_and_download_control": "PASS"
+  },
+  "verification": [
+    {"name": "focused_v3_non_browser", "passed": 72, "duration_seconds": 195.51, "status": "PASS_BEFORE_FINAL_MAIN_SUITE"},
+    {"name": "v32_v33_schema_targeted", "passed": 4, "duration_seconds": 22.14, "status": "PASS"},
+    {"name": "options_and_v3_service_targeted", "passed": 15, "duration_seconds": 91.11, "status": "PASS"},
+    {"name": "v3_browser_and_import_http_chrome", "passed": 12, "duration_seconds": 116.59, "status": "PASS"},
+    {"name": "legacy_business_form_browser", "passed": 17, "deselected": 43, "duration_seconds": 123.4, "status": "PASS"},
+    {"name": "other_phase11_browser", "passed": 52, "deselected": 249, "duration_seconds": 133.64, "status": "PASS"},
+    {"name": "bounded_main_uninterrupted", "passed": 1128, "deselected": 132, "duration_seconds": 2931.86, "status": "PASS", "command": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q -m 'not cleanroom and not full5m and not performance and not browser' --maxfail=1 --tb=short"},
+    {"name": "phase1_to_7_bounded_cleanroom", "status": "PASS", "json_path": "docs/evidence/lookalike_v3/09_PHASE1_TO_7_CLEANROOM.json"},
+    {"name": "scoped_python_ruff_production_and_new_integration_tests", "status": "PASS"},
+    {"name": "git_diff_check", "status": "PASS_WITH_README_LINE_ENDING_WARNINGS"},
+    {"name": "pip_check", "status": "PASS"},
+    {"name": "broader_app_and_selected_v3_ruff", "status": "NOT_GREEN_15_FINDINGS"},
+    {"name": "node_check", "status": "NOT_AVAILABLE_NODE_NOT_INSTALLED"}
+  ],
+  "current_working_file_git_object_hashes": {
+    "app/database/schema.py": "4a0757400a03214ed113a456749ad394d006f6de",
+    "app/services/potential_customer_search_submission_service.py": "830b4a7a165444d066354731a46dfb86ad2cb924",
+    "app/services/phase11_results_service.py": "8f03b4cc1cd14094f5c1c5b45d306caa531ac490",
+    "app/routers/potential_customer_search.py": "e81d3a179b65133d5f6994f6655e724374ca8e6a",
+    "frontend/js/business-search-form.js": "0550b46c26b9968c7c92c59c62b9f6f5281f291e",
+    "tests/test_lookalike_v3_integration_closure.py": "f4f6aee0906dce73ee636f27068927a2ec4b81c1"
+  },
+  "next_stage": "14B_15_ONLY_WHEN_OPERATOR_DIRECTS"
+}
