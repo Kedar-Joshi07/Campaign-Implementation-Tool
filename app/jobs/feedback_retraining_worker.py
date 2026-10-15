@@ -182,6 +182,9 @@ class FeedbackRecalibrationWorker:
         self._futures: dict[int, Future[None]] = {}
 
     def submit(self, database_path: str | Path, decision_id: int) -> None:
+        from app.qa_guard import assert_qa_runtime
+        assert_qa_runtime(database_path, operation="feedback_submit",
+                          record_admission=True)
         with self._lock:
             if decision_id in self._active:
                 return
@@ -361,6 +364,8 @@ class FeedbackRecalibrationWorker:
             )
 
     def _run(self, path: Path, decision_id: int) -> None:
+        from app.qa_guard import assert_qa_runtime
+        assert_qa_runtime(path, operation="feedback_worker", record_admission=True)
         token = self._claim(path, decision_id)
         if token is None:
             with self._lock:

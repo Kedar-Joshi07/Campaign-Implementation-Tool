@@ -568,7 +568,9 @@ function renderSearchRows(rows, { append = false } = {}) {
     appendSearchCell(row, item.rank_band || "-");
     appendSearchCell(row, formatExactInteger(item.percentile_bucket), "numeric");
     appendSearchCell(row, formatExactInteger(item.decile), "numeric");
-    appendSearchCell(row, formatId(item.person_id));
+    // Person identifiers are opaque strings; the numeric ID formatter hides
+    // valid alphanumeric IDs as an em dash.
+    appendSearchCell(row, String(item.person_id ?? "—"));
     appendSearchCell(row, formatExactInteger(item.age), "numeric");
     appendSearchCell(row, item.gender || "Unknown/Other");
     appendSearchCell(row, item.state || "Unknown/Other");

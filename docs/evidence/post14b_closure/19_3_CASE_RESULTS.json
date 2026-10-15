@@ -1,0 +1,2878 @@
+{
+  "all_v3_export_profiles_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "owned_server_stopped": true,
+    "profile_count": 20,
+    "profiles": [
+      {
+        "csv_sha256": "e18fc8f4e5ec881a74cd0b99277f96ac07944fc2babfe9c10c7ed259fb7b8e0d",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "DIRECT_MAIL_CONTACT_CONTACT_ONLY_V2",
+        "run_id": 1,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "2e1c5a8a8df9ea5423c0f16236fd2f947c2763f761df89934a038e8051e48408",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "DIRECT_MAIL_CONTACT_V2",
+        "run_id": 2,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "f4a445a0558214747d366e4387c1e023dfecabdeb8bf773ee9898e0006564b82",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "DISPLAY_AUDIENCE_CONTACT_ONLY_V2",
+        "run_id": 3,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "58dd5dc576de3b287a418857d16b499456d1362a8f7ad644b83af48df7af2b9b",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "DISPLAY_AUDIENCE_V2",
+        "run_id": 4,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "b12edec056b9acf82def5962bc9e4f4ccd4c7bc18181e0ca5a213e422caeec21",
+        "deliverable": 160,
+        "excluded": 40,
+        "profile": "EMAIL_CONTACT_CONTACT_ONLY_V2",
+        "run_id": 5,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "a337a18a7eae13e5a1d6907e5aa9a6dd7cf43451707ee4055530bd2ddfca2617",
+        "deliverable": 160,
+        "excluded": 40,
+        "profile": "EMAIL_CONTACT_V2",
+        "run_id": 6,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "e28d5917ee69b1b66fac87dc0b371a26ab7d5a65643e6e33bb8f45e5dda74a5c",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "MOBILE_PUSH_CONTACT_CONTACT_ONLY_V2",
+        "run_id": 7,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "94531baf1997d02eecb0a298c6bdd890ac5a3dc64fd71fc0a93930afae86e8fc",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "MOBILE_PUSH_CONTACT_V2",
+        "run_id": 8,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "3ad90ba058b3f9abf18aa4db37378642a7bf517325d1a744d37221c67b2886dc",
+        "deliverable": 180,
+        "excluded": 20,
+        "profile": "PAID_SEARCH_AUDIENCE_CONTACT_ONLY_V2",
+        "run_id": 9,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "80337fcaa3ee1413d32760654887cb8ada016ddd3e077cb34f6d7135cc37b266",
+        "deliverable": 180,
+        "excluded": 20,
+        "profile": "PAID_SEARCH_AUDIENCE_V2",
+        "run_id": 10,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "3ad90ba058b3f9abf18aa4db37378642a7bf517325d1a744d37221c67b2886dc",
+        "deliverable": 180,
+        "excluded": 20,
+        "profile": "PAID_SOCIAL_AUDIENCE_CONTACT_ONLY_V2",
+        "run_id": 11,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "80337fcaa3ee1413d32760654887cb8ada016ddd3e077cb34f6d7135cc37b266",
+        "deliverable": 180,
+        "excluded": 20,
+        "profile": "PAID_SOCIAL_AUDIENCE_V2",
+        "run_id": 12,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "b88c429328bd7997569e745646fde0f7a480acafcc7d82880ffd9626e40f4f02",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "SMS_CONTACT_CONTACT_ONLY_V2",
+        "run_id": 13,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "9fab6cb383a6c3f659c4009969d426608f5dad7897de7f6f097947f0394f8344",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "SMS_CONTACT_V2",
+        "run_id": 14,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "534d209fe90bb97822decd0947a7fbe465e9ab17c8a6123b9e38e5edd24d24c4",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "TELEMARKETING_CONTACT_CONTACT_ONLY_V2",
+        "run_id": 15,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "5ff125b90680111a3e081d300f961d3224347737ae68cc57ff741723064976a5",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "TELEMARKETING_CONTACT_V2",
+        "run_id": 16,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "c9bd41feb3cd6c2d682e40a6042ae9c1e241e055cb4aaf0756f95ea51bb8d95b",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "WEBSITE_AUDIENCE_CONTACT_ONLY_V2",
+        "run_id": 17,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "a4f5c408460371b0c737f826fb54a74c0d5f536200099cd9f8f6d8f7245e2ccb",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "WEBSITE_AUDIENCE_V2",
+        "run_id": 18,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "5c04aa8d073f04017adecd593fe1a72527922392636287372b4b7f4fffb18d38",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "WHATSAPP_CONTACT_CONTACT_ONLY_V2",
+        "run_id": 19,
+        "selected": 200
+      },
+      {
+        "csv_sha256": "56d23b53d69de3199c45671719443f3e76b1234b9f7ca6351b829b7b398bc258",
+        "deliverable": 20,
+        "excluded": 180,
+        "profile": "WHATSAPP_CONTACT_V2",
+        "run_id": 20,
+        "selected": 200
+      }
+    ],
+    "scope": "BUSINESS_NATIVE_V3_EXPORT_PROFILE_MATRIX",
+    "status": "PASS_V3_ALL_AVAILABLE_EXPORT_PROFILES"
+  },
+  "api_responses": [
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/options",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/potential-customer-search/preflight",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/potential-customer-search/runs",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs/1/result",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs/1/result",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs/1/result",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/potential-customer-search/runs/1/feedback",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/api/potential-customer-search/runs/1/feedback",
+      "status": 422
+    },
+    {
+      "method": "POST",
+      "path": "/api/potential-customer-search/preflight",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/potential-customer-search/runs",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs/2/result",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs/2/result",
+      "status": 200
+    }
+  ],
+  "audience_alternates_case": {
+    "audiences_before_after": [
+      2,
+      3
+    ],
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "cases": [
+      {
+        "id": "AUDIENCE_WORKSPACE_REFRESH",
+        "status": "PASS"
+      },
+      {
+        "id": "AUDIENCE_FILTER_TOP_PERCENTILE_MAX",
+        "matching": 200,
+        "status": "PASS",
+        "value": 100
+      },
+      {
+        "id": "AUDIENCE_FILTER_AGE_MIN",
+        "matching": 200,
+        "status": "PASS",
+        "value": 18
+      },
+      {
+        "id": "AUDIENCE_FILTER_AGE_MAX",
+        "matching": 200,
+        "status": "PASS",
+        "value": 100
+      },
+      {
+        "id": "AUDIENCE_FILTER_INDIVIDUAL_YEARLY_INCOME_MIN",
+        "matching": 200,
+        "status": "PASS",
+        "value": 0
+      },
+      {
+        "id": "AUDIENCE_FILTER_INDIVIDUAL_YEARLY_INCOME_MAX",
+        "matching": 200,
+        "status": "PASS",
+        "value": 999999999
+      },
+      {
+        "id": "AUDIENCE_FILTER_FAMILY_MEMBER_COUNT_MIN",
+        "matching": 200,
+        "status": "PASS",
+        "value": 1
+      },
+      {
+        "id": "AUDIENCE_FILTER_FAMILY_MEMBER_COUNT_MAX",
+        "matching": 200,
+        "status": "PASS",
+        "value": 100
+      },
+      {
+        "id": "AUDIENCE_FILTER_DECILES",
+        "matching": 20,
+        "status": "PASS",
+        "value": "1"
+      },
+      {
+        "id": "AUDIENCE_FILTER_RANK_BANDS",
+        "matching": 2,
+        "status": "PASS",
+        "value": "ELITE"
+      },
+      {
+        "id": "AUDIENCE_FILTER_GENDER",
+        "matching": 200,
+        "status": "PASS",
+        "value": "Female"
+      },
+      {
+        "id": "AUDIENCE_FILTER_STATE",
+        "matching": 200,
+        "status": "PASS",
+        "value": "California"
+      },
+      {
+        "id": "AUDIENCE_FILTER_MARITAL_STATUS",
+        "matching": 200,
+        "status": "PASS",
+        "value": "Single"
+      },
+      {
+        "id": "AUDIENCE_FILTER_EDUCATION",
+        "matching": 200,
+        "status": "PASS",
+        "value": "Graduate"
+      },
+      {
+        "id": "AUDIENCE_FILTER_EMPLOYMENT_STATUS",
+        "matching": 200,
+        "status": "PASS",
+        "value": "Employed"
+      },
+      {
+        "id": "AUDIENCE_FILTER_RESIDENT_STATUS",
+        "matching": 200,
+        "status": "PASS",
+        "value": "Owner"
+      },
+      {
+        "id": "AUDIENCE_FILTER_RESIDENT_TYPE",
+        "matching": 200,
+        "status": "PASS",
+        "value": "Urban"
+      },
+      {
+        "id": "AUDIENCE_FILTER_TYPE_OF_EMPLOYMENT",
+        "matching": 200,
+        "status": "PASS",
+        "value": "Salaried"
+      },
+      {
+        "id": "AUDIENCE_CLEAR_CHIPS_ALL_MODE",
+        "status": "PASS"
+      },
+      {
+        "id": "AUDIENCE_SAVED_REFRESH_DESCRIPTION_VIEW",
+        "resolved_count": 200,
+        "status": "PASS"
+      }
+    ],
+    "console_errors": [],
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "request_failures": [],
+    "scope": "RETAINED_NATIVE_AUDIENCE_ALTERNATES",
+    "scoring_runs_before_after": [
+      1,
+      1
+    ],
+    "status": "PASS_RETAINED_AUDIENCE_ALTERNATES"
+  },
+  "audience_alternates_qa_output_evidence": "output\\post14b_closure\\npikhnvag\\native_audience_alternates.json",
+  "baseline_head": "9bea771940f930504ee8635c7b14fc988a37568c",
+  "blocked_qa_output_evidence": "output\\post14b_closure\\nio9i8a9s\\native_unsupported_product.json",
+  "browser": {
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "execution_mode": "headed",
+    "name": "system_chrome",
+    "product_version": "154.0.8037.98"
+  },
+  "business_form_controls_case": {
+    "api_responses": [
+      {
+        "method": "GET",
+        "path": "/api/health",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/potential-customer-search/options",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/potential-customer-search/preflight",
+        "request": {
+          "catalog_version": "b680ec8f937e8bc47244bc216606f63c8f3dcb3d01b842a5a299ec32ea676dfc",
+          "context": {
+            "campaign_categories": [],
+            "campaign_channel": "EMAIL",
+            "campaign_types": [],
+            "historical_campaign_channels": [],
+            "offer_types": [],
+            "product_ids": [
+              "P1"
+            ]
+          },
+          "criteria": {
+            "age_groups": [],
+            "education_levels": [],
+            "employment_statuses": [],
+            "employment_types": [],
+            "family_member_count_max": null,
+            "family_member_count_min": null,
+            "genders": [],
+            "income_groups": [],
+            "marital_statuses": [],
+            "resident_statuses": [],
+            "resident_types": [],
+            "states": []
+          },
+          "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+          "selection_contract_version": "3",
+          "selection_mode": "TOP_N",
+          "similarity_minimum": 0.5,
+          "top_n": 10
+        },
+        "status": 200
+      }
+    ],
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "console_errors": [],
+    "jobs_after": 0,
+    "multiselects": [
+      {
+        "available_options": 3,
+        "chip_remove": true,
+        "field": "product_ids",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "campaign_types",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "campaign_categories",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "offer_types",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "historical_campaign_channels",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "genders",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 7,
+        "chip_remove": true,
+        "field": "age_groups",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "states",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "regions",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 2,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 7,
+        "chip_remove": true,
+        "field": "income_groups",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "marital_statuses",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "education_levels",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "employment_statuses",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "resident_statuses",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "resident_types",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      },
+      {
+        "available_options": 2,
+        "chip_remove": true,
+        "field": "employment_types",
+        "keyboard_toggle_escape": true,
+        "outside_click": true,
+        "region_mapped_state_count": 0,
+        "search_no_result": true,
+        "select_all_clear_all": true
+      }
+    ],
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "preflight_request": {
+      "catalog_version": "b680ec8f937e8bc47244bc216606f63c8f3dcb3d01b842a5a299ec32ea676dfc",
+      "context": {
+        "campaign_categories": [],
+        "campaign_channel": "EMAIL",
+        "campaign_types": [],
+        "historical_campaign_channels": [],
+        "offer_types": [],
+        "product_ids": [
+          "P1"
+        ]
+      },
+      "criteria": {
+        "age_groups": [],
+        "education_levels": [],
+        "employment_statuses": [],
+        "employment_types": [],
+        "family_member_count_max": null,
+        "family_member_count_min": null,
+        "genders": [],
+        "income_groups": [],
+        "marital_statuses": [],
+        "resident_statuses": [],
+        "resident_types": [],
+        "states": []
+      },
+      "score_semantics": "PRODUCT_BUYER_SIMILARITY",
+      "selection_contract_version": "3",
+      "selection_mode": "TOP_N",
+      "similarity_minimum": 0.5,
+      "top_n": 10
+    },
+    "request_failures": [],
+    "required_and_numeric_guards": [
+      "products",
+      "campaign_name_whitespace",
+      "family_min_max",
+      "top_n_required"
+    ],
+    "runs_after": 0,
+    "scope": "BUSINESS_NATIVE_FORM_CONTROLS",
+    "status": "PASS_BUSINESS_FORM_CONTROLS",
+    "tested_probability_bucket_count": 5,
+    "tested_similarity_minima": [
+      "0.9",
+      "0.8",
+      "0.7",
+      "0.6",
+      "0.5"
+    ]
+  },
+  "business_links_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "cases": [
+      {
+        "id": "HOME_VIEW_ALL_RESULTS",
+        "status": "PASS"
+      },
+      {
+        "id": "RESULTS_FIND_CUSTOMERS_SHORTCUT",
+        "status": "PASS"
+      },
+      {
+        "id": "BRAND_HOME_AND_RECENT_RESULT",
+        "status": "PASS"
+      },
+      {
+        "id": "V3_TECHNICAL_DISCLOSURE",
+        "status": "PASS"
+      }
+    ],
+    "console_errors": [],
+    "database_counts_before_after": [
+      1,
+      0,
+      1
+    ],
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "request_failures": [],
+    "scope": "BUSINESS_NATIVE_LINKS_AND_TECHNICAL",
+    "status": "PASS_BUSINESS_LINKS_AND_V3_TECHNICAL"
+  },
+  "business_links_qa_output_evidence": "output\\post14b_closure\\n3zeri83f\\native_business_links.json",
+  "campaign_builder_and_export_recovery_case": {
+    "direct_mail_csv_sha256": "72e318070d35bd8f9c58ae10757bd2d37918dcc58c0760e2a08edc171f0504f3",
+    "direct_mail_deliverable": 180,
+    "direct_mail_excluded": 20,
+    "direct_mail_selected": 200,
+    "initial_passed_cases": [
+      {
+        "id": "CAMPAIGN_NAME_REQUIRED",
+        "status": "PASS"
+      },
+      {
+        "audience_id": 2,
+        "campaign_id": 1,
+        "csv_sha256": "94233e07832d54fdc55bb770b61c895b283a6dad910319f3c96b2286d8a1ca02",
+        "deliverable": 8,
+        "excluded": 2,
+        "header": [
+          "person_id",
+          "propensity_score",
+          "percentile_bucket",
+          "decile",
+          "rank_band",
+          "first_name",
+          "last_name",
+          "email"
+        ],
+        "id": "CAMPAIGN_EMAIL_DRAFT_FINALIZE_EXPORT",
+        "selected": 10,
+        "status": "PASS"
+      }
+    ],
+    "initial_status": "FAIL_CAMPAIGN_BUILDER_SLICE",
+    "limitation": "Not all retained Campaign Builder controls/states certified; original Chrome crash preserved.",
+    "owned_server_stopped": true,
+    "reconciled_interrupted_event": "ABORTED",
+    "recovery_browser": {
+      "executable_path": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "execution_mode": "headed",
+      "name": "system_edge",
+      "product_version": "155.0.4283.45"
+    },
+    "recovery_event_statuses": [
+      "ABORTED",
+      "COMPLETED"
+    ],
+    "recovery_scope": "RETAINED_NATIVE_CAMPAIGN_EXPORT_RESTART_RECOVERY",
+    "recovery_status": "PASS_RESTART_AND_EDGE_EXPORT",
+    "scope": "RETAINED_COMPONENT_NATIVE_CAMPAIGN_BUILDER"
+  },
+  "campaign_qa_output_evidence": "output\\post14b_closure\\npikhnvag\\native_campaign_builder.json",
+  "campaign_recovery_qa_output_evidence": "output\\post14b_closure\\npikhnvag\\native_campaign_export_recovery.json",
+  "campaign_stepper_post_fix_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "campaigns_before_after": [
+      8,
+      9
+    ],
+    "cases": [
+      {
+        "hash": "#find-potential-customers",
+        "id": "SAVED_GROUP_CREATE_CAMPAIGN_ROUTE",
+        "status": "PASS"
+      },
+      {
+        "id": "CAMPAIGN_WORKSPACE_REFRESH",
+        "status": "PASS"
+      },
+      {
+        "id": "CAMPAIGN_STEPPER_GUARDED_VISITED_NAVIGATION",
+        "status": "PASS"
+      },
+      {
+        "campaign_id": 1,
+        "id": "CAMPAIGN_RECENT_OPEN_FINALIZED",
+        "status": "PASS"
+      },
+      {
+        "campaign_id": 9,
+        "id": "CAMPAIGN_DRAFT_EDIT_SAVE_SAME_AUDIENCE",
+        "status": "PASS"
+      },
+      {
+        "campaign_id": 9,
+        "csv_sha256": "ebc917907396b68a482b052d6b3d24545a9b3a9d4a11d8c978f556c67c057bca",
+        "exported": 160,
+        "id": "CAMPAIGN_POST_FIX_DRAFT_FINALIZE_EXPORT",
+        "status": "PASS"
+      }
+    ],
+    "console_errors": [],
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "request_failures": [],
+    "scope": "RETAINED_NATIVE_CAMPAIGN_STEPPER",
+    "status": "PASS_RETAINED_CAMPAIGN_STEPPER"
+  },
+  "campaign_stepper_qa_output_evidence": "output\\post14b_closure\\npikhnvag\\native_campaign_stepper.json",
+  "case_scope": "BUSINESS_NATIVE_ONE_FRESH_V3_CASE",
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)"
+  ],
+  "database_after": {
+    "buyer_similarity_profiles": 1,
+    "buyer_similarity_result_snapshots": 1,
+    "buyer_similarity_score_generations": 1,
+    "campaign_sales": 640,
+    "campaign_search_attempts": 2,
+    "campaign_search_runs": 2,
+    "customers": 230,
+    "demographics": 200
+  },
+  "database_before": {
+    "buyer_similarity_profiles": 0,
+    "buyer_similarity_result_snapshots": 0,
+    "buyer_similarity_score_generations": 0,
+    "campaign_sales": 640,
+    "campaign_search_attempts": 0,
+    "campaign_search_runs": 0,
+    "customers": 230,
+    "demographics": 200
+  },
+  "expected_console_errors": [
+    "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)"
+  ],
+  "export_qa_output_evidence": "output\\post14b_closure\\nsnwumo1m\\native_export_matrix.json",
+  "fault_qa_output_evidence": "output\\post14b_closure\\n9yze8s42\\native_retryable_failure.json",
+  "feedback_negative_matrix_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "cases": [
+      {
+        "id": "FRESH_V3_PREREQUISITE",
+        "run_id": 1,
+        "status": "PASS"
+      },
+      {
+        "id": "NO_FILE_CLIENT_GUARD",
+        "status": "PASS"
+      },
+      {
+        "id": "WRONG_EXTENSION_CLIENT_GUARD",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "MISSING_COLUMNS",
+        "safe_ui_message": "Feedback CSV requires person_id, outcome, and outcome_at columns.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "MALFORMED_JSON",
+        "safe_ui_message": "Feedback JSON must be valid UTF-8 JSON.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "INVALID_UTF8_JSON",
+        "safe_ui_message": "Feedback JSON must be valid UTF-8 JSON.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "JSON_ROWS_NOT_ARRAY",
+        "safe_ui_message": "JSON feedback requires a rows array.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "EMPTY_JSON_ROWS",
+        "safe_ui_message": "Feedback requires at least one row.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "DUPLICATE_ROWS",
+        "safe_ui_message": "Feedback person identifiers must be unique and bounded.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "UNKNOWN_MEMBER",
+        "safe_ui_message": "Every feedback person must belong to the immutable result snapshot.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "FUTURE_TIMESTAMP",
+        "safe_ui_message": "Feedback timestamps cannot be in the future.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "MISSING_TIMEZONE",
+        "safe_ui_message": "Feedback timestamps must include a timezone.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "INVALID_OUTCOME",
+        "safe_ui_message": "Feedback outcomes must be boolean or 0/1.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "NONFINITE_OUTCOME_VALUE",
+        "safe_ui_message": "Outcome values must be finite numbers.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "OVERSIZE_CSV",
+        "safe_ui_message": "Feedback CSV exceeds the 10 MB limit.",
+        "status": "PASS"
+      },
+      {
+        "http_status": 201,
+        "id": "VALID_JSON",
+        "safe_ui_message": "1 outcomes accepted. Buyer similarity is descriptive. This feedback is retained with its immutable selection lineage, but no independently valid purchase-probab",
+        "status": "PASS"
+      },
+      {
+        "http_status": 409,
+        "id": "DUPLICATE_PRIOR_OUTCOME",
+        "safe_ui_message": "Feedback for one or more members was already recorded for this search.",
+        "status": "PASS"
+      }
+    ],
+    "database_counts": [
+      1,
+      1
+    ],
+    "lineage": {
+      "attempt_number": 1,
+      "profile_sha256": "304ecd824ab9fb4c92219adb9667a6ba6a9f91aa99be4bd9497bee7171ef1e4f",
+      "score_method_version": "BUYER_PROFILE_DISTANCE_V1",
+      "search_run_id": 1,
+      "selection_contract_version": "3",
+      "similarity_generation_id": 1,
+      "similarity_snapshot_id": 1
+    },
+    "owned_server_stopped": true,
+    "scope": "BUSINESS_NATIVE_FEEDBACK_NEGATIVE_MATRIX",
+    "status": "PASS_FEEDBACK_NEGATIVE_MATRIX"
+  },
+  "feedback_qa_output_evidence": "output\\post14b_closure\\ng8oktfw4\\native_feedback_matrix.json",
+  "form_qa_output_evidence": "output\\post14b_closure\\njv2sqc4j\\native_business_form_controls.json",
+  "governed_probability_v2_case": {
+    "api_responses": [
+      {
+        "method": "GET",
+        "path": "health",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/options",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "potential-customer-search/preflight",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "potential-customer-search/runs",
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/runs/1/result",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/runs/1/result",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "health",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/runs/1/result",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/options",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "potential-customer-search/preflight",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "potential-customer-search/runs",
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/runs/2/result",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/runs/2/result",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "health",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/runs/2/result",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/options",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "potential-customer-search/preflight",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "potential-customer-search/preflight",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "potential-customer-search/preflight",
+        "status": 200
+      }
+    ],
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "calibration_artifact_id": 1,
+    "cases": [
+      {
+        "bucket": "0.90",
+        "id": "V2_BUCKET_0.90",
+        "independent_oracle": 200,
+        "materialized_members": 200,
+        "preflight_selected": 200,
+        "reopened_stored_contract": true,
+        "run_id": 1,
+        "snapshot_sha256": "7743b85ac838800a63b899a4b86832a6bb62adbf4f03d5326bb5d7570359f840",
+        "status": "PASS"
+      },
+      {
+        "bucket": "0.80",
+        "id": "V2_BUCKET_0.80",
+        "independent_oracle": 0,
+        "materialized_members": 0,
+        "preflight_selected": 0,
+        "reopened_stored_contract": true,
+        "run_id": 2,
+        "snapshot_sha256": "9f9fe7b2a8fa682f3377a232f694be5ca54d5a73958ea3531f91ad29f4154739",
+        "status": "PASS"
+      },
+      {
+        "bucket": "0.70",
+        "id": "V2_BUCKET_0.70",
+        "independent_oracle": 0,
+        "preflight_selected": 0,
+        "status": "PASS"
+      },
+      {
+        "bucket": "0.60",
+        "id": "V2_BUCKET_0.60",
+        "independent_oracle": 0,
+        "preflight_selected": 0,
+        "status": "PASS"
+      },
+      {
+        "bucket": "0.50",
+        "id": "V2_BUCKET_0.50",
+        "independent_oracle": 0,
+        "preflight_selected": 0,
+        "status": "PASS"
+      }
+    ],
+    "console_errors": [],
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "request_failures": [],
+    "scope": "BUSINESS_NATIVE_V2_GOVERNED_PROBABILITY",
+    "scoring_run_id": 1,
+    "status": "PASS_V2_BUCKET_AND_MEMBERSHIP_MATRIX"
+  },
+  "historical_alternates_case": {
+    "analysis_runs_before_after": [
+      4,
+      7
+    ],
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "cases": [
+      {
+        "id": "HISTORICAL_OPTIONS_REFRESH",
+        "status": "PASS"
+      },
+      {
+        "id": "HISTORICAL_DATE_GUARD_RESET",
+        "status": "PASS"
+      },
+      {
+        "chosen": "CMP_TEST_001",
+        "id": "HISTORICAL_FILTER_CAMPAIGN_IDS",
+        "status": "PASS"
+      },
+      {
+        "chosen": "P1",
+        "id": "HISTORICAL_FILTER_PRODUCT_IDS",
+        "status": "PASS"
+      },
+      {
+        "chosen": "Everyday",
+        "id": "HISTORICAL_FILTER_PRODUCT_CATEGORIES",
+        "status": "PASS"
+      },
+      {
+        "chosen": "EMAIL",
+        "id": "HISTORICAL_FILTER_CAMPAIGN_CHANNELS",
+        "status": "PASS"
+      },
+      {
+        "chosen": "Retention",
+        "id": "HISTORICAL_FILTER_CAMPAIGN_TYPES",
+        "status": "PASS"
+      },
+      {
+        "id": "HISTORICAL_CONVERSION_ATTRIBUTED_PURCHASE",
+        "observation_count": 105,
+        "positive_count": 105,
+        "run_id": 5,
+        "selected_count": 105,
+        "status": "PASS"
+      },
+      {
+        "id": "HISTORICAL_CONVERSION_ANY_PURCHASE",
+        "observation_count": 105,
+        "positive_count": 105,
+        "run_id": 6,
+        "selected_count": 105,
+        "status": "PASS"
+      },
+      {
+        "id": "HISTORICAL_CONVERSION_RESPONSE",
+        "observation_count": 105,
+        "positive_count": 105,
+        "run_id": 7,
+        "selected_count": 105,
+        "status": "PASS"
+      },
+      {
+        "id": "HISTORICAL_RECENT_REFRESH_REOPEN",
+        "status": "PASS"
+      }
+    ],
+    "console_errors": [],
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "request_failures": [],
+    "scope": "RETAINED_NATIVE_HISTORICAL_ALTERNATES",
+    "selected_filters": {
+      "campaign_channels": "EMAIL",
+      "campaign_ids": "CMP_TEST_001",
+      "campaign_types": "Retention",
+      "product_categories": "Everyday",
+      "product_ids": "P1"
+    },
+    "status": "PASS_RETAINED_HISTORICAL_ALTERNATES"
+  },
+  "historical_alternates_qa_output_evidence": "output\\post14b_closure\\n1vrj9033\\native_historical_alternates.json",
+  "history_paging_boundary_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "database_counts_unchanged": {
+      "generations": 1,
+      "jobs": 0,
+      "profiles": 1,
+      "runs": 20
+    },
+    "history_responses": [
+      {
+        "status": 200,
+        "url": "potential-customer-search/results?limit=20"
+      },
+      {
+        "status": 200,
+        "url": "potential-customer-search/results?limit=20&before_search_run_id=1"
+      },
+      {
+        "status": 200,
+        "url": "potential-customer-search/results?limit=20"
+      }
+    ],
+    "ordered_run_ids": [
+      20,
+      19,
+      18,
+      17,
+      16,
+      15,
+      14,
+      13,
+      12,
+      11,
+      10,
+      9,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "owned_server_stopped": true,
+    "scope": "BUSINESS_NATIVE_HISTORY_PAGING",
+    "status": "PASS_HISTORY_PAGING_BOUNDARY"
+  },
+  "history_qa_output_evidence": "output\\post14b_closure\\nsnwumo1m\\native_history_paging.json",
+  "legacy_detail_actions_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "cases": [
+      {
+        "id": "LEGACY_V2_1_REFRESH_TECHNICAL",
+        "selected": 200,
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V2_1_CSV_TEMPLATE",
+        "sha256": "85bf0e9c820504370b222ae95fef79c689d8ec2af92a25ed54c737623ad6b813",
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V2_1_JSON_TEMPLATE",
+        "sha256": "0c41df3d425d6cc354fdbec8f6be3c3436b2ea9819940e152ab59aaa87d7fc88",
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V2_1_FORMAT_GUIDE",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "LEGACY_V2_1_UPLOAD_GUARDS",
+        "status": "PASS"
+      },
+      {
+        "exported": 160,
+        "id": "LEGACY_V2_1_EXPORT",
+        "sha256": "563bea8f402b09adaef5f46cb410884ed21c1114f639846fb38b0e9cb71045ca",
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V2_1_RUN_AGAIN_RESTORE",
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V2_2_REFRESH_TECHNICAL",
+        "selected": 0,
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V2_2_CSV_TEMPLATE",
+        "sha256": "85bf0e9c820504370b222ae95fef79c689d8ec2af92a25ed54c737623ad6b813",
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V2_2_JSON_TEMPLATE",
+        "sha256": "0c41df3d425d6cc354fdbec8f6be3c3436b2ea9819940e152ab59aaa87d7fc88",
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V2_2_FORMAT_GUIDE",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "LEGACY_V2_2_UPLOAD_GUARDS",
+        "status": "PASS"
+      },
+      {
+        "exported": 0,
+        "id": "LEGACY_V2_2_EXPORT",
+        "sha256": "6567c5165b018b5182ba70eaa5c90f6b5fe26771718fe6f68d14b72209c49192",
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V2_2_RUN_AGAIN_RESTORE",
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V1_3_REFRESH_TECHNICAL",
+        "selected": 200,
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V1_3_CSV_TEMPLATE",
+        "sha256": "85bf0e9c820504370b222ae95fef79c689d8ec2af92a25ed54c737623ad6b813",
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V1_3_JSON_TEMPLATE",
+        "sha256": "0c41df3d425d6cc354fdbec8f6be3c3436b2ea9819940e152ab59aaa87d7fc88",
+        "status": "PASS"
+      },
+      {
+        "id": "LEGACY_V1_3_FORMAT_GUIDE",
+        "status": "PASS"
+      },
+      {
+        "http_status": 422,
+        "id": "LEGACY_V1_3_UPLOAD_GUARDS",
+        "status": "PASS"
+      },
+      {
+        "exported": 160,
+        "id": "LEGACY_V1_3_EXPORT",
+        "sha256": "563bea8f402b09adaef5f46cb410884ed21c1114f639846fb38b0e9cb71045ca",
+        "status": "PASS"
+      }
+    ],
+    "console_errors": [
+      "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+      "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+      "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)"
+    ],
+    "feedback_batches_before_after": [
+      0,
+      0
+    ],
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "request_failures": [],
+    "runs": [
+      [
+        1,
+        "2",
+        200
+      ],
+      [
+        2,
+        "2",
+        0
+      ],
+      [
+        3,
+        "1",
+        200
+      ]
+    ],
+    "scope": "BUSINESS_NATIVE_LEGACY_DETAIL_ACTIONS",
+    "search_runs_before_after": [
+      3,
+      3
+    ],
+    "status": "PASS_LEGACY_DETAIL_ACTIONS"
+  },
+  "legacy_detail_qa_output_evidence": "output\\post14b_closure\\npvrrvlt1\\native_legacy_detail_actions.json",
+  "legacy_qa_output_evidence": "output\\post14b_closure\\npvrrvlt1\\native_legacy_v1_reopen.json",
+  "legacy_v1_historical_reopen_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "console_errors": [],
+    "csv_sha256": "563bea8f402b09adaef5f46cb410884ed21c1114f639846fb38b0e9cb71045ca",
+    "export_header": [
+      "person_id",
+      "propensity_score",
+      "percentile_bucket",
+      "decile",
+      "rank_band",
+      "first_name",
+      "last_name",
+      "email"
+    ],
+    "export_profile": "EMAIL_CONTACT_V1",
+    "exported_count": 160,
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "request_failures": [],
+    "run_id": 3,
+    "scope": "BUSINESS_NATIVE_LEGACY_V1_REOPEN",
+    "selected_count": 200,
+    "selection_contract_version": "1",
+    "setup": "Reused the same QA root's real completed v1 API fixture.",
+    "status": "PASS_LEGACY_V1_REOPEN"
+  },
+  "links_qa_output_evidence": "output\\post14b_closure\\n0avx1j2i\\native_retained_links.json",
+  "model_alternates_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "cases": [
+      {
+        "id": "MODEL_WORKSPACE_REFRESH_AND_SOURCE",
+        "status": "PASS"
+      },
+      {
+        "id": "MODEL_RANDOM_SEED_GUARD",
+        "status": "PASS"
+      },
+      {
+        "id": "MODEL_VALIDATION_FRACTION_GUARD",
+        "status": "PASS"
+      },
+      {
+        "id": "MODEL_ALTERNATE_REAL_TRAIN_NO_CHALLENGER",
+        "model_run_id": 2,
+        "status": "PASS"
+      },
+      {
+        "id": "MODEL_RECENT_REFRESH_REOPEN",
+        "status": "PASS"
+      }
+    ],
+    "console_errors": [],
+    "model_runs_before_after": [
+      1,
+      2
+    ],
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "request_failures": [],
+    "request_payload": {
+      "analysis_run_id": 1,
+      "model_name": "Bounded no-challenger alternate",
+      "random_seed": 73,
+      "run_elkan_challenger": false,
+      "validation_fraction": 0.25
+    },
+    "scope": "RETAINED_NATIVE_MODEL_ALTERNATES",
+    "scoring_runs_before_after": [
+      1,
+      1
+    ],
+    "status": "PASS_RETAINED_MODEL_ALTERNATES"
+  },
+  "model_alternates_qa_output_evidence": "output\\post14b_closure\\npvrrvlt1\\native_model_alternates.json",
+  "multi_product_any_max_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "fresh_run_id": 1,
+    "generation_count": 2,
+    "owned_server_stopped": true,
+    "profile_count": 2,
+    "scope": "BUSINESS_NATIVE_MULTI_PRODUCT_ANY_MAX",
+    "score_rows": 400,
+    "status": "PASS_MULTI_PRODUCT_ANY_MAX",
+    "strict_expected": 80,
+    "strict_result_source": "INTELLIGENCE_REUSE",
+    "strict_run_id": 2,
+    "strict_selected": 80,
+    "strict_snapshot_sha256": "d7b04690723a7d1d84ec36cefda2cc13570b27007ef4fc33226e28642edd5305",
+    "unique_score_people": 200
+  },
+  "multi_product_qa_output_evidence": "output\\post14b_closure\\nwx06q23c\\native_multi_product.json",
+  "named_10k_qualification_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "console_errors": [],
+    "demographics": 12000,
+    "generation_id": 1,
+    "independent_qualifying_count": 12000,
+    "minimum": 0.7,
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "qualification_threshold_met": true,
+    "request_failures": [],
+    "scope": "BUSINESS_NATIVE_NAMED_10K_QUALIFICATION",
+    "selected_count": 12000,
+    "snapshot_sha256": "9e971453bb2a918166b9dee511330eba873bc38ceed8aeaeca69a8ebc2215a0f",
+    "status": "PASS_NAMED_10K_TRUTHFUL_QUALIFICATION",
+    "submit_to_completed_seconds": 10.891,
+    "v3_demo_ready_field_present": false,
+    "valid_score_rows": 12000
+  },
+  "native_transport_rejoin_case": {
+    "backend_status_sequence": [
+      "ONLINE",
+      "OFFLINE",
+      "ONLINE"
+    ],
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "console_errors": [
+      "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "Error: The application service could not be reached. Check your connection and try again.\n    at getJSON (http://127.0.0.1:52616/static/js/api.js:13:11)\n    at async checkBackendHealth (http://127.0.0.1:52616/static/js/app.js?v=sidebar-layout-2:48:20)",
+      "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    ],
+    "database_counts_before_after": [
+      1,
+      1,
+      0,
+      1
+    ],
+    "final_request_failures": [
+      {
+        "failure": "net::ERR_INTERNET_DISCONNECTED",
+        "method": "GET",
+        "url": "http://127.0.0.1:52616/api/health"
+      },
+      {
+        "failure": "net::ERR_INTERNET_DISCONNECTED",
+        "method": "GET",
+        "url": "http://127.0.0.1:52616/api/potential-customer-search/runs/1/result"
+      }
+    ],
+    "offline_request_failures": [
+      {
+        "failure": "net::ERR_INTERNET_DISCONNECTED",
+        "method": "GET",
+        "url": "http://127.0.0.1:52616/api/health"
+      },
+      {
+        "failure": "net::ERR_INTERNET_DISCONNECTED",
+        "method": "GET",
+        "url": "http://127.0.0.1:52616/api/potential-customer-search/runs/1/result"
+      }
+    ],
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "scope": "FAULT_NATIVE_TRANSPORT_REJOIN",
+    "status": "PASS_NATIVE_TRANSPORT_REJOIN"
+  },
+  "navigation_qa_output_evidence": "output\\post14b_closure\\njvckbrcb\\native_navigation_responsive.json",
+  "navigation_responsive_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "cases": [
+      {
+        "id": "HOME_COUNTS_RECENT_AND_NAV",
+        "status": "PASS"
+      },
+      {
+        "id": "THREE_ROUTES_BACK_FORWARD_REPEAT",
+        "status": "PASS"
+      },
+      {
+        "id": "ALIASES_AND_RETAINED_ROUTE_BOUNDARY",
+        "status": "PASS"
+      },
+      {
+        "id": "RESPONSIVE_1920X1080",
+        "resize_handle_visible": true,
+        "status": "PASS"
+      },
+      {
+        "id": "RESPONSIVE_1366X768",
+        "resize_handle_visible": true,
+        "status": "PASS"
+      },
+      {
+        "id": "RESPONSIVE_1024X768",
+        "resize_handle_visible": true,
+        "status": "PASS"
+      },
+      {
+        "id": "RESPONSIVE_768X1024",
+        "resize_handle_visible": false,
+        "status": "PASS"
+      },
+      {
+        "id": "RESPONSIVE_390X844",
+        "resize_handle_visible": false,
+        "status": "PASS"
+      },
+      {
+        "id": "INVALID_RESULT_ID_RETRY_BACK",
+        "status": "PASS"
+      }
+    ],
+    "database_counts_before_after": [
+      1,
+      0,
+      1
+    ],
+    "owned_server_stopped": true,
+    "scope": "BUSINESS_NATIVE_NAVIGATION_RESPONSIVE",
+    "status": "PASS_NAVIGATION_RESPONSIVE_SLICE"
+  },
+  "page_errors": [],
+  "passed_cases": [
+    {
+      "id": "V3_PREFLIGHT_UNPREPARED",
+      "status": "PASS",
+      "visible_state": "Not prepared\nEligible prospects\n200\nValidly scored pool\nNot available\nFeature coverage gaps\nNot available\nSimilarity-qualified\nNot available\nSelected\nNot available\nEventual exportable\nNot available\n\nBuyer similarity can be prepared for this exact campaign context.\n\nUse Prepare & Start Search to build this exact context. Selected and exportable counts are not available yet."
+    },
+    {
+      "excluded_count": 40,
+      "exportable_count": 160,
+      "id": "V3_EXPORT_AUDIT_VISIBLE_AFTER_REFRESH",
+      "selected_count": 200,
+      "status": "PASS"
+    },
+    {
+      "event_count": 14,
+      "export_sha256": "a337a18a7eae13e5a1d6907e5aa9a6dd7cf43451707ee4055530bd2ddfca2617",
+      "exported_count": 160,
+      "id": "V3_FRESH_UI_TO_WORKER_TO_DB_TO_EXPORT",
+      "search_run_id": 1,
+      "selected_count": 200,
+      "selection_contract_version": "3",
+      "stages": [
+        "QUEUED",
+        "CHECKING_CURRENT_INTELLIGENCE",
+        "PREPARING_BUYER_PATTERNS",
+        "SCORING_PROSPECTS",
+        "VERIFYING_SIMILARITY",
+        "SELECTING_CUSTOMERS",
+        "MATERIALIZING_RESULT",
+        "COMPLETED"
+      ],
+      "status": "PASS"
+    },
+    {
+      "accepted_outcomes": 1,
+      "id": "V3_NATIVE_FEEDBACK_TEMPLATES_AND_UPLOAD",
+      "status": "PASS",
+      "template_sha256": {
+        "csv": "85bf0e9c820504370b222ae95fef79c689d8ec2af92a25ed54c737623ad6b813",
+        "json": "0c41df3d425d6cc354fdbec8f6be3c3436b2ea9819940e152ab59aaa87d7fc88"
+      }
+    },
+    {
+      "http_status": 422,
+      "id": "V3_NATIVE_FEEDBACK_WRONG_MEMBER_REJECTED",
+      "safe_ui_message": "Every feedback person must belong to the immutable result snapshot.",
+      "status": "PASS"
+    },
+    {
+      "id": "V3_READY_EXACT_PREFLIGHT",
+      "status": "PASS",
+      "visible_state": "Current buyer similarity\nEligible prospects\n200\nValidly scored pool\n200\nFeature coverage gaps\n0\nSimilarity-qualified\n200\nSelected\n200\nEventual exportable\nNot available\n\nCurrent buyer similarity is ready.\n\nExportable count is determined later by governed contactability checks."
+    },
+    {
+      "id": "V3_UI_EXACT_RESULT_REUSE",
+      "result_source": "EXACT_RESULT_REUSE",
+      "search_run_id": 2,
+      "selected_count": 200,
+      "status": "PASS"
+    }
+  ],
+  "permanent_support_block_case": {
+    "attempts": [
+      [
+        1,
+        "BLOCKED",
+        0
+      ]
+    ],
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "issue_text": "Why this search is blocked\n\nThe selected products do not have a feasible shared buyer split.\n\nImport additional verified attributed-buyer history for the selected products.",
+    "mixed_status_polling_contract": [
+      true,
+      true,
+      false
+    ],
+    "owned_server_stopped": true,
+    "profile_count": 0,
+    "run": [
+      "BLOCKED",
+      1,
+      null
+    ],
+    "run_id": 1,
+    "runtime": [
+      "PROFILE_NOT_ELIGIBLE",
+      "INSUFFICIENT_HISTORY",
+      "The selected products do not have a feasible shared buyer split.",
+      0
+    ],
+    "scope": "BUSINESS_NATIVE_PERMANENT_SUPPORT_BLOCK",
+    "status": "PASS_PERMANENT_SUPPORT_BLOCK"
+  },
+  "planner_blocked_qa_output_evidence": "output\\post14b_closure\\npikhnvag\\native_retained_planner.json",
+  "planner_positive_qa_output_evidence": "output\\post14b_closure\\npvrrvlt1\\native_retained_planner_positive_resume.json",
+  "probability_qa_output_evidence": "output\\post14b_closure\\npvrrvlt1\\native_probability_v2.json",
+  "qa_output_evidence": "output\\post14b_closure\\nyvmgcy4w\\native_business_case.json",
+  "qualification_qa_output_evidence": "output\\post14b_closure\\n3zeri83f\\native_named_10k_qualification.json",
+  "request_failures": [],
+  "retained_historical_case": {
+    "analysis_run_id": 1,
+    "api_responses": [
+      {
+        "method": "GET",
+        "path": "/api/health",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/analyses",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/options",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/historical/analyses",
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/analyses",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/analyses/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/models/training-options",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/analyses/1",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/models/train",
+        "status": 202
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      }
+    ],
+    "breakdown_tabs_tested": 4,
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "console_errors": [],
+    "model_one_component_failure_category": "NO_UNLABELED_COMPONENT",
+    "model_one_component_job_status": "FAILED",
+    "model_one_component_safe_failure": "Model training could not be completed.",
+    "observations": 640,
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "positive_people": 230,
+    "request_failures": [],
+    "scope": "RETAINED_COMPONENT_HARNESS_HISTORICAL_SLICE",
+    "selected_people": 230,
+    "status": "PASS_RETAINED_HISTORICAL_AND_MODEL_BLOCK"
+  },
+  "retained_insights_links_case": {
+    "api_responses": [
+      {
+        "method": "GET",
+        "path": "/api/health",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/options",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/analyses",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audience/runs",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audiences",
+        "status": 200
+      }
+    ],
+    "audience_no_run_guard_visible": true,
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "business_insights_hash_hidden": true,
+    "console_errors": [],
+    "jobs_after_navigation": 0,
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "request_failures": [],
+    "retained_destinations_clicked": [
+      "historical-analysis",
+      "audience-explorer"
+    ],
+    "scope": "RETAINED_COMPONENT_HARNESS_INSIGHTS_LINKS",
+    "scoring_runs_after_navigation": 0,
+    "status": "PASS_RETAINED_INSIGHTS_LINKS_AND_ROUTING_BOUNDARY"
+  },
+  "retained_planner_blocked_case": {
+    "api_responses": [
+      {
+        "method": "GET",
+        "path": "health",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/options",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/targeting-options",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/context-options",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "campaign-planner/contexts",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "campaign-planner/contexts/1/targeting-criteria",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/intelligence-plan",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/prepare",
+        "status": 202
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      }
+    ],
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "cases": [
+      {
+        "id": "PLANNER_REQUIRED_NAME_GUARD",
+        "status": "PASS"
+      },
+      {
+        "id": "PLANNER_DRAFT_BACK_STEPPER",
+        "status": "PASS"
+      },
+      {
+        "api_status": 201,
+        "id": "PLANNER_CONTEXT_SAVE",
+        "status": "PASS"
+      },
+      {
+        "id": "PLANNER_INVALID_RANGE_GUARD",
+        "status": "PASS"
+      },
+      {
+        "api_status": 200,
+        "id": "PLANNER_TARGETING_TO_INTELLIGENCE",
+        "status": "PASS"
+      }
+    ],
+    "owned_server_stopped": true,
+    "scope": "RETAINED_COMPONENT_NATIVE_PLANNER",
+    "status": "PASS_RETAINED_PLANNER_TO_INTELLIGENCE"
+  },
+  "retained_planner_positive_case": {
+    "api_responses": [
+      {
+        "method": "GET",
+        "path": "health",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/options",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/targeting-options",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/context-options",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "campaign-planner/contexts",
+        "status": 201
+      },
+      {
+        "method": "PUT",
+        "path": "campaign-planner/contexts/1/targeting-criteria",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/intelligence-plan",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/prepare",
+        "status": 202
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence/preparation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/targeting-intelligence",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/target-group-preview",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "campaign-planner/contexts/1/match-strength-recommendation",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "campaign-planner/contexts/1/target-group-search",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "campaign-planner/contexts/1/save-target-group-and-create-draft",
+        "status": 201
+      }
+    ],
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "cases": [
+      {
+        "id": "PLANNER_REQUIRED_NAME_GUARD",
+        "status": "PASS"
+      },
+      {
+        "id": "PLANNER_DRAFT_BACK_STEPPER",
+        "status": "PASS"
+      },
+      {
+        "api_status": 201,
+        "id": "PLANNER_CONTEXT_SAVE",
+        "status": "PASS"
+      },
+      {
+        "id": "PLANNER_INVALID_RANGE_GUARD",
+        "status": "PASS"
+      },
+      {
+        "api_status": 200,
+        "id": "PLANNER_TARGETING_TO_INTELLIGENCE",
+        "status": "PASS"
+      },
+      {
+        "id": "PLANNER_PREVIEW_TO_REVIEW",
+        "status": "PASS"
+      },
+      {
+        "id": "PLANNER_TARGET_GROUP_CAMPAIGN_DRAFT",
+        "new_campaigns": 1,
+        "new_groups": 1,
+        "status": "PASS"
+      }
+    ],
+    "console_errors": [],
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "preview_selected": "200",
+    "request_failures": [],
+    "scope": "RETAINED_COMPONENT_NATIVE_PLANNER",
+    "status": "PASS_RETAINED_PLANNER_FIVE_STEPS"
+  },
+  "retained_qa_output_evidence": "output\\post14b_closure\\n_0wtud41\\native_retained_historical.json",
+  "retained_trainable_case": {
+    "analysis_run_id": 1,
+    "api_responses": [
+      {
+        "method": "GET",
+        "path": "/api/historical/analyses",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/options",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/health",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/historical/analyses",
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/analyses",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/analyses/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/models/training-options",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/historical/analyses/1",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/models/train",
+        "status": 202
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/models",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/models/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/models/1/scoring-status",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/models/1/score",
+        "status": 202
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/2",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/models/1/scoring-status",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/scoring-runs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/scoring-runs/1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audiences",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audience/runs",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audience/runs/1/preparation-status",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/runs/1/prepare",
+        "status": 202
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/3",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/3",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/3",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/3",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/jobs/3",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audiences",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audience/runs",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audience/options",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/estimate",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/estimate",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/search",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/profile",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audiences",
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "path": "/api/audiences",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/search",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/search",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/search",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/estimate",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/search",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/profile",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audiences",
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "path": "/api/audiences",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audiences/2",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audiences",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/estimate",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/audiences",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/data/imports",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/data/status",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/data/imports",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/audience/search",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/data/status",
+        "status": 200
+      }
+    ],
+    "bounded_audience_paginated_people": 200,
+    "bounded_audience_saved_people": 200,
+    "bounded_audience_top_n_people": 10,
+    "bounded_data_status_counts": {
+      "campaign_sales": 940,
+      "customers": 430,
+      "demographics": 200
+    },
+    "bounded_saved_target_groups_visible": 2,
+    "bounded_scored_people": 200,
+    "bounded_scoring_status": "COMPLETED",
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "console_errors": [],
+    "fixture_kind": "LEGACY_TRAINABLE",
+    "model_one_component_job_status": "COMPLETED",
+    "observations": 300,
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "positive_people": 100,
+    "request_failures": [],
+    "scope": "RETAINED_COMPONENT_HARNESS_HISTORICAL_SLICE",
+    "selected_people": 300,
+    "status": "PASS_RETAINED_TRAINABLE_MODEL"
+  },
+  "retryable_failure_and_recovery_case": {
+    "api_responses": [
+      {
+        "method": "POST",
+        "path": "potential-customer-search/runs",
+        "status": 201
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/runs/1/result",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/runs/1/result",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "potential-customer-search/runs/1/retry",
+        "status": 202
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/runs/1/result",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "potential-customer-search/runs/1/result",
+        "status": 200
+      }
+    ],
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "final_attempts": [
+      [
+        1,
+        "FAILED",
+        "SIMILARITY_PREPARATION_FAILED",
+        1,
+        "2026-10-14T08:42:43Z"
+      ],
+      [
+        2,
+        "COMPLETED",
+        null,
+        0,
+        "2026-10-14T08:42:54Z"
+      ]
+    ],
+    "first_attempts": [
+      [
+        1,
+        "FAILED",
+        "SIMILARITY_PREPARATION_FAILED",
+        1,
+        "2026-10-14T08:42:43Z"
+      ]
+    ],
+    "generation_count": 1,
+    "owned_server_stopped": true,
+    "profile_count": 1,
+    "run": [
+      "COMPLETED",
+      2,
+      200,
+      1,
+      1
+    ],
+    "run_id": 1,
+    "scope": "FAULT_NATIVE_ONE_SHOT_RETRY",
+    "status": "PASS_FAULT_RETRY_COMPLETED"
+  },
+  "selection_qa_output_evidence": "output\\post14b_closure\\n9qux7rp3\\native_similarity_selection_matrix.json",
+  "source_currentness_qa_output_evidence": "output\\post14b_closure\\narohlqk3\\native_source_currentness.json",
+  "source_replacement_currentness_case": {
+    "after": {
+      "generations": 1,
+      "profiles": 1,
+      "run": [
+        "COMPLETED",
+        200,
+        1
+      ],
+      "snapshots": 1
+    },
+    "before": {
+      "generations": 1,
+      "profiles": 1,
+      "run": [
+        "COMPLETED",
+        200,
+        1
+      ],
+      "snapshots": 1
+    },
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "effective_result_currentness": "STALE",
+    "old_snapshot_sha256": "2b5a8c6b3fd2f6a2c48fa67464105a8cd7244b8027ddf79d81e8ef15d6e9364c",
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "post_import_preflight": {
+      "currentness": "STALE",
+      "reason_code": "SIMILARITY_SOURCE_STALE",
+      "selected_count": null
+    },
+    "post_import_snapshot_state": "CURRENT",
+    "request_failures": [],
+    "scope": "FAULT_NATIVE_BOUNDED_SOURCE_REPLACEMENT",
+    "status": "PASS_BOUNDED_SOURCE_REPLACEMENT_CURRENTNESS"
+  },
+  "source_sha256": {
+    "app/routers/potential_customer_search.py": "752b698d4d17d2ac9183c85e9f8a48332b305e70ca07993858ecb95bd82807ce",
+    "app/services/campaign_service.py": "fdc231c46a6382da8d25088739c5c913ace903065d354862e5aa642237a508b9",
+    "app/services/prospect_scoring_service.py": "dec81eac4f8816bf2055a52332c37d9e7979c01ff93739addb621cbfbef01ae4",
+    "frontend/css/components.css": "19d1ee312648fdb2593e3c80630b6ac72936e9ed3f4789faf75bbb0b8ce32d98",
+    "frontend/css/main.css": "e47bc1d0745f3ea141dec5a84917d5640686ff0fe30e60485004635f30948f72",
+    "frontend/index.html": "a86d40b076ef3d0efd996729e34b410de893ecb423375765f864820431241b68",
+    "frontend/js/app.js": "f0f21e6c537df9f04fd1c5530a6f181ca509d9d39e3e2a5139af1df2637badc7",
+    "frontend/js/audience-explorer.js": "34d521bcfbe6b996e22b56d9decd5c4f6bbc16c4e065b66db3236f4526a7d4c3",
+    "frontend/js/business-search-form.js": "47e4aeee50a5a436c21b92f122db8b4baa139e94bf50770b1f0e615d5b6af75e",
+    "frontend/js/business-search-status.js": "048176a7384bcb5f96bdbe507bf4873bc2677c31611dfc212d6315434fea6456",
+    "frontend/js/campaigns.js": "07f6ce1e54470f4fb862330ffe35731d220c44d3f7f3326f8862f64029c31f9e",
+    "frontend/js/run-progress.js": "bebaa98172cf3e6f937de206049274b6eb02674885e6026c6347864a6f88c31f",
+    "frontend/js/view-contract.js": "98b6f52d2b9b0060eb9441bc86812dcb0fae4c00f314ca0cda44fb1cb53f7807"
+  },
+  "stage": "19_3",
+  "status": "NO_GO_PARTIAL_CASES",
+  "topn_zero_qa_output_evidence": "output\\post14b_closure\\n9qux7rp3\\native_similarity_topn_zero_resume.json",
+  "trainable_qa_output_evidence": "output\\post14b_closure\\npikhnvag\\native_retained_historical.json",
+  "transport_qa_output_evidence": "output\\post14b_closure\\n3zeri83f\\native_transport_rejoin.json",
+  "two_tab_retry_fencing_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "155.0.8059.40"
+    },
+    "competing_retry_status": 409,
+    "final_attempts": [
+      [
+        1,
+        "FAILED",
+        "SIMILARITY_PREPARATION_FAILED",
+        1,
+        "2026-10-14T16:28:32Z"
+      ],
+      [
+        2,
+        "COMPLETED",
+        null,
+        0,
+        "2026-10-14T16:28:52Z"
+      ]
+    ],
+    "first_attempts": [
+      [
+        1,
+        "FAILED",
+        "SIMILARITY_PREPARATION_FAILED",
+        1,
+        "2026-10-14T16:28:32Z"
+      ]
+    ],
+    "generation_count": 1,
+    "owned_server_stopped": true,
+    "page_errors": [],
+    "profile_count": 1,
+    "request_failures": [],
+    "run_id": 1,
+    "scope": "FAULT_NATIVE_ONE_SHOT_RETRY",
+    "second_tab_retry_visible_before_click": true,
+    "status": "PASS_FAULT_TWO_TAB_RETRY_FENCED"
+  },
+  "two_tab_retry_qa_output_evidence": "output\\post14b_closure\\ni0e9jwdq\\native_retry_two_tabs.json",
+  "unexpected_console_errors": [],
+  "untested": [
+    "other reuse variants",
+    "stale retry and broader concurrency",
+    "retained planner and Campaign Builder stale/error alternatives",
+    "in-flight worker restart and source-change faults",
+    "full 200-percent route, keyboard/focus and accessibility matrix"
+  ],
+  "v3_exact_selection_and_zero_case": {
+    "browser": {
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "execution_mode": "headed",
+      "name": "system_chrome",
+      "product_version": "154.0.8037.98"
+    },
+    "owned_servers_stopped": true,
+    "scope": "BUSINESS_NATIVE_V3_EXACT_SELECTION_MATRIX",
+    "score_range": {
+      "invalid_count": 0,
+      "max": 1.0,
+      "min": 0.5454545454545454,
+      "valid_count": 200
+    },
+    "status": "PASS_V3_SELECTION_MINIMUM_MATRIX",
+    "threshold_cases": [
+      {
+        "id": "V3_MINIMUM_50",
+        "preflight_qualifying": 200,
+        "result_source": "INTELLIGENCE_REUSE",
+        "run_id": 2,
+        "selected": 200,
+        "snapshot_sha256": "1381246f7f5e2368d3150c5c56b855a0bcd5b3ab1e550fe9ddb791a13068f825",
+        "status": "PASS"
+      },
+      {
+        "id": "V3_MINIMUM_60",
+        "preflight_qualifying": 160,
+        "result_source": "INTELLIGENCE_REUSE",
+        "run_id": 3,
+        "selected": 160,
+        "snapshot_sha256": "e68f925a79a8d4283b7171e09f764179a8ade67ec5e5606cf6629ae68a0bd9c5",
+        "status": "PASS"
+      },
+      {
+        "id": "V3_MINIMUM_70",
+        "preflight_qualifying": 160,
+        "result_source": "EXACT_RESULT_REUSE",
+        "run_id": 4,
+        "selected": 160,
+        "snapshot_sha256": "e68f925a79a8d4283b7171e09f764179a8ade67ec5e5606cf6629ae68a0bd9c5",
+        "status": "PASS"
+      },
+      {
+        "id": "V3_MINIMUM_80",
+        "preflight_qualifying": 120,
+        "result_source": "INTELLIGENCE_REUSE",
+        "run_id": 5,
+        "selected": 120,
+        "snapshot_sha256": "b6ca2e15921c8e9b326e99c2b2e11e1a3ae2067024097c8faa1d4e68d6dc4efa",
+        "status": "PASS"
+      },
+      {
+        "id": "V3_MINIMUM_90",
+        "preflight_qualifying": 80,
+        "result_source": "INTELLIGENCE_REUSE",
+        "run_id": 6,
+        "selected": 80,
+        "snapshot_sha256": "d7b04690723a7d1d84ec36cefda2cc13570b27007ef4fc33226e28642edd5305",
+        "status": "PASS"
+      }
+    ],
+    "topn_zero_cases": [
+      {
+        "generation_id": 1,
+        "id": "TOP_N_10",
+        "qualified": 200,
+        "run_id": 7,
+        "selected": 10,
+        "status": "PASS"
+      },
+      {
+        "generation_id": 1,
+        "id": "ZERO_NEW_YORK_AT_90",
+        "qualified": 0,
+        "run_id": 9,
+        "selected": 0,
+        "status": "PASS"
+      }
+    ],
+    "topn_zero_status": "PASS_TOPN_AND_HONEST_ZERO"
+  }
+}

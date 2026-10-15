@@ -1,0 +1,32 @@
+{
+  "contract": "POST14B_QA_V1",
+  "source": "scripts/validation/browser/post14b_qa_launcher.py and test_post14b_fresh_v3_gate._fresh_sources",
+  "root_pattern": "output/post14b_closure/n<unique>/",
+  "database": "state/qa.db",
+  "source_copy": "source/",
+  "browser_profile": "browser_profile/",
+  "downloads": "downloads/",
+  "logs": "logs/",
+  "default": {
+    "fixture_version": "sources/qa_v1",
+    "expected_customers": 230,
+    "expected_campaign_sales": 640,
+    "expected_demographics": 200,
+    "max_customers": 1000,
+    "max_campaign_sales": 3000,
+    "max_demographics": 2000,
+    "products_with_attributed_buyers": ["P1", "P2", "P3"],
+    "distinct_attributed_buyers_per_product": 210,
+    "unlabeled_campaign_events": 10,
+    "sparse_product": "P4, no attributed buyers",
+    "contact_variants": ["email", "SMS", "WhatsApp", "telemarketing", "do-not-call", "direct mail", "push", "advertising", "onsite", "opt-out/no identifier"]
+  },
+  "named_10k_qualification": {
+    "expected_demographics": 12000,
+    "hard_cap": 20000,
+    "status": "PREPARED_NOT_SCORED_AT_19_2"
+  },
+  "empty": {"expected_customers": 0, "expected_campaign_sales": 0, "expected_demographics": 0, "real_app_startup": "PASS"},
+  "original_scenarios_unchanged": true,
+  "canonical_source_imported": false
+}

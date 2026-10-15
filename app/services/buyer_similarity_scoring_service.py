@@ -321,6 +321,10 @@ def run_similarity_generation(
 ) -> dict[str, Any]:
     """Reuse or build one exact per-product generation in bounded chunks."""
 
+    from app.qa_guard import assert_qa_runtime
+    assert_qa_runtime(database_path, project_root=project_root,
+                      operation="v3_score_generation", record_admission=True)
+
     limit = _validate_chunk_size(chunk_size)
     repository = BuyerSimilarityScoringRepository(database_path)
     profile_row, artifact = _load_current_profile(

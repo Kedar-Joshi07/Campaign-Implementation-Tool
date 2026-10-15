@@ -1,0 +1,133 @@
+{
+  "pack_version": "1.0",
+  "prepared_date": "2026-10-12",
+  "baseline_sha": "9bea771940f930504ee8635c7b14fc988a37568c",
+  "status": "PROMPT_PACK_REVIEWED_NOT_EXECUTED",
+  "default_stage_count": 9,
+  "native_browser_prompt": "19_3_NATIVE_BROWSER_ALL_UI_AND_BACKGROUND_E2E_NO_5M.md",
+  "browser_5m_scoring_excluded": true,
+  "controls_are_static_seeds_not_test_results": true,
+  "checks": [
+    "JSON parsed",
+    "file references resolved",
+    "default/optional stage separation",
+    "fixture cap and no-5M contract consistency",
+    "native-headed and retained-component coverage requirements",
+    "28 functional families",
+    "211 static seeds/11 views/79 route mappings",
+    "repository unchanged",
+    "ZIP hashes and CRC verified"
+  ],
+  "files": [
+    {
+      "name": "00_README_START_HERE.md",
+      "bytes": 3979,
+      "sha256": "f0f0c9e37ac826c90b0ba3690b5bcd1a1345a64d8338eb6b528f28d314529d54"
+    },
+    {
+      "name": "01_GUARDRAILS_SCOPE_AND_ORDER.md",
+      "bytes": 7047,
+      "sha256": "46c672d35c3b810988d879bfe3eeb384bfafe2a894216dfec0485e2deafaef2b"
+    },
+    {
+      "name": "02_PENDING_REGISTER_AND_BASELINE.md",
+      "bytes": 4966,
+      "sha256": "43c7f8514063dbb7022f8f9747ca7c0bae000162c468ccb42ee50c218202b7bd"
+    },
+    {
+      "name": "03_BROWSER_TEST_ORACLE_AND_COVERAGE_CONTRACT.md",
+      "bytes": 4918,
+      "sha256": "98a97adae8d5b293de47cbec9f6592481aa4211342bef5404dd65e8d0f9a3e13"
+    },
+    {
+      "name": "04_UI_AND_BACKGROUND_FUNCTIONAL_MATRIX.md",
+      "bytes": 6476,
+      "sha256": "380feca610ac3b0a4ab1bd6910dab8f1ca24b354648dd8fb8777db605f0c6978"
+    },
+    {
+      "name": "05_PACK_REVIEW_AND_REFERENCES.md",
+      "bytes": 2034,
+      "sha256": "3f95ff84fb7a64a8837c9feaacd370f298652e4055c47488510ee33a631ce92e"
+    },
+    {
+      "name": "19_0_CURRENT_BASELINE_AND_PENDING_RECONCILIATION.md",
+      "bytes": 5236,
+      "sha256": "834cf5f3918dae9d813265bdd243b0d0572d87697d46e5339aacdd12f2e5491c"
+    },
+    {
+      "name": "19_1_FRESH_V3_VALIDATION_AND_RELEASE_SCOPE.md",
+      "bytes": 5427,
+      "sha256": "903663bea7bed405ff778b848b4cd1e279d22f4590f2a5d37efa9e543d6654f6"
+    },
+    {
+      "name": "19_2_BOUNDED_QA_FIXTURES_AND_NO_5M_GUARD.md",
+      "bytes": 5750,
+      "sha256": "3e614d53457116325ce12c1e9d6c92cd14b921a628593acfaa93926104e262cc"
+    },
+    {
+      "name": "19_3_NATIVE_BROWSER_ALL_UI_AND_BACKGROUND_E2E_NO_5M.md",
+      "bytes": 25796,
+      "sha256": "f4f33510d854f9c93dfd4e591ac90fe6138cb70a2f385e0aa13a469200361ebc"
+    },
+    {
+      "name": "19_4_UI_DEFECT_REPAIR_AND_RETEST.md",
+      "bytes": 5308,
+      "sha256": "3ec4999589e75e8749705e902df7024142912fe01b5e89b4182fa71ad92cd9e9"
+    },
+    {
+      "name": "19_5_BACKGROUND_INTEGRITY_EXPORT_FEEDBACK_AND_REGRESSION.md",
+      "bytes": 5545,
+      "sha256": "06f0392a769b1701423b5e531efde0365e6cdbfe4a69aac35dab52c30f656273"
+    },
+    {
+      "name": "19_6_DOCUMENTATION_GOVERNANCE_AND_OPERATOR_HANDOFF.md",
+      "bytes": 5563,
+      "sha256": "458e1c4194d40c5dc5dc965a9f23b9fa2690ace42eadc0395511598f562a340f"
+    },
+    {
+      "name": "19_7_EXACT_CANDIDATE_CI_AND_SCOPED_FINAL_GATE.md",
+      "bytes": 5565,
+      "sha256": "dd8010324bb94a79f22436d1a52d51fca7d454bfac638e05845b83555c0011a8"
+    },
+    {
+      "name": "20_POC_REHEARSAL_AND_MAINTENANCE_RUNBOOK.md",
+      "bytes": 5027,
+      "sha256": "2c22275620a4a9341e948958b310b5071b341685bd844ed76bbbf673df438af9"
+    },
+    {
+      "name": "API_ROUTE_CATALOG.json",
+      "bytes": 15587,
+      "sha256": "19316ce981ce35f427ca9171039bb1e0b4b83baa79a581f51418b421da83d49b"
+    },
+    {
+      "name": "MASTER_EXECUTION_PROMPT.md",
+      "bytes": 6462,
+      "sha256": "b8182634c02a636ef2300f273c0152348f57e9b2f7667fb9e99a3bcde46c3723"
+    },
+    {
+      "name": "OPTIONAL_21_REAL_OUTCOME_VALIDATION_AND_TRUE_LEARNING_PLAN.md",
+      "bytes": 5366,
+      "sha256": "0204903d23b7f8e0ede7533c162064f1d4479bd364720fd665d06d4db8f7856a"
+    },
+    {
+      "name": "OPTIONAL_22_CANONICAL_SCALE_REVALIDATION_SEPARATE_FROM_UI.md",
+      "bytes": 4549,
+      "sha256": "9763271b41549aa3e2834a529a657db9413505df50f8cba07b145e218d277edf"
+    },
+    {
+      "name": "PACK_EXECUTION_CONTRACT.json",
+      "bytes": 3042,
+      "sha256": "b1f1c25d67111a32294b18c62fd82376a59fb69054cc5592073ab829bcc80505"
+    },
+    {
+      "name": "START_PROMPT.txt",
+      "bytes": 379,
+      "sha256": "633bb8298112d2d718c8f5f709962a273a3d36897389c62571c8da646cd7037a"
+    },
+    {
+      "name": "STATIC_UI_CONTROL_SEEDS.json",
+      "bytes": 74172,
+      "sha256": "8f991dabc72f614d071bf6e8d1dd18c5d6797985593d8eeb0b09d78b8279bb97"
+    }
+  ]
+}

@@ -381,6 +381,10 @@ def publish_fitted_calibration(
 ) -> dict[str, Any]:
     """Persist a fitted candidate and, when approved, publish all calibrated scores."""
 
+    from app.qa_guard import assert_qa_runtime
+    assert_qa_runtime(database_path, operation="calibration_publication",
+                      record_admission=True)
+
     path = initialize_database(database_path)
     if promote and not has_governed_calibration_lineage(fitted.split_lineage):
         raise PropensityCalibrationError(

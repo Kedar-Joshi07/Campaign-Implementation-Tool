@@ -340,6 +340,10 @@ def prepare_phase10_orchestration(
 ) -> Phase10OrchestrationStart:
     """Idempotently return READY/active work or persist and submit one parent."""
 
+    from app.qa_guard import assert_qa_runtime
+    assert_qa_runtime(database_path, project_root=project_root,
+                      operation="phase10_prepare", record_admission=True)
+
     requested = build_phase10_requested_intelligence(
         database_path,
         targeting_context_id,
@@ -475,6 +479,10 @@ def run_phase10_orchestration(
     rank_chunk_size: int = DEFAULT_PREPARATION_SCAN_CHUNK_SIZE,
 ) -> dict[str, Any]:
     """Run or resume one durable parent from its highest persisted progress."""
+
+    from app.qa_guard import assert_qa_runtime
+    assert_qa_runtime(database_path, project_root=project_root,
+                      operation="phase10_worker", record_admission=True)
 
     repository = Phase10IntelligenceRepository(database_path)
     initial = repository.fetch_orchestration(orchestration_id)

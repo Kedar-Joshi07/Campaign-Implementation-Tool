@@ -39,6 +39,7 @@ from app.services.phase11_search_orchestration_service import (
     validate_persisted_search_identity,
 )
 from app.database.connection import get_connection
+from app.qa_guard import assert_qa_runtime
 
 
 logger = logging.getLogger(__name__)
@@ -82,22 +83,35 @@ def execute_similarity_search_safely(
 
     path = Path(database_path)
     root = Path(project_root)
+    assert_qa_runtime(path, project_root=root, operation="v3_search_worker",
+                      record_admission=True)
     repository = CampaignResultRegistryRepository(path)
     fence = dict(attempt_number=attempt_number, execution_lease_token=execution_lease_token)
     initial_runtime = repository.fetch_search_runtime(search_run_id)
     last_percent = int(initial_runtime["progress_percent"]) if initial_runtime else 0
+    last_processed = int(initial_runtime["processed_count"]) if initial_runtime else 0
 
     def progress(stage: str, label: str, percent: int, message: str, *,
                  processed: int | None = None, total: int | None = None,
+                 unit: str | None = None,
                  workload: str = "NEW_INTELLIGENCE_BUILD") -> None:
-        nonlocal last_percent
+        nonlocal last_percent, last_processed
         percent = max(last_percent, percent)
+        if processed is not None:
+            # A search spans several product generations. The durable counter is
+            # cumulative across the attempt, not a per-generation counter that
+            # resets to zero at each QUEUE_WAIT callback.
+            processed = max(last_processed, processed)
+            total = max(processed, total) if total is not None else None
         repository.update_search_progress(
             search_run_id, **fence, stage_code=stage, stage_label=label,
             progress_percent=percent, status_message=message,
-            processed_count=processed, total_count=total, workload_class=workload,
+            processed_count=processed, total_count=total, progress_unit=unit,
+            workload_class=workload,
         )
         last_percent = percent
+        if processed is not None:
+            last_processed = processed
 
     def cancelled() -> bool:
         return cancellation_check is not None and cancellation_check()
@@ -189,19 +203,28 @@ def execute_similarity_search_safely(
                     if resolution.unready_products:
                         profiles = {str(row["product_id"]): int(row["profile_id"])
                                     for row in resolution.profile_rows}
+                        product_order = {
+                            product_id: index for index, product_id in enumerate(
+                                sorted(context["product_ids"])
+                            )
+                        }
                         for product in sorted(resolution.unready_products):
                             if cancelled():
                                 return SearchOrchestrationOutcome(search_run_id, "PROCESSING", waiting_on="CANCELLED")
                             progress("SCORING_PROSPECTS", "Scoring potential customers", 30,
-                                     "Scoring current potential customers against buyer patterns.")
+                                     "Scoring current potential customers against buyer patterns.",
+                                     unit="score evaluations")
 
                             def scoring_progress(stage: str, processed: int, total: int,
                                                  message: str) -> None:
                                 code = "VERIFYING_SIMILARITY" if stage in {"DEEP_VERIFY", "PUBLISH"} else "SCORING_PROSPECTS"
-                                percent = 72 if code == "VERIFYING_SIMILARITY" else 30 + min(40, int(40 * processed / max(total, 1)))
+                                cumulative_processed = product_order[product] * total + processed
+                                cumulative_total = len(product_order) * total
+                                percent = 30 + min(40, int(40 * cumulative_processed / max(cumulative_total, 1)))
                                 progress(code,
                                          "Verifying buyer similarity" if code == "VERIFYING_SIMILARITY" else "Scoring potential customers",
-                                         percent, message, processed=processed, total=total)
+                                         percent, message, processed=cumulative_processed,
+                                         total=cumulative_total, unit="score evaluations")
 
                             run_similarity_generation(
                                 path, profiles[product], project_root=root,

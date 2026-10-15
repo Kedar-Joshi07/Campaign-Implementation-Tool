@@ -286,8 +286,31 @@ def _reconcile_completion(
         raise ProspectScoringExecutionError("Score aggregates are incomplete.")
     if not (math.isfinite(score_min) and math.isfinite(score_max) and math.isfinite(score_mean)):
         raise ProspectScoringExecutionError("Score aggregates are not finite.")
-    if not (0.0 <= score_min <= score_mean <= score_max <= 1.0):
+    if not (0.0 <= score_min <= score_max <= 1.0):
         raise ProspectScoringExecutionError("Score aggregates violate [0, 1] ordering constraints.")
+    # SQLite AVG accumulates in binary64. For a constant-score population it
+    # can differ from that same score's MIN/MAX by a few ulps, even while every
+    # persisted person score is valid. Correct only the summary's bounded
+    # summation roundoff; never alter member scores or admit out-of-range extrema.
+    summation_roundoff = 4 * score_count * math.ulp(1.0)
+    if score_mean < score_min and score_min - score_mean <= summation_roundoff:
+        score_mean = score_min
+    elif score_mean > score_max and score_mean - score_max <= summation_roundoff:
+        score_mean = score_max
+    if not (score_min <= score_mean <= score_max):
+        raise ProspectScoringExecutionError("Score aggregates violate [0, 1] ordering constraints.")
+    aggregates["score_mean"] = score_mean
+
+
+def _bounded_running_score_mean(score_sum: float, score_count: int,
+                                score_min: float, score_max: float) -> float:
+    mean = score_sum / score_count
+    roundoff = 4 * score_count * math.ulp(1.0)
+    if mean < score_min and score_min - mean <= roundoff:
+        return score_min
+    if mean > score_max and mean - score_max <= roundoff:
+        return score_max
+    return mean
 
 
 def run_chunked_prospect_scoring(
@@ -300,6 +323,9 @@ def run_chunked_prospect_scoring(
     progress_callback: ProgressCallback | None = None,
 ) -> dict[str, Any]:
     """Run bounded keyset scoring and persist propensity scores chunk-by-chunk."""
+    from app.qa_guard import assert_qa_runtime
+    assert_qa_runtime(database_path, project_root=project_root,
+                      operation="direct_prospect_scoring", record_admission=True)
     normalized_chunk_size = _validate_chunk_size(chunk_size)
     initialized_path = initialize_database(database_path)
 
@@ -409,7 +435,13 @@ def run_chunked_prospect_scoring(
             running_score_min = chunk_min if running_score_min is None else min(running_score_min, chunk_min)
             running_score_max = chunk_max if running_score_max is None else max(running_score_max, chunk_max)
             running_score_sum += chunk_sum
-            running_score_mean = running_score_sum / scored_count
+            # The intermediate repository counters enforce the same ordering
+            # as the final SQLite aggregate. A constant-score batch can have
+            # a binary64 SUM/count a few ulps outside its identical MIN/MAX.
+            # Correct only bounded summation error, never a material mismatch.
+            running_score_mean = _bounded_running_score_mean(
+                running_score_sum, scored_count, running_score_min, running_score_max
+            )
 
             scoring_repository.update_counters(
                 scoring_run_id=scoring_run_id,

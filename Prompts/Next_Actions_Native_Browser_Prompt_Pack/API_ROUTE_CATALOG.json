@@ -1,0 +1,492 @@
+{
+  "repository_sha": "9bea771940f930504ee8635c7b14fc988a37568c",
+  "route_count": 79,
+  "scope": "Parsed baseline router endpoints; live OpenAPI/router/worker mappings must be rechecked during execution",
+  "source_hashes": {
+    "app/routers/business.py": "1f851ff3303accf34474f9556c5309f5f3972c083dc16cecd7fc09457af322c7",
+    "app/routers/campaign_targeting.py": "ea05e6fbf1423a51c37895997d5f3475a1b42d12b6e3edd8133a3d7f1bd14349",
+    "app/routers/campaigns.py": "a9e8d85f9a1092363a2b765708878bb5f1a5d469f257cc8b47805e31eaf697af",
+    "app/routers/data.py": "55473e6aa3187085d89ee8f4832d04802210b2ac34e11d4052a7d1803a9c1022",
+    "app/routers/health.py": "ee040a549f44a0cd909cda5ae17e663c6570e7cdc079e0a393a2aa2eb8b54422",
+    "app/routers/historical.py": "eddf29841b3c770671d98176ad0c2b29cff93ad1bc514d9437b770e6cb0f73b7",
+    "app/routers/models.py": "9df8028cffd7f2ef3acd51576beb5fc351eef097067f1e8dbf4a856a77a7cee9",
+    "app/routers/potential_customer_search.py": "123d22cfdccd421dbfefff482424d9729f9dbacc317a7cafa9058d7d8e94c3ec",
+    "app/routers/reference.py": "e5754c11c792fe31ee6d95d8537bb5322f52514975536bebbdb5fed018a7d76d"
+  },
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/api/historical/options",
+      "source": "app/routers/historical.py",
+      "handler": "historical_options"
+    },
+    {
+      "method": "GET",
+      "path": "/api/historical/overview",
+      "source": "app/routers/historical.py",
+      "handler": "historical_overview"
+    },
+    {
+      "method": "POST",
+      "path": "/api/historical/analyses",
+      "source": "app/routers/historical.py",
+      "handler": "create_analysis"
+    },
+    {
+      "method": "GET",
+      "path": "/api/historical/analyses",
+      "source": "app/routers/historical.py",
+      "handler": "list_analyses"
+    },
+    {
+      "method": "GET",
+      "path": "/api/historical/analyses/{analysis_run_id}",
+      "source": "app/routers/historical.py",
+      "handler": "get_analysis"
+    },
+    {
+      "method": "GET",
+      "path": "/api/business/overview",
+      "source": "app/routers/business.py",
+      "handler": "business_overview"
+    },
+    {
+      "method": "GET",
+      "path": "/api/business/recent-results",
+      "source": "app/routers/business.py",
+      "handler": "business_recent_results"
+    },
+    {
+      "method": "GET",
+      "path": "/api/data/status",
+      "source": "app/routers/data.py",
+      "handler": "data_status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/data/summary",
+      "source": "app/routers/data.py",
+      "handler": "data_summary"
+    },
+    {
+      "method": "GET",
+      "path": "/api/data/imports",
+      "source": "app/routers/data.py",
+      "handler": "import_runs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/feedback-template.csv",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "download_feedback_csv_template"
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/feedback-template.json",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "download_feedback_json_template"
+    },
+    {
+      "method": "GET",
+      "path": "/api/export-profiles",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "export_profiles"
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/options",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "search_options"
+    },
+    {
+      "method": "POST",
+      "path": "/api/potential-customer-search/runs",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "create_search"
+    },
+    {
+      "method": "POST",
+      "path": "/api/potential-customer-search/preflight",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "preflight_search"
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "search_history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/results",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "result_history"
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs/{search_run_id}",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "get_search_run"
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs/{search_run_id}/status",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "search_status"
+    },
+    {
+      "method": "POST",
+      "path": "/api/potential-customer-search/runs/{search_run_id}/retry",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "retry_search_run"
+    },
+    {
+      "method": "POST",
+      "path": "/api/potential-customer-search/runs/{search_run_id}/feedback",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "upload_search_feedback"
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs/{search_run_id}/feedback",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "get_search_feedback"
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs/{search_run_id}/result",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "search_result"
+    },
+    {
+      "method": "GET",
+      "path": "/api/potential-customer-search/runs/{search_run_id}/download",
+      "source": "app/routers/potential_customer_search.py",
+      "handler": "download_search_result"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaign-planner/context-options",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "campaign_context_options"
+    },
+    {
+      "method": "POST",
+      "path": "/api/campaign-planner/contexts",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "create_campaign_context"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "campaign_context_detail"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "update_campaign_context"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaign-planner/targeting-options",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "business_targeting_options"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/targeting-criteria",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "business_targeting_criteria_detail"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/targeting-criteria",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "update_business_targeting_criteria"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "targeting_intelligence_resolution"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/intelligence-plan",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "targeting_intelligence_plan"
+    },
+    {
+      "method": "POST",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence/prepare",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "prepare_targeting_intelligence"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence/preparation",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "targeting_intelligence_preparation"
+    },
+    {
+      "method": "POST",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence/preparation/retry",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "retry_targeting_intelligence_preparation"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "attach_targeting_intelligence"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/targeting-intelligence",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "detach_targeting_intelligence"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/target-group-preview",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "target_group_preview"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/match-strength-recommendation",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "match_strength_recommendation"
+    },
+    {
+      "method": "POST",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/target-group-search",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "target_group_search"
+    },
+    {
+      "method": "POST",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/save-target-group-and-create-draft",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "create_target_group_and_campaign_draft"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaign-planner/contexts/{targeting_context_id}/campaign-draft",
+      "source": "app/routers/campaign_targeting.py",
+      "handler": "campaign_draft_detail"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "source": "app/routers/health.py",
+      "handler": "health"
+    },
+    {
+      "method": "GET",
+      "path": "/api/version",
+      "source": "app/routers/health.py",
+      "handler": "version"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health/modes",
+      "source": "app/routers/health.py",
+      "handler": "health_modes"
+    },
+    {
+      "method": "POST",
+      "path": "/api/models/train",
+      "source": "app/routers/models.py",
+      "handler": "submit_model_training"
+    },
+    {
+      "method": "POST",
+      "path": "/api/models/{model_run_id}/score",
+      "source": "app/routers/models.py",
+      "handler": "submit_model_scoring"
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/{job_id}",
+      "source": "app/routers/models.py",
+      "handler": "get_job"
+    },
+    {
+      "method": "GET",
+      "path": "/api/models/{model_run_id}/scoring-status",
+      "source": "app/routers/models.py",
+      "handler": "get_model_scoring_status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/models/training-options",
+      "source": "app/routers/models.py",
+      "handler": "model_training_options"
+    },
+    {
+      "method": "GET",
+      "path": "/api/models",
+      "source": "app/routers/models.py",
+      "handler": "list_models"
+    },
+    {
+      "method": "GET",
+      "path": "/api/scoring-runs",
+      "source": "app/routers/models.py",
+      "handler": "list_scoring_runs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/models/{model_run_id}",
+      "source": "app/routers/models.py",
+      "handler": "get_model"
+    },
+    {
+      "method": "GET",
+      "path": "/api/scoring-runs/{scoring_run_id}",
+      "source": "app/routers/models.py",
+      "handler": "get_scoring_run"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audience/runs/{scoring_run_id}/prepare",
+      "source": "app/routers/models.py",
+      "handler": "submit_audience_preparation"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audience/runs/{scoring_run_id}/preparation-status",
+      "source": "app/routers/models.py",
+      "handler": "get_audience_preparation_status"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audience/runs",
+      "source": "app/routers/models.py",
+      "handler": "list_audience_runs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audience/options",
+      "source": "app/routers/models.py",
+      "handler": "get_audience_filter_options"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audience/estimate",
+      "source": "app/routers/models.py",
+      "handler": "estimate_audience_selection"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audience/search",
+      "source": "app/routers/models.py",
+      "handler": "search_audience"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audience/profile",
+      "source": "app/routers/models.py",
+      "handler": "profile_audience"
+    },
+    {
+      "method": "POST",
+      "path": "/api/audiences",
+      "source": "app/routers/models.py",
+      "handler": "save_immutable_audience"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audiences",
+      "source": "app/routers/models.py",
+      "handler": "list_immutable_audiences"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audiences/{audience_id}",
+      "source": "app/routers/models.py",
+      "handler": "get_immutable_audience"
+    },
+    {
+      "method": "GET",
+      "path": "/api/audiences/{audience_id}/currentness",
+      "source": "app/routers/models.py",
+      "handler": "get_immutable_audience_currentness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reference/states",
+      "source": "app/routers/reference.py",
+      "handler": "states"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reference/campaigns",
+      "source": "app/routers/reference.py",
+      "handler": "campaigns"
+    },
+    {
+      "method": "GET",
+      "path": "/api/reference/products",
+      "source": "app/routers/reference.py",
+      "handler": "products"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaigns/options",
+      "source": "app/routers/campaigns.py",
+      "handler": "campaign_options"
+    },
+    {
+      "method": "POST",
+      "path": "/api/campaigns",
+      "source": "app/routers/campaigns.py",
+      "handler": "create_campaign_draft"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaigns",
+      "source": "app/routers/campaigns.py",
+      "handler": "list_campaign_summaries"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaigns/{campaign_id}",
+      "source": "app/routers/campaigns.py",
+      "handler": "get_campaign_detail"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/campaigns/{campaign_id}",
+      "source": "app/routers/campaigns.py",
+      "handler": "update_campaign_draft"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaigns/{campaign_id}/currentness",
+      "source": "app/routers/campaigns.py",
+      "handler": "get_campaign_currentness"
+    },
+    {
+      "method": "POST",
+      "path": "/api/campaigns/{campaign_id}/finalize",
+      "source": "app/routers/campaigns.py",
+      "handler": "finalize_campaign_draft"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaigns/{campaign_id}/exports",
+      "source": "app/routers/campaigns.py",
+      "handler": "get_campaign_export_events"
+    },
+    {
+      "method": "GET",
+      "path": "/api/campaigns/{campaign_id}/export.csv",
+      "source": "app/routers/campaigns.py",
+      "handler": "export_campaign_csv"
+    }
+  ]
+}

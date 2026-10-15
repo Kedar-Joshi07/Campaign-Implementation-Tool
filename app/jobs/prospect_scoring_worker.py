@@ -111,6 +111,9 @@ def run_prospect_scoring_job(
     progress_observer: Callable[[str, int, str | None], None] | None = None,
 ) -> None:
     """Execute one queued PROSPECT_SCORING job and persist lifecycle transitions."""
+    from app.qa_guard import assert_qa_runtime
+    assert_qa_runtime(database_path, project_root=project_root,
+                      operation="prospect_scoring_worker", record_admission=True)
     path = initialize_database(database_path)
     repository = JobRepository(path)
     row = repository.fetch_job(job_id)

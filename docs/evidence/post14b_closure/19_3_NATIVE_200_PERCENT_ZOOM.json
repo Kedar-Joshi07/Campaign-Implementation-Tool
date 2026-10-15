@@ -1,0 +1,20 @@
+{
+  "status": "PASS_BOUNDED_NATIVE_ZOOM_REFLOW_ONLY",
+  "date_local": "2026-10-15",
+  "browser": "installed Google Chrome 155.0.8059.40, headed operator window",
+  "target": "isolated loopback /qa-retained on the 200-person synthetic campaign fixture",
+  "zoom_evidence": "Chrome's own accessibility Zoom indicator and browser menu showed 200%; this was not CSS scaling or viewport emulation",
+  "before_repair": "Campaigns page showed page-level horizontal scrolling at 200%, including with the sidebar hidden",
+  "repair": [
+    "At narrow widths, business navigation uses a single column",
+    "Grid children and table scroll containers can shrink without exporting table width to the page"
+  ],
+  "after_repair": [
+    "Campaigns page at 200% had no page-level horizontal scrollbar with sidebar hidden",
+    "Campaigns page at 200% had no page-level horizontal scrollbar with sidebar expanded",
+    "Results navigation remained actionable at 200% and its page had no page-level horizontal scrollbar"
+  ],
+  "regression": "tests/test_frontend.py narrow campaign/navigation reflow assertion passed within 48/48 frontend suite",
+  "cleanup": "Chrome zoom restored to 100%, isolated QA tab closed, original tabs retained, owned QA server stopped",
+  "limitations": "This native observation does not certify every route, nested table, dialog, keyboard focus order, upload, or download at 200%. The full 19.3 accessibility gate remains NO-GO."
+}

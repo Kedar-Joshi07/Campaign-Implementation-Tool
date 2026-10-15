@@ -985,6 +985,29 @@ def test_feedback_api_accepts_json_and_csv_then_lists_batches(
     ]
 
 
+@pytest.mark.parametrize("content", [b'{"rows": [', b'\xff\xfe'])
+def test_feedback_api_rejects_malformed_json_without_server_error_or_write(
+    case, tmp_path: Path, monkeypatch, content: bytes,
+) -> None:
+    path, _ids, _values, _repository = case
+    search_run_id = _search(case)
+    application = FastAPI()
+    application.include_router(search_router.router)
+    application.dependency_overrides[get_database_path] = lambda: path
+    monkeypatch.setattr(search_router, "PROJECT_ROOT", tmp_path)
+
+    response = TestClient(application).post(
+        f"/api/potential-customer-search/runs/{search_run_id}/feedback",
+        headers={"Content-Type": "application/json", "Idempotency-Key": "bad-json-test-001"},
+        content=content,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Feedback JSON must be valid UTF-8 JSON."
+    with sqlite3.connect(path) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM campaign_feedback_batches").fetchone()[0] == 0
+
+
 def test_feedback_templates_are_downloadable_and_match_the_ingestion_contract() -> None:
     application = FastAPI()
     application.include_router(search_router.router)

@@ -1,0 +1,20 @@
+{
+  "stage": "19_1",
+  "starting_sha": "9bea771940f930504ee8635c7b14fc988a37568c",
+  "fresh_v3_bounded": "GO",
+  "fixture_version": "sources/v1",
+  "fixture_counts": {"customers": 230, "attributed_sales": 630, "prospects": 200, "products": 3, "score_evaluations": 600},
+  "real_app_lifespan_worker": true,
+  "runner_tests": {"passed": 3, "seconds": 42.86},
+  "targeted_regressions": {"lineage_and_restart_passed": 3, "lifecycle_and_fencing_passed": 29},
+  "source_replacement": "STALE_NO_COUNT",
+  "exact_result_reuse": "PASS",
+  "feedback_recalibration": "NOT_AVAILABLE",
+  "demo_10000": "NOT_CLAIMED",
+  "native_headed_browser": "NOT_RUN",
+  "canonical_5m": "RECORDED_PRIOR_ONLY",
+  "legacy_probability": "BLOCKED_BY_DATA",
+  "predictive_claims": "UNVALIDATED",
+  "remote_supplemental_workflow": "NOT_DISPATCHED",
+  "overall_release": "NO_GO_PENDING_AUTHORITY_AND_GATES"
+}

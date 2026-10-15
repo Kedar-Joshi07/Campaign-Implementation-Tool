@@ -1,0 +1,95 @@
+{
+  "pack_version": "1.0",
+  "baseline_sha": "9bea771940f930504ee8635c7b14fc988a37568c",
+  "artifact_status": "PROMPTS_ONLY_NOT_EXECUTED",
+  "purpose": "Post-14B pending closure and all implemented native UI/background functionality without canonical 5M scoring",
+  "default_sequence": [
+    "19_0_CURRENT_BASELINE_AND_PENDING_RECONCILIATION.md",
+    "19_1_FRESH_V3_VALIDATION_AND_RELEASE_SCOPE.md",
+    "19_2_BOUNDED_QA_FIXTURES_AND_NO_5M_GUARD.md",
+    "19_3_NATIVE_BROWSER_ALL_UI_AND_BACKGROUND_E2E_NO_5M.md",
+    "19_4_UI_DEFECT_REPAIR_AND_RETEST.md",
+    "19_5_BACKGROUND_INTEGRITY_EXPORT_FEEDBACK_AND_REGRESSION.md",
+    "19_6_DOCUMENTATION_GOVERNANCE_AND_OPERATOR_HANDOFF.md",
+    "19_7_EXACT_CANDIDATE_CI_AND_SCOPED_FINAL_GATE.md",
+    "20_POC_REHEARSAL_AND_MAINTENANCE_RUNBOOK.md"
+  ],
+  "optional_off_by_default": [
+    "OPTIONAL_21_REAL_OUTCOME_VALIDATION_AND_TRUE_LEARNING_PLAN.md",
+    "OPTIONAL_22_CANONICAL_SCALE_REVALIDATION_SEPARATE_FROM_UI.md"
+  ],
+  "browser": {
+    "primary": "installed Chrome or Edge",
+    "execution_mode": "headed native local",
+    "system_resolver": "scripts/validation/browser/system_browser.py",
+    "default_demographic_limit": 2000,
+    "absolute_named_fixture_limit": 20000,
+    "canonical_5m_scoring_allowed": false,
+    "canonical_5m_import_allowed": false,
+    "real_bounded_workers_required": true,
+    "mock_success_as_primary_proof_allowed": false,
+    "live_contacts_allowed": false,
+    "personal_browser_profile_allowed": false,
+    "business_scope": [
+      "Home",
+      "Find Potential Customers",
+      "Results",
+      "Result Detail"
+    ],
+    "retained_component_scope": [
+      "saved-target-groups",
+      "campaigns",
+      "insights",
+      "historical-analysis",
+      "audience-explorer",
+      "data-status",
+      "model-training"
+    ],
+    "retained_component_harness_label_required": true,
+    "production_hidden_navigation_preserved": true,
+    "zero_canonical_scale_dispatch_required": true
+  },
+  "preserved_contracts": {
+    "v1_v2": true,
+    "v2_broad": 0.6,
+    "explicit_v2_50": true,
+    "v2_default": 0.7,
+    "v3_score_semantics": "PRODUCT_BUYER_SIMILARITY",
+    "v3_threshold": ">=",
+    "v3_minimums": [
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9
+    ],
+    "support_minimums": {
+      "total": 200,
+      "fit": 160,
+      "holdout": 40
+    },
+    "split_policy": "SIMILARITY_CUSTOMER_SPLIT_V2",
+    "demo_qualification_minimum": 10000,
+    "original_scenarios_unchanged": true
+  },
+  "release": {
+    "legacy_probability_failure_preserved": true,
+    "scoped_v3_readiness_separate": true,
+    "overall_policy_change_requires_explicit_applicable_authority": true,
+    "historical_5m_not_new_browser_certification": true
+  },
+  "source_inventory": {
+    "html_views": 11,
+    "static_interactive_container_seeds": 211,
+    "api_routes": 79,
+    "runtime_inventory_required": true
+  },
+  "evidence_statuses": [
+    "PASS",
+    "FAIL",
+    "BLOCKED",
+    "NOT_RUN",
+    "HIDDEN_CONTRACT_VERIFIED",
+    "NOT_IMPLEMENTED_WITH_SOURCE_PROOF"
+  ]
+}

@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from app.config import DATABASE_BUSY_TIMEOUT_MS, DATABASE_PATH
+from app.qa_guard import assert_qa_runtime
 
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 def _prepare_database_path(database_path: str | Path | None) -> Path:
     path = Path(database_path) if database_path is not None else DATABASE_PATH
+    assert_qa_runtime(path, operation="database_connection")
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 

@@ -1,0 +1,18 @@
+{
+  "stage": "19_0",
+  "status": "GO_TO_19_1_THEN_19_2",
+  "starting_sha": "9bea771940f930504ee8635c7b14fc988a37568c",
+  "branch": "main",
+  "schema_version": 33,
+  "v3_method": "BUYER_PROFILE_DISTANCE_V1",
+  "split_version": "SIMILARITY_CUSTOMER_SPLIT_V2",
+  "minimum_support": {"total": 200, "fit": 160, "holdout": 40},
+  "original_scenarios_sha256": "D168DECCF2F7CF9723B5BC08A4B99BF0DC49325309C1A402CD59BA4BEABB2B77",
+  "frontend_sha256": "A86D40B076EF3D0EFD996729E34B410DE893ECB423375765F864820431241B68",
+  "local_checks": {"pinned_environment": "PASS", "pip_check": "PASS", "compileall": "PASS", "ci_hygiene": "PASS", "workflow_syntax": "PASS", "support_aware_split": "12_PASS", "headed_browser": "NOT_RUN", "standalone_node": "UNAVAILABLE"},
+  "remote_recorded": {"merge_ci_run": 38217341713, "merge_ci": "SUCCESS", "manual_full_fresh_run": 38208450604, "manual_full_fresh": "FAILED_INDEPENDENT_CAMPAIGN_GROUP_GATE", "main_protected": true},
+  "runtime_inventory": "PENDING_19_3",
+  "full_5m_rerun": "NOT_RUN_BY_DESIGN",
+  "legacy_probability": "NO_GO_WITH_CURRENT_DATA",
+  "overall_release": "NOT_CERTIFIED"
+}
