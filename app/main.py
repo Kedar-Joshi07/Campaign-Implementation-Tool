@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import APP_ENV, APP_NAME, APP_VERSION, DATABASE_PATH
+from app.qa_guard import assert_qa_runtime
 from app.database.schema import initialize_database
 from app.dependencies import get_database_path
 from app.jobs.executor import shutdown_model_training_executor
@@ -63,6 +64,8 @@ async def lifespan(_: FastAPI):
     runtime_database_path = Path(
         database_override() if database_override is not None else DATABASE_PATH
     )
+    assert_qa_runtime(runtime_database_path, project_root=PROJECT_ROOT,
+                      operation="startup", record_admission=True)
     phase11_coordinator: Phase11SearchCoordinator | None = None
     feedback_worker: FeedbackRecalibrationWorker | None = None
     runtime_health: RuntimeHealthState = app.state.runtime_health

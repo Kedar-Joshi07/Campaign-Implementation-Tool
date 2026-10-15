@@ -221,7 +221,10 @@ async def upload_search_feedback(
         if content_type in {"text/csv", "application/csv"}:
             rows = parse_feedback_csv(await request.body())
         elif content_type == "application/json":
-            payload = await request.json()
+            try:
+                payload = await request.json()
+            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+                raise FeedbackValidationError("Feedback JSON must be valid UTF-8 JSON.") from exc
             if not isinstance(payload, dict) or not isinstance(payload.get("rows"), list):
                 raise FeedbackValidationError("JSON feedback requires a rows array.")
             rows = payload["rows"]

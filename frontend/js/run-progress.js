@@ -42,10 +42,15 @@ function freshnessText(progress) {
 }
 
 export function isRunActive(run) {
-  return new Set([
+  const active = new Set([
     "QUEUED", "PROCESSING", "PAUSE_REQUESTED", "PAUSED",
     "STOP_REQUESTED", "RESTART_REQUESTED",
-  ]).has(run.progress?.lifecycle_status || run.status);
+  ]);
+  // A result projection can span a worker's terminal commit: its saved-run
+  // status and separately read runtime may briefly describe different states.
+  // Keep polling until both agree on a terminal state instead of freezing the
+  // initial page on an obsolete PROCESSING badge.
+  return active.has(run.status) || active.has(run.progress?.lifecycle_status);
 }
 
 export function createRunProgress(run, { compact = false } = {}) {

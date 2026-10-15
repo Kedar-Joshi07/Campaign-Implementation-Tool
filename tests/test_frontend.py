@@ -72,6 +72,19 @@ def test_frontend_assets_are_served(client: TestClient, asset_path: str) -> None
     assert response.text
 
 
+def test_narrow_campaign_tables_and_navigation_reflow_within_page(client: TestClient) -> None:
+    main_css = client.get("/static/css/main.css").text
+    components_css = client.get("/static/css/components.css").text
+
+    narrow_main = main_css.split("@media (max-width: 780px)", 1)[1]
+    assert ".navigation {\n    grid-template-columns: 1fr;" in narrow_main
+    assert ".analysis-visual-grid > * {\n  min-width: 0;" in components_css
+    table_scroll = components_css.split(".table-scroll {", 1)[1].split("}", 1)[0]
+    assert "min-width: 0;" in table_scroll
+    assert "max-width: 100%;" in table_scroll
+    assert "overflow-x: auto;" in table_scroll
+
+
 def test_business_navigation_and_retained_phase7_shell_are_separate(client: TestClient) -> None:
     html = client.get("/").text
 
@@ -490,6 +503,15 @@ def test_audience_explorer_script_uses_required_endpoints_and_state_contracts(
     assert 'querySelector("#audience-save-form").addEventListener("submit", submitSaveAudience)' in script
 
 
+def test_audience_explorer_renders_opaque_person_identifiers_as_text(
+    client: TestClient,
+) -> None:
+    script = client.get("/static/js/audience-explorer.js").text
+
+    assert 'appendSearchCell(row, String(item.person_id ?? "—"));' in script
+    assert "appendSearchCell(row, formatId(item.person_id));" not in script
+
+
 def test_phase9_multi_branch_saved_target_group_interoperability_blocks_legacy_form_population(
     client: TestClient,
 ) -> None:
@@ -620,6 +642,10 @@ def test_campaign_builder_script_uses_campaign_api_workflow_and_export_profiles(
     assert "triggerDownload(API_PATHS.campaignExportCsv(campaignId), filename)" in script
     assert "startExportHistoryPolling(campaignId)" in script
     assert "function startNewCampaignDraft()" in script
+    assert "let furthestStep = 1;" in script
+    assert "if (target > furthestStep)" in script
+    assert "Complete the current campaign steps before opening this step." in script
+    assert 'button.addEventListener("click", () => {' in script
     assert 'setCampaignAnnouncement("New campaign draft form ready.")' in script
     assert '"Currentness", detail.currentness?.is_current ? "CURRENT" : "STALE"' in script
     assert "Campaign is current for immutable audience and source/model provenance." in script

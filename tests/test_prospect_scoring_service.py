@@ -22,6 +22,54 @@ from app.services.prospect_scoring_service import (
     validate_completed_scoring_run_integrity_deep,
     validate_completed_scoring_run_provenance,
 )
+from app.repositories.prospect_scoring_repository import ProspectPopulationSnapshot
+
+
+def test_completion_reconciles_only_sqlite_avg_roundoff_without_changing_scores() -> None:
+    snapshot = ProspectPopulationSnapshot(200, "PER0000", "PER0199")
+    score = 0.9900811464443302
+    aggregates = {
+        "score_count": 200, "distinct_person_count": 200,
+        "score_min": score, "score_max": score,
+        "score_mean": 0.9900811464443319,
+    }
+    scoring_service._reconcile_completion(
+        expected_snapshot=snapshot, actual_snapshot=snapshot,
+        aggregates=aggregates, last_person_id="PER0199",
+    )
+    assert aggregates["score_mean"] == score
+
+
+def test_intermediate_counters_reconcile_only_binary64_summation_roundoff() -> None:
+    score = 0.9900811464443302
+    assert scoring_service._bounded_running_score_mean(
+        score * 200 - 1e-13, 200, score, score
+    ) == score
+    assert scoring_service._bounded_running_score_mean(
+        score * 200 + 1e-13, 200, score, score
+    ) == score
+    assert scoring_service._bounded_running_score_mean(
+        score * 200 - 0.02, 200, score, score
+    ) < score
+
+
+@pytest.mark.parametrize("minimum,mean,maximum", [
+    (0.5, 0.51, 0.5),
+    (-1e-15, 0.5, 0.9),
+    (0.1, 0.5, 1.0 + 1e-15),
+])
+def test_completion_still_rejects_material_or_out_of_range_aggregate(
+    minimum: float, mean: float, maximum: float,
+) -> None:
+    snapshot = ProspectPopulationSnapshot(200, "PER0000", "PER0199")
+    with pytest.raises(ProspectScoringExecutionError, match="ordering constraints"):
+        scoring_service._reconcile_completion(
+            expected_snapshot=snapshot, actual_snapshot=snapshot,
+            aggregates={"score_count": 200, "distinct_person_count": 200,
+                        "score_min": minimum, "score_max": maximum,
+                        "score_mean": mean},
+            last_person_id="PER0199",
+        )
 
 
 class _TrackingPreprocessor:

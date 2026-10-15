@@ -1,0 +1,16 @@
+{
+  "stage": "19_2",
+  "starting_sha": "9bea771940f930504ee8635c7b14fc988a37568c",
+  "status": "GO_FOR_BOUNDED_NATIVE_QA",
+  "combined_tests": {"passed": 9, "seconds": 166.71},
+  "additional_wrong_source_test": {"passed": 1, "seconds": 6.84},
+  "compileall": "PASS",
+  "git_diff_check": "PASS_WITH_EXISTING_CRLF_NORMALIZATION_WARNINGS",
+  "denials": ["declared 5M demographics before body", "foreign database root", "foreign source/artifact root", "actual 200 rows over lowered cap 100 before scoring", "queued admission fixture before startup recovery"],
+  "real_app_startup": ["200-row default fixture PASS", "empty fixture PASS"],
+  "named_12k_fixture": "MANIFEST_PREPARED_NOT_IMPORTED_OR_SCORED",
+  "canonical_5m_scoring_dispatches": 0,
+  "operator_database_mutations": 0,
+  "remote_actions": 0,
+  "native_browser": "NOT_RUN_AT_19_2"
+}

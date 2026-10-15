@@ -1,0 +1,9 @@
+{
+  "stage": "19_3",
+  "status": "OPEN_PARTIAL_LEDGER",
+  "production_defects_confirmed": 8,
+  "production_defects_repaired": ["APP-19.3-01", "APP-19.3-02", "APP-19.3-03", "APP-19.3-04", "APP-19.3-05", "APP-19.3-06", "APP-19.3-07", "APP-19.3-08"],
+  "harness_findings_corrected": ["QA-19.3-01", "QA-19.3-02", "QA-19.3-03", "QA-19.3-04", "QA-19.3-05", "QA-19.3-06", "QA-19.3-07", "QA-19.3-08", "QA-19.3-09", "QA-19.3-10", "QA-19.3-11", "QA-19.3-12", "QA-19.3-13", "QA-19.3-14", "QA-19.3-15", "QA-19.3-16", "QA-19.3-17"],
+  "environment_findings": ["ENV-19.3-01", "ENV-19.3-02"],
+  "unresolved": ["OBS-19.3-01 initial completed-detail timeout needs isolated reproduction", "OBS-19.3-02 campaign list still took 6.93 seconds warm for eight rows and opened 215 SQLite connections", "All remaining 19.3 native functional cases"]
+}

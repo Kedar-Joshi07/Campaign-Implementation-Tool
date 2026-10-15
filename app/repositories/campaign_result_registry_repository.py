@@ -559,6 +559,7 @@ class CampaignResultRegistryRepository:
         status_message: str,
         processed_count: int | None = None,
         total_count: int | None = None,
+        progress_unit: str | None = None,
         workload_class: str | None = None,
         timestamp: str | None = None,
     ) -> None:
@@ -584,6 +585,7 @@ class CampaignResultRegistryRepository:
         workload = (
             None if workload_class is None else _text(workload_class, 80)
         )
+        unit = None if progress_unit is None else _text(progress_unit, 40)
         if workload is not None and workload not in _SEARCH_WORKLOAD_CLASSES:
             raise Phase11RegistryValidationError("Invalid search workload class.")
         processed = None if processed_count is None else _integer(processed_count, zero=True)
@@ -620,6 +622,7 @@ class CampaignResultRegistryRepository:
             if next_total is not None and next_processed > int(next_total):
                 raise Phase11RegistryValidationError("Processed count exceeds total count.")
             next_workload = workload or str(current["workload_class"])
+            next_unit = unit or str(current["progress_unit"])
             meaningful = any((
                 code != str(current["stage_code"]),
                 label != str(current["stage_label"]),
@@ -628,12 +631,13 @@ class CampaignResultRegistryRepository:
                 next_total != current["total_count"],
                 message != str(current["status_message"]),
                 next_workload != str(current["workload_class"]),
+                next_unit != str(current["progress_unit"]),
             ))
             cursor = connection.execute(
                 """
                 UPDATE campaign_search_run_runtime
                 SET stage_code=?, stage_label=?, progress_percent=?,
-                    processed_count=?, total_count=?, status_message=?,
+                    processed_count=?, total_count=?, progress_unit=?, status_message=?,
                     workload_class=?, updated_at=?, heartbeat_at=?,
                     stage_started_at=CASE
                         WHEN stage_code != ? OR workload_class != ? THEN ?
@@ -655,7 +659,7 @@ class CampaignResultRegistryRepository:
                   )
                 """,
                 (
-                    code, label, progress_percent, next_processed, next_total,
+                    code, label, progress_percent, next_processed, next_total, next_unit,
                     message, next_workload, moment, moment,
                     code, next_workload, moment,
                     identifier, progress_percent,
@@ -968,7 +972,7 @@ class CampaignResultRegistryRepository:
                 """UPDATE campaign_search_run_runtime
                    SET lifecycle_status='COMPLETED',stage_code='COMPLETED',
                        stage_label='Result ready',progress_percent=100,
-                       processed_count=?,total_count=?,
+                       processed_count=?,total_count=?,progress_unit='people',
                        status_message='Potential-customer results are ready.',
                        failure_code=NULL,failure_category=NULL,failure_summary=NULL,
                        resolution_steps_json='[]',retryable=0,

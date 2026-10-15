@@ -8,7 +8,7 @@ import logging
 import math
 import secrets
 from pathlib import Path
-from threading import Event, Lock
+from threading import Event, Lock, Thread, current_thread
 from typing import Any
 from app.database.connection import get_connection
 
@@ -96,6 +96,7 @@ class Phase11SearchCoordinator:
         self._refilling = False
         self._active_search_ids: set[int] = set()
         self._futures: dict[int, Future[None]] = {}
+        self._recovery_thread: Thread | None = None
 
     @property
     def active_search_ids(self) -> frozenset[int]:
@@ -119,6 +120,10 @@ class Phase11SearchCoordinator:
 
     def submit(self, database_path: str | Path, search_run_id: int) -> bool:
         """Schedule one durable search without waiting for its orchestration."""
+
+        from app.qa_guard import assert_qa_runtime
+        assert_qa_runtime(database_path, project_root=self.project_root,
+                          operation="phase11_search_dispatch", record_admission=True)
 
         identifier = self._validate_submission(database_path, search_run_id)
         with self._lock:
@@ -292,6 +297,20 @@ class Phase11SearchCoordinator:
                                 self.database_path, int(run["search_run_id"])
                             ):
                                 scheduled += 1
+                        except Phase11RegistryStateError as exc:
+                            if str(exc) == "Search attempt is already owned by a live worker.":
+                                # A prior process can have exited without releasing
+                                # its fenced lease. Revisit it after the stale window;
+                                # never steal a genuinely live worker's token.
+                                logger.debug(
+                                    "Phase 11 recovery awaits lease expiry | search_run_id=%s",
+                                    run.get("search_run_id"),
+                                )
+                            else:
+                                logger.exception(
+                                    "Phase 11 durable search scheduling failed | search_run_id=%s",
+                                    run.get("search_run_id"),
+                                )
                         except Exception:
                             logger.exception(
                                 "Phase 11 durable search scheduling failed | search_run_id=%s",
@@ -311,7 +330,26 @@ class Phase11SearchCoordinator:
     def resume_durable_searches(self) -> int:
         """Boundedly schedule durable PROCESSING and QUEUED searches."""
 
-        return self._refill_from_durable_state()
+        scheduled = self._refill_from_durable_state()
+        with self._lock:
+            if self._accepting and self._recovery_thread is None:
+                self._recovery_thread = Thread(
+                    target=self._monitor_durable_searches,
+                    name="phase11-durable-recovery",
+                    daemon=True,
+                )
+                self._recovery_thread.start()
+        return scheduled
+
+    def _monitor_durable_searches(self) -> None:
+        # An abruptly stopped process leaves a valid lease until its heartbeat
+        # goes stale. Startup's one-shot refill alone cannot recover that run.
+        interval = max(0.05, min(self.poll_interval_seconds * 3.0, 15.0))
+        while not self._shutdown_event.wait(interval):
+            try:
+                self._refill_from_durable_state()
+            except Exception:
+                logger.exception("Phase 11 durable recovery sweep failed")
 
     def shutdown(self, *, wait: bool = True) -> None:
         """Stop accepting work, wake pollers, and close the bounded pool."""
@@ -325,6 +363,9 @@ class Phase11SearchCoordinator:
         for future in futures:
             if not future.running():
                 future.cancel()
+        recovery_thread = self._recovery_thread
+        if recovery_thread is not None and recovery_thread is not current_thread():
+            recovery_thread.join(timeout=min(self.poll_interval_seconds, 15.0) + 1.0)
         self._executor.shutdown(wait=wait, cancel_futures=True)
         with self._lock:
             for identifier, future in tuple(self._futures.items()):

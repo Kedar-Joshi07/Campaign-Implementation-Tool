@@ -1,0 +1,43 @@
+name: Fresh V3 Bounded Validation (Manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fresh-v3-bounded-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  fresh-v3-bounded:
+    name: Fresh V3 Bounded
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout without canonical LFS materialization
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          lfs: false
+      - name: Set up pinned Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.lock
+            requirements-browser.lock
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install -r requirements.lock -r requirements-browser.lock
+          python -m pip check
+      - name: Verify isolated fresh-v3 path
+        run: python scripts/validation/run_post14b_fresh_v3.py
+      - name: Retain bounded test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-v3-bounded-failure
+          if-no-files-found: ignore
+          path: output/post14b_closure/q/

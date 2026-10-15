@@ -465,7 +465,12 @@ def _extract_saved_audience_snapshot(
     }
 
 
-def _campaign_currentness_from_row(path: Path, row: dict[str, Any]) -> dict[str, Any]:
+def _campaign_currentness_from_row(
+    path: Path,
+    row: dict[str, Any],
+    *,
+    audience_snapshots: dict[int, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     campaign_id = int(row["campaign_id"])
     status = str(row["status"])
     issues: list[str] = []
@@ -498,7 +503,13 @@ def _campaign_currentness_from_row(path: Path, row: dict[str, Any]) -> dict[str,
     analytics_ready = False
 
     try:
-        snapshot = _extract_saved_audience_snapshot(path, saved_audience_id=int(row["saved_audience_id"]))
+        audience_id = int(row["saved_audience_id"])
+        if audience_snapshots is not None and audience_id in audience_snapshots:
+            snapshot = audience_snapshots[audience_id]
+        else:
+            snapshot = _extract_saved_audience_snapshot(path, saved_audience_id=audience_id)
+            if audience_snapshots is not None:
+                audience_snapshots[audience_id] = snapshot
         detail = snapshot["detail"]
 
         if int(detail["definition"]["scoring_run_id"]) != int(row["scoring_run_id"]):
@@ -565,8 +576,15 @@ def evaluate_campaign_currentness(
     return _campaign_currentness_from_row(path, row)
 
 
-def _campaign_summary_from_row(path: Path, row: dict[str, Any]) -> dict[str, Any]:
-    currentness = _campaign_currentness_from_row(path, row)
+def _campaign_summary_from_row(
+    path: Path,
+    row: dict[str, Any],
+    *,
+    audience_snapshots: dict[int, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    currentness = _campaign_currentness_from_row(
+        path, row, audience_snapshots=audience_snapshots,
+    )
     return {
         "campaign_id": int(row["campaign_id"]),
         "campaign_name": str(row["campaign_name"]),
@@ -719,7 +737,8 @@ def list_campaigns(
     except CampaignValidationError as exc:
         raise CampaignServiceValidationError(str(exc)) from exc
 
-    return [_campaign_summary_from_row(path, row) for row in rows]
+    audience_snapshots: dict[int, dict[str, Any]] = {}
+    return [_campaign_summary_from_row(path, row, audience_snapshots=audience_snapshots) for row in rows]
 
 
 def get_campaign(database_path: str | Path, *, campaign_id: int) -> dict[str, Any]:

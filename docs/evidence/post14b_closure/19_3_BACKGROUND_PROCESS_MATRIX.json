@@ -1,0 +1,304 @@
+{
+  "not_run": [
+    "other reuse variants",
+    "stale retry and broader concurrency",
+    "Audience Explorer error/stale branches and remaining conditional controls",
+    "Phase 10 planner alternate/error controls",
+    "Campaign Builder stale, invalid-export and duplicate-submission states",
+    "additional fault injection",
+    "in-flight worker restart recovery"
+  ],
+  "observed": [
+    {
+      "exported_count": 160,
+      "selected_count": 200,
+      "stages": [
+        "QUEUED",
+        "CHECKING_CURRENT_INTELLIGENCE",
+        "PREPARING_BUYER_PATTERNS",
+        "SCORING_PROSPECTS",
+        "VERIFYING_SIMILARITY",
+        "SELECTING_CUSTOMERS",
+        "MATERIALIZING_RESULT",
+        "COMPLETED"
+      ],
+      "status": "PASS",
+      "workflow": "v3 fresh buyer similarity via business form"
+    },
+    {
+      "accepted_outcomes": 1,
+      "status": "PASS",
+      "workflow": "v3 feedback upload retained with lineage"
+    },
+    {
+      "result_source": "EXACT_RESULT_REUSE",
+      "selected_count": 200,
+      "status": "PASS",
+      "workflow": "v3 exact result reuse via run again form"
+    },
+    {
+      "observations": 640,
+      "positive_people": 230,
+      "selected_people": 230,
+      "status": "PASS",
+      "workflow": "retained historical analysis via native UI"
+    },
+    {
+      "failure_category": "NO_UNLABELED_COMPONENT",
+      "job_status": "FAILED",
+      "safe_failure": "Model training could not be completed.",
+      "status": "PASS_EXPECTED_FAILURE",
+      "workflow": "one-component legacy training block via native UI"
+    },
+    {
+      "observations": 300,
+      "positive_people": 100,
+      "selected_people": 300,
+      "status": "PASS",
+      "workflow": "trainable legacy analysis via native UI"
+    },
+    {
+      "status": "PASS",
+      "workflow": "governed legacy model training via native UI"
+    },
+    {
+      "scored_people": 200,
+      "status": "PASS",
+      "workflow": "bounded legacy prospect scoring via native UI"
+    },
+    {
+      "saved_people": 200,
+      "status": "PASS",
+      "workflow": "bounded audience preparation/estimate/save via native UI"
+    },
+    {
+      "paginated_people": 200,
+      "status": "PASS",
+      "top_n_people": 10,
+      "workflow": "bounded audience pagination, TOP_N and saved reopen via native UI"
+    },
+    {
+      "status": "PASS",
+      "visible_groups": 2,
+      "workflow": "retained saved target groups refresh and advanced-definition link"
+    },
+    {
+      "source_counts": {
+        "campaign_sales": 940,
+        "customers": 430,
+        "demographics": 200
+      },
+      "status": "PASS",
+      "workflow": "retained data status counts and refresh"
+    },
+    {
+      "destinations": [
+        "historical-analysis",
+        "audience-explorer"
+      ],
+      "jobs_after_navigation": 0,
+      "status": "PASS",
+      "workflow": "Insights destination buttons and production-route hiding"
+    },
+    {
+      "jobs_after": 0,
+      "multiselect_widgets": 16,
+      "status": "PASS",
+      "workflow": "business form dynamic controls, mode/validation and bounded preflight"
+    },
+    {
+      "available_profiles": 20,
+      "distinct_runs": 20,
+      "status": "PASS",
+      "workflow": "v3 channel/profile native export matrix"
+    },
+    {
+      "accepted_batches": 1,
+      "cases": 17,
+      "status": "PASS",
+      "workflow": "feedback positive/negative browser upload matrix"
+    },
+    {
+      "cases": 9,
+      "compute_counts_unchanged": [
+        1,
+        0,
+        1
+      ],
+      "status": "PASS",
+      "workflow": "business navigation/sidebar/responsive matrix"
+    },
+    {
+      "deliverable": 8,
+      "selected": 10,
+      "status": "PASS",
+      "workflow": "retained Campaign Builder EMAIL local finalize/export"
+    },
+    {
+      "deliverable": 180,
+      "event_statuses": [
+        "ABORTED",
+        "COMPLETED"
+      ],
+      "selected": 200,
+      "status": "PASS_AFTER_RECOVERY_WITH_ORIGINAL_CHROME_CRASH_RETAINED",
+      "workflow": "retained Campaign Builder DIRECT_MAIL interrupted export/restart/Edge retry"
+    },
+    {
+      "cases": 5,
+      "score_range": {
+        "invalid_count": 0,
+        "max": 1.0,
+        "min": 0.5454545454545454,
+        "valid_count": 200
+      },
+      "status": "PASS",
+      "workflow": "v3 five inclusive minima with exact preflight/snapshot membership"
+    },
+    {
+      "cases": 2,
+      "status": "PASS",
+      "workflow": "v3 TOP_N ranking and genuine zero-result materialization"
+    },
+    {
+      "attempts": 1,
+      "failure_code": "PROFILE_NOT_ELIGIBLE",
+      "retryable": false,
+      "status": "PASS",
+      "workflow": "v3 permanent insufficient-history block and mixed-status polling"
+    },
+    {
+      "attempts": 2,
+      "generations": 1,
+      "profiles": 1,
+      "selected": 200,
+      "status": "PASS",
+      "workflow": "one-shot bounded v3 worker fault, UI retry and genuine recovery"
+    },
+    {
+      "database_counts_unchanged": {
+        "generations": 1,
+        "jobs": 0,
+        "profiles": 1,
+        "runs": 20
+      },
+      "runs": 20,
+      "status": "PASS",
+      "workflow": "20-run results history, older-page boundary, detail and refresh"
+    },
+    {
+      "profiles": 2,
+      "score_rows": 400,
+      "status": "PASS",
+      "strict_selected": 80,
+      "unique_people": 200,
+      "workflow": "v3 two-product ANY/max exact selection and unique snapshot"
+    },
+    {
+      "status": "PASS_EXPECTED_BLOCK",
+      "steps": 5,
+      "workflow": "retained Phase 10 planner insufficient-history block"
+    },
+    {
+      "preview_selected": "200",
+      "status": "PASS",
+      "steps": 7,
+      "workflow": "retained Phase 10 planner five-step preparation/preview/draft"
+    },
+    {
+      "buckets": 5,
+      "calibration_artifact_id": 1,
+      "materialized_runs": 2,
+      "status": "PASS",
+      "workflow": "v2 governed calibration and native discrete-bucket selection"
+    },
+    {
+      "export_profile": "EMAIL_CONTACT_V1",
+      "native_exported": 160,
+      "run_id": 3,
+      "selected": 200,
+      "status": "PASS_READER_ONLY",
+      "workflow": "legacy v1 historical result/detail reopen"
+    },
+    {
+      "attempts": 2,
+      "competing_status": 409,
+      "status": "PASS",
+      "workflow": "two headed Chrome tabs retry one failed search"
+    },
+    {
+      "effective_result_currentness": "STALE",
+      "reason_code": "SIMILARITY_SOURCE_STALE",
+      "selected_count": null,
+      "status": "PASS",
+      "workflow": "bounded source replacement, historical result and unknown preflight"
+    },
+    {
+      "demographics": 12000,
+      "independent_qualifying_count": 12000,
+      "qualification_threshold_met": true,
+      "selected_count": 12000,
+      "status": "PASS",
+      "v3_demo_ready_field_present": false,
+      "workflow": "named 12K bounded v3 exact 10K qualification"
+    },
+    {
+      "database_counts_unchanged": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "expected_offline_failures": 2,
+      "status": "PASS",
+      "workflow": "native offline result-detail failure and online retry"
+    },
+    {
+      "cases": 4,
+      "database_counts_unchanged": [
+        1,
+        0,
+        1
+      ],
+      "status": "PASS",
+      "workflow": "business shortcuts and v3 technical disclosure"
+    },
+    {
+      "cases": 11,
+      "counts_reconciled_with_ui": true,
+      "saved_runs": 3,
+      "status": "PASS",
+      "workflow": "retained historical alternate filters and outcome definitions"
+    },
+    {
+      "cases": 5,
+      "new_model_runs": 1,
+      "new_scoring_runs": 0,
+      "status": "PASS",
+      "workflow": "retained model training configuration and bounded new job"
+    },
+    {
+      "cases": 20,
+      "new_audiences": 1,
+      "new_scoring_runs": 0,
+      "status": "PASS",
+      "workflow": "retained audience alternate filters and durable save"
+    },
+    {
+      "cases": 20,
+      "feedback_batch_delta": 0,
+      "search_run_delta": 0,
+      "status": "PASS",
+      "workflow": "legacy v1/v2 native result detail actions and zero export"
+    },
+    {
+      "cases": 6,
+      "exported": 160,
+      "new_campaigns": 1,
+      "status": "PASS",
+      "workflow": "post-fix retained campaign stepper, draft edit, finalize and export"
+    }
+  ],
+  "stage": "19_3",
+  "status": "NO_GO_PARTIAL_MATRIX"
+}

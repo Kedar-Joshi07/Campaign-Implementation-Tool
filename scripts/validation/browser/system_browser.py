@@ -178,13 +178,17 @@ def launch_system_browser_session(
     app_url: str | None = None,
     ignore_https_errors: bool = True,
     extra_args: list[str] | None = None,
+    profile_dir: Path | None = None,
+    downloads_dir: Path | None = None,
 ) -> Iterator[SystemBrowserSession]:
     target = resolve_system_browser(system_browser=system_browser, system_browser_path=system_browser_path)
     launch_headless = False if headed_debug else headless
-    profile_tmp = tempfile.TemporaryDirectory(prefix="phase8-browser-profile-")
-    downloads_tmp = tempfile.TemporaryDirectory(prefix="phase8-browser-downloads-")
-    profile_dir = Path(profile_tmp.name)
-    downloads_dir = Path(downloads_tmp.name)
+    profile_tmp = None if profile_dir is not None else tempfile.TemporaryDirectory(prefix="phase8-browser-profile-")
+    downloads_tmp = None if downloads_dir is not None else tempfile.TemporaryDirectory(prefix="phase8-browser-downloads-")
+    profile_dir = Path(profile_dir) if profile_dir is not None else Path(profile_tmp.name)
+    downloads_dir = Path(downloads_dir) if downloads_dir is not None else Path(downloads_tmp.name)
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    downloads_dir.mkdir(parents=True, exist_ok=True)
     context: BrowserContext | None = None
     try:
         launch_args = ["--disable-popup-blocking", *(extra_args or [])]
@@ -220,8 +224,10 @@ def launch_system_browser_session(
     finally:
         if context is not None:
             context.close()
-        downloads_tmp.cleanup()
-        profile_tmp.cleanup()
+        if downloads_tmp is not None:
+            downloads_tmp.cleanup()
+        if profile_tmp is not None:
+            profile_tmp.cleanup()
 
 
 def attach_page_event_capture(page: Page) -> tuple[PageEventCapture, dict[str, Any]]:

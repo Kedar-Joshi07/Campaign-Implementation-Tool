@@ -62,6 +62,7 @@ const PROFILE_FIELDS = {
 let initialized = false;
 let loadedOnce = false;
 let activeStep = "1";
+let furthestStep = 1;
 let optionsPayload = null;
 let recentCampaigns = [];
 let selectedAudienceId = null;
@@ -142,6 +143,7 @@ function setState(state) {
 
 function setStep(step) {
   activeStep = step;
+  furthestStep = Math.max(furthestStep, Number(step));
   for (const stepId of STEP_IDS) {
     const button = document.querySelector(`#campaign-step-${stepId}`);
     const panel = document.querySelector(`#campaign-step-panel-${stepId}`);
@@ -609,6 +611,7 @@ function startNewCampaignDraft() {
   renderAudienceSummary(selectedAudienceDetail);
   renderExportProfile("");
   renderReviewSummary();
+  furthestStep = 1;
   setStep("1");
   synchronizeActionState();
   setCampaignAnnouncement("New campaign draft form ready.");
@@ -861,6 +864,7 @@ async function openCampaign(campaignId) {
   hideError(document.querySelector("#campaigns-error"));
 
   await loadCampaignDetail(campaignId, { force: true });
+  furthestStep = 1;
   if (activeCampaignDetail?.status === "FINALIZED") {
     setStep("4");
   } else {
@@ -1150,6 +1154,25 @@ async function onAudienceSelectionChanged() {
 function bindStepperKeyboard() {
   const buttons = STEP_IDS.map((id) => document.querySelector(`#campaign-step-${id}`));
   buttons.forEach((button, index) => {
+    button.addEventListener("click", () => {
+      const target = index + 1;
+      if (mutationInFlight) return;
+      if (target > furthestStep) {
+        showStepError("Complete the current campaign steps before opening this step.");
+        return;
+      }
+      if (target > Number(activeStep)) {
+        const error = (Number(activeStep) <= 1 && target >= 2 ? validateStep1() : null)
+          || (target >= 3 ? validateStep2() : null);
+        if (error) {
+          showStepError(error);
+          return;
+        }
+        if (target >= 3) renderReviewSummary();
+      }
+      clearStepError();
+      setStep(String(target));
+    });
     button.addEventListener("keydown", (event) => {
       let nextIndex = null;
       if (event.key === "ArrowRight") nextIndex = (index + 1) % buttons.length;
@@ -1317,6 +1340,7 @@ export async function loadCampaigns(force = false) {
     }
 
     setState("ready");
+    furthestStep = 1;
     setStep("1");
     dispatchBackendStatus("is-online", "Backend online");
   } catch (error) {

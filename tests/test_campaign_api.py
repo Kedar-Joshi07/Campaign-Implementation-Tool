@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import app.routers.campaigns as campaigns_router_module
+import app.services.campaign_service as campaign_service_module
 from app.database.schema import initialize_database
 from app.dependencies import get_database_path
 from app.main import app
@@ -89,6 +90,41 @@ def test_campaign_create_missing_saved_audience_maps_to_404(client: TestClient) 
         },
     )
     assert response.status_code == 404
+
+
+def test_campaign_list_reuses_audience_currentness_within_one_response(
+    database_path: Path,
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    saved_audience_id = _create_current_saved_audience(database_path)
+    for name in ("First", "Second"):
+        response = client.post(
+            "/api/campaigns",
+            json={
+                "campaign_name": name,
+                "channel": "EMAIL",
+                "saved_audience_id": saved_audience_id,
+            },
+        )
+        assert response.status_code == 201
+
+    extract = campaign_service_module._extract_saved_audience_snapshot
+    observed_ids: list[int] = []
+
+    def counted_extract(path: Path, *, saved_audience_id: int):
+        observed_ids.append(saved_audience_id)
+        return extract(path, saved_audience_id=saved_audience_id)
+
+    monkeypatch.setattr(campaign_service_module, "_extract_saved_audience_snapshot", counted_extract)
+    summaries = client.get("/api/campaigns", params={"limit": 20, "offset": 0})
+    assert summaries.status_code == 200
+    assert len(summaries.json()) == 2
+    assert observed_ids == [saved_audience_id]
+    assert all(item["currentness"]["is_current"] for item in summaries.json())
+
+    client.get("/api/campaigns", params={"limit": 20, "offset": 0})
+    assert observed_ids == [saved_audience_id, saved_audience_id]
 
 
 def test_campaign_workflow_finalize_and_export(database_path: Path, client: TestClient) -> None:

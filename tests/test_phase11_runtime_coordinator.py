@@ -162,6 +162,39 @@ def test_worker_polls_phase10_then_reaches_terminal_state(case) -> None:
         coordinator.shutdown()
 
 
+def test_recovery_sweep_waits_for_old_owner_lease_then_fences_and_resumes(
+    case, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A crash-time live lease must not strand the run after startup's first scan."""
+
+    repository = case[3]
+    search_run_id = _search(case)
+    previous_fence = repository.claim_search_attempt(
+        search_run_id, lease_owner="departed-process"
+    )
+    monkeypatch.setattr(
+        "app.repositories.campaign_result_registry_repository."
+        "ATTEMPT_EXECUTION_LEASE_STALE_SECONDS", 0.2,
+    )
+    called = Event()
+
+    def runner(_path, identifier, **kwargs):
+        assert kwargs["execution_lease_token"] != previous_fence.execution_lease_token
+        repository.fail_search_run(identifier, **_worker_fence(kwargs))
+        called.set()
+        return SearchOrchestrationOutcome(identifier, "FAILED")
+
+    coordinator = _coordinator(case, runner, poll_interval_seconds=0.02)
+    try:
+        assert coordinator.resume_durable_searches() == 0
+        assert not called.is_set()
+        assert called.wait(2.0)
+        assert repository.fetch_search_run(search_run_id)["status"] == "FAILED"
+        assert repository.fetch_search_run(search_run_id)["current_attempt_number"] == 1
+    finally:
+        coordinator.shutdown()
+
+
 def test_unexpected_runner_exception_fails_safely_and_cleans_registry(case) -> None:
     repository = case[3]
     search_run_id = _search(case)

@@ -1080,6 +1080,10 @@ def execute_phase11_search_safely(
 ) -> SearchOrchestrationOutcome:
     """Fail closed with registry-owned safe messages; never persist exceptions."""
 
+    from app.qa_guard import assert_qa_runtime
+    assert_qa_runtime(database_path, project_root=kwargs.get("project_root"),
+                      operation="legacy_search_worker", record_admission=True)
+
     repository = CampaignResultRegistryRepository(database_path)
     fence = {
         "attempt_number": attempt_number,

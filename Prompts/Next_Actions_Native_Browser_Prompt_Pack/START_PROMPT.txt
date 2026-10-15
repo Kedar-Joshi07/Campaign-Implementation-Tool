@@ -1,0 +1,1 @@
+Read MASTER_EXECUTION_PROMPT.md from this extracted pack and execute its default stage sequence. Preserve the current checkout and all v1/v2/v3 contracts. Use installed headed Chrome/Edge and bounded real-worker QA for all implemented UI/background controls. Do not launch 5M scoring/import or OPTIONAL_21/22. Produce real evidence and separate scoped verdicts; do not force GO.

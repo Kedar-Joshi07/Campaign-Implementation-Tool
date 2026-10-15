@@ -1,0 +1,7 @@
+# 19.4 feedback JSON validation repair
+
+During the bounded native 19.3 feedback matrix, a malformed `.json` file uploaded through the real result-detail file input returned HTTP 500 and the generic application-error message. The isolated QA root `output/post14b_closure/nsnwumo1m/` preserves that failed browser attempt. The endpoint called `request.json()` without translating JSON-decode or UTF-8 failures into the governed feedback validation contract.
+
+`app/routers/potential_customer_search.py` now catches those two parser failures and returns HTTP 422 with `Feedback JSON must be valid UTF-8 JSON.` It does not change accepted feedback schemas, membership validation, idempotency, feedback lineage, or recalibration governance. Two API regression variants (malformed JSON and invalid UTF-8) assert 422 and zero batch writes; the full feedback test file passed **28 tests**. The fresh headed-Chrome root `output/post14b_closure/ng8oktfw4/native_feedback_matrix.json` passed the file-input matrix: client no-file/wrong-extension guards, twelve server-side rejection cases, one accepted JSON batch, and a duplicate-prior-outcome 409. Its accepted batch retained attempt 1, v3 selection origin, immutable result snapshot, similarity generation/profile checksum and score-method lineage. Failed uploads did not add batches or outcomes.
+
+This is a narrow functional repair, not a 19.3 all-UI certificate. The earlier failed root and native browser evidence remain preserved.
